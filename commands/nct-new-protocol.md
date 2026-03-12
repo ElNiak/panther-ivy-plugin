@@ -45,7 +45,7 @@ Present the 14-layer template and ask which layers to scaffold. Suggest all 14 b
 
 ### Step 3: Create Directory Structure
 
-Use `mcp__plugin_panther-ivy-plugin_panther-serena__create_text_file` to create each file. The directory structure:
+Use Claude's `Write` tool to create each file. The directory structure:
 
 ```
 protocol-testing/{prot}/
@@ -126,4 +126,4 @@ Show what was created:
 5. Use `/nct-check` to verify as you go
 ```
 
-**IMPORTANT**: Use `mcp__plugin_panther-ivy-plugin_panther-serena__create_text_file` to create all files. Do NOT use Bash file operations.
+**IMPORTANT**: Use Claude's `Write` tool to create all files. Do NOT use Bash file operations.

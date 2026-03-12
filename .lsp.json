@@ -1,0 +1,12 @@
+{
+  "ivy": {
+    "command": "uvx",
+    "args": ["--from", "git+https://github.com/ElNiak/ivy-lsp", "ivy_lsp"],
+    "extensionToLanguage": {
+      ".ivy": "ivy"
+    },
+    "env": {
+      "IVY_LSP_EXCLUDE_PATHS": "submodules,test"
+    }
+  }
+}

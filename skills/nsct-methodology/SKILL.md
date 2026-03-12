@@ -121,17 +121,31 @@ NSCT requires a specific Z3 build mode for Shadow NS compatibility:
 - This uses the legacy `mk_make.py` build system compatible with Shadow NS
 - Other build modes (`debug-asan`, `rel-lto`, `release-static-pgo`) are for NCT/NACT Docker environments
 
-## Serena Tools for NSCT
+## Tools for NSCT
 
-NSCT uses the same ivy-tools and panther-serena tools as NCT for specification work:
+NSCT uses the same tools as NCT for specification work.
+
+### Navigation and editing
+
+Use Claude's built-in tools:
+- `Read` — Read file contents
+- `Grep` — Search across files
+- `Glob` — Find files by pattern
+- `Edit` — Modify code in place
+- `Write` — Create new files
+
+Native Ivy LSP provides go-to-definition, find-references, hover, and instant diagnostics for `.ivy` files.
+
+### Verification and analysis
+
+Use ivy-tools MCP tools:
 
 | Step | Tool | Usage |
 |---|---|---|
-| Navigate specs | `find_symbol`, `get_symbols_overview` | Understand spec structure |
-| Verify specs | `ivy_check` | Check formal properties before simulation |
-| Compile tests | `ivy_compile` | Build test executables |
-| Create configs | `create_text_file` | Write PANTHER experiment configs |
-| Search patterns | `search_for_pattern` | Find relevant configuration patterns |
+| Verify specs | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` | Check formal properties before simulation |
+| Compile tests | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` | Build test executables |
+| Inspect model | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` | View model structure |
+| Fast structural lint | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` | Quick structural checks |
 
 **IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
 

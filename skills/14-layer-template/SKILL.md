@@ -166,13 +166,23 @@ Use `/nct-new-protocol` command to interactively scaffold from this template.
 | Tunneling? | Add encapsulation + Security Association management |
 | Real-time? | Add timing constraints + FEC recovery |
 
-## Serena Tools for Template Work
+## Tools for Template Work
 
-| Task | Tool |
-|---|---|
-| Explore existing protocol structure | `list_dir`, `find_file` |
-| Understand layer contents | `get_symbols_overview` |
-| Navigate between layers | `find_symbol`, `find_referencing_symbols` |
-| Create new layer files | `create_text_file` |
-| Edit layer content | `replace_symbol_body` |
-| Verify layer correctness | `ivy_check` |
+### Navigation and editing
+
+Use Claude's built-in tools:
+- `Read` — Read file contents
+- `Grep` — Search across files
+- `Glob` — Find files by pattern
+- `Edit` — Modify code in place
+- `Write` — Create new files
+
+Native Ivy LSP provides go-to-definition, find-references, hover, and instant diagnostics for `.ivy` files.
+
+### Verification and analysis
+
+Use ivy-tools MCP tools:
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` — Formal verification
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` — Test compilation
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` — Model introspection
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` — Fast structural lint

@@ -79,12 +79,12 @@ Follow this cycle when verification fails:
 
 1. **Check**: Run verification via `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify`.
 2. **Read the error**: Note the line number, error type, and any counterexample trace.
-3. **Locate the issue**: Use `mcp__plugin_panther-ivy-plugin_panther-serena__find_symbol` to navigate to the failing symbol (panther-serena provides code navigation).
+3. **Locate the issue**: Use Claude's `Grep` tool or native LSP go-to-definition to navigate to the failing symbol.
 4. **Diagnose**: Determine if the issue is:
    - A missing invariant (the model under-specifies expected behavior)
    - A bug in the action logic (the model is incorrect)
    - A missing precondition (the action is called in unexpected contexts)
-5. **Fix**: Apply the minimal fix using `mcp__plugin_panther-ivy-plugin_panther-serena__replace_symbol_body`. Prefer adding invariants over weakening specifications.
+5. **Fix**: Apply the minimal fix using Claude's `Edit` tool. Prefer adding invariants over weakening specifications.
 6. **Re-check**: Run verification again. Repeat until all checks pass.
 
 ## Common Ivy Verification Errors and Fixes

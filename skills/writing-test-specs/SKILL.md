@@ -185,17 +185,26 @@ Example mapping:
 - RFC: "A server MUST NOT send data exceeding flow control limits"
 - Ivy: `after frame.stream.handle(f) { require f.offset + f.length <= max_stream_data(f.id); }`
 
-## Serena Tools for Test Specs
+## Tools for Test Specs
 
-| Task | Tool |
-|---|---|
-| Read existing tests | `read_file`, `find_symbol` |
-| Understand test structure | `get_symbols_overview` |
-| Find test patterns | `search_for_pattern` |
-| Create new test | `create_text_file` |
-| Add variant checks | `replace_symbol_body`, `insert_after_symbol` |
-| Verify test | `ivy_check` |
-| Compile test | `ivy_compile` |
+### Navigation and editing
+
+Use Claude's built-in tools:
+- `Read` — Read file contents
+- `Grep` — Search across files
+- `Glob` — Find files by pattern
+- `Edit` — Modify code in place
+- `Write` — Create new files
+
+Native Ivy LSP provides go-to-definition, find-references, hover, and instant diagnostics for `.ivy` files.
+
+### Verification and analysis
+
+Use ivy-tools MCP tools:
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` — Formal verification
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` — Test compilation
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` — Model introspection
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` — Fast structural lint
 
 **IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
 
