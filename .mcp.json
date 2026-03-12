@@ -1,13 +1,11 @@
 {
   "mcpServers": {
     "ivy-tools": {
-      "command": "uvx",
+      "command": "bash",
       "args": [
-        "--from",
-        "git+https://github.com/ElNiak/ivy-lsp[mcp]",
-        "ivy_lsp",
-        "--mcp"
-      ]
+        "${CLAUDE_PLUGIN_ROOT}/scripts/start-ivy-tools.sh"
+      ],
+      "env": {}
     }
   }
 }
