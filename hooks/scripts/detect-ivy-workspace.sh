@@ -82,6 +82,7 @@ fi
 cat <<EOF
 {
   "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
     "additionalContext": "$context"
   }
 }
