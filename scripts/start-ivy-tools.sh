@@ -90,11 +90,35 @@ log "Workspace: $DETECTED_ROOT (type=$DETECTED_TYPE)"
 log "Include paths: ${IVY_LSP_INCLUDE_PATHS:-<none>}"
 log "Exclude paths: ${IVY_LSP_EXCLUDE_PATHS:-<none>}"
 
+# --- Resolve ivy-lsp source ---
+
+# Priority: IVY_LSP_DEV_ROOT env var > local submodule > GitHub package.
+IVY_LSP_SRC=""
+
+if [ -n "${IVY_LSP_DEV_ROOT:-}" ] && [ -d "$IVY_LSP_DEV_ROOT/ivy_lsp" ]; then
+    IVY_LSP_SRC="$IVY_LSP_DEV_ROOT"
+elif [ -n "$panther_ivy_dir" ]; then
+    local_lsp="$panther_ivy_dir/submodules/ivy-lsp"
+    if [ -d "$local_lsp/ivy_lsp" ]; then
+        IVY_LSP_SRC="$local_lsp"
+    fi
+fi
+
 # --- Launch ---
 
-exec uvx \
-    --from "git+https://github.com/ElNiak/ivy-lsp[mcp]" \
-    ivy_lsp \
-    --mcp \
-    --workspace "$DETECTED_ROOT" \
-    2>>"$LOG_FILE"
+if [ -n "$IVY_LSP_SRC" ]; then
+    log "Using local ivy-lsp source: $IVY_LSP_SRC"
+    exec uvx \
+        --from "${IVY_LSP_SRC}[mcp]" \
+        ivy_lsp \
+        --mcp \
+        --workspace "$DETECTED_ROOT" \
+        2>>"$LOG_FILE"
+else
+    exec uvx \
+        --from "git+https://github.com/ElNiak/ivy-lsp[mcp]" \
+        ivy_lsp \
+        --mcp \
+        --workspace "$DETECTED_ROOT" \
+        2>>"$LOG_FILE"
+fi
