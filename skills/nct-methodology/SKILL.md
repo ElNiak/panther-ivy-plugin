@@ -102,19 +102,29 @@ Use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` with `target=test` t
 ### Step 10: Execute Against IUT
 Run compiled test against the implementation via PANTHER experiment framework.
 
-## Serena Tools for NCT
+## Tools for NCT
+
+### Navigation and editing
+
+Use Claude's built-in tools:
+- `Read` — Read file contents
+- `Grep` — Search across files
+- `Glob` — Find files by pattern
+- `Edit` — Modify code in place
+- `Write` — Create new files
+
+Native Ivy LSP provides go-to-definition, find-references, hover, and instant diagnostics for `.ivy` files.
+
+### Verification and analysis
+
+Use ivy-tools MCP tools:
 
 | Step | Tool | Usage |
 |---|---|---|
-| Navigate specs | `find_symbol`, `get_symbols_overview` | Understand existing spec structure |
-| Read spec code | `read_file` | View specific .ivy file sections |
-| Trace dependencies | `find_referencing_symbols` | Find what references a symbol |
-| Search patterns | `search_for_pattern` | Find patterns across specs |
-| Formal verification | `ivy_check` | Check isolate/invariant/safety properties |
-| Compile tests | `ivy_compile` | Build test executables (target=test) |
-| Inspect model | `ivy_model_info` | View types, relations, actions, invariants |
-| Create new specs | `create_text_file` | Write new .ivy files |
-| Edit specs | `replace_symbol_body` | Modify existing symbols |
+| Formal verification | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` | Check isolate/invariant/safety properties |
+| Compile tests | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` | Build test executables (target=test) |
+| Inspect model | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` | View types, relations, actions, invariants |
+| Fast structural lint | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` | Quick structural checks |
 
 **IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
 

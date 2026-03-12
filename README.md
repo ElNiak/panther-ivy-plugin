@@ -1,6 +1,6 @@
 # panther-ivy-plugin
 
-NCT/NACT/NSCT methodology guidance for Ivy protocol testing via panther-serena and ivy-tools MCP servers. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.
+NCT/NACT/NSCT methodology guidance for Ivy protocol testing via native Ivy LSP and ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.
 
 **Version:** 0.1.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
 
@@ -31,16 +31,16 @@ This is a **Claude Code plugin** for the PANTHER-Ivy tester. It provides methodo
 
 - **PANTHER framework** with the Ivy tester plugin installed (`panther/plugins/services/testers/panther_ivy/`)
 - **Ivy toolchain** available (either locally or via Docker-based execution through PANTHER)
-- **Two MCP servers** (configured automatically via `.mcp.json`):
-  - [panther-serena](https://github.com/ElNiak/panther-serena) -- semantic code navigation and Ivy operations
-  - [ivy-tools](https://github.com/ElNiak/ivy-lsp) -- read-only Ivy diagnostics and analysis (LSP-based)
+- **Native Ivy LSP** (configured automatically via `.lsp.json`) -- diagnostics, go-to-definition, find-references, hover for `.ivy` files
+- **ivy-tools MCP server** (configured automatically via `.mcp.json`):
+  - [ivy-tools](https://github.com/ElNiak/ivy-lsp) -- Ivy verification, compilation, analysis, linting, and traceability tools
 
 ## Installation
 
 Claude Code auto-discovers plugins via the `.claude-plugin/` directory. No `pip install` is needed for the plugin itself.
 
 1. Ensure the panther-ivy-plugin is present as a submodule (or cloned) at `panther/plugins/services/testers/panther_ivy/submodules/panther-ivy-plugin/`
-2. The `.mcp.json` file in this directory configures the two MCP servers (`panther-serena` and `ivy-tools`) via `uvx`
+2. The `.mcp.json` file configures the `ivy-tools` MCP server and the `.lsp.json` file configures the native Ivy LSP
 3. Claude Code will automatically load the plugin's agents, skills, commands, and hooks
 
 ## Components
@@ -52,16 +52,17 @@ Claude Code auto-discovers plugins via the `.claude-plugin/` directory. No `pip 
 | Skills | 11 | Domain knowledge for Ivy language, methodologies, and tooling | [skills/](skills/) |
 | Hooks | 1 | PreToolUse: blocks direct Ivy CLI calls, redirects to MCP tools | -- |
 
-## MCP Server Architecture
+## Tooling Architecture
 
-The plugin relies on two MCP servers with complementary roles:
+The plugin relies on one MCP server plus native LSP support:
 
-| Server | Role | Key Tools | Source |
-|--------|------|-----------|--------|
-| **panther-serena** | Code manipulation and LSP navigation | `find_symbol`, `replace_symbol_body`, `create_text_file`, `ivy_diagnostics`, `ivy_goto_definition`, `ivy_server_status`, `ivy_test_scope` | [panther-serena](https://github.com/ElNiak/panther-serena) |
-| **ivy-tools** | Verification, analysis, and visualization | `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_lint`, `ivy_traceability_matrix`, `ivy_requirement_coverage`, `ivy_impact_analysis` | [ivy-lsp](https://github.com/ElNiak/ivy-lsp) |
+| Component | Role | Capabilities | Source |
+|-----------|------|--------------|--------|
+| **Native Ivy LSP** | Language intelligence for `.ivy` files | Diagnostics, go-to-definition, find-references, hover | [ivy-lsp](https://github.com/ElNiak/ivy-lsp) (configured via `.lsp.json`) |
+| **ivy-tools MCP** | Verification, analysis, and visualization | `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_lint`, `ivy_traceability_matrix`, `ivy_requirement_coverage`, `ivy_impact_analysis` | [ivy-lsp](https://github.com/ElNiak/ivy-lsp) (configured via `.mcp.json`) |
+| **Claude's native tools** | Code navigation and editing | `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Bash` | Built into Claude Code |
 
-A **PreToolUse hook** (`hooks/scripts/block-direct-ivy.sh`) intercepts Bash tool calls and blocks direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`, redirecting to the corresponding MCP tool. This ensures all Ivy operations go through the MCP servers for consistent behavior and structured output.
+A **PreToolUse hook** (`hooks/scripts/block-direct-ivy.sh`) intercepts Bash tool calls and blocks direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`, redirecting to the corresponding MCP tool. This ensures all Ivy operations go through the MCP server for consistent behavior and structured output.
 
 ## Quick Start
 
@@ -99,8 +100,7 @@ For interactive guidance, ask Claude directly -- the agents activate automatical
 
 | Project | Description | Relationship |
 |---------|-------------|--------------|
-| [ivy-lsp](https://github.com/ElNiak/ivy-lsp) | Ivy Language Server Protocol implementation and MCP tool server | Provides the `ivy-tools` MCP server used by this plugin |
-| [panther-serena](https://github.com/ElNiak/panther-serena) | Serena-based code intelligence with Ivy extensions | Provides the `panther-serena` MCP server used by this plugin |
+| [ivy-lsp](https://github.com/ElNiak/ivy-lsp) | Ivy Language Server Protocol implementation and MCP tool server | Provides both the native Ivy LSP (`.lsp.json`) and the `ivy-tools` MCP server (`.mcp.json`) used by this plugin |
 | [PANTHER](https://github.com/ElNiak/PANTHER) | Protocol Analysis and Testing Harness for Extensible Research | Parent framework; the Ivy tester plugin is a PANTHER service |
 | PANTHER-Ivy | Ivy tester plugin for PANTHER (`panther_ms_ivy`) | The Docker-based tester that this Claude Code plugin provides guidance for |
 
@@ -110,7 +110,8 @@ For interactive guidance, ask Claude directly -- the agents activate automatical
 panther-ivy-plugin/
 ├── .claude-plugin/
 │   └── plugin.json          # Plugin manifest (name, version, description)
-├── .mcp.json                # MCP server configuration (panther-serena, ivy-tools)
+├── .lsp.json                # Native Ivy LSP configuration
+├── .mcp.json                # ivy-tools MCP server configuration
 ├── agents/                  # 8 agent definitions
 │   ├── README.md            # Agent catalog and selection guide
 │   ├── spec-explorer.md     # Navigate and explain Ivy specifications
@@ -142,7 +143,7 @@ panther-ivy-plugin/
 │   ├── nact-methodology/    # NACT methodology
 │   ├── nct-methodology/     # NCT methodology
 │   ├── nsct-methodology/    # NSCT methodology
-│   ├── panther-serena-for-ivy/ # panther-serena tool mapping
+│   ├── ivy-tooling-guide/    # Ivy tooling architecture and tool mapping
 │   ├── rfc-to-ivy-mapping/  # RFC to Ivy translation patterns
 │   └── writing-test-specs/  # Test specification guide
 └── README.md                # This file

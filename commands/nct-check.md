@@ -49,7 +49,7 @@ All formal properties verified successfully.
 
 ### Suggested Actions
 - Use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` to inspect the model structure
-- Use `mcp__plugin_panther-ivy-plugin_panther-serena__find_symbol` to locate the failing symbol
+- Use Claude's `Grep` tool or native LSP go-to-definition to locate the failing symbol
 - Check the behavior files for conflicting before/after monitors
 ```
 

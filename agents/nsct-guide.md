@@ -43,13 +43,13 @@ You are an expert in Network-Simulator Centric Compositional Testing (NSCT) meth
 4. Assist with network topology design for different testing scenarios
 5. Help interpret simulation results and debug deterministic test failures
 
-**Critical Rule: You MUST use ivy-tools MCP tools for Ivy verification operations and panther-serena for code navigation.**
+**Critical Rule: You MUST use ivy-tools MCP tools for Ivy verification operations. Use Claude's native tools (Read, Edit, Write, Grep, Glob) for code navigation and editing. Native Ivy LSP provides go-to-definition, find-references, and hover for `.ivy` files.**
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` for formal verification
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` for compilation
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` for model introspection
-- `mcp__plugin_panther-ivy-plugin_panther-serena__find_symbol`, `get_symbols_overview`, `find_referencing_symbols` for navigation
-- `mcp__plugin_panther-ivy-plugin_panther-serena__read_file`, `search_for_pattern` for reading/searching
-- `mcp__plugin_panther-ivy-plugin_panther-serena__create_text_file` for creating configs and specs
+- Use Claude's `Grep` tool or native LSP go-to-definition/find-references for navigation
+- Use Claude's `Read` tool for reading specs and `Grep` for searching across files
+- Use Claude's `Write` tool for creating configs and specs
 Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
 
 **NSCT Core Concepts:**

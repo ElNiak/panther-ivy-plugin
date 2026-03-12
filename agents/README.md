@@ -188,9 +188,9 @@ NCT and NACT are complementary: NCT verifies correctness, NACT verifies security
 
 ## MCP Tool Enforcement
 
-All agents use MCP tools from two servers configured in `.mcp.json`:
-- **panther-serena** -- Semantic code navigation (`find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `search_for_pattern`, `read_file`, `list_dir`, `find_file`) and file operations (`create_text_file`, `replace_symbol_body`)
-- **ivy-tools** -- Ivy verification (`ivy_verify`, `ivy_compile`, `ivy_model_info`), linting (`ivy_lint`), requirement extraction (`ivy_extract_requirements`), traceability (`ivy_traceability_matrix`, `ivy_requirement_coverage`), and analysis tools (`ivy_impact_analysis`, `ivy_cross_references`, `ivy_query_symbol`)
+All agents use two tool sources:
+- **Claude's native tools + Ivy LSP** -- Code navigation (`Read`, `Grep`, `Glob`, `Edit`, `Write`) and Ivy-specific LSP features (diagnostics, go-to-definition, find-references, hover) configured via `.lsp.json`
+- **ivy-tools MCP** -- Ivy verification (`ivy_verify`, `ivy_compile`, `ivy_model_info`), linting (`ivy_lint`), requirement extraction (`ivy_extract_requirements`), traceability (`ivy_traceability_matrix`, `ivy_requirement_coverage`), and analysis tools (`ivy_impact_analysis`, `ivy_cross_references`, `ivy_query_symbol`) configured via `.mcp.json`
 
 **Available Protocol Models:**
 - **QUIC** (complete, 202+ files) — `protocol-testing/quic/`

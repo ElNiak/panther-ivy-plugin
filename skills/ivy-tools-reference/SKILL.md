@@ -10,17 +10,17 @@ description: Use when asking about "ivy diagnostics", "ivy lint", "ivy verificat
 
 ## Role Division
 
-The panther-ivy-plugin exposes **two** MCP servers with distinct responsibilities:
+The panther-ivy-plugin exposes the **ivy-tools** MCP server alongside native tooling:
 
-| Server | Role | Analogy |
+| Tool Layer | Role | Analogy |
 |--------|------|---------|
 | **ivy-tools** | Read-only diagnostics and analysis | Like pyright/eslint for Python/JS |
-| **panther-serena** | Symbolic code manipulation and navigation | Like an IDE's refactoring engine |
+| **Native LSP + Claude tools** | Code navigation, editing, and file operations | Built-in IDE capabilities |
 
 **Use ivy-tools** for: verification, linting, coverage, traceability, dependency graphs.
-**Use panther-serena** for: find/replace symbols, navigate code, edit files, create files.
+**Use Claude's built-in tools** (`Read`, `Grep`, `Glob`, `Edit`, `Write`) for: navigate code, edit files, create files. Native Ivy LSP provides go-to-definition, find-references, and hover.
 
-See the `panther-serena-for-ivy` skill for panther-serena tool details.
+See the `ivy-tooling-guide` skill for detailed tooling guidance.
 
 ## Tool Name Pattern
 

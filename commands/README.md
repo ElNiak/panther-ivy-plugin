@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains 5 slash commands for common Ivy formal verification operations within the panther-ivy-plugin for Claude Code. All commands use the `ivy-tools` MCP tools for verification/compilation/model-info and `panther-serena` MCP tools for code navigation -- they do NOT invoke Ivy CLI tools (e.g., `ivy_check`, `ivyc`, `ivy_show`) directly via Bash.
+This directory contains 5 slash commands for common Ivy formal verification operations within the panther-ivy-plugin for Claude Code. All commands use the `ivy-tools` MCP tools for verification/compilation/model-info and Claude's native tools (`Grep`, `Read`, `Glob`, `Write`) for code navigation and file operations -- they do NOT invoke Ivy CLI tools (e.g., `ivy_check`, `ivyc`, `ivy_show`) directly via Bash.
 
 ## Command Reference
 
@@ -136,7 +136,7 @@ A `Test Specification Created` report showing the file path, protocol, role unde
   - `mim` -> `protocol-testing/{prot}/{prot}_tests/mim_tests/{prot}_mim_test_{name}.ivy`
   - `attacker` -> `protocol-testing/apt/apt_tests/server_attacks/{prot}_attacker_test_{name}.ivy`
 - If a base test file already exists for the protocol/role, the new test includes it (variant pattern); otherwise a full template is generated.
-- Internally uses `mcp__plugin_panther-ivy-plugin_panther-serena__create_text_file` and `mcp__plugin_panther-ivy-plugin_panther-serena__find_file`.
+- Internally uses Claude's `Write` tool to create files and `Glob` tool to find files.
 
 ---
 
@@ -171,7 +171,7 @@ A `Protocol Scaffold Created` report listing all generated files with their laye
   - **Infrastructure** (layers 13--14): serialization/deserialization, utilities.
 - A minimal viable subset (layers 1, 4, 5, 7, 10, 11, 12) is available for users who want to start small.
 - Creates a directory structure under `protocol-testing/{prot}/` with subdirectories for stack, entities, shims, utils, and tests.
-- Internally uses `mcp__plugin_panther-ivy-plugin_panther-serena__create_text_file` to create all files.
+- Internally uses Claude's `Write` tool to create all files.
 
 ## Common Workflows
 

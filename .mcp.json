@@ -1,25 +1,11 @@
 {
   "mcpServers": {
-    "panther-serena": {
-      "command": "uvx",
+    "ivy-tools": {
+      "command": "bash",
       "args": [
-        "--from",
-        "git+https://github.com/ElNiak/panther-serena",
-        "serena",
-        "start-mcp-server",
-        "--context",
-        "claude-code"
+        "${CLAUDE_PLUGIN_ROOT}/scripts/start-ivy-tools.sh"
       ],
       "env": {}
-    },
-    "ivy-tools": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/ElNiak/ivy-lsp[mcp]",
-        "ivy_lsp",
-        "--mcp"
-      ]
     }
   }
 }

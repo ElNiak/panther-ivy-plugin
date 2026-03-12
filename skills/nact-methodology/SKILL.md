@@ -132,18 +132,31 @@ protocol-testing/apt/
 └── apt_utils/                 # Attack utilities
 ```
 
-## Serena Tools for NACT
+## Tools for NACT
 
-Same tools as NCT apply, with focus on navigating the `apt/` directory structure:
+Same tools as NCT apply, with focus on navigating the `apt/` directory structure.
+
+### Navigation and editing
+
+Use Claude's built-in tools:
+- `Read` — Read file contents
+- `Grep` — Search across files
+- `Glob` — Find files by pattern
+- `Edit` — Modify code in place
+- `Write` — Create new files
+
+Native Ivy LSP provides go-to-definition, find-references, hover, and instant diagnostics for `.ivy` files.
+
+### Verification and analysis
+
+Use ivy-tools MCP tools:
 
 | Step | Tool | Usage |
 |---|---|---|
-| Navigate APT structure | `find_symbol`, `get_symbols_overview` | Understand attack entity structure |
-| Search attack patterns | `search_for_pattern` | Find attack actions across specs |
-| Verify attack model | `ivy_check` | Check attack spec consistency |
-| Compile attack tests | `ivy_compile` | Build attack test executables |
-| Create attack specs | `create_text_file` | Write new attack .ivy files |
-| Edit attack specs | `replace_symbol_body` | Modify attack specifications |
+| Verify attack model | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` | Check attack spec consistency |
+| Compile attack tests | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` | Build attack test executables |
+| Inspect model | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` | View attack entity structure |
+| Fast structural lint | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` | Quick structural checks |
 
 **IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
 

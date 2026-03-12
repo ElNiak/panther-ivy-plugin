@@ -36,7 +36,7 @@
 | Skill | Description | Trigger Keywords |
 |-------|-------------|------------------|
 | [ivy-tools-reference](ivy-tools-reference/) | Tool catalog for the ivy-tools MCP server (read-only diagnostics): ivy_verify, ivy_compile, ivy_model_info, ivy_lint, ivy_include_graph, ivy_capabilities, ivy_traceability_matrix, ivy_requirement_coverage, ivy_impact_analysis, ivy_extract_requirements, ivy_cross_references, ivy_query_symbol | "ivy diagnostics", "ivy lint", "ivy verification", "ivy coverage", "ivy traceability", "ivy include graph", "ivy capabilities", "ivy impact analysis", "ivy requirements", "ivy cross references", "ivy query symbol" |
-| [panther-serena-for-ivy](panther-serena-for-ivy/) | Tool mapping for the panther-serena MCP server (code navigation/editing): find_symbol, replace_symbol_body, create_text_file, search_for_pattern, ivy_diagnostics, ivy_goto_definition, ivy_server_status, ivy_test_scope | "using serena for Ivy", "Ivy tool guidance", "panther-serena tools", "code navigation", "symbol editing", "MCP tools for Ivy" |
+| [ivy-tooling-guide](ivy-tooling-guide/) | Ivy tooling architecture guide: native LSP (diagnostics, go-to-definition, find-references, hover), ivy-tools MCP (verification, compilation, analysis), and Claude's native tools (Read, Edit, Write, Grep, Glob) | "Ivy tool guidance", "tooling architecture", "code navigation", "MCP tools for Ivy", "LSP for Ivy", "ivy-tools" |
 
 ### Workflow
 
@@ -69,7 +69,7 @@ For someone who already understands NCT and wants to add adversarial testing.
 
 For someone who wants to use the MCP tool ecosystem effectively.
 
-1. **panther-serena-for-ivy** -- Understand the two-MCP architecture and why direct CLI is blocked; learn code navigation and editing tools
+1. **ivy-tooling-guide** -- Understand the tooling architecture (native LSP + ivy-tools MCP + Claude's native tools) and why direct CLI is blocked
 2. **ivy-tools-reference** -- Learn the 12 read-only diagnostic tools: verification, linting, coverage, traceability, dependency graphs, impact analysis
 3. **ivy-verification** -- Apply the tools in a verify-debug-fix cycle
 
@@ -109,12 +109,12 @@ For someone who wants to use the MCP tool ecosystem effectively.
 - **Trigger keywords**: "ivy diagnostics", "ivy lint", "ivy verification", "ivy coverage", "ivy traceability", "ivy include graph", "ivy capabilities", "ivy impact analysis", "ivy requirements", "ivy cross references", "ivy query symbol"
 - **Key topics**: ivy_verify (formal verification), ivy_compile (test compilation), ivy_model_info (model introspection), ivy_lint (fast structural lint), ivy_include_graph (dependency graph), ivy_capabilities (tool availability), ivy_traceability_matrix (RFC coverage), ivy_requirement_coverage (coverage stats), ivy_impact_analysis (symbol edges), ivy_extract_requirements (RFC parsing), ivy_cross_references (graph neighborhood), ivy_query_symbol (rich symbol info)
 - **Related agents**: spec-verifier, traceability-reviewer
-- **Related skills**: panther-serena-for-ivy, ivy-verification
+- **Related skills**: ivy-tooling-guide, ivy-verification
 
 ### ivy-verification
 
 - **Category**: Workflow
-- **Purpose**: End-to-end verification workflow using panther-serena and ivy-tools MCP. Covers running `ivy_check`, interpreting success/failure, common error patterns (invariant not preserved, type safety, ungrounded relations, Z3 timeouts), and a systematic debugging cycle.
+- **Purpose**: End-to-end verification workflow using ivy-tools MCP and native Ivy LSP. Covers running `ivy_check`, interpreting success/failure, common error patterns (invariant not preserved, type safety, ungrounded relations, Z3 timeouts), and a systematic debugging cycle.
 - **Trigger keywords**: "running formal verification", "ivy_check workflow", "verifying protocol specifications", "debugging verification failures", "interpreting ivy_check output", "invariant violations", "type safety errors", "verification debugging"
 - **Key topics**: Running verification via MCP, interpreting OK/failure output, counterexample traces, invariant preservation failures, type safety errors, ungrounded relations, safety property violations, circular dependencies, Z3 timeout handling, debugging cycle (check -> read error -> locate -> diagnose -> fix -> re-check)
 - **Related agents**: spec-verifier, ivy-model-reviewer
@@ -147,12 +147,12 @@ For someone who wants to use the MCP tool ecosystem effectively.
 - **Related agents**: nsct-guide
 - **Related skills**: nct-methodology, nact-methodology
 
-### panther-serena-for-ivy
+### ivy-tooling-guide
 
 - **Category**: Tooling
-- **Purpose**: Explains the two-MCP architecture (panther-serena for code manipulation, ivy-tools for diagnostics) and provides a complete tool mapping from CLI commands to panther-serena MCP equivalents. Documents symbol navigation, file operations, search/discovery tools, and the enforcement hook that blocks direct CLI usage.
-- **Trigger keywords**: "using serena for Ivy", "Ivy tool guidance", "panther-serena tools", "how to check Ivy files", "how to compile Ivy", "formal verification tools", "ivy_check alternative", "MCP tools for Ivy"
-- **Key topics**: Two-MCP architecture, CLI-to-MCP tool mapping, symbol navigation (find_symbol, get_symbols_overview, find_referencing_symbols), file operations (read_file, create_text_file, replace_symbol_body, replace_content), search/discovery (search_for_pattern, list_dir, find_file), Navigate -> Understand -> Edit -> Verify workflow, PreToolUse enforcement hook
+- **Purpose**: Explains the tooling architecture (native Ivy LSP for language intelligence, ivy-tools MCP for verification and analysis, Claude's native tools for code navigation and editing) and provides a complete tool mapping from CLI commands to their MCP/LSP/native equivalents. Documents the enforcement hook that blocks direct CLI usage.
+- **Trigger keywords**: "Ivy tool guidance", "tooling architecture", "how to check Ivy files", "how to compile Ivy", "formal verification tools", "ivy_check alternative", "MCP tools for Ivy", "LSP for Ivy"
+- **Key topics**: Tooling architecture (LSP + MCP + native tools), CLI-to-tool mapping, native Ivy LSP features (diagnostics, go-to-definition, find-references, hover), Claude's native tools (Read, Edit, Write, Grep, Glob), ivy-tools MCP (verification, compilation, analysis), Navigate -> Understand -> Edit -> Verify workflow, PreToolUse enforcement hook
 - **Related agents**: spec-explorer, ivy-model-reviewer
 - **Related skills**: ivy-tools-reference, ivy-verification
 

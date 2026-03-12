@@ -174,14 +174,25 @@ Some requirements cannot be tested via NCT:
 ### Circular Dependencies
 Avoid creating circular `require` chains where action A requires state set by action B, and B requires state set by A. Break cycles by identifying which action happens first in the protocol flow.
 
-## Serena Tools
+## Tools
 
-| Task | Tool |
-|---|---|
-| Read RFC requirements file | `read_file` |
-| Search existing requirement mappings | `search_for_pattern` |
-| Find how a requirement is implemented | `find_symbol`, `find_referencing_symbols` |
-| Create new assertion | `replace_symbol_body`, `insert_after_symbol` |
-| Verify consistency | `ivy_check` |
+### Navigation and editing
+
+Use Claude's built-in tools:
+- `Read` — Read file contents
+- `Grep` — Search across files
+- `Glob` — Find files by pattern
+- `Edit` — Modify code in place
+- `Write` — Create new files
+
+Native Ivy LSP provides go-to-definition, find-references, hover, and instant diagnostics for `.ivy` files.
+
+### Verification and analysis
+
+Use ivy-tools MCP tools:
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` — Formal verification
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` — Test compilation
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` — Model introspection
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` — Fast structural lint
 
 **IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.

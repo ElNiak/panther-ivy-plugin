@@ -60,7 +60,7 @@ The executable can be found in the build/ directory.
 
 ### Suggested Actions
 - Run `/nct-check {file}` first to verify formal properties
-- Use `mcp__plugin_panther-ivy-plugin_panther-serena__get_symbols_overview` to check file structure
+- Use Claude's `Read` tool to check file structure
 - Check for missing includes or undefined symbols
 ```
 
