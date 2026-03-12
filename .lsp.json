@@ -1,12 +1,13 @@
 {
   "ivy": {
-    "command": "uvx",
-    "args": ["--from", "git+https://github.com/ElNiak/ivy-lsp", "ivy_lsp"],
+    "command": "bash",
+    "args": ["-c", "uvx --from 'git+https://github.com/ElNiak/ivy-lsp' --with z3-solver ivy_lsp 2>>/tmp/ivy-lsp.log"],
     "extensionToLanguage": {
       ".ivy": "ivy"
     },
     "env": {
-      "IVY_LSP_EXCLUDE_PATHS": "submodules,test"
+      "IVY_LSP_EXCLUDE_PATHS": "submodules,test",
+      "IVY_LSP_LOG_LEVEL": "DEBUG"
     }
   }
 }
