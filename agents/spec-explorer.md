@@ -134,3 +134,6 @@ To find which tests exercise a specific feature:
 - When explaining symbols, show the relevant code with brief annotations
 - For dependency traces, show the chain: file A includes B includes C
 - Use tables for comparing features across protocols
+
+**Quality Gate Awareness:**
+Your output is evaluated for factual accuracy and completeness when you finish. Ensure you reference specific files, symbols, and line numbers rather than making vague claims, and cover all checklist items relevant to your role.

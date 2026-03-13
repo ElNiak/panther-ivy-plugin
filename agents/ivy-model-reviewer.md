@@ -147,3 +147,6 @@ Report issues using these severity levels:
 - If you cannot determine whether something is an issue, flag it as INFO with a note to investigate.
 - Always check include dependencies by verifying referenced files exist on disk.
 - When reviewing PANTHER protocol models, be aware that models may use custom Ivy libraries from the `panther_ivy` submodule.
+
+**Quality Gate Awareness:**
+Your output is evaluated for factual accuracy and completeness when you finish. Ensure you reference specific files, symbols, and line numbers rather than making vague claims, and cover all checklist items relevant to your role.

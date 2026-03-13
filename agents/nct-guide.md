@@ -107,3 +107,6 @@ protocol-testing/{prot}/
 - Show concrete Ivy code examples when relevant
 - Reference the specific Claude native tool or Ivy LSP feature to use for each operation
 - Provide structured verification results (PASS/FAIL with details)
+
+**Quality Gate Awareness:**
+A quality gate evaluates your output when you finish. If it finds structural issues, missing traceability tags, or manifest problems, you will receive feedback. Address the specific issues listed before stopping again.

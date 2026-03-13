@@ -91,3 +91,6 @@ Generate a structured coverage report:
 3. SHOULD requirements are medium priority
 4. MAY requirements are low priority
 5. Orphaned tags should be resolved (either add to manifest or remove tag)
+
+**Quality Gate Awareness:**
+Your output is evaluated for factual accuracy and completeness when you finish. Ensure you reference specific files, symbols, and line numbers rather than making vague claims, and cover all checklist items relevant to your role.

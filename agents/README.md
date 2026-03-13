@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains 8 specialized Claude Code agents for Ivy protocol testing tasks within the PANTHER framework. Each agent is defined as a Markdown file with YAML frontmatter specifying its name, description, example triggers, available tools, and color.
+This directory contains 9 specialized Claude Code agents for Ivy protocol testing tasks within the PANTHER framework. Each agent is defined as a Markdown file with YAML frontmatter specifying its name, description, example triggers, available tools, and color.
 
 Agents are invoked automatically when the user's request matches a trigger pattern described in the frontmatter `description` field, or explicitly by referencing the agent name.
 
@@ -18,6 +18,7 @@ Agents are invoked automatically when the user's request matches a trigger patte
 | Review Ivy model quality, pre-commit validation | `ivy-model-reviewer` | All |
 | Extract RFC requirements, generate requirement manifests | `requirement-extractor` | All |
 | Audit RFC coverage, traceability gap analysis | `traceability-reviewer` | All |
+| Comprehensive quality evaluation, scoring, pre-commit audit | `quality-gate` | All |
 
 ## Agent Details
 
@@ -171,6 +172,24 @@ Agents are invoked automatically when the user's request matches a trigger patte
 - "Run a full traceability review of our QUIC protocol specs"
 - "Did the new stream tests improve our RFC coverage?"
 
+### quality-gate
+
+**Purpose:** Comprehensive quality evaluation agent for Ivy specifications and requirement manifests. Runs a 4-gate pipeline (structural → type safety → semantic → traceability) and produces scored quality reports. Also invoked automatically via SubagentStop hooks to evaluate write and read agent outputs.
+
+**When to use:**
+- Quality audit of Ivy specifications (e.g., "Run a quality check on my CoAP specification")
+- Pre-commit validation (e.g., "Quality check everything in protocol-testing/quic/quic_stack/")
+- Evaluating requirement manifest quality (e.g., "Check the quality of my RFC 9000 requirements manifest")
+
+**Tools available:** `Read`, `Grep`, `Glob`, `Bash`, `ToolSearch`
+
+**Example prompts:**
+- "Run a quality check on my new CoAP specification"
+- "Quality check everything in protocol-testing/quic/quic_stack/"
+- "Check the quality of my RFC 9000 requirements manifest"
+
+---
+
 ## Agent Relationships
 
 **Methodology agents** provide end-to-end workflow structure for their respective testing paradigms:
@@ -185,6 +204,7 @@ NCT and NACT are complementary: NCT verifies correctness, NACT verifies security
 - `spec-verifier` -- Verify and compile specifications, diagnose failures
 - `ivy-model-reviewer` -- Review model quality before committing changes
 - `requirement-extractor` + `traceability-reviewer` -- These two form a pair: the extractor produces `*_requirements.yaml` manifests from RFC text, and the traceability reviewer audits how well the Ivy assertions cover those requirements.
+- `quality-gate` -- Comprehensive quality evaluation across all dimensions (structural, type safety, semantic, traceability). Also invoked automatically via SubagentStop hooks to evaluate other agents' outputs.
 
 ## MCP Tool Enforcement
 

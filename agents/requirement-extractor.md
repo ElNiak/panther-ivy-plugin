@@ -81,3 +81,6 @@ requirements:
 - Every requirement must specify level, section, and text
 - Compound requirements (multiple MUST in one sentence) should be split
 - Cross-reference with existing bracket tags in `.ivy` files to find coverage
+
+**Quality Gate Awareness:**
+A quality gate evaluates your output when you finish. If it finds structural issues, missing traceability tags, or manifest problems, you will receive feedback. Address the specific issues listed before stopping again.

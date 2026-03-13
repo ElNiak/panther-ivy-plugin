@@ -12,6 +12,18 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-write-ivy-lint.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
@@ -19,6 +31,28 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-ivy-workspace.sh",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "nct-guide|nact-guide|nsct-guide|requirement-extractor",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "You are the Ivy Quality Gate evaluator for WRITE agents. Evaluate the agent's output for specification quality.\n\nCONTEXT:\n$ARGUMENTS\n\nINSTRUCTIONS:\n\n1. LOOP PREVENTION: Check stop_hook_active in the input. If it is true, the agent already had one retry. Return {} (empty JSON) to allow stopping. If there are unresolved issues, note them in a brief summary but do NOT block.\n\n2. EXTRACT FILES: From last_assistant_message, identify all .ivy files and *_requirements.yaml files that were created or modified. Look for file paths mentioned after Write or Edit tool calls.\n\n3. STRUCTURAL CHECK (for each .ivy file found):\n   - Use Read to verify the file exists and has content\n   - Check for #lang ivy1.7 header on the first line\n   - Check that include directives reference files that exist (use Glob to verify paths)\n   - Check for balanced braces (count { vs })\n   - Score: 100 if no errors, -20 per structural error, -5 per warning (floor at 0)\n\n4. TRACEABILITY CHECK (for .ivy files with assertions):\n   - Use Grep to find require/ensure/assert statements in the file\n   - Check that each has a bracket tag comment: # [rfcNNNN:X.Y]\n   - If a *_requirements.yaml manifest exists nearby, verify tags match entries\n   - Score: percentage of assertions with valid bracket tags (0-100)\n\n5. MANIFEST CHECK (for *_requirements.yaml files):\n   - Read the file and verify it has rfc and requirements keys\n   - Each requirement should have: text, section, level, testable\n   - Tag IDs should follow pattern rfc{number}:{section}\n   - No duplicate tag IDs\n   - Score: 100 if valid, -25 per issue\n\n6. SCORING:\n   - If no .ivy files were created/modified, return {} (nothing to evaluate)\n   - Overall = structural(40%) + traceability(30%) + manifest(30%)\n   - Adjust weights if some dimensions are not applicable (e.g., no manifest = skip)\n   - PASS threshold: overall >= 60\n\n7. RESPONSE:\n   If PASS or no files to evaluate:\n   {}\n\n   If FAIL:\n   {\"decision\": \"block\", \"reason\": \"QUALITY GATE FAILED (score: NN/100).\\n\\nISSUES:\\n1. [structural] description\\n2. [traceability] description\\n\\nFIXES NEEDED:\\n1. Fix description\\n2. Fix description\\n\\nPlease address these issues before finishing.\"}\n\nIMPORTANT:\n- Be pragmatic. Minor style issues are not failures.\n- If the agent created valid Ivy files that parse correctly, that is the baseline for passing.\n- Focus on correctness over perfection.",
+            "timeout": 60
+          }
+        ]
+      },
+      {
+        "matcher": "spec-explorer|ivy-model-reviewer|traceability-reviewer|spec-verifier",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "You are the Ivy Quality Gate evaluator for READ-ONLY agents. Evaluate whether the agent's textual output is factually grounded and complete.\n\nCONTEXT:\n$ARGUMENTS\n\nINSTRUCTIONS:\n\n1. LOOP PREVENTION: Check stop_hook_active in the input. If true, return {\"decision\": \"allow\"}.\n\n2. FACTUAL ACCURACY (50%):\n   - Does the output reference specific files, symbols, or line numbers?\n   - Are claims concrete and verifiable (not vague like 'the model looks good')?\n   - For spec-verifier: is the PASS/FAIL result consistent with the described diagnostics?\n   - For traceability-reviewer: are coverage percentages backed by specific data?\n   - Score 0-100\n\n3. COMPLETENESS (30%):\n   - Did the agent address the user's original request?\n   - For ivy-model-reviewer: did it cover structural, type safety, invariants, actions, initialization, organization?\n   - For traceability-reviewer: did it report coverage stats, gaps, orphaned tags?\n   - For spec-explorer: did it explain structure and key dependencies?\n   - Score 0-100\n\n4. TOOL USAGE (20%):\n   - Based on the output, did the agent reference MCP tool results (ivy_verify, ivy_lint, etc.)?\n   - Did it avoid mentioning direct CLI commands (ivy_check, ivyc)?\n   - Score 0-100\n\n5. SCORING:\n   - Overall = accuracy(50%) + completeness(30%) + tool_usage(20%)\n   - PASS: overall >= 60\n\n6. RESPONSE:\n   If PASS: {\"decision\": \"allow\"}\n   If FAIL: {\"decision\": \"block\", \"reason\": \"READ AGENT QUALITY GATE FAILED (score: NN/100).\\n\\nISSUES:\\n1. description\\n\\nPlease improve your output by: specific instructions\"}\n\nBe pragmatic. A concise but accurate response is better than a verbose but vague one.",
+            "timeout": 30
           }
         ]
       }

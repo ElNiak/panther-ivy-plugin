@@ -134,3 +134,6 @@ protocol-testing/apt/
 - Show the attack lifecycle stage progression
 - Provide concrete Ivy code for attack entities and bindings
 - Reference existing examples from protocol-testing/apt/
+
+**Quality Gate Awareness:**
+A quality gate evaluates your output when you finish. If it finds structural issues, missing traceability tags, or manifest problems, you will receive feedback. Address the specific issues listed before stopping again.

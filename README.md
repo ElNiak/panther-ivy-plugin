@@ -47,10 +47,10 @@ Claude Code auto-discovers plugins via the `.claude-plugin/` directory. No `pip 
 
 | Component | Count | Description | Details |
 |-----------|-------|-------------|---------|
-| Agents | 8 | Methodology guides and utility agents for interactive workflows | [agents/](agents/) |
-| Commands | 5 | Slash commands for verification, compilation, and scaffolding | [commands/](commands/) |
-| Skills | 11 | Domain knowledge for Ivy language, methodologies, and tooling | [skills/](skills/) |
-| Hooks | 1 | PreToolUse: blocks direct Ivy CLI calls, redirects to MCP tools | -- |
+| Agents | 9 | Methodology guides, utility agents, and quality evaluation | [agents/](agents/) |
+| Commands | 6 | Slash commands for verification, compilation, and scaffolding | [commands/](commands/) |
+| Skills | 12 | Domain knowledge for Ivy language, methodologies, and tooling | [skills/](skills/) |
+| Hooks | 3 | PreToolUse (block CLI), PostToolUse (lint .ivy), SubagentStop (quality gates) | -- |
 
 ## Tooling Architecture
 
@@ -63,6 +63,10 @@ The plugin relies on one MCP server plus native LSP support:
 | **Claude's native tools** | Code navigation and editing | `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Bash` | Built into Claude Code |
 
 A **PreToolUse hook** (`hooks/scripts/block-direct-ivy.sh`) intercepts Bash tool calls and blocks direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`, redirecting to the corresponding MCP tool. This ensures all Ivy operations go through the MCP server for consistent behavior and structured output.
+
+A **PostToolUse hook** (`hooks/scripts/post-write-ivy-lint.sh`) runs fast structural checks on `.ivy` files after Write/Edit operations, providing immediate feedback on missing `#lang` headers or unbalanced braces.
+
+**SubagentStop hooks** automatically evaluate agent outputs when they finish: write agents (nct-guide, nact-guide, nsct-guide, requirement-extractor) are evaluated for structural quality, traceability, and manifest correctness via an agent hook; read agents (spec-explorer, ivy-model-reviewer, traceability-reviewer, spec-verifier) are evaluated for factual accuracy and completeness via a prompt hook. Failed evaluations trigger one self-repair retry before escalating to the user.
 
 ## Quick Start
 
@@ -112,7 +116,7 @@ panther-ivy-plugin/
 │   └── plugin.json          # Plugin manifest (name, version, description)
 ├── .lsp.json                # Native Ivy LSP configuration
 ├── .mcp.json                # ivy-tools MCP server configuration
-├── agents/                  # 8 agent definitions
+├── agents/                  # 9 agent definitions
 │   ├── README.md            # Agent catalog and selection guide
 │   ├── spec-explorer.md     # Navigate and explain Ivy specifications
 │   ├── nct-guide.md         # NCT methodology workflow guide
@@ -121,8 +125,9 @@ panther-ivy-plugin/
 │   ├── spec-verifier.md     # Verification and diagnosis specialist
 │   ├── ivy-model-reviewer.md # Model quality reviewer
 │   ├── requirement-extractor.md # RFC requirement extraction
-│   └── traceability-reviewer.md # RFC coverage audit
-├── commands/                # 5 slash commands
+│   ├── traceability-reviewer.md # RFC coverage audit
+│   └── quality-gate.md      # Quality evaluation agent
+├── commands/                # 6 slash commands
 │   ├── README.md            # Command reference and workflows
 │   ├── nct-check.md         # /nct-check -- formal verification
 │   ├── nct-compile.md       # /nct-compile -- compile to test binary
@@ -130,10 +135,11 @@ panther-ivy-plugin/
 │   ├── nct-new-test.md      # /nct-new-test -- scaffold test spec
 │   └── nct-new-protocol.md  # /nct-new-protocol -- scaffold protocol
 ├── hooks/
-│   ├── hooks.json           # PreToolUse hook definition
+│   ├── hooks.json           # Hook definitions (PreToolUse, PostToolUse, SubagentStop)
 │   └── scripts/
-│       └── block-direct-ivy.sh  # Blocks direct Ivy CLI, redirects to MCP
-├── skills/                  # 11 skill directories
+│       ├── block-direct-ivy.sh      # Blocks direct Ivy CLI, redirects to MCP
+│       └── post-write-ivy-lint.sh   # Fast structural lint after .ivy writes
+├── skills/                  # 12 skill directories
 │   ├── README.md            # Skill catalog and learning paths
 │   ├── 14-layer-template/   # Protocol decomposition template
 │   ├── annotated-spec-writing/ # RFC bracket-tag annotations
@@ -145,6 +151,7 @@ panther-ivy-plugin/
 │   ├── nsct-methodology/    # NSCT methodology
 │   ├── ivy-tooling-guide/    # Ivy tooling architecture and tool mapping
 │   ├── rfc-to-ivy-mapping/  # RFC to Ivy translation patterns
+│   ├── quality-gate-reference/ # Quality evaluation pipeline reference
 │   └── writing-test-specs/  # Test specification guide
 └── README.md                # This file
 ```

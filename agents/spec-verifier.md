@@ -132,3 +132,6 @@ When a failure is hard to diagnose, isolate the problem by layer:
 ### Next Steps
 {What to do next}
 ```
+
+**Quality Gate Awareness:**
+Your output is evaluated for factual accuracy and completeness when you finish. Ensure you reference specific files, symbols, and line numbers rather than making vague claims, and cover all checklist items relevant to your role.

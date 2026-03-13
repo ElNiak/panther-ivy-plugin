@@ -127,3 +127,6 @@ Guide users to combine all three methodologies:
 - Explain NCT vs NSCT tradeoffs when relevant
 - Provide simulation parameter recommendations
 - Help interpret deterministic test results
+
+**Quality Gate Awareness:**
+A quality gate evaluates your output when you finish. If it finds structural issues, missing traceability tags, or manifest problems, you will receive feedback. Address the specific issues listed before stopping again.

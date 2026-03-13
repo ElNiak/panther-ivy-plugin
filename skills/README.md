@@ -2,7 +2,7 @@
 
 ## Overview
 
-- 11 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
+- 12 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
 - Skills are surfaced automatically by Claude Code when trigger patterns in the user's query match a skill's `description` frontmatter
 - They provide **reference material** (language guides, workflow steps, tool catalogs); agents and commands provide interactive workflows and execution
 
@@ -43,6 +43,7 @@
 | Skill | Description | Trigger Keywords |
 |-------|-------------|------------------|
 | [ivy-verification](ivy-verification/) | End-to-end verification workflow: running ivy_check via MCP, interpreting success/failure output, debugging invariant violations, type safety errors, counterexample traces, and Z3 timeouts | "running formal verification", "ivy_check workflow", "verifying protocol specifications", "debugging verification failures", "interpreting ivy_check output", "invariant violations", "type safety errors", "verification debugging" |
+| [quality-gate-reference](quality-gate-reference/) | Multi-gate quality evaluation pipeline: scoring system, self-repair loop, quality dimensions for write and read agents, hook architecture | "quality gates", "quality evaluation", "quality scoring", "self-repair loop", "quality dimensions", "agent output quality" |
 
 ## Learning Paths
 
@@ -164,6 +165,15 @@ For someone who wants to use the MCP tool ecosystem effectively.
 - **Key topics**: RFC 2119 normative keywords, MUST/MUST NOT/SHOULD/MAY mapping to Ivy constructs, mapping patterns (require, before/after, invariant, _finalize), Ivy constructs reference table, systematic 5-step mapping workflow, common pitfalls (ambiguous language, untestable requirements, circular dependencies)
 - **Related agents**: requirement-extractor, traceability-reviewer
 - **Related skills**: annotated-spec-writing, nct-methodology, writing-test-specs
+
+### quality-gate-reference
+
+- **Category**: Workflow
+- **Purpose**: Documents the multi-gate quality evaluation pipeline that automatically evaluates all agent outputs. Covers scoring system (structural, type safety, semantic, traceability for write agents; accuracy, completeness, tool usage for read agents), self-repair loop via SubagentStop hooks, and the quality-gate agent for manual audits.
+- **Trigger keywords**: "quality gates", "quality evaluation", "quality scoring", "self-repair loop", "quality dimensions", "agent output quality"
+- **Key topics**: 3-gate architecture (PostToolUse lint, SubagentStop agent hook for write agents, SubagentStop prompt hook for read agents), scoring weights, PASS/FAIL thresholds, self-repair mechanism (1 retry via stop_hook_active), quality-gate agent for on-demand evaluation
+- **Related agents**: quality-gate, ivy-model-reviewer
+- **Related skills**: ivy-tools-reference, ivy-verification
 
 ### writing-test-specs
 
