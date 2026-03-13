@@ -126,4 +126,32 @@ Show what was created:
 5. Use `/nct-check` to verify as you go
 ```
 
+### Step 6: Add Patterns (Optional)
+
+After creating the directory structure, ask the user which formal model patterns to add:
+
+> "Would you like to add formal model patterns to your new protocol? Available patterns:
+> - **variants**: PDU type hierarchy (recommended - start here)
+> - **entity**: Protocol participants (client/server or speaker/peer)
+> - **serdes**: Wire-format serialization (binary or JSON)
+> - **monitors**: Behavioral constraints (before/after)
+> - **shim**: Network I/O bridge (UDP or TCP)
+> - **module**: Parameterized reusable components
+> - **all**: Add all patterns in dependency order
+>
+> Type the pattern names separated by commas, or 'skip' to create empty directories."
+
+If the user selects patterns, invoke `/nct-add-pattern` for each one, following dependency order:
+1. variants (no dependencies)
+2. entity (no dependencies)
+3. module (no dependencies)
+4. serdes (needs variants)
+5. monitors (needs variants)
+6. shim (needs serdes + entity)
+
+For each pattern, ask for specific options:
+- **serdes**: "Binary or JSON wire format?"
+- **entity**: "Asymmetric (client/server) or symmetric (peer/peer)?"
+- **shim**: "UDP or TCP transport?"
+
 **IMPORTANT**: Use Claude's `Write` tool to create all files. Do NOT use Bash file operations.
