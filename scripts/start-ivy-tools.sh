@@ -109,6 +109,7 @@ fi
 if [ -n "$IVY_LSP_SRC" ]; then
     log "Using local ivy-lsp source: $IVY_LSP_SRC"
     exec uvx \
+        --reinstall \
         --from "${IVY_LSP_SRC}[mcp]" \
         ivy_lsp \
         --mcp \

@@ -5,7 +5,9 @@
       "args": [
         "${CLAUDE_PLUGIN_ROOT}/scripts/start-ivy-tools.sh"
       ],
-      "env": {}
+      "env": {
+        "IVY_LSP_LOG_LEVEL": "INFO"
+      }
     }
   }
 }
