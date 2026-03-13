@@ -78,12 +78,15 @@ else
     context="[ivy-workspace] No Ivy project detected. Using CWD as workspace: $DETECTED_ROOT."
 fi
 
+# Escape context for JSON safety (handle \ and " in paths)
+context_escaped=$(printf '%s' "$context" | sed 's/\\/\\\\/g; s/"/\\"/g')
+
 # Output hook result as JSON
 cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": "$context"
+    "additionalContext": "$context_escaped"
   }
 }
 EOF

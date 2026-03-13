@@ -44,7 +44,8 @@ if [ ! -s "$FILE_PATH" ]; then
 fi
 
 if [ -n "$ERRORS" ]; then
-  REL_PATH=$(basename "$FILE_PATH")
+  # Escape for JSON safety (handle " and \ in filenames)
+  REL_PATH=$(basename "$FILE_PATH" | sed 's/\\/\\\\/g; s/"/\\"/g')
   # Return additionalContext so Claude sees the issues (non-blocking)
   printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"[IVY-LINT] Structural issues in %s:\\n%sRun ivy_lint MCP tool for full diagnostics."}}' "$REL_PATH" "$ERRORS"
 fi

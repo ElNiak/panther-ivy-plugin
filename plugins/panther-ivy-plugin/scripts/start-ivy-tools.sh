@@ -106,10 +106,16 @@ fi
 
 # --- Launch ---
 
+REINSTALL_FLAG=""
+if [ "${IVY_LSP_FORCE_REINSTALL:-}" = "1" ]; then
+    REINSTALL_FLAG="--reinstall"
+fi
+
 if [ -n "$IVY_LSP_SRC" ]; then
     log "Using local ivy-lsp source: $IVY_LSP_SRC"
+    # shellcheck disable=SC2086
     exec uvx \
-        --reinstall \
+        $REINSTALL_FLAG \
         --from "${IVY_LSP_SRC}[mcp]" \
         ivy_lsp \
         --mcp \
