@@ -194,7 +194,7 @@ The panther-ivy-plugin includes a quality evaluation pipeline. It evaluates spec
 | Structural | 25% | `ivy_lint` | `#lang` header, balanced braces, includes, file structure |
 | Type Safety | 30% | `ivy_verify` | Formal verification, invariants, type correctness |
 | Semantic | 20% | `ivy_model_info` + checklist | Naming, invariant coverage, guards, initialization |
-| Traceability | 25% | `ivy_traceability_matrix` | Bracket tags, RFC coverage, orphaned/untagged assertions |
+| Traceability | 25% | `ivy_coverage` (mode="matrix") | Bracket tags, RFC coverage, orphaned/untagged assertions |
 
 ### Scoring
 
@@ -218,12 +218,12 @@ The panther-ivy-plugin includes a quality evaluation pipeline. It evaluates spec
 #### Gate 3: Semantic Correctness (20%)
 1. Run `ivy_model_info` to get model structure
 2. Check: naming conventions (+20), invariant coverage (+20), action require guards (+20), after init blocks (+20), no anti-patterns (+20)
-3. Run `ivy_smart_suggestions` for additional hints
+3. Run `ivy_quality` (mode="suggestions") for additional hints
 4. Score: sum of applicable checks (max 100)
 
 #### Gate 4: RFC Traceability (25%)
-1. Run `ivy_traceability_matrix` for requirement-to-assertion mapping
-2. Run `ivy_requirement_coverage` for coverage statistics
+1. Run `ivy_coverage` (mode="matrix") for requirement-to-assertion mapping
+2. Run `ivy_coverage` (mode="stats") for coverage statistics
 3. Check: bracket tag presence, tags match manifest, no orphaned tags, no untagged assertions
 4. Score: coverage_percent + bonus for all MUST covered (cap at 100)
 
@@ -238,11 +238,11 @@ When evaluating `*_requirements.yaml` files:
 
 ### Manual Quality Check
 
-Use the `ivy_quality_gate` MCP tool for on-demand evaluation:
+Use the `ivy_quality` (mode="gate") MCP tool for on-demand evaluation:
 ```
-ivy_quality_gate(protocol="quic", gate_level="minimal")      # Basic checks
-ivy_quality_gate(protocol="quic", gate_level="standard")     # + test specs, monitors
-ivy_quality_gate(protocol="quic", gate_level="comprehensive") # + manifest, coverage
+ivy_quality(mode="gate", protocol="quic", level="minimal")      # Basic checks
+ivy_quality(mode="gate", protocol="quic", level="standard")     # + test specs, monitors
+ivy_quality(mode="gate", protocol="quic", level="comprehensive") # + manifest, coverage
 ```
 
 Or use the `model-reviewer` agent for a detailed human-readable review.
