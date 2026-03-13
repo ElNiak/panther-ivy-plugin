@@ -29,12 +29,12 @@ You are a specification analyst for Ivy formal protocol models in the PANTHER fr
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` -- Compile to test executable
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` -- Inspect model structure
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` -- Full 5-layer diagnostic analysis (structural, lexer, semantic, coverage, pattern)
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_smart_suggestions` -- Context-aware suggestions for fixes
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_layered_overview` -- Layered overview organized by file or module
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_action_requirements` -- Requirements grouped by action boundaries
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_action_dependency_graph` -- Action dependency graph via shared state
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_state_machine_view` -- State machine perspective of the model
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` -- Per-action summary table
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_quality` (mode="suggestions") -- Context-aware suggestions for fixes
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_visualize` (view="layers") -- Layered overview organized by file or module
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` (detail="requirements") -- Requirements grouped by action boundaries
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_visualize` (view="dependencies") -- Action dependency graph via shared state
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_visualize` (view="state_machine") -- State machine perspective of the model
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` (detail="summary") -- Per-action summary table
 - Use Claude's `Grep` tool or native LSP go-to-definition to find specific symbols
 - Use Claude's `Read` tool to understand file structure
 - Use Claude's `Grep` tool or native LSP find-references to trace dependencies
@@ -53,15 +53,15 @@ Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
 | Get type info for a mismatched type | LSP `hover` | Read (requires finding the type declaration) |
 | List directory structure | Glob | LSP (not designed for this) |
 | Search for error patterns across files | Grep | LSP (not designed for pattern search) |
-| Get layered model overview | MCP `ivy_layered_overview` | Read each file manually |
-| Get requirements by action | MCP `ivy_action_requirements` | Grep + manual grouping |
-| Get improvement suggestions | MCP `ivy_smart_suggestions` | Manual review only |
-| Explore action dependencies | MCP `ivy_action_dependency_graph` | Grep shared state manually |
-| View state machine structure | MCP `ivy_state_machine_view` | Read + manual extraction |
-| Get per-action summary | MCP `ivy_model_summary` | Read + manual counting |
-| Check requirement coverage | MCP `ivy_requirement_coverage` | Manual counting |
+| Get layered model overview | MCP `ivy_visualize` (view="layers") | Read each file manually |
+| Get requirements by action | MCP `ivy_model_summary` (detail="requirements") | Grep + manual grouping |
+| Get improvement suggestions | MCP `ivy_quality` (mode="suggestions") | Manual review only |
+| Explore action dependencies | MCP `ivy_visualize` (view="dependencies") | Grep shared state manually |
+| View state machine structure | MCP `ivy_visualize` (view="state_machine") | Read + manual extraction |
+| Get per-action summary | MCP `ivy_model_summary` (detail="summary") | Read + manual counting |
+| Check requirement coverage | MCP `ivy_coverage` (mode="stats") | Manual counting |
 
-**Start with `documentSymbol` on each file to build an outline, then use `goToDefinition` to drill into specific symbols.** See the `ivy-lsp-navigation` skill for complete patterns.
+**Start with `documentSymbol` on each file to build an outline, then use `goToDefinition` to drill into specific symbols.** See the `tooling-reference` skill for complete patterns.
 
 ## Protocol Directory Layout
 

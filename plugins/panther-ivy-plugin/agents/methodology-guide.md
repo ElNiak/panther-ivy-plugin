@@ -37,11 +37,11 @@ For deep methodology knowledge, reference the `methodology-reference` skill.
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` for formal verification (NOT `ivy_check` via Bash)
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` for compilation (NOT `ivyc` via Bash)
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` for model introspection (NOT `ivy_show` via Bash)
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_action_requirements` for requirements organized by action boundaries
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_smart_suggestions` for context-aware suggestions for improving specifications
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` (detail="requirements") for requirements organized by action boundaries
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_quality` (mode="suggestions") for context-aware suggestions for improving specifications
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` for full 5-layer diagnostic analysis after edits
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_scaffold_check` for 14-layer completeness check for new protocols
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage_gaps` for finding uncovered requirements and unguarded state vars
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_patterns` (mode="check") for 14-layer completeness check for new protocols
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage` (mode="gaps") for finding uncovered requirements and unguarded state vars
 - Use Claude's `Grep` tool or native LSP go-to-definition to navigate specs
 - Use Claude's `Read` tool to understand file structure
 - Use Claude's `Grep` tool or native LSP find-references to trace dependencies
@@ -58,18 +58,18 @@ Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
 | Get action signature and parameter types | LSP `hover` | Read (requires scanning the file manually) |
 | Get file outline (all symbols) | LSP `documentSymbol` | Read + manual scanning |
 | Search for a regex pattern across files | Grep | LSP (does not support regex) |
-| Check requirement coverage | MCP `ivy_requirement_coverage` | Manual counting |
-| Get requirements by action | MCP `ivy_action_requirements` | Grep + manual grouping |
-| Get improvement suggestions | MCP `ivy_smart_suggestions` | Manual review only |
+| Check requirement coverage | MCP `ivy_coverage` (mode="stats") | Manual counting |
+| Get requirements by action | MCP `ivy_model_summary` (detail="requirements") | Grep + manual grouping |
+| Get improvement suggestions | MCP `ivy_quality` (mode="suggestions") | Manual review only |
 | Run full diagnostic analysis | MCP `ivy_diagnostics` | Multiple separate tool calls |
-| Check 14-layer completeness | MCP `ivy_scaffold_check` | Manual file-by-file check |
-| Find coverage gaps | MCP `ivy_coverage_gaps` | Manual cross-referencing |
-| Get layered model overview | MCP `ivy_layered_overview` | Read each file manually |
-| Explore action dependencies | MCP `ivy_action_dependency_graph` | Grep shared state manually |
-| View state machine structure | MCP `ivy_state_machine_view` | Read + manual extraction |
-| Get per-action summary | MCP `ivy_model_summary` | Read + manual counting |
+| Check 14-layer completeness | MCP `ivy_patterns` (mode="check") | Manual file-by-file check |
+| Find coverage gaps | MCP `ivy_coverage` (mode="gaps") | Manual cross-referencing |
+| Get layered model overview | MCP `ivy_visualize` (view="layers") | Read each file manually |
+| Explore action dependencies | MCP `ivy_visualize` (view="dependencies") | Grep shared state manually |
+| View state machine structure | MCP `ivy_visualize` (view="state_machine") | Read + manual extraction |
+| Get per-action summary | MCP `ivy_model_summary` (detail="summary") | Read + manual counting |
 
-See the `ivy-lsp-navigation` skill for full LSP invocation patterns and LSP+MCP coordination workflows.
+See the `tooling-reference` skill for full LSP invocation patterns and LSP+MCP coordination workflows.
 
 ---
 

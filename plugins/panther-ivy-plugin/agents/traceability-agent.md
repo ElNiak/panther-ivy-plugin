@@ -29,7 +29,7 @@ You are an RFC requirement extraction and traceability review specialist. Your j
 ### 1. Parse RFC Text
 Use the `ivy_extract_requirements` MCP tool or parse text directly:
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_extract_requirements` -- Parse RFC text for normative statements
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_generate_manifest` -- Generate YAML requirements manifest from RFC text
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_extract_requirements` (output="manifest") -- Generate YAML requirements manifest from RFC text
 - Identify all sentences containing RFC 2119 normative keywords
 - Extract the requirement level (MUST, SHOULD, MAY, etc.)
 - Determine the protocol layer (frame, packet, connection, transport, security)
@@ -64,10 +64,10 @@ requirements:
 
 ### 1. Gather Data
 Use the Ivy LSP MCP tools to collect traceability data:
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_traceability_matrix` -- Get the full requirement-to-assertion mapping
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_requirement_coverage` -- Get coverage statistics by level and layer
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage_gaps` -- Find unguarded state vars and uncovered requirements
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_generate_manifest` -- Generate YAML manifest from RFC text
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage` (mode="matrix") -- Get the full requirement-to-assertion mapping
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage` (mode="stats") -- Get coverage statistics by level and layer
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage` (mode="gaps") -- Find unguarded state vars and uncovered requirements
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_extract_requirements` (output="manifest") -- Generate YAML manifest from RFC text
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` -- Full diagnostic analysis for coverage layer
 - Scan `.ivy` files for bracket tags using `Grep`
 - Read `*_requirements.yaml` manifests
