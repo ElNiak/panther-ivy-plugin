@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains 6 slash commands for common Ivy formal verification operations within the panther-ivy-plugin for Claude Code. All commands use the `ivy-tools` MCP tools for verification/compilation/model-info and Claude's native tools (`Grep`, `Read`, `Glob`, `Write`) for code navigation and file operations -- they do NOT invoke Ivy CLI tools (e.g., `ivy_check`, `ivyc`, `ivy_show`) directly via Bash.
+This directory contains 5 slash commands for common Ivy formal verification operations within the panther-ivy-plugin for Claude Code. All commands use the `ivy-tools` MCP tools for verification/compilation/model-info and Claude's native tools (`Grep`, `Read`, `Glob`, `Write`) for code navigation and file operations -- they do NOT invoke Ivy CLI tools (e.g., `ivy_check`, `ivyc`, `ivy_show`) directly via Bash.
 
 ## Command Reference
 
@@ -11,8 +11,7 @@ This directory contains 6 slash commands for common Ivy formal verification oper
 | `/nct-check` | Run formal verification on an Ivy specification file via ivy-tools | `file` -- path to `.ivy` file | `isolate` -- isolate name to check |
 | `/nct-compile` | Compile an Ivy model to a test binary via ivy-tools | `file` -- path to `.ivy` file | `target` -- compilation target (default `"test"`); `isolate` -- isolate name |
 | `/nct-model-info` | Display the structure of an Ivy model via ivy-tools | `file` -- path to `.ivy` file | `isolate` -- isolate name to inspect |
-| `/nct-new-test` | Scaffold a new Ivy test specification for a protocol | _(none -- interactive)_ | `protocol` -- protocol abbreviation; `role` -- `"client"`, `"server"`, `"mim"`, or `"attacker"`; `name` -- test name suffix |
-| `/nct-new-protocol` | Interactively scaffold a new protocol from the 14-layer template | _(none -- interactive)_ | `name` -- protocol name (e.g., `"coap"`, `"mqtt"`, `"ssh"`) |
+| `/nct-scaffold` | Scaffold a new protocol or test specification | `type` -- `"protocol"` or `"test"` | `name` -- protocol/test name; `protocol` -- target protocol (for tests); `role` -- `"client"`, `"server"`, `"mim"`, or `"attacker"` (for tests) |
 | `/nct-add-pattern` | Add a formal model pattern to an existing protocol specification | `pattern` -- pattern name (e.g., `"variant"`, `"shim"`, `"monitor"`) | `protocol` -- target protocol; `file` -- target file |
 
 ## Detailed Usage
@@ -105,74 +104,47 @@ A structured `Model Structure` report organized into sections: Types, Relations,
 
 ---
 
-### `/nct-new-test`
+### `/nct-scaffold`
 
-Interactively scaffold a new Ivy test specification file for a protocol.
+Scaffold a new protocol model or test specification from templates.
 
 **Usage:**
 
 ```
-/nct-new-test [protocol=<abbr>] [role=<role>] [name=<test_name>]
+/nct-scaffold type=<protocol|test> [name=<name>] [protocol=<abbr>] [role=<role>]
 ```
 
 **Example:**
 
 ```
-/nct-new-test protocol=quic role=server name=stream
-/nct-new-test protocol=coap role=client name=observe
-/nct-new-test protocol=quic role=mim name=injection
+/nct-scaffold type=protocol name=coap
+/nct-scaffold type=test protocol=quic role=server name=stream
+/nct-scaffold type=test protocol=coap role=client name=observe
 ```
 
-**Expected output format:**
+**For `type=protocol`:**
 
-A `Test Specification Created` report showing the file path, protocol, role under test, the opposing role Ivy plays, and the test variant name. Includes next steps: edit exports and weight attributes, add `_finalize` checks, verify with `/nct-check`, compile with `/nct-compile`.
+Creates a directory structure under `protocol-testing/{name}/` using the 14-layer template:
+- **Core Protocol Stack** (layers 1--9): types, application, security, frame, packet, protection, connection, transport parameters, error handling
+- **Entity Model** (layers 10--12): entity definitions, entity behavior, shims
+- **Infrastructure** (layers 13--14): serialization/deserialization, utilities
+
+A minimal viable subset (layers 1, 4, 5, 7, 10, 11, 12) is available for users who want to start small.
+
+**For `type=test`:**
+
+Creates a test specification file. Role inversion applies: testing a **server** means Ivy acts as **client**, and vice versa. File placement depends on role:
+- `server` -> `protocol-testing/{prot}/{prot}_tests/server_tests/{prot}_server_test_{name}.ivy`
+- `client` -> `protocol-testing/{prot}/{prot}_tests/client_tests/{prot}_client_test_{name}.ivy`
+- `mim` -> `protocol-testing/{prot}/{prot}_tests/mim_tests/{prot}_mim_test_{name}.ivy`
+- `attacker` -> `protocol-testing/apt/apt_tests/server_attacks/{prot}_attacker_test_{name}.ivy`
+
+If a base test file already exists for the protocol/role, the new test includes it (variant pattern); otherwise a full template is generated.
 
 **Notes:**
 
 - If arguments are omitted, the command prompts interactively for each missing value.
-- Role inversion applies: testing a **server** means Ivy acts as **client**, and vice versa.
-- File placement depends on role:
-  - `server` -> `protocol-testing/{prot}/{prot}_tests/server_tests/{prot}_server_test_{name}.ivy`
-  - `client` -> `protocol-testing/{prot}/{prot}_tests/client_tests/{prot}_client_test_{name}.ivy`
-  - `mim` -> `protocol-testing/{prot}/{prot}_tests/mim_tests/{prot}_mim_test_{name}.ivy`
-  - `attacker` -> `protocol-testing/apt/apt_tests/server_attacks/{prot}_attacker_test_{name}.ivy`
-- If a base test file already exists for the protocol/role, the new test includes it (variant pattern); otherwise a full template is generated.
 - Internally uses Claude's `Write` tool to create files and `Glob` tool to find files.
-
----
-
-### `/nct-new-protocol`
-
-Interactively scaffold a new formal protocol specification from the 14-layer template.
-
-**Usage:**
-
-```
-/nct-new-protocol [name=<protocol_abbreviation>]
-```
-
-**Example:**
-
-```
-/nct-new-protocol name=coap
-/nct-new-protocol name=mqtt
-/nct-new-protocol
-```
-
-**Expected output format:**
-
-A `Protocol Scaffold Created` report listing all generated files with their layer descriptions, plus next steps: start with type definitions, build up through frame/packet/connection layers, define entity roles and behavioral constraints, write test specifications, verify with `/nct-check`.
-
-**Notes:**
-
-- If the `name` argument is not provided, the command prompts for the full protocol name and abbreviation.
-- The 14-layer template is organized into three groups:
-  - **Core Protocol Stack** (layers 1--9): types, application, security/handshake, frame/message, packet, protection, connection/state, transport parameters, error handling.
-  - **Entity Model** (layers 10--12): entity definitions, entity behavior, shims.
-  - **Infrastructure** (layers 13--14): serialization/deserialization, utilities.
-- A minimal viable subset (layers 1, 4, 5, 7, 10, 11, 12) is available for users who want to start small.
-- Creates a directory structure under `protocol-testing/{prot}/` with subdirectories for stack, entities, shims, utils, and tests.
-- Internally uses Claude's `Write` tool to create all files.
 
 ## Common Workflows
 
@@ -191,7 +163,7 @@ Run verification, fix any failures, then verify again until clean:
 Scaffold the protocol structure, edit the generated stubs, verify incrementally, then compile tests:
 
 ```
-/nct-new-protocol name=<prot>
+/nct-scaffold type=protocol name=<prot>
 # edit type definitions, frame/packet layers, entity models
 /nct-check file=protocol-testing/<prot>/<prot>_stack/<prot>_types.ivy
 # continue editing and checking layer by layer
@@ -203,7 +175,7 @@ Scaffold the protocol structure, edit the generated stubs, verify incrementally,
 Scaffold a new test, customize it, verify, and compile:
 
 ```
-/nct-new-test protocol=<prot> role=server name=<variant>
+/nct-scaffold type=test protocol=<prot> role=server name=<variant>
 # edit exports, weight attributes, and _finalize checks
 /nct-check file=protocol-testing/<prot>/<prot>_tests/server_tests/<prot>_server_test_<variant>.ivy
 /nct-compile file=protocol-testing/<prot>/<prot>_tests/server_tests/<prot>_server_test_<variant>.ivy
