@@ -1,11 +1,11 @@
 ---
-name: ivy-model-reviewer
+name: model-reviewer
 description: Use this agent when the user asks to review Ivy formal specification models for correctness, completeness, or adherence to Ivy modeling best practices. Use before committing changes to .ivy files. Examples:
 
   <example>
   Context: User wants a quality review of their Ivy model.
   user: "Review my QUIC frame specification for any issues"
-  assistant: "I'll use the ivy-model-reviewer agent to analyze the model for correctness and best practices."
+  assistant: "I'll use the model-reviewer agent to analyze the model for correctness and best practices."
   <commentary>
   Reviewing an Ivy model for quality issues is the reviewer's primary function.
   </commentary>
@@ -14,7 +14,7 @@ description: Use this agent when the user asks to review Ivy formal specificatio
   <example>
   Context: User just finished editing an .ivy file and wants validation.
   user: "Can you check if my protocol model has any invariant problems?"
-  assistant: "I'll launch the ivy-model-reviewer agent to check invariant quality and other modeling concerns."
+  assistant: "I'll launch the model-reviewer agent to check invariant quality and other modeling concerns."
   <commentary>
   Invariant review is a core checklist item for this agent.
   </commentary>
@@ -23,7 +23,7 @@ description: Use this agent when the user asks to review Ivy formal specificatio
   <example>
   Context: User is preparing to commit .ivy changes.
   user: "I'm about to commit these Ivy changes. Anything wrong with the model?"
-  assistant: "Let me use the ivy-model-reviewer agent to review the Ivy specification before committing."
+  assistant: "Let me use the model-reviewer agent to review the Ivy specification before committing."
   <commentary>
   Pre-commit review of Ivy models catches issues before they enter the codebase.
   </commentary>
@@ -47,7 +47,7 @@ Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash. Use:
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_layered_overview` for model overview by file/module
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_quality_gate` for quality gate validation
 
-**Tool Selection — Review Efficiently:**
+**Tool Selection -- Review Efficiently:**
 
 | Your Task | Use This | Not This |
 |-----------|----------|----------|
@@ -168,6 +168,3 @@ Report issues using these severity levels:
 - If you cannot determine whether something is an issue, flag it as INFO with a note to investigate.
 - Always check include dependencies by verifying referenced files exist on disk.
 - When reviewing PANTHER protocol models, be aware that models may use custom Ivy libraries from the `panther_ivy` submodule.
-
-**Quality Gate Awareness:**
-Your output is evaluated for factual accuracy and completeness when you finish. Ensure you reference specific files, symbols, and line numbers rather than making vague claims, and cover all checklist items relevant to your role.

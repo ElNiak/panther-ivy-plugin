@@ -1,11 +1,11 @@
-#\!/usr/bin/env bash
+#!/usr/bin/env bash
 # block-direct-ivy.sh
 #
-# PreToolUse hook that blocks direct Ivy CLI calls in Bash commands.
-# Enforces usage of ivy-tools MCP tools instead.
+# PreToolUse hook that warns about direct Ivy CLI calls in Bash commands.
+# Suggests using ivy-tools MCP tools instead.
 #
 # Receives tool input via stdin as JSON with a "command" field.
-# Exit 0 = allow, exit non-zero = block with message.
+# Exit 0 = allow (with suggestion), exit non-zero = block.
 
 set -euo pipefail
 
@@ -17,15 +17,14 @@ COMMAND=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | 
 
 # Check if the command contains direct Ivy CLI tool invocations
 if echo "$COMMAND" | grep -qE '\bivy_check\b|\bivyc\b|\bivy_show\b|\bivy_to_cpp\b'; then
-    echo "BLOCKED: Direct Ivy CLI usage detected."
+    echo "NOTE: Consider using ivy-tools MCP tools instead of direct CLI:"
+    echo "  ivy_check  -> ivy_verify MCP tool     (or /nct-check)"
+    echo "  ivyc       -> ivy_compile MCP tool    (or /nct-compile)"
+    echo "  ivy_show   -> ivy_model_info MCP tool (or /nct-model-info)"
+    echo "  ivy_to_cpp -> ivy_compile MCP tool"
     echo ""
-    echo "Use ivy-tools MCP tools instead:"
-    echo "  ivy_check  -> mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify     (or /nct-check)"
-    echo "  ivyc       -> mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile    (or /nct-compile)"
-    echo "  ivy_show   -> mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info (or /nct-model-info)"
-    echo "  ivy_to_cpp -> mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile"
-    exit 1
+    echo "MCP tools provide structured JSON output and integrate with the semantic model."
 fi
 
-# Allow the command
+# Always allow the command (informational only)
 exit 0

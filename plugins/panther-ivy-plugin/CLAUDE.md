@@ -18,7 +18,7 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 
 ## Tool Rules — CRITICAL
 
-**BLOCKED CLI commands** — a PreToolUse hook intercepts Bash and blocks these. Use MCP equivalents:
+**CLI commands with MCP equivalents** — a PreToolUse hook warns when these are used directly. Prefer MCP tools for structured output:
 
 | Blocked CLI | Required MCP Tool | Purpose |
 |---|---|---|
@@ -28,16 +28,19 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 | `ivy_to_cpp` | `ivy_compile` | C++ code generation |
 
 **Analysis MCP tools** (read-only, no CLI equivalent):
-`ivy_lint` (fast structural check), `ivy_diagnostics` (full 5-layer diagnostics), `ivy_traceability_matrix`, `ivy_requirement_coverage`, `ivy_impact_analysis`, `ivy_extract_requirements`, `ivy_generate_manifest`, `ivy_cross_references`, `ivy_query_symbol`, `ivy_include_graph`, `ivy_capabilities`
+`ivy_lint` (fast structural check), `ivy_diagnostics` (full 5-layer diagnostics), `ivy_include_graph`, `ivy_capabilities`
 
-**Visualization MCP tools** (read-only model views):
-`ivy_action_requirements`, `ivy_model_summary`, `ivy_coverage_gaps`, `ivy_action_dependency_graph`, `ivy_state_machine_view`, `ivy_layered_overview`
+**Coverage & traceability** (consolidated):
+`ivy_coverage` (mode: `matrix`/`stats`/`gaps`), `ivy_query` (mode: `impact`/`xrefs`/`info`), `ivy_extract_requirements` (output: `structured`/`manifest`)
 
-**Quality and pattern MCP tools**:
-`ivy_smart_suggestions`, `ivy_quality_gate`, `ivy_scaffold_check`, `ivy_pattern_analysis`, `ivy_pattern_scaffold`
+**Visualization MCP tools** (consolidated model views):
+`ivy_visualize` (view: `dependencies`/`state_machine`/`layers`), `ivy_model_summary` (detail: `summary`/`requirements`)
+
+**Quality and pattern MCP tools** (consolidated):
+`ivy_quality` (mode: `suggestions`/`gate`), `ivy_patterns` (mode: `analyze`/`check`), `ivy_pattern_scaffold`
 
 **Ivy LSP** (for `.ivy` files — use the `LSP` tool explicitly):
-Go-to-definition, find-references, hover, document symbols, workspace symbol search. **Note**: Claude Code does not receive automatic diagnostics — use `ivy_lint`/`ivy_diagnostics` MCP tools instead. See the `ivy-lsp-navigation` skill for usage patterns.
+Go-to-definition, find-references, hover, document symbols, workspace symbol search. **Note**: Claude Code does not receive automatic diagnostics — use `ivy_lint`/`ivy_diagnostics` MCP tools instead. See the `tooling-reference` skill for usage patterns.
 
 **Claude native tools**: `Read`/`Grep`/`Glob` for navigation, `Edit`/`Write` for modification.
 
@@ -121,7 +124,7 @@ Provides deterministic execution (seed-controlled), scale testing (many nodes), 
 
 **Minimum viable set** (7 layers): Types, Frame, Packet, Connection, Entity Defs, Entity Behavior, Shims.
 
-Use `/nct-new-protocol` to scaffold. Reference `protocol-testing/quic/` as the complete example (200+ files).
+Use `/nct-scaffold type=protocol` to scaffold. Reference `protocol-testing/quic/` as the complete example (200+ files).
 
 ## Ivy Language Patterns (from QUIC Reference Model)
 
@@ -246,8 +249,8 @@ After writing or modifying Ivy specifications, run this verification loop:
 
 1. **`ivy_lint`** — Fast structural check (milliseconds). Fix: missing `#lang`, unresolved includes, unmatched braces.
 2. **`ivy_verify`** — Formal property verification. If FAIL: read error line → locate with Grep/LSP go-to-definition → diagnose (missing invariant? action bug? missing precondition?) → fix → re-verify.
-3. **`ivy_requirement_coverage`** — Check MUST requirement coverage. If low, add missing `before`/`after` monitors with bracket tags.
-4. **`ivy_traceability_matrix`** — Review assertion-to-requirement mapping. Add bracket tags (`# [rfcNNNN:X.Y]`) to uncovered assertions.
+3. **`ivy_coverage mode=stats`** — Check MUST requirement coverage. If low, add missing `before`/`after` monitors with bracket tags.
+4. **`ivy_coverage mode=matrix`** — Review assertion-to-requirement mapping. Add bracket tags (`# [rfcNNNN:X.Y]`) to uncovered assertions.
 5. **Anti-pattern checklist** — before declaring work complete:
    - Missing `after init` → relations/functions start with arbitrary values, not defaults
    - Ungrounded variables in invariants → `invariant sent(P, N)` means "for ALL P and N, sent is true"
@@ -276,6 +279,6 @@ protocol-testing/{prot}/
 
 ## Quick Reference
 
-**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-new-test`, `/nct-new-protocol`
+**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`
 
-**Skills for deep dives**: `nct-methodology`, `nact-methodology`, `nsct-methodology`, `14-layer-template`, `ivy-model-editing`, `writing-test-specs`, `rfc-to-ivy-mapping`, `annotated-spec-writing`, `ivy-verification`, `ivy-tooling-guide`, `ivy-tools-reference`
+**Skills for deep dives**: `methodology-reference`, `specification-patterns`, `ivy-writing-guide`, `tooling-reference`, `workflow-reference`, `ivy-lsp-walkthrough`
