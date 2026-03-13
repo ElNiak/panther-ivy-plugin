@@ -15,7 +15,7 @@ detect_ivy_workspace
 
 # Write env var for later Bash commands
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
-    echo "IVY_WORKSPACE_ROOT=$DETECTED_ROOT" >> "$CLAUDE_ENV_FILE"
+    printf 'IVY_WORKSPACE_ROOT="%s"\n' "$DETECTED_ROOT" >> "$CLAUDE_ENV_FILE"
 fi
 
 # Build context message for Claude
