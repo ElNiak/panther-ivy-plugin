@@ -1,7 +1,7 @@
 {
   "ivy": {
     "command": "bash",
-    "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/ivy-lsp-wrapper.sh"],
+    "args": ["-c", "uvx --from 'git+https://github.com/ElNiak/ivy-lsp' --with z3-solver ivy_lsp 2>>/tmp/ivy-lsp.log"],
     "extensionToLanguage": {
       ".ivy": "ivy"
     },
