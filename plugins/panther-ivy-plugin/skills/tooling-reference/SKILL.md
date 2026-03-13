@@ -33,7 +33,7 @@ For code navigation and editing, use Claude's built-in tools (`Read`, `Edit`, `W
 | Search for a regex pattern across files | Grep | LSP does not support regex |
 | Read entire file contents | Read | LSP returns metadata, not content |
 | Find comments, strings, non-symbol text | Grep | LSP operates on symbols only |
-| Check coverage gaps or traceability | MCP `ivy_coverage_gaps` / `ivy_traceability_matrix` | Analysis tools |
+| Check coverage gaps or traceability | MCP `ivy_coverage` (mode="gaps"/"matrix"/"stats") | Analysis tools |
 | Verify formal properties | MCP `ivy_verify` | Verification tool |
 | Get diagnostics/errors | MCP `ivy_lint` or `ivy_diagnostics` | Claude Code does NOT receive automatic LSP diagnostics |
 
@@ -174,174 +174,140 @@ Parameters: none
 Returns: { ivy_check, ivyc, ivy_show }
 ```
 
-### Traceability and Semantic Analysis
+### Traceability and Semantic Analysis (Consolidated)
 
-#### ivy_traceability_matrix
-RFC requirement-to-annotation mapping.
+#### ivy_coverage
+Unified coverage and traceability tool with mode dispatch.
 ```
 Parameters:
+  mode: str              # "matrix" | "stats" | "gaps" | "diff"
   relative_path: str | None = None
+  protocol: str | None = None
 
+Mode "matrix": RFC requirement-to-annotation mapping
 Returns: { total_requirements, covered, uncovered, matrix }
-```
 
-#### ivy_requirement_coverage
-Coverage statistics by MUST/SHOULD/MAY level and layer.
-```
-Parameters:
-  relative_path: str | None = None
-
+Mode "stats": Coverage statistics by MUST/SHOULD/MAY level and layer
 Returns: { total, covered, uncovered, coverage_percent, by_level, by_layer }
+
+Mode "gaps": Identify unguarded state vars, uncovered requirements, orphaned monitors
+Returns: { unguarded_state_vars, uncovered_requirements, orphaned_monitors, gap_count }
+
+Mode "diff": Compare coverage between baseline and current
+Returns: { baseline, current, newly_covered, newly_uncovered }
 ```
 
-#### ivy_impact_analysis
-Incoming and outgoing edges for a symbol.
+#### ivy_query
+Unified semantic query tool with mode dispatch.
 ```
 Parameters:
-  symbol_name: str
+  mode: str              # "impact" | "xrefs" | "info"
+  symbol_name: str | None = None
+  node_id: str | None = None
 
+Mode "impact": Incoming and outgoing edges for a symbol (requires symbol_name)
 Returns: { symbol, found, qualified_name, kind, file, line, incoming_edges, outgoing_edges, total_references }
+
+Mode "xrefs": Cross-reference graph neighborhood of a node (requires node_id)
+Returns: { node_id, found, node_type, incoming, outgoing }
+
+Mode "info": Rich semantic info about a symbol (requires symbol_name)
+Returns: { symbol, found, symbol_info, type_info, references }
 ```
 
 #### ivy_extract_requirements
 Parse RFC text for normative statements (MUST/SHOULD/MAY).
 ```
 Parameters:
-  rfc_text: str
+  relative_path: str | None = None
+  output: str = "structured"    # "structured" | "manifest"
 
+Output "structured": Parse RFC text for normative statements
 Returns: { requirements, total, by_level }
-```
 
-#### ivy_cross_references
-Query cross-reference graph neighborhood of a node.
-```
-Parameters:
-  node_id: str
-
-Returns: { node_id, found, node_type, incoming, outgoing }
-```
-
-#### ivy_query_symbol
-Rich semantic info about a symbol.
-```
-Parameters:
-  symbol_name: str
-
-Returns: { symbol, found, symbol_info, type_info, references }
-```
-
-#### ivy_generate_manifest
-Generate YAML requirements manifest from RFC text.
-```
-Parameters:
-  rfc_name: str
-  rfc_text: str
-  protocol: str = ""
-  base_section: str = ""
-
+Output "manifest": Generate YAML requirements manifest
 Returns: { yaml, total_requirements, suggested_path, by_level }
 ```
 
-### Model Visualization
+### Model Visualization (Consolidated)
 
-#### ivy_action_requirements
-Requirements organized by action boundaries (before/after monitors).
+#### ivy_visualize
+Unified model visualization tool with view dispatch.
 ```
 Parameters:
-  action_name: str | None, file_path: str | None, test_file: str | None, protocol: str | None, offset: int = 0, limit: int | None
+  view: str              # "dependencies" | "state_machine" | "layers"
+  relative_path: str | None = None
+  protocol: str | None = None
 
-Returns: { actions, total_actions }
-```
-
-#### ivy_model_summary
-Per-action requirement counts, state variable usage, and RFC coverage summary.
-```
-Parameters:
-  test_file: str | None, protocol: str | None
-
-Returns: { rows, total_actions }
-```
-
-#### ivy_coverage_gaps
-Identify coverage gaps.
-```
-Parameters:
-  test_file: str | None, protocol: str | None
-
-Returns: { unguarded_state_vars, uncovered_requirements, orphaned_monitors, gap_count }
-```
-
-#### ivy_action_dependency_graph
-Action dependency graph showing shared-state relationships.
-```
-Parameters:
-  test_file: str | None, include_state_vars: bool = False, protocol: str | None
-
+View "dependencies": Action dependency graph via shared state
 Returns: { nodes, edges, total_actions }
-```
 
-#### ivy_state_machine_view
-State-machine view of the Ivy specification.
-```
-Parameters:
-  test_file: str | None, state_var_filter: str | None, protocol: str | None
-
+View "state_machine": State-machine perspective of the model
 Returns: { states, transitions, total_states }
-```
 
-#### ivy_layered_overview
-Layered overview organized by file or module.
-```
-Parameters:
-  test_file: str | None, group_by: str = "file", protocol: str | None
-
+View "layers": Layered overview organized by file or module
 Returns: { layers, total_files }
 ```
 
-### Quality and Suggestions
-
-#### ivy_smart_suggestions
-Context-aware suggestions for improving an Ivy specification.
+#### ivy_model_summary
+Per-action summary with mode dispatch.
 ```
 Parameters:
-  file_path: str | None, line: int | None, context: str | None, protocol: str | None
+  detail: str = "summary"   # "summary" | "requirements"
+  relative_path: str | None = None
+  protocol: str | None = None
 
+Detail "summary": Per-action requirement counts, state variable usage, RFC coverage
+Returns: { rows, total_actions }
+
+Detail "requirements": Requirements organized by action boundaries (before/after monitors)
+Returns: { actions, total_actions }
+```
+
+### Quality and Patterns (Consolidated)
+
+#### ivy_quality
+Unified quality tool with mode dispatch.
+```
+Parameters:
+  mode: str              # "suggestions" | "gate"
+  relative_path: str | None = None
+  protocol: str | None = None
+  level: str = "minimal"    # For gate mode: "minimal" | "standard" | "comprehensive"
+
+Mode "suggestions": Context-aware suggestions for improving an Ivy specification
 Returns: { suggestions, total }
-```
 
-#### ivy_quality_gate
-Validate a protocol model against quality gates.
-```
-Parameters:
-  protocol: str
-  gate_level: str = "minimal"    # "minimal", "standard", "comprehensive"
-
+Mode "gate": Validate a protocol model against quality gates
 Returns: { checks, all_passed, gate_level }
 ```
 
-#### ivy_scaffold_check
-Check which layers/patterns are present or missing.
+#### ivy_patterns
+Unified pattern analysis tool with mode dispatch.
 ```
 Parameters:
-  protocol: str
+  mode: str = "analyze"    # "analyze" | "validate" | "compare" | "check"
+  protocol: str | None = None
+  pattern: str | None = None
 
-Returns: { layers_present, layers_missing, suggestions, completeness_score }
-```
-
-#### ivy_pattern_analysis
-Analyze formal model patterns in a protocol specification.
-```
-Parameters:
-  protocol: str, mode: str = "detect", pattern: str | None, reference_protocol: str | None
-
+Mode "analyze"/"detect": Analyze formal model patterns in a specification
 Returns: { patterns, total_patterns, mode }
+
+Mode "validate": Cross-reference validation of detected patterns
+Returns: { patterns, issues, validation_summary }
+
+Mode "compare": Compare patterns between two protocols (requires reference_protocol)
+Returns: { protocol_a, protocol_b, comparison }
+
+Mode "check": Check which layers/patterns are present or missing (scaffold check)
+Returns: { layers_present, layers_missing, suggestions, completeness_score }
 ```
 
 #### ivy_pattern_scaffold
 Generate Ivy source code from a pattern template.
 ```
 Parameters:
-  protocol: str, pattern: str, wire_format: str = "binary", role_type: str = "asymmetric", variant_names: list | None, roles: list | None
+  pattern_type: str, protocol: str | None = None, name: str | None = None
 
 Returns: { source, pattern, file_suggestion }
 ```
@@ -355,17 +321,17 @@ Returns: { source, pattern, file_suggestion }
 2. `goToDefinition` -- read its full definition
 3. `hover` -- get type signature and docs
 4. `findReferences` -- see all usages across workspace
-5. MCP `ivy_impact_analysis` -- see incoming/outgoing semantic edges
+5. MCP `ivy_query` (mode="impact") -- see incoming/outgoing semantic edges
 
 ### Workflow B: Adding a New Requirement Monitor
 1. `documentSymbol` or `workspaceSymbol` -- find the relevant action
 2. `findReferences` -- find existing before/after monitors
 3. `Read` -- read the existing monitors to understand the pattern
-4. MCP `ivy_requirement_coverage` -- check what requirements are missing
+4. MCP `ivy_coverage` (mode="stats") -- check what requirements are missing
 5. `Edit` -- write the new monitor with bracket tag
 6. MCP `ivy_lint` -- runs automatically via post-write hook
 7. MCP `ivy_verify` -- formal verification
-8. MCP `ivy_traceability_matrix` -- confirm new requirement is covered
+8. MCP `ivy_coverage` (mode="matrix") -- confirm new requirement is covered
 
 ### Workflow C: Diagnosing a Verification Failure
 1. Read the error message -- note file, line, symbol name
