@@ -47,12 +47,25 @@ You are a verification and diagnosis specialist for Ivy formal protocol specific
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` — Run formal verification
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` — Compile to test executable
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` — Inspect model structure
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` — Full 5-layer diagnostic analysis (structural, lexer, semantic, coverage, pattern)
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_smart_suggestions` — Context-aware suggestions for fixes
 - Use Claude's `Grep` tool or native LSP go-to-definition to locate symbols involved in failures
 - Use Claude's `Read` tool to understand file structure
 - Use Claude's `Grep` tool or native LSP find-references to trace dependencies
 - Use Claude's `Grep` tool to find related patterns
 - Use Claude's `Read` tool to read specific file sections
 Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
+
+**Tool Selection — Diagnose Efficiently:**
+
+| Your Task | Use This | Not This |
+|-----------|----------|----------|
+| Locate a symbol mentioned in an error message | LSP `workspaceSymbol` then `goToDefinition` | Grep (may find wrong occurrence) |
+| Find all callers of a failing action | LSP `incomingCalls` | Grep (misses indirect references) |
+| Get type info for a mismatched type | LSP `hover` | Read (requires finding the type declaration) |
+| Search for error patterns across files | Grep | LSP (not designed for pattern search) |
+
+See the `ivy-lsp-navigation` skill for full invocation patterns.
 
 **Verification Workflow:**
 

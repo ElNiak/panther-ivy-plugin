@@ -1,6 +1,6 @@
 ---
-name: NSCT Methodology
-description: This skill should be used when the user asks about "simulation", "Shadow NS", "Shadow Network Simulator", "network simulator", "NSCT", "simulation-based testing", "network topology testing", "large-scale testing", "deterministic testing", or mentions running protocol tests in simulated network environments within the PANTHER framework.
+name: nsct-methodology
+description: Use when running protocol tests in simulated network environments, or when you need deterministic, large-scale, or topology-controlled testing with Shadow NS
 ---
 
 # NSCT — Network-Simulator Centric Compositional Testing
@@ -158,3 +158,32 @@ A complete protocol verification campaign combines all three methodologies:
 3. **NSCT third** — Verify behavior at scale and under adverse conditions
 
 Each methodology shares the same Ivy formal specifications but applies them in different execution contexts, providing comprehensive coverage of protocol correctness, security, and robustness.
+
+## Red Flags -- STOP
+
+| Rationalization | Reality |
+|----------------|---------|
+| "I can skip the simulation config" | Without proper topology, your simulation doesn't test what you think it tests. |
+| "The same Docker build works for Shadow" | Shadow requires specific build modes. Use the right `build_mode` setting. |
+| "Deterministic seeds don't matter for this test" | Determinism is Shadow's key advantage. Always set and document seeds. |
+| "I don't need network condition modeling" | If you're not using latency/loss/bandwidth, why use Shadow at all? |
+
+## Common Mistakes
+
+**Wrong build mode**
+- **Problem:** Using Docker build mode instead of Shadow-compatible mode
+- **Fix:** Use empty string `""` build mode for Shadow NS compatibility
+
+**Missing seed configuration**
+- **Problem:** Tests run with random seeds, losing reproducibility
+- **Fix:** Always configure `seed` in the experiment YAML for Shadow runs
+
+## Integration
+
+**Required skills:**
+- **panther-ivy:nct-methodology** — Foundation (NSCT uses same specs)
+- **panther-ivy:ivy-verification** — Verify specs before simulation
+
+**Related agents:**
+- **nsct-guide** — Interactive NSCT workflow
+- **spec-verifier** — Verification

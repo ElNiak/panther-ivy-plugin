@@ -50,9 +50,33 @@ You are a specification navigator and explainer for Ivy formal protocol models i
 - Use Claude's `Grep` tool to search across files with regex
 - Use Claude's `Read` tool to read specific file sections
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` — View model types, relations, actions
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_layered_overview` — Layered overview organized by file or module
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_action_requirements` — Requirements grouped by action boundaries
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_smart_suggestions` — Context-aware suggestions
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_action_dependency_graph` — Action dependency graph via shared state
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_state_machine_view` — State machine perspective of the model
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` — Per-action summary table
 - Use Claude's `Glob` tool to list directory contents
 - Use Claude's `Glob` tool to find files by name pattern
 Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
+
+**Tool Selection — Navigate Efficiently:**
+
+| Your Task | Use This | Not This |
+|-----------|----------|----------|
+| Get file outline (all symbols) | LSP `documentSymbol` | Read + manual scanning |
+| Find a symbol by name across all .ivy files | LSP `workspaceSymbol` | Glob + Grep (slower, less precise) |
+| Trace what includes define a symbol | LSP `goToDefinition` | Grep `include` + manual chaining |
+| Find all files that reference a symbol | LSP `findReferences` | Grep (matches non-code text) |
+| List directory structure | Glob | LSP (not designed for this) |
+| Get layered model overview | MCP `ivy_layered_overview` | Read each file manually |
+| Get requirements by action | MCP `ivy_action_requirements` | Grep + manual grouping |
+| Get improvement suggestions | MCP `ivy_smart_suggestions` | Manual review only |
+| Explore action dependencies | MCP `ivy_action_dependency_graph` | Grep shared state manually |
+| View state machine structure | MCP `ivy_state_machine_view` | Read + manual extraction |
+| Get per-action summary | MCP `ivy_model_summary` | Read + manual counting |
+
+**Start with `documentSymbol` on each file to build an outline, then use `goToDefinition` to drill into specific symbols.** See the `ivy-lsp-navigation` skill for complete patterns.
 
 **Protocol Directory Layout:**
 Each protocol follows this structure:

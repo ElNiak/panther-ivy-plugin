@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains 5 slash commands for common Ivy formal verification operations within the panther-ivy-plugin for Claude Code. All commands use the `ivy-tools` MCP tools for verification/compilation/model-info and Claude's native tools (`Grep`, `Read`, `Glob`, `Write`) for code navigation and file operations -- they do NOT invoke Ivy CLI tools (e.g., `ivy_check`, `ivyc`, `ivy_show`) directly via Bash.
+This directory contains 6 slash commands for common Ivy formal verification operations within the panther-ivy-plugin for Claude Code. All commands use the `ivy-tools` MCP tools for verification/compilation/model-info and Claude's native tools (`Grep`, `Read`, `Glob`, `Write`) for code navigation and file operations -- they do NOT invoke Ivy CLI tools (e.g., `ivy_check`, `ivyc`, `ivy_show`) directly via Bash.
 
 ## Command Reference
 
@@ -13,6 +13,7 @@ This directory contains 5 slash commands for common Ivy formal verification oper
 | `/nct-model-info` | Display the structure of an Ivy model via ivy-tools | `file` -- path to `.ivy` file | `isolate` -- isolate name to inspect |
 | `/nct-new-test` | Scaffold a new Ivy test specification for a protocol | _(none -- interactive)_ | `protocol` -- protocol abbreviation; `role` -- `"client"`, `"server"`, `"mim"`, or `"attacker"`; `name` -- test name suffix |
 | `/nct-new-protocol` | Interactively scaffold a new protocol from the 14-layer template | _(none -- interactive)_ | `name` -- protocol name (e.g., `"coap"`, `"mqtt"`, `"ssh"`) |
+| `/nct-add-pattern` | Add a formal model pattern to an existing protocol specification | `pattern` -- pattern name (e.g., `"variant"`, `"shim"`, `"monitor"`) | `protocol` -- target protocol; `file` -- target file |
 
 ## Detailed Usage
 

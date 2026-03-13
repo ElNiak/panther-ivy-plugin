@@ -1,6 +1,6 @@
 ---
-name: Ivy Verification
-description: This skill should be used when the user asks about "running formal verification", "ivy_check workflow", "verifying protocol specifications", "debugging verification failures", "interpreting ivy_check output", "invariant violations", "type safety errors", "verification debugging", or mentions checking Ivy models for correctness in the PANTHER Ivy framework.
+name: ivy-verification
+description: Use when running ivy_verify, interpreting verification failures, or debugging invariant violations, type errors, and Z3 timeouts
 ---
 
 # Ivy Verification Workflow
@@ -114,3 +114,39 @@ The SMT solver could not decide within the time limit. Fix:
 - Use `isolate` boundaries to limit what the solver must reason about.
 
 **IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash. Use `/nct-check`, `/nct-compile`, or `/nct-model-info` commands.
+
+## Red Flags -- STOP
+
+| Rationalization | Reality |
+|----------------|---------|
+| "Verification passed last time, it should still pass" | Run it. Previous results prove nothing about current state. |
+| "This change is too small to break anything" | Small changes break invariants. Verify. |
+| "Z3 timed out, so the model is probably fine" | Timeout means unknown, not OK. Simplify or add lemmas. |
+| "I can assume this invariant holds" | Use `require`, not `assume`. `assume` weakens the model unsoundly. |
+| "The error is in a different isolate, I can ignore it" | Isolate failures can cascade. Fix before proceeding. |
+| "I'll fix the verification failure after finishing the feature" | Never proceed with broken verification. Fix it now. |
+
+## Common Mistakes
+
+**Using `assume` instead of `require`**
+- **Problem:** `assume` tells the solver "pretend this is true" — it makes the model unsound
+- **Fix:** Use `require` for preconditions. Only use `assume` when you have a proven lemma.
+
+**Ungrounded variables in invariants**
+- **Problem:** `invariant sent(P, N)` means "for ALL P and N, sent is true" — almost always wrong
+- **Fix:** Ground variables: `invariant sent(P, N) -> P = the_cid`
+
+## Integration
+
+**Prerequisite skills:**
+- **panther-ivy:ivy-tooling-guide** — Understanding MCP tool architecture
+
+**Follow-up skills:**
+- **panther-ivy:writing-test-specs** — After verification passes, write test specs
+
+**Related agents:**
+- **spec-verifier** — Automated verification workflow
+- **ivy-model-reviewer** — Model quality review
+
+**Related commands:**
+- `/nct-check` — Quick verification shortcut

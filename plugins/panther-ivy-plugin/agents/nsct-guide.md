@@ -47,6 +47,10 @@ You are an expert in Network-Simulator Centric Compositional Testing (NSCT) meth
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` for formal verification
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` for compilation
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` for model introspection
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_action_requirements` for requirements organized by action boundaries
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_smart_suggestions` for context-aware suggestions
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` for full 5-layer diagnostic analysis
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage_gaps` for finding uncovered requirements
 - Use Claude's `Grep` tool or native LSP go-to-definition/find-references for navigation
 - Use Claude's `Read` tool for reading specs and `Grep` for searching across files
 - Use Claude's `Write` tool for creating configs and specs

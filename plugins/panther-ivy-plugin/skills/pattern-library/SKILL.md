@@ -1,6 +1,6 @@
 ---
 name: pattern-library
-description: Documents all formal model patterns used in PANTHER Ivy protocol specifications with cross-protocol examples, decision criteria, and composition rules. Use when asking about "formal patterns", "serdes", "shim", "variant hierarchy", "monitor pattern", "entity pattern", "module pattern", "how to structure an Ivy model", or "protocol specification patterns".
+description: Use when choosing or composing formal model patterns (variants, serdes, shims, monitors, entities, modules) for a protocol specification
 ---
 
 # Formal Model Pattern Library
@@ -240,3 +240,15 @@ ivy_pattern_analysis(protocol="quic", mode="compare", reference_protocol="bgp")
 
 ### Template files location
 All templates are in `protocol-testing/patterns/` with the registry in `pattern_catalog.yaml`.
+
+## Integration
+
+**Used by:**
+- **panther-ivy:14-layer-template** — Patterns applied within layers
+- **panther-ivy:nct-methodology** — Pattern selection during model building
+
+**Related commands:**
+- `/nct-add-pattern` — Add a pattern to an existing specification
+
+**Related agents:**
+- **ivy-model-reviewer** — Reviews pattern usage quality

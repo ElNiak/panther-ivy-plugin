@@ -41,6 +41,27 @@ Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash. Use:
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` for formal verification
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` for compilation
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` for model introspection
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` for per-action summary table (counts, state vars, RFC tags)
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage_gaps` for identifying unguarded state vars and uncovered requirements
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` for full 5-layer diagnostic analysis
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_layered_overview` for model overview by file/module
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_quality_gate` for quality gate validation
+
+**Tool Selection — Review Efficiently:**
+
+| Your Task | Use This | Not This |
+|-----------|----------|----------|
+| Get structured file outline for review | LSP `documentSymbol` | Read + manual scanning |
+| Check if an include target exists and resolves | LSP `goToDefinition` on include | Grep + Glob |
+| Find all usages of a relation to check invariant coverage | LSP `findReferences` | Grep (noisy matches) |
+| Verify naming conventions across files | Grep with regex | LSP (not designed for pattern matching) |
+| Get per-action summary with counts | MCP `ivy_model_summary` | Read + manual counting |
+| Find unguarded state vars / uncovered reqs | MCP `ivy_coverage_gaps` | Manual cross-referencing |
+| Run full 5-layer diagnostic | MCP `ivy_diagnostics` | Multiple separate tool calls |
+| Get model overview by file/module | MCP `ivy_layered_overview` | Read each file manually |
+| Run quality gate validation | MCP `ivy_quality_gate` | Manual multi-step evaluation |
+
+See the `ivy-lsp-navigation` skill for full invocation patterns.
 
 ## Review Process
 

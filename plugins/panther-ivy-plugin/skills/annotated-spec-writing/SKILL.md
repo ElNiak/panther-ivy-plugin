@@ -1,6 +1,6 @@
 ---
-name: Annotated Spec Writing
-description: This skill should be used when the user asks about "writing annotated specs", "bracket tags", "RFC traceability annotations", "tagged assertions", "requirement coverage", "annotating Ivy files", or mentions adding RFC bracket tag annotations to Ivy specifications for traceability in the PANTHER framework.
+name: annotated-spec-writing
+description: Use when adding RFC bracket-tag annotations to Ivy assertions for automated traceability and coverage tracking
 ---
 
 # Writing Annotated Ivy Specifications
@@ -98,3 +98,16 @@ The manifest enables:
 4. **Keep manifests updated** — When you discover new requirements, add them
 5. **Review orphaned tags** — They indicate manifest-spec drift
 6. **Level matters** — MUST requirements should be covered first, SHOULD second
+
+## Integration
+
+**Used by:**
+- **panther-ivy:nct-methodology** — RFC traceability throughout workflow
+- **panther-ivy:writing-test-specs** — Annotating test assertions
+
+**Related skills:**
+- **panther-ivy:rfc-to-ivy-mapping** — Translating RFC requirements
+
+**Related agents:**
+- **traceability-reviewer** — Audits bracket-tag coverage
+- **requirement-extractor** — Extracts requirements from RFC text

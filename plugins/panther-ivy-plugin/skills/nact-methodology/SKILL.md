@@ -1,6 +1,6 @@
 ---
-name: NACT Methodology
-description: This skill should be used when the user asks about "attack testing", "APT", "threat modeling", "security verification", "NACT", "attack lifecycle", "attacker specification", "security testing with Ivy", "penetration testing formal model", or mentions designing attack entities or writing attacker test specifications in the PANTHER Ivy framework.
+name: nact-methodology
+description: Use when designing attack specifications, threat modeling protocol implementations, or working with the APT 6-stage lifecycle for security testing
 ---
 
 # NACT — Network-Attack Compositional Testing
@@ -168,3 +168,35 @@ NACT and NCT are complementary:
 - Both use the same Ivy formal language and before/after monitor pattern
 - NACT adds attack entity roles and the APT lifecycle framework
 - A comprehensive testing campaign uses both NCT and NACT
+
+## Red Flags -- STOP
+
+| Rationalization | Reality |
+|----------------|---------|
+| "I can skip the threat model definition" | Without a threat model, you're testing random behavior, not attacks. |
+| "This attack doesn't need entity definitions" | Every attack needs attacker, target, and optionally bot/C2/MIM entities. |
+| "I can reuse the NCT behavior files directly" | NACT requires adversarial monitors — NCT monitors enforce compliance, not attacks. |
+| "The APT stages don't apply to this protocol" | All 6 stages apply. Some may be trivial, but they must be considered. |
+| "I'll add persistence modeling later" | Without persistence, the attack model is incomplete and unrealistic. |
+
+## Common Mistakes
+
+**Missing attack entity definitions**
+- **Problem:** Attack spec uses generic entities instead of defining attacker-specific ones
+- **Fix:** Define entities in `apt_entities/` with attack-specific state and capabilities
+
+**Confusing NCT and NACT monitors**
+- **Problem:** Using `require` (compliance check) instead of attack-specific constraints
+- **Fix:** NACT monitors model what the attacker CAN do, not what the protocol SHOULD do
+
+## Integration
+
+**Required skills:**
+- **panther-ivy:nct-methodology** — Foundation (NACT extends NCT)
+- **panther-ivy:14-layer-template** — Layer decomposition
+- **panther-ivy:writing-test-specs** — Test specification structure
+
+**Related agents:**
+- **nact-guide** — Interactive NACT workflow
+- **spec-verifier** — Verification
+- **requirement-extractor** — RFC requirement extraction

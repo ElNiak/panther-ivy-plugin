@@ -31,7 +31,7 @@ This is a **Claude Code plugin** for the PANTHER-Ivy tester. It provides methodo
 
 - **PANTHER framework** with the Ivy tester plugin installed (`panther/plugins/services/testers/panther_ivy/`)
 - **Ivy toolchain** available (either locally or via Docker-based execution through PANTHER)
-- **Native Ivy LSP** (configured automatically via `.lsp.json`) -- diagnostics, go-to-definition, find-references, hover for `.ivy` files
+- **Native Ivy LSP** (configured automatically via `.lsp.json`) -- go-to-definition, find-references, hover, document symbols for `.ivy` files (diagnostics via MCP `ivy_lint`/`ivy_diagnostics`)
 - **ivy-tools MCP server** (configured automatically via `.mcp.json`):
   - [ivy-tools](https://github.com/ElNiak/ivy-lsp) -- Ivy verification, compilation, analysis, linting, and traceability tools
 

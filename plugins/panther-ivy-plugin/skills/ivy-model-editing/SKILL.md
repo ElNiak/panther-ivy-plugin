@@ -1,6 +1,6 @@
 ---
 name: ivy-model-editing
-description: Use when editing Ivy formal specification files (.ivy). Covers Ivy syntax, declaration types (type, relation, action, object, module, instance, isolate), module system, and best practices for protocol modeling.
+description: Use when editing .ivy files — covers syntax, declaration types, module system, and protocol modeling patterns
 ---
 
 # Ivy Model Editing Guide
@@ -365,3 +365,15 @@ protocol_model/
 7. **Minimize axioms**: Every axiom is an unverified assumption. Prefer provable invariants.
 
 **IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash. Use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify`, `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile`, and `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` instead.
+
+## Integration
+
+**Used by:**
+- All specification writing workflows
+
+**Related skills:**
+- **panther-ivy:14-layer-template** — Where to place each declaration type
+- **panther-ivy:ivy-verification** — Verify after editing
+
+**Related agents:**
+- **ivy-model-reviewer** — Reviews model quality

@@ -47,6 +47,11 @@ You are an expert in Network-Centric Compositional Testing (NCT) methodology for
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` for formal verification (NOT `ivy_check` via Bash)
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` for compilation (NOT `ivyc` via Bash)
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` for model introspection (NOT `ivy_show` via Bash)
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_action_requirements` for requirements organized by action boundaries
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_smart_suggestions` for context-aware suggestions for improving specifications
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` for full 5-layer diagnostic analysis after edits
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_scaffold_check` for 14-layer completeness check for new protocols
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage_gaps` for finding uncovered requirements and unguarded state vars
 - Use Claude's `Grep` tool or native LSP go-to-definition to navigate specs
 - Use Claude's `Read` tool to understand file structure
 - Use Claude's `Grep` tool or native LSP find-references to trace dependencies
@@ -55,6 +60,24 @@ You are an expert in Network-Centric Compositional Testing (NCT) methodology for
 - Use Claude's `Write` tool for creating new specs
 - Use Claude's `Edit` tool for editing specs
 Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
+
+**Tool Selection — When to Use What:**
+
+| Your Task | Use This | Not This |
+|-----------|----------|----------|
+| Find where an action is defined (across includes) | LSP `goToDefinition` | Grep (misses cross-include resolution) |
+| Find all monitors for a protocol event | LSP `findReferences` | Grep (matches comments and strings too) |
+| Get action signature and parameter types | LSP `hover` | Read (requires scanning the file manually) |
+| Get file outline (all symbols) | LSP `documentSymbol` | Read + manual scanning |
+| Search for a regex pattern across files | Grep | LSP (does not support regex) |
+| Check requirement coverage | MCP `ivy_requirement_coverage` | Manual counting |
+| Get requirements by action | MCP `ivy_action_requirements` | Grep + manual grouping |
+| Get improvement suggestions | MCP `ivy_smart_suggestions` | Manual review only |
+| Run full diagnostic analysis | MCP `ivy_diagnostics` | Multiple separate tool calls |
+| Check 14-layer completeness | MCP `ivy_scaffold_check` | Manual file-by-file check |
+| Find coverage gaps | MCP `ivy_coverage_gaps` | Manual cross-referencing |
+
+See the `ivy-lsp-navigation` skill for full LSP invocation patterns and LSP+MCP coordination workflows.
 
 **NCT Core Concepts:**
 - NCT tests by having a formal specification play one role (client/server/MIM) against an Implementation Under Test (IUT)

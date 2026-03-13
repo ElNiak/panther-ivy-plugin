@@ -1,6 +1,6 @@
 ---
-name: Writing Test Specs
-description: This skill should be used when the user asks about "writing test files", "test specifications", "monitors", "assertions", "before/after clauses", "_finalize", "export actions", "test variants", "writing Ivy tests", "creating protocol tests", or mentions creating new test specifications for protocol verification in the PANTHER Ivy framework.
+name: writing-test-specs
+description: Use when creating new Ivy test specifications with exports, before/after monitors, and _finalize end-state checks
 ---
 
 # Writing Ivy Test Specifications
@@ -219,3 +219,43 @@ Use ivy-tools MCP tools:
 7. `export` declarations for mirror-generated actions
 8. `_finalize` with end-state checks
 9. Weight attributes for test focus (optional)
+
+## Red Flags -- STOP
+
+| Rationalization | Reality |
+|----------------|---------|
+| "This test doesn't need _finalize" | Without _finalize, end-state properties are never checked. Always export it. |
+| "I don't need bracket tags on these assertions" | Every assertion needs traceability. No exceptions. |
+| "Role inversion is confusing, I'll just match the file name" | Role inversion is fundamental. Server test = Ivy plays client. Period. |
+| "I can skip the initialization block" | Without `after init`, sockets aren't created and TLS isn't initialized. |
+| "Weight attributes aren't important" | Without weights, Z3 generates uniformly random actions. Weights focus testing. |
+
+## Common Mistakes
+
+**Missing _finalize**
+- **Problem:** End-state properties (data transferred, no errors) are never checked
+- **Fix:** Always export `_finalize` with `require is_no_error; require conn_total_data(the_cid) > 0;`
+
+**Including behavior file for wrong role**
+- **Problem:** Server test includes `ivy_{prot}_server_behavior` instead of `ivy_{prot}_client_behavior`
+- **Fix:** Remember role inversion. Ivy plays the OPPOSITE role. Server test = Ivy acts as client.
+
+**Missing include ordering**
+- **Problem:** Includes in wrong order cause unresolved type errors
+- **Fix:** Follow dependency order: stdlib → types → protocol stack → shims → behavior
+
+## Integration
+
+**Required skills:**
+- **panther-ivy:nct-methodology** — Overall NCT workflow context
+- **panther-ivy:annotated-spec-writing** — RFC bracket-tag annotations
+- **panther-ivy:ivy-verification** — Verify after writing specs
+
+**Related agents:**
+- **nct-guide** — Interactive workflow
+- **spec-verifier** — Verification and debugging
+
+**Related commands:**
+- `/nct-new-test` — Scaffold a new test specification
+- `/nct-check` — Verify the test specification
+- `/nct-compile` — Compile the test to a binary

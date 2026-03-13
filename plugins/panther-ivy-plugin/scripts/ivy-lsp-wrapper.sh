@@ -7,6 +7,10 @@
 #   3. Fallback: GitHub package (remote)
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=workspace-common.sh
+source "$SCRIPT_DIR/workspace-common.sh"
+
 LOG_FILE="${IVY_LSP_LOG_FILE:-/tmp/ivy-lsp.log}"
 
 log() {
@@ -15,33 +19,8 @@ log() {
 
 # --- Resolve ivy-lsp source ---
 
-IVY_LSP_SRC=""
-
-# 1. Explicit dev root
-if [ -n "${IVY_LSP_DEV_ROOT:-}" ] && [ -d "$IVY_LSP_DEV_ROOT/ivy_lsp" ]; then
-    IVY_LSP_SRC="$IVY_LSP_DEV_ROOT"
-fi
-
-# 2. Walk up from CWD looking for panther_ivy/submodules/ivy-lsp/
-if [ -z "$IVY_LSP_SRC" ]; then
-    check="$PWD"
-    depth=0
-    while [ "$check" != "/" ] && [ $depth -lt 10 ]; do
-        candidate="$check/panther/plugins/services/testers/panther_ivy/submodules/ivy-lsp"
-        if [ -d "$candidate/ivy_lsp" ]; then
-            IVY_LSP_SRC="$candidate"
-            break
-        fi
-        # Maybe CWD is inside panther_ivy
-        candidate="$check/submodules/ivy-lsp"
-        if [ -d "$candidate/ivy_lsp" ]; then
-            IVY_LSP_SRC="$candidate"
-            break
-        fi
-        check="$(dirname "$check")"
-        depth=$((depth + 1))
-    done
-fi
+detect_ivy_workspace
+resolve_ivy_lsp_source
 
 # --- Launch ---
 

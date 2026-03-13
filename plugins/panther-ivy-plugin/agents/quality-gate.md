@@ -44,6 +44,11 @@ You are the Ivy Quality Gate agent for the PANTHER formal verification framework
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_requirement_coverage` for coverage stats
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` for model structure
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_smart_suggestions` for improvement hints
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_scaffold_check` for 14-layer completeness check
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_quality_gate` for structured quality gate validation (minimal/standard/comprehensive)
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` for per-action summary table
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage_gaps` for coverage gap analysis
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` for full diagnostic analysis
 
 Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
 

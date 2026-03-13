@@ -1,6 +1,6 @@
 ---
-name: NCT Methodology
-description: This skill should be used when the user asks about "compositional testing", "protocol specification", "formal verification", "NCT", "specification-based testing", "role-based testing", "test against IUT", "Ivy protocol testing", or mentions writing formal protocol specifications that generate test traffic. Provides step-by-step NCT workflow guidance for the PANTHER Ivy framework.
+name: nct-methodology
+description: Use when writing formal protocol specifications that generate test traffic against an IUT, or following the NCT 10-step workflow from RFC to executable test
 ---
 
 # NCT — Network-Centric Compositional Testing
@@ -151,3 +151,49 @@ The QUIC model (`protocol-testing/quic/`) is the most complete NCT implementatio
 - Version negotiation, timeout handling
 
 Examine `quic_server_test.ivy` as the canonical test structure example.
+
+## Red Flags -- STOP
+
+| Rationalization | Reality |
+|----------------|---------|
+| "I can skip the type layer" | Types are the foundation. Everything depends on them. |
+| "Verification can wait until the end" | Verify after every meaningful change. Errors compound. |
+| "I know this protocol well enough to skip the RFC" | RFC is the source of truth. Your memory is not. |
+| "This monitor doesn't need a bracket tag" | Every assertion needs traceability. No exceptions. |
+| "Role inversion doesn't matter for this test" | It always matters. Testing a server = Ivy acts as client. |
+| "I'll add _finalize later" | Without _finalize, end-state properties are never checked. |
+| "Direct ivy_check is faster" | MCP tools are required. The hook will block you anyway. |
+
+## Common Mistakes
+
+**Missing `after init`**
+- **Problem:** Relations/functions start with arbitrary values, not defaults
+- **Fix:** Always include `after init` block setting initial state for all relations
+
+**Wrong role in test file name**
+- **Problem:** File named `quic_client_test_*.ivy` but Ivy plays client role, creating confusion
+- **Fix:** File name indicates WHAT IS TESTED, not what Ivy plays. `quic_server_test_*.ivy` = testing the server.
+
+**Missing bracket tags on assertions**
+- **Problem:** Assertions lack `[rfcNNNN:X.Y]` comments, breaking traceability
+- **Fix:** Tag every `require`/`ensure`/`assert` with its RFC section reference
+
+## Integration
+
+**Required skills for NCT workflow:**
+- **panther-ivy:14-layer-template** — Layer decomposition (Step 2)
+- **panther-ivy:writing-test-specs** — Test specification structure (Step 7)
+- **panther-ivy:ivy-verification** — Formal verification (Step 8)
+- **panther-ivy:annotated-spec-writing** — RFC traceability tags (throughout)
+- **panther-ivy:rfc-to-ivy-mapping** — Translating RFC requirements (Step 2)
+
+**Related agents:**
+- **nct-guide** — Interactive NCT workflow execution
+- **spec-verifier** — Verification and diagnosis
+- **spec-explorer** — Codebase navigation
+
+**Related commands:**
+- `/nct-check` — Quick verification
+- `/nct-compile` — Compilation
+- `/nct-new-protocol` — Protocol scaffolding
+- `/nct-new-test` — Test scaffolding

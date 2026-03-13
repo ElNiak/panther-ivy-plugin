@@ -2,7 +2,7 @@
 
 ## Overview
 
-- 12 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
+- 15 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
 - Skills are surfaced automatically by Claude Code when trigger patterns in the user's query match a skill's `description` frontmatter
 - They provide **reference material** (language guides, workflow steps, tool catalogs); agents and commands provide interactive workflows and execution
 
@@ -36,7 +36,9 @@
 | Skill | Description | Trigger Keywords |
 |-------|-------------|------------------|
 | [ivy-tools-reference](ivy-tools-reference/) | Tool catalog for the ivy-tools MCP server (read-only diagnostics): ivy_verify, ivy_compile, ivy_model_info, ivy_lint, ivy_include_graph, ivy_capabilities, ivy_traceability_matrix, ivy_requirement_coverage, ivy_impact_analysis, ivy_extract_requirements, ivy_cross_references, ivy_query_symbol | "ivy diagnostics", "ivy lint", "ivy verification", "ivy coverage", "ivy traceability", "ivy include graph", "ivy capabilities", "ivy impact analysis", "ivy requirements", "ivy cross references", "ivy query symbol" |
-| [ivy-tooling-guide](ivy-tooling-guide/) | Ivy tooling architecture guide: native LSP (diagnostics, go-to-definition, find-references, hover), ivy-tools MCP (verification, compilation, analysis), and Claude's native tools (Read, Edit, Write, Grep, Glob) | "Ivy tool guidance", "tooling architecture", "code navigation", "MCP tools for Ivy", "LSP for Ivy", "ivy-tools" |
+| [ivy-tooling-guide](ivy-tooling-guide/) | Ivy tooling architecture guide: native LSP (go-to-definition, find-references, hover), ivy-tools MCP (verification, compilation, analysis), and Claude's native tools (Read, Edit, Write, Grep, Glob) | "Ivy tool guidance", "tooling architecture", "code navigation", "MCP tools for Ivy", "LSP for Ivy", "ivy-tools" |
+| [ivy-lsp-navigation](ivy-lsp-navigation/) | Decision matrix and invocation patterns for using Claude Code's LSP tool with Ivy specs: when to use LSP vs Grep vs MCP, exact API parameters, coordination workflows | "LSP for Ivy", "go-to-definition", "find references", "hover", "document symbols", "workspace symbol search", "when to use LSP vs Grep", "cross-include resolution", "semantic navigation" |
+| [ivy-lsp-walkthrough](ivy-lsp-walkthrough/) | End-to-end walkthrough demonstrating LSP + MCP coordination: adding rfc9000:7.3 requirement to the QUIC spec using LSP for navigation and MCP for analysis/verification | "end-to-end Ivy example", "LSP workflow example", "add RFC requirement walkthrough", "complete Ivy editing workflow", "LSP and MCP together example" |
 
 ### Workflow
 
@@ -44,6 +46,7 @@
 |-------|-------------|------------------|
 | [ivy-verification](ivy-verification/) | End-to-end verification workflow: running ivy_check via MCP, interpreting success/failure output, debugging invariant violations, type safety errors, counterexample traces, and Z3 timeouts | "running formal verification", "ivy_check workflow", "verifying protocol specifications", "debugging verification failures", "interpreting ivy_check output", "invariant violations", "type safety errors", "verification debugging" |
 | [quality-gate-reference](quality-gate-reference/) | Multi-gate quality evaluation pipeline: scoring system, self-repair loop, quality dimensions for write and read agents, hook architecture | "quality gates", "quality evaluation", "quality scoring", "self-repair loop", "quality dimensions", "agent output quality" |
+| [pattern-library](pattern-library/) | Catalog of formal model patterns (variants, serdes, shims, monitors, entities, modules) with composition rules and usage examples from the QUIC reference model | "formal model patterns", "pattern library", "variant pattern", "shim pattern", "monitor pattern", "entity pattern", "module pattern", "pattern composition" |
 
 ## Learning Paths
 
@@ -155,7 +158,25 @@ For someone who wants to use the MCP tool ecosystem effectively.
 - **Trigger keywords**: "Ivy tool guidance", "tooling architecture", "how to check Ivy files", "how to compile Ivy", "formal verification tools", "ivy_check alternative", "MCP tools for Ivy", "LSP for Ivy"
 - **Key topics**: Tooling architecture (LSP + MCP + native tools), CLI-to-tool mapping, native Ivy LSP features (diagnostics, go-to-definition, find-references, hover), Claude's native tools (Read, Edit, Write, Grep, Glob), ivy-tools MCP (verification, compilation, analysis), Navigate -> Understand -> Edit -> Verify workflow, PreToolUse enforcement hook
 - **Related agents**: spec-explorer, ivy-model-reviewer
-- **Related skills**: ivy-tools-reference, ivy-verification
+- **Related skills**: ivy-tools-reference, ivy-verification, ivy-lsp-navigation
+
+### ivy-lsp-navigation
+
+- **Category**: Tooling
+- **Purpose**: Decision matrix and invocation patterns for using Claude Code's LSP tool with Ivy specifications. Documents when to use LSP vs Grep vs MCP, exact LSP tool API parameters, 6 invocation patterns with QUIC examples, 3 LSP+MCP coordination workflows, and what LSP does NOT provide in Claude Code (no automatic diagnostics).
+- **Trigger keywords**: "LSP for Ivy", "go-to-definition", "find references in Ivy", "hover Ivy symbol", "document symbols", "workspace symbol search", "when to use LSP vs Grep", "Ivy code navigation", "cross-include resolution", "semantic navigation"
+- **Key topics**: LSP vs Grep vs MCP decision matrix, LSP tool API (operation, filePath, line, character), documentSymbol/workspaceSymbol/goToDefinition/findReferences/hover patterns, LSP+MCP coordination workflows (understanding symbols, adding requirements, diagnosing failures), publishDiagnostics limitation
+- **Related agents**: spec-explorer, nct-guide, spec-verifier, ivy-model-reviewer
+- **Related skills**: ivy-tooling-guide, ivy-lsp-walkthrough, ivy-tools-reference
+
+### ivy-lsp-walkthrough
+
+- **Category**: Tooling
+- **Purpose**: Concrete end-to-end walkthrough demonstrating LSP + MCP coordination on the real QUIC specification. Walks through adding rfc9000:7.3 "Authenticating Connection IDs" as a formal monitor, using LSP for navigation (Steps 1-3) and MCP for analysis/verification (Steps 4-8).
+- **Trigger keywords**: "end-to-end Ivy example", "LSP workflow example", "add RFC requirement walkthrough", "complete Ivy editing workflow", "how to add a requirement to QUIC spec", "LSP and MCP together example", "concrete plugin usage scenario"
+- **Key topics**: 8-step workflow (find action, explore definitions, find monitors, check coverage, write monitor, lint, verify, check traceability), rfc9000:7.3 authenticating connection IDs, LSP documentSymbol/workspaceSymbol/goToDefinition/findReferences/hover usage, MCP ivy_requirement_coverage/ivy_coverage_gaps/ivy_lint/ivy_verify/ivy_traceability_matrix usage
+- **Related agents**: nct-guide, spec-explorer, spec-verifier
+- **Related skills**: ivy-lsp-navigation, ivy-tooling-guide, nct-methodology
 
 ### rfc-to-ivy-mapping
 
@@ -192,7 +213,7 @@ For someone who wants to use the MCP tool ecosystem effectively.
 | **Agent** | Executes a multi-step interactive workflow using MCP tools and user input | `@agent-name` or selected by Claude Code when a task matches | Active -- calls tools, asks questions, produces artifacts |
 | **Command** | Runs a single focused operation (verify, compile, scaffold) | `/command-name [args]` | Active -- executes one action and returns results |
 
-### Available Agents (8)
+### Available Agents (9)
 
 | Agent | Purpose |
 |-------|---------|
@@ -200,15 +221,17 @@ For someone who wants to use the MCP tool ecosystem effectively.
 | nct-guide | Interactive NCT workflow guide |
 | nact-guide | Interactive NACT workflow guide |
 | nsct-guide | Interactive NSCT workflow guide |
+| quality-gate | Evaluates agent output quality using multi-gate scoring pipeline |
 | requirement-extractor | Extracts RFC normative requirements and generates manifests |
 | spec-explorer | Navigates and explains Ivy protocol specification structure |
 | spec-verifier | Runs verification and helps debug failures |
 | traceability-reviewer | Audits RFC coverage and bracket-tag annotations |
 
-### Available Commands (5)
+### Available Commands (6)
 
 | Command | Purpose |
 |---------|---------|
+| `/nct-add-pattern` | Add a formal model pattern to an existing protocol specification |
 | `/nct-check` | Run formal verification (`ivy_check`) on an Ivy file |
 | `/nct-compile` | Compile an Ivy file to a test executable (`ivyc`) |
 | `/nct-model-info` | Display model structure (`ivy_show`) |

@@ -1,8 +1,6 @@
 ---
-name: Quality Gate Reference
-description: Use when asking about "quality gates", "quality evaluation", "quality scoring",
-  "self-repair loop", "quality dimensions", "agent output quality", or how the multi-gate
-  quality pipeline works for evaluating Ivy specification agent outputs.
+name: quality-gate-reference
+description: Use when you need to understand the multi-gate quality evaluation pipeline, scoring system, or self-repair mechanism
 ---
 
 # Quality Gate Reference
@@ -86,3 +84,11 @@ Use the `quality-gate` agent directly for on-demand evaluation:
 - **Hook**: `post-write-ivy-lint.sh` — PostToolUse fast lint
 - **Skill**: `ivy-tools-reference` — MCP tool catalog used by quality gates
 - **Agent**: `ivy-model-reviewer` — complementary read-only model review
+
+## Integration
+
+**Related agents:**
+- **quality-gate** — Implements this evaluation pipeline
+
+**Related skills:**
+- **panther-ivy:ivy-verification** — Verification used in quality scoring

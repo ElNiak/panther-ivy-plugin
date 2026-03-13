@@ -1,6 +1,6 @@
 ---
-name: RFC-to-Ivy Mapping
-description: This skill should be used when the user asks about "translating RFC", "requirements extraction", "specification mapping", "RFC to Ivy", "mapping MUST SHOULD MAY", "formalizing RFC requirements", "extracting protocol requirements", or mentions converting natural language RFC requirements into formal Ivy specifications in the PANTHER framework.
+name: rfc-to-ivy-mapping
+description: Use when translating RFC normative language (MUST/SHOULD/MAY) into formal Ivy constructs
 ---
 
 # RFC-to-Ivy Mapping
@@ -196,3 +196,15 @@ Use ivy-tools MCP tools:
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` — Fast structural lint
 
 **IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
+
+## Integration
+
+**Used by:**
+- **panther-ivy:nct-methodology** — RFC requirement extraction (Step 2)
+
+**Related skills:**
+- **panther-ivy:annotated-spec-writing** — Adding bracket tags after mapping
+- **panther-ivy:14-layer-template** — Where to place mapped requirements
+
+**Related agents:**
+- **requirement-extractor** — Automated RFC parsing

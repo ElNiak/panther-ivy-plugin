@@ -17,7 +17,7 @@
       },
       "source": "./plugins/ivy-lsp",
       "category": "development",
-      "homepage": "https://github.com/ElNiak/panther-ivy-plugin",
+      "homepage": "https://github.com/ElNiak/ivy-lsp",
       "strict": false,
       "lspServers": {
         "ivy": {

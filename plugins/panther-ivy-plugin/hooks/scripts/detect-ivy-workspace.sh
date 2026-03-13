@@ -6,63 +6,12 @@
 #   - Writes IVY_WORKSPACE_ROOT to CLAUDE_ENV_FILE (if set)
 set -euo pipefail
 
-DETECTED_ROOT=""
-DETECTED_TYPE=""
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLUGIN_SCRIPTS_DIR="$SCRIPT_DIR/../../scripts"
+# shellcheck source=../../scripts/workspace-common.sh
+source "$PLUGIN_SCRIPTS_DIR/workspace-common.sh"
 
-# 1. Check for PANTHER project structure
-find_panther_ivy() {
-    local dir="$1"
-    local candidate="$dir/panther/plugins/services/testers/panther_ivy"
-    if [ -d "$candidate/protocol-testing" ]; then
-        echo "$candidate"
-        return 0
-    fi
-    local check="$dir"
-    local depth=0
-    while [ "$check" != "/" ] && [ $depth -lt 10 ]; do
-        candidate="$check/panther/plugins/services/testers/panther_ivy"
-        if [ -d "$candidate/protocol-testing" ]; then
-            echo "$candidate"
-            return 0
-        fi
-        if [ -d "$check/protocol-testing" ] && [ -f "$check/panther_ivy.py" ]; then
-            echo "$check"
-            return 0
-        fi
-        check="$(dirname "$check")"
-        depth=$((depth + 1))
-    done
-    return 1
-}
-
-panther_ivy_dir="$(find_panther_ivy "$PWD" 2>/dev/null)" || true
-
-if [ -n "$panther_ivy_dir" ]; then
-    DETECTED_ROOT="$panther_ivy_dir"
-    DETECTED_TYPE="panther"
-fi
-
-# 2. Walk up from CWD for directories with .ivy files
-if [ -z "$DETECTED_ROOT" ]; then
-    check="$PWD"
-    depth=0
-    while [ "$check" != "/" ] && [ $depth -lt 8 ]; do
-        ivy_count=$(find "$check" -maxdepth 2 -name "*.ivy" 2>/dev/null | head -5 | wc -l)
-        if [ "$ivy_count" -ge 3 ]; then
-            DETECTED_ROOT="$check"
-            DETECTED_TYPE="standalone"
-            break
-        fi
-        check="$(dirname "$check")"
-        depth=$((depth + 1))
-    done
-fi
-
-# 3. Fallback
-if [ -z "$DETECTED_ROOT" ]; then
-    DETECTED_ROOT="$PWD"
-    DETECTED_TYPE="fallback"
-fi
+detect_ivy_workspace
 
 # Write env var for later Bash commands
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then

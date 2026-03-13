@@ -28,10 +28,16 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 | `ivy_to_cpp` | `ivy_compile` | C++ code generation |
 
 **Analysis MCP tools** (read-only, no CLI equivalent):
-`ivy_lint` (fast structural check), `ivy_traceability_matrix`, `ivy_requirement_coverage`, `ivy_impact_analysis`, `ivy_extract_requirements`, `ivy_cross_references`, `ivy_query_symbol`, `ivy_include_graph`, `ivy_capabilities`
+`ivy_lint` (fast structural check), `ivy_diagnostics` (full 5-layer diagnostics), `ivy_traceability_matrix`, `ivy_requirement_coverage`, `ivy_impact_analysis`, `ivy_extract_requirements`, `ivy_generate_manifest`, `ivy_cross_references`, `ivy_query_symbol`, `ivy_include_graph`, `ivy_capabilities`
 
-**Ivy LSP** (automatic for `.ivy` files — no tool calls needed):
-Instant diagnostics, go-to-definition, find-references, hover, document symbols.
+**Visualization MCP tools** (read-only model views):
+`ivy_action_requirements`, `ivy_model_summary`, `ivy_coverage_gaps`, `ivy_action_dependency_graph`, `ivy_state_machine_view`, `ivy_layered_overview`
+
+**Quality and pattern MCP tools**:
+`ivy_smart_suggestions`, `ivy_quality_gate`, `ivy_scaffold_check`, `ivy_pattern_analysis`, `ivy_pattern_scaffold`
+
+**Ivy LSP** (for `.ivy` files — use the `LSP` tool explicitly):
+Go-to-definition, find-references, hover, document symbols, workspace symbol search. **Note**: Claude Code does not receive automatic diagnostics — use `ivy_lint`/`ivy_diagnostics` MCP tools instead. See the `ivy-lsp-navigation` skill for usage patterns.
 
 **Claude native tools**: `Read`/`Grep`/`Glob` for navigation, `Edit`/`Write` for modification.
 

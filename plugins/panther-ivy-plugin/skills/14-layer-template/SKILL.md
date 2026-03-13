@@ -1,6 +1,6 @@
 ---
-name: 14-Layer Template
-description: This skill should be used when the user asks about "creating a new protocol model", "protocol specification architecture", "layer architecture", "14-layer template", "formal model structure", "protocol decomposition", "scaffolding a protocol", "Ivy model layers", or mentions structuring a new formal protocol specification in the PANTHER Ivy framework. Provides the structural template for decomposing any network protocol into modular Ivy specifications.
+name: 14-layer-template
+description: Use when structuring a new formal protocol specification into modular Ivy layers, or choosing which layers to scaffold first
 ---
 
 # 14-Layer Formal Model Template
@@ -186,3 +186,16 @@ Use ivy-tools MCP tools:
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` — Test compilation
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` — Model introspection
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` — Fast structural lint
+
+## Integration
+
+**Used by:**
+- **panther-ivy:nct-methodology** — Layer decomposition (Step 2)
+- **panther-ivy:nact-methodology** — Same layer structure for attack models
+
+**Related skills:**
+- **panther-ivy:ivy-model-editing** — Ivy language reference for writing layers
+- **panther-ivy:pattern-library** — Formal model patterns to apply within layers
+
+**Related commands:**
+- `/nct-new-protocol` — Scaffolds from this template

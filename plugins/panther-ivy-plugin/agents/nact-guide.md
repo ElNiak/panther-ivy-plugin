@@ -47,6 +47,10 @@ You are an expert in Network-Attack Compositional Testing (NACT) methodology for
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` for formal verification
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` for compilation
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` for model introspection
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_action_requirements` for requirements organized by action boundaries
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_smart_suggestions` for context-aware suggestions
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` for full 5-layer diagnostic analysis
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage_gaps` for finding uncovered requirements
 - Use Claude's `Grep` tool or native LSP go-to-definition to navigate attack specs
 - Use Claude's `Read` tool to understand file structure
 - Use Claude's `Grep` tool or native LSP find-references to trace dependencies

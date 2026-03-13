@@ -41,6 +41,9 @@ You are an RFC traceability review specialist. Your job is to analyze the mappin
 Use the Ivy LSP MCP tools to collect traceability data:
 - `ivy_traceability_matrix` - Get the full requirement-to-assertion mapping
 - `ivy_requirement_coverage` - Get coverage statistics by level and layer
+- `ivy_coverage_gaps` - Find unguarded state vars and uncovered requirements
+- `ivy_generate_manifest` - Generate YAML manifest from RFC text
+- `ivy_diagnostics` - Full diagnostic analysis for coverage layer
 - Scan `.ivy` files for bracket tags using `Grep`
 - Read `*_requirements.yaml` manifests
 
