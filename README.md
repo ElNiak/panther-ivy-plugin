@@ -2,7 +2,7 @@
 
 NCT/NACT/NSCT methodology guidance for Ivy protocol testing via native Ivy LSP and ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.
 
-**Version:** 0.1.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
+**Version:** 0.4.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
 
 ## Overview
 
@@ -31,7 +31,7 @@ This is a **Claude Code plugin** for the PANTHER-Ivy tester. It provides methodo
 
 - **PANTHER framework** with the Ivy tester plugin installed (`panther/plugins/services/testers/panther_ivy/`)
 - **Ivy toolchain** available (either locally or via Docker-based execution through PANTHER)
-- **Native Ivy LSP** (configured automatically via `.lsp.json`) -- diagnostics, go-to-definition, find-references, hover for `.ivy` files
+- **Native Ivy LSP** (configured automatically via `.lsp.json`) -- go-to-definition, find-references, hover, document symbols for `.ivy` files (diagnostics via MCP `ivy_lint`/`ivy_diagnostics`)
 - **ivy-tools MCP server** (configured automatically via `.mcp.json`):
   - [ivy-tools](https://github.com/ElNiak/ivy-lsp) -- Ivy verification, compilation, analysis, linting, and traceability tools
 
@@ -47,10 +47,10 @@ Claude Code auto-discovers plugins via the `.claude-plugin/` directory. No `pip 
 
 | Component | Count | Description | Details |
 |-----------|-------|-------------|---------|
-| Agents | 8 | Methodology guides and utility agents for interactive workflows | [agents/](agents/) |
+| Agents | 4 | Methodology guide, model reviewer, spec analyst, traceability agent | [agents/](agents/) |
 | Commands | 5 | Slash commands for verification, compilation, and scaffolding | [commands/](commands/) |
-| Skills | 11 | Domain knowledge for Ivy language, methodologies, and tooling | [skills/](skills/) |
-| Hooks | 1 | PreToolUse: blocks direct Ivy CLI calls, redirects to MCP tools | -- |
+| Skills | 6 | Domain knowledge for Ivy language, methodologies, and tooling | [skills/](skills/) |
+| Hooks | 3 | PreToolUse (warn CLI), PostToolUse (lint .ivy), SessionStart (workspace detection) | -- |
 
 ## Tooling Architecture
 
@@ -59,10 +59,14 @@ The plugin relies on one MCP server plus native LSP support:
 | Component | Role | Capabilities | Source |
 |-----------|------|--------------|--------|
 | **Native Ivy LSP** | Language intelligence for `.ivy` files | Diagnostics, go-to-definition, find-references, hover | [ivy-lsp](https://github.com/ElNiak/ivy-lsp) (configured via `.lsp.json`) |
-| **ivy-tools MCP** | Verification, analysis, and visualization | `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_lint`, `ivy_traceability_matrix`, `ivy_requirement_coverage`, `ivy_impact_analysis` | [ivy-lsp](https://github.com/ElNiak/ivy-lsp) (configured via `.mcp.json`) |
+| **ivy-tools MCP** | Verification, analysis, and visualization | `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_lint`, `ivy_coverage`, `ivy_query`, `ivy_visualize`, `ivy_quality`, `ivy_patterns` | [ivy-lsp](https://github.com/ElNiak/ivy-lsp) (configured via `.mcp.json`) |
 | **Claude's native tools** | Code navigation and editing | `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Bash` | Built into Claude Code |
 
-A **PreToolUse hook** (`hooks/scripts/block-direct-ivy.sh`) intercepts Bash tool calls and blocks direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`, redirecting to the corresponding MCP tool. This ensures all Ivy operations go through the MCP server for consistent behavior and structured output.
+A **PreToolUse hook** (`hooks/scripts/block-direct-ivy.sh`) intercepts Bash tool calls and warns about direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`, suggesting the corresponding MCP tool. This encourages all Ivy operations to go through the MCP server for consistent behavior and structured output.
+
+A **PostToolUse hook** (`hooks/scripts/post-write-ivy-lint.sh`) runs fast structural checks on `.ivy` files after Write/Edit operations, providing immediate feedback on missing `#lang` headers or unbalanced braces.
+
+A **SessionStart hook** (`hooks/scripts/detect-ivy-workspace.sh`) detects the Ivy workspace root and injects context for Claude, including the path to protocol models and MCP server scope.
 
 ## Quick Start
 
@@ -78,21 +82,21 @@ A **PreToolUse hook** (`hooks/scripts/block-direct-ivy.sh`) intercepts Bash tool
 
 **Scaffold a new protocol:**
 ```
-/nct-new-protocol name=coap
+/nct-scaffold type=protocol name=coap
 ```
 
 For interactive guidance, ask Claude directly -- the agents activate automatically:
-- "Walk me through the QUIC protocol specification structure" (triggers `spec-explorer`)
-- "I need to write an Ivy specification for the CoAP protocol" (triggers `nct-guide`)
-- "Which MUST requirements from RFC 9000 are we missing?" (triggers `traceability-reviewer`)
+- "Walk me through the QUIC protocol specification structure" (triggers `spec-analyst`)
+- "I need to write an Ivy specification for the CoAP protocol" (triggers `methodology-guide`)
+- "Which MUST requirements from RFC 9000 are we missing?" (triggers `traceability-agent`)
 
 ## Methodology Overview
 
 | | NCT | NACT | NSCT |
 |---|-----|------|------|
 | **Description** | Formal spec plays one role against an IUT to verify RFC compliance | Extends NCT with APT lifecycle to model attacks | Runs specs in Shadow NS for deterministic, large-scale testing |
-| **Guide Agent** | `nct-guide` | `nact-guide` | `nsct-guide` |
-| **Methodology Skill** | `nct-methodology` | `nact-methodology` | `nsct-methodology` |
+| **Guide Agent** | `methodology-guide` | `methodology-guide` | `methodology-guide` |
+| **Methodology Skill** | `methodology-reference` | `methodology-reference` | `methodology-reference` |
 | **Key Concepts** | Role inversion, before/after monitors, `_finalize`, Z3/SMT | APT 6-stage lifecycle, attack entities, protocol bindings | Shadow NS, topology control, deterministic replay, scale testing |
 | **Typical Workflow** | 10-step: RFC analysis to compiled test binary | 9-step: threat model to attack test binary | NCT specs + Shadow NS config for simulated execution |
 
@@ -110,42 +114,34 @@ For interactive guidance, ask Claude directly -- the agents activate automatical
 panther-ivy-plugin/
 ├── .claude-plugin/
 │   └── plugin.json          # Plugin manifest (name, version, description)
-├── .lsp.json                # Native Ivy LSP configuration
 ├── .mcp.json                # ivy-tools MCP server configuration
-├── agents/                  # 8 agent definitions
+│                            # Note: .lsp.json lives in sibling plugin plugins/ivy-lsp/
+├── agents/                  # 4 agent definitions
 │   ├── README.md            # Agent catalog and selection guide
-│   ├── spec-explorer.md     # Navigate and explain Ivy specifications
-│   ├── nct-guide.md         # NCT methodology workflow guide
-│   ├── nact-guide.md        # NACT methodology workflow guide
-│   ├── nsct-guide.md        # NSCT methodology workflow guide
-│   ├── spec-verifier.md     # Verification and diagnosis specialist
-│   ├── ivy-model-reviewer.md # Model quality reviewer
-│   ├── requirement-extractor.md # RFC requirement extraction
-│   └── traceability-reviewer.md # RFC coverage audit
+│   ├── methodology-guide.md # NCT/NACT/NSCT methodology guide
+│   ├── model-reviewer.md    # Model quality reviewer
+│   ├── spec-analyst.md      # Specification explorer and verifier
+│   └── traceability-agent.md # RFC requirement extraction and coverage audit
 ├── commands/                # 5 slash commands
 │   ├── README.md            # Command reference and workflows
 │   ├── nct-check.md         # /nct-check -- formal verification
 │   ├── nct-compile.md       # /nct-compile -- compile to test binary
 │   ├── nct-model-info.md    # /nct-model-info -- model structure
-│   ├── nct-new-test.md      # /nct-new-test -- scaffold test spec
-│   └── nct-new-protocol.md  # /nct-new-protocol -- scaffold protocol
+│   ├── nct-scaffold.md      # /nct-scaffold -- scaffold protocol or test
+│   └── nct-add-pattern.md   # /nct-add-pattern -- add formal model pattern
 ├── hooks/
-│   ├── hooks.json           # PreToolUse hook definition
+│   ├── hooks.json           # Hook definitions (PreToolUse, PostToolUse, SessionStart)
 │   └── scripts/
-│       └── block-direct-ivy.sh  # Blocks direct Ivy CLI, redirects to MCP
-├── skills/                  # 11 skill directories
+│       ├── block-direct-ivy.sh      # Warns about direct Ivy CLI, suggests MCP
+│       └── post-write-ivy-lint.sh   # Fast structural lint after .ivy writes
+├── skills/                  # 6 skill directories
 │   ├── README.md            # Skill catalog and learning paths
-│   ├── 14-layer-template/   # Protocol decomposition template
-│   ├── annotated-spec-writing/ # RFC bracket-tag annotations
-│   ├── ivy-model-editing/   # Ivy language reference
-│   ├── ivy-tools-reference/ # ivy-tools MCP tool catalog
-│   ├── ivy-verification/    # Verification workflow guide
-│   ├── nact-methodology/    # NACT methodology
-│   ├── nct-methodology/     # NCT methodology
-│   ├── nsct-methodology/    # NSCT methodology
-│   ├── ivy-tooling-guide/    # Ivy tooling architecture and tool mapping
-│   ├── rfc-to-ivy-mapping/  # RFC to Ivy translation patterns
-│   └── writing-test-specs/  # Test specification guide
+│   ├── methodology-reference/ # NCT/NACT/NSCT methodology reference
+│   ├── specification-patterns/ # 14-layer template + pattern library
+│   ├── ivy-writing-guide/   # Ivy language reference + RFC annotations
+│   ├── tooling-reference/   # LSP + MCP tool catalog + coordination
+│   ├── ivy-lsp-walkthrough/ # End-to-end LSP + MCP example
+│   └── workflow-reference/  # Verification, RFC mapping, quality gates
 └── README.md                # This file
 ```
 

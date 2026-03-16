@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# SessionStart hook: detect Ivy workspace and inject context for Claude.
+#
+# Outputs:
+#   - JSON with hookSpecificOutput.additionalContext for Claude
+#   - Writes IVY_WORKSPACE_ROOT to CLAUDE_ENV_FILE (if set)
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLUGIN_SCRIPTS_DIR="$SCRIPT_DIR/../../scripts"
+# shellcheck source=../../scripts/workspace-common.sh
+source "$PLUGIN_SCRIPTS_DIR/workspace-common.sh"
+
+detect_ivy_workspace
+
+# Write env var for later Bash commands
+if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+    printf 'IVY_WORKSPACE_ROOT="%s"\n' "$DETECTED_ROOT" >> "$CLAUDE_ENV_FILE"
+fi
+
+# Build context message for Claude
+if [ "$DETECTED_TYPE" = "panther" ]; then
+    context="[ivy-workspace] Detected PANTHER project at: $DETECTED_ROOT. Ivy models are in protocol-testing/. The ivy-tools MCP server and LSP are scoped to this directory."
+elif [ "$DETECTED_TYPE" = "standalone" ]; then
+    context="[ivy-workspace] Detected standalone Ivy project at: $DETECTED_ROOT."
+else
+    context="[ivy-workspace] No Ivy project detected. Using CWD as workspace: $DETECTED_ROOT."
+fi
+
+# Escape context for JSON safety using proper JSON escaping
+context_escaped=$(printf '%s' "$context" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])")
+
+# Output hook result as JSON
+cat <<EOF
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "$context_escaped"
+  }
+}
+EOF
