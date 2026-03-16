@@ -304,7 +304,7 @@ ensure stream_data_delivered;               # [rfc9000:2.2]
 
 1. **Identify requirements**: Consult RFC text and `*_requirements.yaml` manifest
 2. **Write assertions with tags**: Tag each require/ensure/assert
-3. **Check coverage**: Use `ivy_coverage` (mode="stats") MCP tool
+3. **Check coverage**: Use `ivy_requirement_coverage` MCP tool
 4. **Review diagnostics**: Use `ivy_diagnostics` MCP tool
 
 ### Requirement Manifest

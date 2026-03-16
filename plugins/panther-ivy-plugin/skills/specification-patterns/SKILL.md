@@ -331,11 +331,11 @@ instance {prot}_serdes : serdes({prot}_packet, stream_data, {prot}_ser, {prot}_d
 ```
 
 #### Analyzing existing patterns
-Use the `ivy_patterns` MCP tool:
+Use the `ivy_pattern_analysis` MCP tool:
 ```
-ivy_patterns(protocol="quic", mode="analyze")
-ivy_patterns(protocol="quic", mode="validate")
-ivy_patterns(protocol="quic", mode="compare", reference_protocol="bgp")
+ivy_pattern_analysis(protocol="quic", mode="detect")
+ivy_pattern_analysis(protocol="quic", mode="validate")
+ivy_pattern_analysis(protocol="quic", mode="compare", reference_protocol="bgp")
 ```
 
 Template files are in `protocol-testing/patterns/` with the registry in `pattern_catalog.yaml`.

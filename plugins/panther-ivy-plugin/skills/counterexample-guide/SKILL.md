@@ -74,7 +74,7 @@ Walk through the steps and look for:
 Use MCP tools to understand the symbol's definition and context:
 
 ```
-ivy_query(mode="info", symbol_name="conn_seen")
+ivy_query_symbol(symbol_name="conn_seen")
 ```
 
 This returns the symbol's type, file, line, and references -- helping you understand where it is defined and what sets it.
@@ -84,7 +84,7 @@ This returns the symbol's type, file, line, and references -- helping you unders
 Use the state machine view to see the broader state transition picture:
 
 ```
-ivy_visualize(view="state_machine")
+ivy_state_machine_view(test_file="path/to/test.ivy")
 ```
 
 This shows all states and transitions, helping you spot whether the counterexample trace represents a valid but unguarded path through the state machine.
@@ -94,7 +94,7 @@ This shows all states and transitions, helping you spot whether the counterexamp
 Use coverage analysis to find related gaps:
 
 ```
-ivy_coverage(mode="gaps")
+ivy_coverage_gaps(test_file="path/to/test.ivy")
 ```
 
 Look for unguarded state variables or orphaned monitors that relate to the failing assertion. The counterexample often exploits a gap that this tool can identify.
@@ -211,7 +211,7 @@ before action_name(...) {
 }
 ```
 
-Use `ivy_coverage(mode="gaps")` to find other state variables that may also need guards.
+Use `ivy_coverage_gaps` to find other state variables that may also need guards.
 
 ### Add State Initialization
 
@@ -283,7 +283,7 @@ Execution trace (3 steps):
 ### Investigation
 
 ```
-ivy_query(mode="info", symbol_name="stream_data_sent")
+ivy_query_symbol(symbol_name="stream_data_sent")
 ```
 
 Reveals `stream_data_sent` is set in `after frame.stream.handle` only when `f.length > 0`, but no `before` guard requires `f.length > 0` during test generation.
@@ -314,6 +314,6 @@ After applying the fix, re-run `ivy_verify` to confirm the counterexample is res
 
 **MCP tools used in this workflow:**
 - `ivy_verify` -- Run verification (source of counterexamples)
-- `ivy_query` (mode="info") -- Look up symbol definitions
-- `ivy_visualize` (view="state_machine") -- View state transitions
-- `ivy_coverage` (mode="gaps") -- Find related unguarded state
+- `ivy_query_symbol` -- Look up symbol definitions
+- `ivy_state_machine_view` -- View state transitions
+- `ivy_coverage_gaps` -- Find related unguarded state

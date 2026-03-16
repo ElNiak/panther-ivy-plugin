@@ -30,14 +30,17 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 **Analysis MCP tools** (read-only, no CLI equivalent):
 `ivy_lint` (fast structural check), `ivy_diagnostics` (full 5-layer diagnostics), `ivy_include_graph`, `ivy_capabilities`
 
-**Coverage & traceability** (consolidated):
-`ivy_coverage` (mode: `matrix`/`stats`/`gaps`), `ivy_query` (mode: `impact`/`xrefs`/`info`), `ivy_extract_requirements` (output: `structured`/`manifest`)
+**Coverage & traceability**:
+`ivy_requirement_coverage` (coverage stats), `ivy_coverage_gaps` (unguarded state, uncovered reqs), `ivy_traceability_matrix` (requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text), `ivy_generate_manifest` (produce YAML manifest)
 
-**Visualization MCP tools** (consolidated model views):
-`ivy_visualize` (view: `dependencies`/`state_machine`/`layers`), `ivy_model_summary` (detail: `summary`/`requirements`)
+**Semantic query**:
+`ivy_query_symbol` (symbol info), `ivy_impact_analysis` (incoming/outgoing edges), `ivy_cross_references` (cross-reference graph neighborhood). Note: `ivy_cross_references` node_id resolution is unreliable; use `ivy_query_symbol` for symbol info instead.
 
-**Quality and pattern MCP tools** (consolidated):
-`ivy_quality` (mode: `suggestions`/`gate`), `ivy_patterns` (mode: `analyze`/`check`), `ivy_pattern_scaffold`
+**Visualization MCP tools** (model views):
+`ivy_action_dependency_graph` (action dependency graph), `ivy_state_machine_view` (state-machine perspective), `ivy_layered_overview` (layered overview by file/module), `ivy_model_summary` (per-action summary), `ivy_action_requirements` (per-action requirements)
+
+**Quality and pattern MCP tools**:
+`ivy_smart_suggestions` (context-aware suggestions). Note: file_path/line/context parameters currently have no effect on output (known issue). `ivy_quality_gate` (validate against quality gates), `ivy_pattern_analysis` (analyze/validate/compare patterns), `ivy_scaffold_check` (check layer/pattern completeness), `ivy_pattern_scaffold` (generate from template)
 
 **Ivy LSP** (for `.ivy` files — use the `LSP` tool explicitly):
 
@@ -45,11 +48,49 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 |----------|-----------|
 | Navigation | `goToDefinition` (cross-include), `goToImplementation` (action→before/after monitors), `findReferences` |
 | Inspection | `hover` (type info + RFC annotations), `documentSymbol` (file outline), `workspaceSymbol` (cross-file search) |
-| Call graph | `prepareCallHierarchy`, `incomingCalls`, `outgoingCalls` |
+| Call graph | `prepareCallHierarchy`, `incomingCalls`, `outgoingCalls` (not yet implemented -- may return empty results) |
 
 **Note**: Claude Code does not receive automatic diagnostics — use `ivy_lint`/`ivy_diagnostics` MCP tools instead. See the `tooling-reference` skill for usage patterns.
 
 **Claude native tools**: `Read`/`Grep`/`Glob` for navigation, `Edit`/`Write` for modification.
+
+### MCP Tool Name Reference
+
+| Logical Group | Actual MCP Tool | Key Parameters |
+|---|---|---|
+| Lint | `ivy_lint` | relative_path |
+| Verify | `ivy_verify` | relative_path, isolate |
+| Compile | `ivy_compile` | relative_path, target, isolate |
+| Model info | `ivy_model_info` | relative_path, isolate |
+| Diagnostics | `ivy_diagnostics` | relative_path |
+| Include graph | `ivy_include_graph` | relative_path |
+| Capabilities | `ivy_capabilities` | -- |
+| Coverage: stats | `ivy_requirement_coverage` | relative_path |
+| Coverage: gaps | `ivy_coverage_gaps` | test_file |
+| Coverage: matrix | `ivy_traceability_matrix` | relative_path |
+| Query: symbol info | `ivy_query_symbol` | symbol_name |
+| Query: impact | `ivy_impact_analysis` | symbol_name |
+| Query: cross-refs | `ivy_cross_references` | node_id |
+| Extraction | `ivy_extract_requirements` | rfc_text |
+| Manifest gen | `ivy_generate_manifest` | rfc_name, rfc_text |
+| Visualization: deps | `ivy_action_dependency_graph` | test_file |
+| Visualization: SM | `ivy_state_machine_view` | test_file |
+| Visualization: layers | `ivy_layered_overview` | test_file |
+| Model: summary | `ivy_model_summary` | test_file |
+| Model: per-action reqs | `ivy_action_requirements` | action_name, file_path, test_file |
+| Quality: suggestions | `ivy_smart_suggestions` | file_path |
+| Quality: gate | `ivy_quality_gate` | protocol, gate_level |
+| Patterns: analyze | `ivy_pattern_analysis` | protocol, mode, pattern |
+| Patterns: completeness | `ivy_scaffold_check` | protocol |
+| Patterns: scaffold | `ivy_pattern_scaffold` | protocol, pattern |
+
+### Available Skills
+
+`counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
+
+### Available Agents
+
+`methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`
 
 ## NCT — Network-Centric Compositional Testing
 
@@ -256,8 +297,8 @@ After writing or modifying Ivy specifications, run this verification loop:
 
 1. **`ivy_lint`** — Fast structural check (milliseconds). Fix: missing `#lang`, unresolved includes, unmatched braces.
 2. **`ivy_verify`** — Formal property verification. If FAIL: read error line → locate with Grep/LSP go-to-definition → diagnose (missing invariant? action bug? missing precondition?) → fix → re-verify.
-3. **`ivy_coverage mode=stats`** — Check MUST requirement coverage. If low, add missing `before`/`after` monitors with bracket tags.
-4. **`ivy_coverage mode=matrix`** — Review assertion-to-requirement mapping. Add bracket tags (`# [rfcNNNN:X.Y]`) to uncovered assertions.
+3. **`ivy_requirement_coverage`** — Check MUST requirement coverage. If low, add missing `before`/`after` monitors with bracket tags.
+4. **`ivy_traceability_matrix`** — Review assertion-to-requirement mapping. Add bracket tags (`# [rfcNNNN:X.Y]`) to uncovered assertions.
 5. **Anti-pattern checklist** — before declaring work complete:
    - Missing `after init` → relations/functions start with arbitrary values, not defaults
    - Ungrounded variables in invariants → `invariant sent(P, N)` means "for ALL P and N, sent is true"
@@ -307,4 +348,6 @@ protocol-testing/{prot}/
 
 **Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`
 
-**Skills for deep dives**: `methodology-reference`, `specification-patterns`, `ivy-writing-guide`, `tooling-reference`, `workflow-reference`, `ivy-lsp-walkthrough`
+**Skills for deep dives**: `counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
+
+**Agents**: `methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`

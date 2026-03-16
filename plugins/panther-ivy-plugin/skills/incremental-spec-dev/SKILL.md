@@ -15,20 +15,20 @@ Each requirement follows this 9-step cycle. Never skip steps or batch multiple r
 
 ### Step 1: Identify the Next RFC Requirement
 
-Use `ivy_coverage(mode="gaps")` to find uncovered MUST requirements first, then SHOULD:
+Use `ivy_coverage_gaps()` to find uncovered MUST requirements first, then SHOULD:
 
 ```
-ivy_coverage(mode="gaps", protocol="{prot}")
+ivy_coverage_gaps(test_file="{path_to_test_file}")
 ```
 
 This returns `unguarded_state_vars`, `uncovered_requirements`, and `orphaned_monitors`. Focus on `uncovered_requirements` entries tagged with MUST level.
 
 ### Step 2: Choose the Formal Model Pattern
 
-Use `ivy_patterns(mode="analyze")` to determine which pattern applies to the requirement:
+Use `ivy_pattern_analysis()` to determine which pattern applies to the requirement:
 
 ```
-ivy_patterns(mode="analyze", protocol="{prot}")
+ivy_pattern_analysis(protocol="{prot}")
 ```
 
 Common patterns and when they apply:
@@ -111,7 +111,7 @@ When `ivy_verify` returns a failure:
 Run coverage statistics to confirm the requirement is now covered:
 
 ```
-ivy_coverage(mode="stats", protocol="{prot}")
+ivy_requirement_coverage(relative_path="{path_to_file_or_directory}")
 ```
 
 Compare `covered` and `coverage_percent` with the previous iteration. The newly added requirement should appear as covered.
@@ -121,7 +121,7 @@ Compare `covered` and `coverage_percent` with the previous iteration. The newly 
 Run the quality gate after each addition:
 
 ```
-ivy_quality(mode="gate", protocol="{prot}", level="minimal")
+ivy_quality_gate(protocol="{prot}", gate_level="minimal")
 ```
 
 Gate levels:
@@ -163,15 +163,15 @@ One commit per requirement keeps the git history bisectable and each commit inde
 Use `ivy_extract_requirements` to parse remaining uncovered RFC sections:
 
 ```
-ivy_extract_requirements(relative_path="{rfc_text_file}", output="structured")
+ivy_extract_requirements(rfc_text="{rfc_text}")
 ```
 
-This returns normative statements (MUST/SHOULD/MAY) with section references. Cross-reference against `ivy_coverage(mode="gaps")` to identify which ones still need assertions.
+This returns normative statements (MUST/SHOULD/MAY) with section references. Cross-reference against `ivy_coverage_gaps()` to identify which ones still need assertions.
 
 For a full traceability view:
 
 ```
-ivy_coverage(mode="matrix", protocol="{prot}")
+ivy_traceability_matrix(relative_path="protocol-testing/{prot}/")
 ```
 
 This shows the requirement-to-annotation mapping, making it clear which RFC sections have no corresponding Ivy assertions.
@@ -221,8 +221,8 @@ The `if _generating` guard ensures the constraint only applies to test traffic g
 
 The incremental loop ends when all three conditions are met:
 
-1. **All MUST requirements covered**: Verify with `ivy_coverage(mode="stats")` -- the `by_level.MUST.coverage_percent` should be 100%.
-2. **Quality gate passes at target level**: Run `ivy_quality(mode="gate", level="standard")` (or `comprehensive` for release-quality specifications). All checks must pass.
+1. **All MUST requirements covered**: Verify with `ivy_requirement_coverage()` -- the `by_level.MUST.coverage_percent` should be 100%.
+2. **Quality gate passes at target level**: Run `ivy_quality_gate(protocol="{prot}", gate_level="standard")` (or `comprehensive` for release-quality specifications). All checks must pass.
 3. **No verification failures**: The current specification passes `ivy_verify` cleanly with no counterexamples and no Z3 timeouts.
 
 After MUST requirements are complete, repeat the loop for SHOULD requirements if time permits. MAY requirements are lowest priority and may be deferred.
@@ -251,7 +251,7 @@ After MUST requirements are complete, repeat the loop for SHOULD requirements if
 
 **Wrong**: Write `require property(X)` without checking that the state variable `property` is properly initialized and guarded.
 
-**Right**: Check with `ivy_coverage(mode="gaps")` that state variables have initialization (`after init` blocks) and guard conditions in all relevant `before` blocks.
+**Right**: Check with `ivy_coverage_gaps()` that state variables have initialization (`after init` blocks) and guard conditions in all relevant `before` blocks.
 
 **Why**: Uninitialized state variables start with arbitrary values in Ivy. A `require conn_seen(C)` without `after init { conn_seen(C) := false }` will have unpredictable behavior. The gaps tool identifies unguarded state variables explicitly.
 
@@ -259,7 +259,7 @@ After MUST requirements are complete, repeat the loop for SHOULD requirements if
 
 **Wrong**: Commit after `ivy_verify` passes but without checking the quality gate.
 
-**Right**: Run `ivy_quality(mode="gate", level="minimal")` after each addition.
+**Right**: Run `ivy_quality_gate(protocol="{prot}", gate_level="minimal")` after each addition.
 
 **Why**: Verification passing means the model is internally consistent, but it does not check naming conventions, missing bracket tags, or traceability. The quality gate catches these.
 

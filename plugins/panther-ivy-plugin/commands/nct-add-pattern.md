@@ -28,10 +28,10 @@ If neither exists, ask the user if they want to create it first with `/nct-scaff
 
 ## Step 2: Detect Current State
 
-Use the `ivy_patterns` MCP tool to check what patterns already exist:
+Use the `ivy_pattern_analysis` MCP tool to check what patterns already exist:
 
 ```
-ivy_patterns(protocol="{protocol}", mode="analyze")
+ivy_pattern_analysis(protocol="{protocol}", mode="detect")
 ```
 
 Report which patterns are already present and which are missing.
