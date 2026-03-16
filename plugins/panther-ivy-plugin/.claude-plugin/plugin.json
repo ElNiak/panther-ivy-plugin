@@ -1,9 +1,13 @@
 {
   "name": "panther-ivy-plugin",
   "description": "NCT/NACT/NSCT methodology guidance for Ivy protocol testing via ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": {
     "name": "ElNiak",
     "email": "elniak@github.com"
-  }
+  },
+  "repository": "https://github.com/ElNiak/panther-ivy-plugin",
+  "license": "MIT",
+  "keywords": ["ivy", "formal-verification", "protocol-testing", "panther"],
+  "homepage": "https://github.com/ElNiak/panther-ivy-plugin"
 }

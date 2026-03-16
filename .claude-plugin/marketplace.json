@@ -10,7 +10,7 @@
     {
       "name": "ivy-lsp",
       "description": "Ivy language server for code intelligence, diagnostics, and navigation in .ivy formal specification files",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "author": {
         "name": "ElNiak",
         "email": "elniak@github.com"
@@ -32,7 +32,7 @@
     {
       "name": "panther-ivy-plugin",
       "description": "NCT/NACT/NSCT methodology guidance for Ivy protocol testing via ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "author": {
         "name": "ElNiak",
         "email": "elniak@github.com"
