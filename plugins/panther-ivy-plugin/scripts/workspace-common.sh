@@ -2,6 +2,8 @@
 # Shared workspace detection and ivy-lsp resolution functions.
 # Sourced by start-ivy-tools.sh, ivy-lsp-wrapper.sh, and detect-ivy-workspace.sh.
 
+set -euo pipefail
+
 # Find panther_ivy directory by walking up from a starting directory.
 # Usage: find_panther_ivy "$PWD"
 # Returns: path to panther_ivy directory (with protocol-testing/ inside)

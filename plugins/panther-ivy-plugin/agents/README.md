@@ -86,9 +86,9 @@ All agents use two tool sources:
 - **new_prot** (template, empty files) — `protocol-testing/new_prot/`
 - **APT** (cross-cutting attacks) — `protocol-testing/apt/`
 
-A `PreToolUse` hook (`hooks/scripts/block-direct-ivy.sh`) intercepts all `Bash` tool calls and blocks direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`. If a blocked command is detected, the hook exits with a message directing the user to the corresponding MCP tool:
+A `PreToolUse` hook (`hooks/scripts/block-direct-ivy.sh`) intercepts all `Bash` tool calls and warns about direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`. If a warned command is detected, the hook prints a message suggesting the corresponding MCP tool:
 
-| Blocked CLI command | Required MCP tool |
+| Warned CLI command | Required MCP tool |
 |---------------------|-------------------|
 | `ivy_check` | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` |
 | `ivyc` | `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` |

@@ -122,7 +122,7 @@ Always use ivy-tools MCP tools. Never run `ivy_check` directly via Bash.
 - **Full model check**: `ivy_verify` with `relative_path`
 - **Specific isolate check** (faster): `ivy_verify` with `relative_path` and `isolate`
 - **Model inspection**: `ivy_model_info` before verification
-- **Plugin commands**: `/nct-check <file>`, `/nct-check <file> --isolate <name>`
+- **Plugin commands**: `/nct-check file=<path>`, `/nct-check file=<path> isolate=<name>`
 
 ### Interpreting Results
 

@@ -12,7 +12,7 @@ This directory contains 5 slash commands for common Ivy formal verification oper
 | `/nct-compile` | Compile an Ivy model to a test binary via ivy-tools | `file` -- path to `.ivy` file | `target` -- compilation target (default `"test"`); `isolate` -- isolate name |
 | `/nct-model-info` | Display the structure of an Ivy model via ivy-tools | `file` -- path to `.ivy` file | `isolate` -- isolate name to inspect |
 | `/nct-scaffold` | Scaffold a new protocol or test specification | `type` -- `"protocol"` or `"test"` | `name` -- protocol/test name; `protocol` -- target protocol (for tests); `role` -- `"client"`, `"server"`, `"mim"`, or `"attacker"` (for tests) |
-| `/nct-add-pattern` | Add a formal model pattern to an existing protocol specification | `pattern` -- pattern name (e.g., `"variant"`, `"shim"`, `"monitor"`) | `protocol` -- target protocol; `file` -- target file |
+| `/nct-add-pattern` | Add a formal model pattern to an existing protocol specification | `protocol` -- target protocol; `pattern` -- pattern name (e.g., `"variant"`, `"shim"`, `"monitor"`) | `wire_format` -- `"binary"` or `"json"` (for serdes); `role_type` -- `"asymmetric"` or `"symmetric"` (for entity) |
 
 ## Detailed Usage
 
@@ -35,8 +35,8 @@ Run formal verification on an Ivy specification file.
 
 **Expected output format:**
 
-- On success (`return_code` 0): a `Verification Result: PASS` report listing the file, isolate (or "all"), and confirmation that isolate assumptions, invariants, and safety properties passed.
-- On failure (`return_code` non-zero): a `Verification Result: FAIL` report with parsed error messages from `stderr` and suggested follow-up actions (inspect model info, find failing symbols, check behavior monitors).
+- On success (`success` true): a `Verification Result: PASS` report listing the file, isolate (or "all"), and confirmation that isolate assumptions, invariants, and safety properties passed.
+- On failure (`success` false): a `Verification Result: FAIL` report with parsed error messages from diagnostics and suggested follow-up actions (inspect model info, find failing symbols, check behavior monitors).
 
 **Notes:**
 
@@ -64,8 +64,8 @@ Compile an Ivy model to a test executable.
 
 **Expected output format:**
 
-- On success (`return_code` 0): a `Compilation Result: SUCCESS` report showing the file, target, isolate, and a note that the binary is in the `build/` directory. Suggests running via the PANTHER experiment framework and verifying with `/nct-check` before execution.
-- On failure (`return_code` non-zero): a `Compilation Result: FAILURE` report with parsed error messages and suggested actions (run `/nct-check` first, inspect file structure, check for missing includes or undefined symbols).
+- On success (`success` true): a `Compilation Result: SUCCESS` report showing the file, target, isolate, and a note that the binary is in the `build/` directory. Suggests running via the PANTHER experiment framework and verifying with `/nct-check` before execution.
+- On failure (`success` false): a `Compilation Result: FAILURE` report with parsed error messages and suggested actions (run `/nct-check` first, inspect file structure, check for missing includes or undefined symbols).
 
 **Notes:**
 
@@ -99,7 +99,7 @@ A structured `Model Structure` report organized into sections: Types, Relations,
 **Notes:**
 
 - If no file is provided, the command will prompt for which `.ivy` file to inspect.
-- If the model cannot be parsed (`return_code` non-zero), the command suggests using `/nct-check` to diagnose the issue.
+- If the model cannot be parsed (`success` false), the command suggests using `/nct-check` to diagnose the issue.
 - Internally calls `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info`.
 
 ---

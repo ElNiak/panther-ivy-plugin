@@ -12,8 +12,13 @@ set -euo pipefail
 # Read the tool input from stdin
 INPUT=$(cat)
 
+# python3 is required to parse JSON input
+if ! command -v python3 &>/dev/null; then
+  exit 0  # Cannot parse input without python3
+fi
+
 # Extract the command field from the JSON input
-COMMAND=$(printf '%s' "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('command',''))" 2>/dev/null || echo "")
+COMMAND=$(printf '%s' "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('command',''))" 2>&1) || exit 0
 
 # Check if the command contains direct Ivy CLI tool invocations
 if echo "$COMMAND" | grep -qE '\bivy_check\b|\bivyc\b|\bivy_show\b|\bivy_to_cpp\b'; then

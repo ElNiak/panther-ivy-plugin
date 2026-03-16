@@ -24,7 +24,7 @@ Check that the protocol directory exists under `protocol-testing/`:
 - Standard path: `protocol-testing/{protocol}/`
 - APT path: `protocol-testing/apt/apt_protocols/{protocol}/`
 
-If neither exists, ask the user if they want to create it first with `/nct-new-protocol`.
+If neither exists, ask the user if they want to create it first with `/nct-scaffold type=protocol`.
 
 ## Step 2: Detect Current State
 

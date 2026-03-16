@@ -27,8 +27,8 @@ else
     context="[ivy-workspace] No Ivy project detected. Using CWD as workspace: $DETECTED_ROOT."
 fi
 
-# Escape context for JSON safety (handle \ and " in paths)
-context_escaped=$(printf '%s' "$context" | sed 's/\\/\\\\/g; s/"/\\"/g')
+# Escape context for JSON safety using proper JSON escaping
+context_escaped=$(printf '%s' "$context" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])")
 
 # Output hook result as JSON
 cat <<EOF

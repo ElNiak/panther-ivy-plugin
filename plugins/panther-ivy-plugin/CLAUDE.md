@@ -20,7 +20,7 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 
 **CLI commands with MCP equivalents** — a PreToolUse hook warns when these are used directly. Prefer MCP tools for structured output:
 
-| Blocked CLI | Required MCP Tool | Purpose |
+| Warned CLI | Required MCP Tool | Purpose |
 |---|---|---|
 | `ivy_check` | `ivy_verify` | Formal verification (isolates, invariants, safety) |
 | `ivyc` | `ivy_compile` | Compile test executable (`target=test`) |
@@ -40,7 +40,14 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 `ivy_quality` (mode: `suggestions`/`gate`), `ivy_patterns` (mode: `analyze`/`check`), `ivy_pattern_scaffold`
 
 **Ivy LSP** (for `.ivy` files — use the `LSP` tool explicitly):
-Go-to-definition, find-references, hover, document symbols, workspace symbol search. **Note**: Claude Code does not receive automatic diagnostics — use `ivy_lint`/`ivy_diagnostics` MCP tools instead. See the `tooling-reference` skill for usage patterns.
+
+| Category | Operations |
+|----------|-----------|
+| Navigation | `goToDefinition` (cross-include), `goToImplementation` (action→before/after monitors), `findReferences` |
+| Inspection | `hover` (type info + RFC annotations), `documentSymbol` (file outline), `workspaceSymbol` (cross-file search) |
+| Call graph | `prepareCallHierarchy`, `incomingCalls`, `outgoingCalls` |
+
+**Note**: Claude Code does not receive automatic diagnostics — use `ivy_lint`/`ivy_diagnostics` MCP tools instead. See the `tooling-reference` skill for usage patterns.
 
 **Claude native tools**: `Read`/`Grep`/`Glob` for navigation, `Edit`/`Write` for modification.
 
@@ -277,8 +284,27 @@ protocol-testing/{prot}/
 
 **Reference**: `protocol-testing/quic/` (complete, 200+ files). **Template**: `protocol-testing/new_prot/` (scaffold).
 
+## Debugging & Troubleshooting
+
+**Health check**: Run `/nct-health` to verify LSP + MCP are working correctly.
+
+**Log file**: `/tmp/ivy-lsp.log` — both LSP and MCP server logs go here.
+
+**Common failures**:
+- LSP not starting: check if `uvx` is on PATH, check `/tmp/ivy-lsp.log` for startup errors
+- Empty LSP results: workspace indexing may not be complete — check log for "indexed N files"
+- Z3 import error (ARM/Apple Silicon): use `development-scp-refactor` branch for stability
+- MCP server unresponsive: run `ivy_capabilities` to test connectivity, check `/tmp/ivy-lsp.log`
+
+**Debug environment variables**:
+- `IVY_LSP_LOG_LEVEL=DEBUG` — verbose logging
+- `IVY_LSP_FORCE_REINSTALL=1` — force `uvx` to reinstall the package
+- `IVY_LSP_DEV_ROOT=/path/to/local/ivy-lsp` — use local development copy
+
+**Restart**: Kill the `ivy_lsp` process — Claude Code automatically restarts it on the next LSP or MCP call.
+
 ## Quick Reference
 
-**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`
+**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`
 
 **Skills for deep dives**: `methodology-reference`, `specification-patterns`, `ivy-writing-guide`, `tooling-reference`, `workflow-reference`, `ivy-lsp-walkthrough`

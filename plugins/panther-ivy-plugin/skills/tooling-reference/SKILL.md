@@ -289,6 +289,7 @@ Parameters:
   mode: str = "analyze"    # "analyze" | "validate" | "compare" | "check"
   protocol: str | None = None
   pattern: str | None = None
+  reference_protocol: str | None = None  # Required for "compare" mode
 
 Mode "analyze"/"detect": Analyze formal model patterns in a specification
 Returns: { patterns, total_patterns, mode }

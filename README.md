@@ -50,7 +50,7 @@ Claude Code auto-discovers plugins via the `.claude-plugin/` directory. No `pip 
 | Agents | 4 | Methodology guide, model reviewer, spec analyst, traceability agent | [agents/](agents/) |
 | Commands | 5 | Slash commands for verification, compilation, and scaffolding | [commands/](commands/) |
 | Skills | 6 | Domain knowledge for Ivy language, methodologies, and tooling | [skills/](skills/) |
-| Hooks | 3 | PreToolUse (block CLI), PostToolUse (lint .ivy), SessionStart (workspace detection) | -- |
+| Hooks | 3 | PreToolUse (warn CLI), PostToolUse (lint .ivy), SessionStart (workspace detection) | -- |
 
 ## Tooling Architecture
 
@@ -62,7 +62,7 @@ The plugin relies on one MCP server plus native LSP support:
 | **ivy-tools MCP** | Verification, analysis, and visualization | `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_lint`, `ivy_coverage`, `ivy_query`, `ivy_visualize`, `ivy_quality`, `ivy_patterns` | [ivy-lsp](https://github.com/ElNiak/ivy-lsp) (configured via `.mcp.json`) |
 | **Claude's native tools** | Code navigation and editing | `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Bash` | Built into Claude Code |
 
-A **PreToolUse hook** (`hooks/scripts/block-direct-ivy.sh`) intercepts Bash tool calls and blocks direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`, redirecting to the corresponding MCP tool. This ensures all Ivy operations go through the MCP server for consistent behavior and structured output.
+A **PreToolUse hook** (`hooks/scripts/block-direct-ivy.sh`) intercepts Bash tool calls and warns about direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`, suggesting the corresponding MCP tool. This encourages all Ivy operations to go through the MCP server for consistent behavior and structured output.
 
 A **PostToolUse hook** (`hooks/scripts/post-write-ivy-lint.sh`) runs fast structural checks on `.ivy` files after Write/Edit operations, providing immediate feedback on missing `#lang` headers or unbalanced braces.
 
@@ -114,8 +114,8 @@ For interactive guidance, ask Claude directly -- the agents activate automatical
 panther-ivy-plugin/
 ├── .claude-plugin/
 │   └── plugin.json          # Plugin manifest (name, version, description)
-├── .lsp.json                # Native Ivy LSP configuration
 ├── .mcp.json                # ivy-tools MCP server configuration
+│                            # Note: .lsp.json lives in sibling plugin plugins/ivy-lsp/
 ├── agents/                  # 4 agent definitions
 │   ├── README.md            # Agent catalog and selection guide
 │   ├── methodology-guide.md # NCT/NACT/NSCT methodology guide
@@ -130,9 +130,9 @@ panther-ivy-plugin/
 │   ├── nct-scaffold.md      # /nct-scaffold -- scaffold protocol or test
 │   └── nct-add-pattern.md   # /nct-add-pattern -- add formal model pattern
 ├── hooks/
-│   ├── hooks.json           # Hook definitions (PreToolUse, PostToolUse, SubagentStop)
+│   ├── hooks.json           # Hook definitions (PreToolUse, PostToolUse, SessionStart)
 │   └── scripts/
-│       ├── block-direct-ivy.sh      # Blocks direct Ivy CLI, redirects to MCP
+│       ├── block-direct-ivy.sh      # Warns about direct Ivy CLI, suggests MCP
 │       └── post-write-ivy-lint.sh   # Fast structural lint after .ivy writes
 ├── skills/                  # 6 skill directories
 │   ├── README.md            # Skill catalog and learning paths

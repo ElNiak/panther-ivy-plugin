@@ -11,8 +11,13 @@ set -euo pipefail
 
 INPUT=$(cat)
 
+# python3 is required to parse JSON input
+if ! command -v python3 &>/dev/null; then
+  exit 0  # Cannot parse input without python3
+fi
+
 # Extract file path from Write or Edit tool input
-FILE_PATH=$(printf '%s' "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>/dev/null || echo "")
+FILE_PATH=$(printf '%s' "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('file_path',''))" 2>&1) || exit 0
 
 # Only check .ivy files
 if [ -z "$FILE_PATH" ] || [[ "$FILE_PATH" != *.ivy ]]; then
@@ -45,9 +50,9 @@ if [ ! -s "$FILE_PATH" ]; then
 fi
 
 if [ -n "$ERRORS" ]; then
-  # Escape for JSON safety (handle " and \ in filenames and error text)
-  REL_PATH=$(basename "$FILE_PATH" | sed 's/\\/\\\\/g; s/"/\\"/g')
-  ERRORS_ESCAPED=$(printf '%s' "$ERRORS" | sed 's/\\/\\\\/g; s/"/\\"/g')
+  # Escape for JSON safety using proper JSON escaping
+  REL_PATH=$(basename "$FILE_PATH" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])")
+  ERRORS_ESCAPED=$(printf '%s' "$ERRORS" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])")
   # Return additionalContext so Claude sees the issues (non-blocking)
   printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"[IVY-LINT] Structural issues in %s:\\n%sRun ivy_lint MCP tool for full diagnostics."}}' "$REL_PATH" "$ERRORS_ESCAPED"
 fi
