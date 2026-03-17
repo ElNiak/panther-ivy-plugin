@@ -98,9 +98,9 @@ NSCT requires a specific Z3 build mode for Shadow NS compatibility:
 
 ### Common Mistakes
 
-**Wrong build mode**
-- **Problem:** Using Docker build mode instead of Shadow-compatible mode
-- **Fix:** Use empty string `""` build mode for Shadow NS compatibility
+**Correct build mode selection**
+- **Convention:** Match the build mode to your execution environment
+- **Rule:** Use empty string `""` build mode for Shadow NS compatibility; other modes (`debug-asan`, `rel-lto`, `release-static-pgo`) are for NCT/NACT Docker environments
 
 **Missing seed configuration**
 - **Problem:** Tests run with random seeds, losing reproducibility

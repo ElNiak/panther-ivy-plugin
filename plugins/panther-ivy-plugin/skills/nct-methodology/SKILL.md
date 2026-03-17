@@ -110,7 +110,7 @@ Use Claude's built-in tools for navigation/editing. Use ivy-tools MCP tools for 
 | Inspect model | `ivy_model_info` | View types, relations, actions, invariants |
 | Fast structural lint | `ivy_lint` | Quick structural checks |
 
-**IMPORTANT**: Always use ivy-tools MCP tools. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
+**IMPORTANT**: Always use the MCP equivalents: `ivy_verify`, `ivy_compile`, `ivy_model_info` — they provide structured JSON output for automated processing.
 
 ### Directory Structure
 
@@ -132,17 +132,17 @@ The QUIC model (`protocol-testing/quic/`) is the most complete NCT implementatio
 
 Examine `quic_server_test.ivy` as the canonical test structure example.
 
-### Red Flags -- STOP
+### Checkpoints — Verify Before Continuing
 
-| Rationalization | Reality |
-|----------------|---------|
-| "I can skip the type layer" | Types are the foundation. Everything depends on them. |
-| "Verification can wait until the end" | Verify after every meaningful change. Errors compound. |
-| "I know this protocol well enough to skip the RFC" | RFC is the source of truth. Your memory is not. |
-| "This monitor doesn't need a bracket tag" | Every assertion needs traceability. No exceptions. |
-| "Role inversion doesn't matter for this test" | It always matters. Testing a server = Ivy acts as client. |
-| "I'll add _finalize later" | Without _finalize, end-state properties are never checked. |
-| "Direct ivy_check is faster" | MCP tools are required. The hook will block you anyway. |
+| Checkpoint | Condition to Meet |
+|------------|-------------------|
+| Type layer complete | Types are the foundation — all other layers depend on them being defined first. |
+| Verification passes | Verify after every meaningful change — errors compound when deferred. |
+| RFC consulted | RFC is the source of truth for every requirement and assertion. |
+| Bracket tags present | Every assertion has a `# [rfcNNNN:X.Y]` tag for traceability. |
+| Role inversion correct | Testing a server = Ivy acts as client. File names reflect what is tested. |
+| `_finalize` exported | End-state properties require `_finalize` to execute. |
+| MCP tools used | Use `ivy_verify`, `ivy_compile`, `ivy_model_info` for structured output. |
 
 ### Common Mistakes
 
@@ -150,9 +150,9 @@ Examine `quic_server_test.ivy` as the canonical test structure example.
 - **Problem:** Relations/functions start with arbitrary values, not defaults
 - **Fix:** Always include `after init` block setting initial state for all relations
 
-**Wrong role in test file name**
-- **Problem:** File named `quic_client_test_*.ivy` but Ivy plays client role, creating confusion
-- **Fix:** File name indicates WHAT IS TESTED, not what Ivy plays. `quic_server_test_*.ivy` = testing the server.
+**Correct role assignment**
+- **Convention:** Server test files = Ivy plays client (opposite of what is tested)
+- **Rule:** File name indicates WHAT IS TESTED. `quic_server_test_*.ivy` = testing the server, Ivy plays client.
 
 **Missing bracket tags on assertions**
 - **Problem:** Assertions lack `[rfcNNNN:X.Y]` comments, breaking traceability

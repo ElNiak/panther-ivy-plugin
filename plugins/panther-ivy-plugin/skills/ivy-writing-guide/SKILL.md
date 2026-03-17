@@ -351,19 +351,19 @@ requirements:
 
 7. **Missing _finalize**: Without _finalize, end-state properties are never checked.
 
-8. **Wrong role in test file**: Server test = Ivy plays client. Period.
+8. **Correct role convention**: Server test = Ivy plays client. File name reflects what is tested.
 
 ### Best Practices
 
 1. **Name conventions**: `snake_case` for actions/relations/functions. `PascalCase` for module names.
 2. **Small isolates**: Keep isolates focused on one component for easier solving.
-3. **Incremental verification**: Check frequently. Do not write hundreds of lines before verifying.
+3. **Incremental verification**: Verify incrementally — small changes are easier to debug than large batches.
 4. **Document invariants**: Add comments explaining why each invariant is needed.
 5. **Separate specification from implementation**: Use `specification` and `implementation` blocks.
 6. **Use `after init`**: Explicitly initialize all mutable state.
 7. **Minimize axioms**: Every axiom is an unverified assumption.
 
-**IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
+**IMPORTANT**: Always use the MCP equivalents: `ivy_verify`, `ivy_compile`, `ivy_model_info` — they provide structured JSON output for automated processing.
 
 ## Integration
 

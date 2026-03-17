@@ -11,7 +11,7 @@ This skill guides the iterative loop for adding RFC requirements to an Ivy forma
 
 ## The Incremental Loop
 
-Each requirement follows this 9-step cycle. Never skip steps or batch multiple requirements.
+Each requirement follows this 9-step cycle. Complete each step in order with one requirement per iteration.
 
 ### Step 1: Identify the Next RFC Requirement
 
@@ -77,7 +77,7 @@ This catches:
 - Unmatched braces and syntax errors
 - Structural problems that would waste minutes in full verification
 
-**Fix any lint errors before proceeding.** Do not skip this step.
+**Fix any lint errors before proceeding.** Always run this step — it takes milliseconds and catches structural errors.
 
 ### Step 5: Formal Check with `ivy_verify`
 
@@ -104,7 +104,7 @@ When `ivy_verify` returns a failure:
 | Ungrounded variable | Free variable in assertion | Bind the variable: `require P = the_cid -> property(P)` |
 | Z3 timeout | Proof obligation too complex | Break into smaller isolates, add auxiliary lemmas |
 
-4. After fixing, return to Step 4 (lint) and Step 5 (verify) again. Do not proceed until verification passes.
+4. After fixing, return to Step 4 (lint) and Step 5 (verify) again. Re-run lint and verify until both pass before continuing.
 
 ### Step 7: Track Coverage Progress
 
@@ -156,7 +156,7 @@ One commit per requirement keeps the git history bisectable and each commit inde
 
 - **Start with minimal dependencies**: Pick requirements that depend on the fewest other state variables. A requirement like "packets MUST include a version field" is simpler than "the handshake MUST complete before application data."
 - **Group related requirements**: Work through requirements from the same RFC section or that share state variables. For example, all stream flow control requirements (RFC 9000 Section 4) share `max_stream_data` and `total_data_sent`.
-- **Build state incrementally**: Add state variables (relations, functions) as needed by each requirement. Do not pre-declare state variables you are not yet using.
+- **Build state incrementally**: Add state variables (relations, functions) as needed by each requirement. Add state variables only when a requirement demands them.
 
 ### Finding Uncovered Requirements
 
@@ -229,47 +229,37 @@ After MUST requirements are complete, repeat the loop for SHOULD requirements if
 
 ---
 
-## Anti-Patterns to Avoid
+## Best Practices for Incremental Development
 
-### 1. Adding Multiple Requirements Without Verifying Between Each
+### 1. Verify After Each Requirement Addition
 
-**Wrong**: Write five monitors, then run `ivy_verify` once.
+**Effective approach**: Write one monitor, lint, verify, track coverage, commit. Then proceed to the next.
 
-**Right**: Write one monitor, lint, verify, track coverage, commit. Then the next.
+**Why**: Immediate feedback pinpoints which assertion caused any failure, and every commit is independently verifiable.
 
-**Why**: When verification fails after adding five requirements, you cannot tell which one caused the failure. The incremental approach gives immediate feedback and keeps the specification in a known-good state at every commit.
+### 2. Lint Before Verify
 
-### 2. Skipping `ivy_lint`
+**Effective approach**: Run `ivy_lint` before `ivy_verify` after every edit.
 
-**Wrong**: Go straight to `ivy_verify` after editing.
+**Why**: `ivy_lint` catches structural errors in milliseconds; `ivy_verify` takes seconds to minutes. Catching a typo in 50ms instead of 120s compounds across dozens of iterations.
 
-**Right**: Always run `ivy_lint` first.
+### 3. Check Coverage Gaps Before Writing Guards
 
-**Why**: `ivy_lint` runs in milliseconds and catches structural errors (missing header, unresolved includes, syntax). `ivy_verify` takes seconds to minutes. Catching a typo in 50ms instead of 120 seconds compounds across dozens of iterations.
+**Effective approach**: Before writing `require property(X)`, use `ivy_coverage_gaps()` to verify that the state variable has initialization (`after init`) and guard conditions.
 
-### 3. Ignoring Coverage Gaps in State Variable Guards
+**Why**: Uninitialized state variables start with arbitrary values in Ivy — a `require conn_seen(C)` without `after init { conn_seen(C) := false }` behaves unpredictably. The gaps tool identifies unguarded state variables explicitly.
 
-**Wrong**: Write `require property(X)` without checking that the state variable `property` is properly initialized and guarded.
+### 4. Run Quality Gate After Each Addition
 
-**Right**: Check with `ivy_coverage_gaps()` that state variables have initialization (`after init` blocks) and guard conditions in all relevant `before` blocks.
+**Effective approach**: Run `ivy_quality_gate(protocol="{prot}", gate_level="minimal")` after each addition.
 
-**Why**: Uninitialized state variables start with arbitrary values in Ivy. A `require conn_seen(C)` without `after init { conn_seen(C) := false }` will have unpredictable behavior. The gaps tool identifies unguarded state variables explicitly.
+**Why**: Verification passing means internal consistency, but the quality gate also checks naming conventions, bracket tags, and traceability — catching issues verification alone misses.
 
-### 4. Committing Without a Passing Quality Gate
+### 5. Add State Variables On Demand
 
-**Wrong**: Commit after `ivy_verify` passes but without checking the quality gate.
+**Effective approach**: Add state variables as each requirement demands them.
 
-**Right**: Run `ivy_quality_gate(protocol="{prot}", gate_level="minimal")` after each addition.
-
-**Why**: Verification passing means the model is internally consistent, but it does not check naming conventions, missing bracket tags, or traceability. The quality gate catches these.
-
-### 5. Pre-declaring State Variables Not Yet Needed
-
-**Wrong**: Add 20 relations and functions at the start "in case we need them."
-
-**Right**: Add state variables as each requirement demands them.
-
-**Why**: Unused state variables inflate the verification state space, slow down Z3, and create false gaps in coverage reports. Add what you need, when you need it.
+**Why**: Unused state variables inflate the Z3 verification state space, slow down solving, and create false gaps in coverage reports.
 
 ---
 

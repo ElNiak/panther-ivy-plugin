@@ -117,7 +117,7 @@ export action _finalize = {
 
 ### Running Verification
 
-Always use ivy-tools MCP tools. Never run `ivy_check` directly via Bash.
+Always use `ivy_verify` MCP tool for structured JSON output.
 
 - **Full model check**: `ivy_verify` with `relative_path`
 - **Specific isolate check** (faster): `ivy_verify` with `relative_path` and `isolate`
@@ -166,16 +166,16 @@ Failures include line numbers, counterexample traces, and error type.
 **Z3 timeout**
 - Simplify by breaking into smaller lemmas. Add ghost state or auxiliary invariants. Use isolate boundaries.
 
-### Red Flags -- STOP
+### Checkpoints — Verify Before Continuing
 
-| Rationalization | Reality |
-|----------------|---------|
-| "Verification passed last time, it should still pass" | Run it. Previous results prove nothing about current state. |
-| "This change is too small to break anything" | Small changes break invariants. Verify. |
-| "Z3 timed out, so the model is probably fine" | Timeout means unknown, not OK. |
-| "I can assume this invariant holds" | Use `require`, not `assume`. |
-| "The error is in a different isolate, I can ignore it" | Isolate failures can cascade. |
-| "I'll fix the verification failure after finishing the feature" | Never proceed with broken verification. |
+| Checkpoint | Condition to Meet |
+|------------|-------------------|
+| Verification re-run | Run `ivy_verify` after every change — previous results prove nothing about current state. |
+| Small changes verified | Small changes can break invariants. Verify even single-line edits. |
+| Z3 timeout investigated | Timeout means unknown, not OK. Simplify the proof or add lemmas. |
+| `require` used over `assume` | Use `require` for preconditions — `assume` weakens the model. |
+| All isolate errors resolved | Isolate failures can cascade. Resolve all before continuing. |
+| Verification passes before feature work | Resolve all verification failures before moving to the next requirement. |
 
 ---
 
