@@ -2,7 +2,7 @@
 
 NCT/NACT/NSCT methodology guidance for Ivy protocol testing via native Ivy LSP and ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.
 
-**Version:** 0.4.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
+**Version:** 0.5.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
 
 ## Overview
 
@@ -48,7 +48,7 @@ Claude Code auto-discovers plugins via the `.claude-plugin/` directory. No `pip 
 | Component | Count | Description | Details |
 |-----------|-------|-------------|---------|
 | Agents | 4 | Methodology guide, model reviewer, spec analyst, traceability agent | [agents/](agents/) |
-| Commands | 5 | Slash commands for verification, compilation, and scaffolding | [commands/](commands/) |
+| Commands | 7 | Slash commands for verification, compilation, and scaffolding | [commands/](commands/) |
 | Skills | 6 | Domain knowledge for Ivy language, methodologies, and tooling | [skills/](skills/) |
 | Hooks | 3 | PreToolUse (warn CLI), PostToolUse (lint .ivy), SessionStart (workspace detection) | -- |
 
@@ -122,13 +122,15 @@ panther-ivy-plugin/
 │   ├── model-reviewer.md    # Model quality reviewer
 │   ├── spec-analyst.md      # Specification explorer and verifier
 │   └── traceability-agent.md # RFC requirement extraction and coverage audit
-├── commands/                # 5 slash commands
+├── commands/                # 7 slash commands
 │   ├── README.md            # Command reference and workflows
 │   ├── nct-check.md         # /nct-check -- formal verification
 │   ├── nct-compile.md       # /nct-compile -- compile to test binary
 │   ├── nct-model-info.md    # /nct-model-info -- model structure
 │   ├── nct-scaffold.md      # /nct-scaffold -- scaffold protocol or test
-│   └── nct-add-pattern.md   # /nct-add-pattern -- add formal model pattern
+│   ├── nct-add-pattern.md   # /nct-add-pattern -- add formal model pattern
+│   ├── nct-health.md        # /nct-health -- health check for LSP + MCP integration
+│   └── nct-validate.md      # /nct-validate -- comprehensive correctness validation
 ├── hooks/
 │   ├── hooks.json           # Hook definitions (PreToolUse, PostToolUse, SessionStart)
 │   └── scripts/

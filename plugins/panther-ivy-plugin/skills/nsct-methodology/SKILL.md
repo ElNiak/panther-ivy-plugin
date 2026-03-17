@@ -87,14 +87,14 @@ NSCT requires a specific Z3 build mode for Shadow NS compatibility:
 - This uses the legacy `mk_make.py` build system compatible with Shadow NS
 - Other build modes (`debug-asan`, `rel-lto`, `release-static-pgo`) are for NCT/NACT Docker environments
 
-### Red Flags -- STOP
+### Checkpoints — Verify Before Continuing
 
-| Rationalization | Reality |
-|----------------|---------|
-| "I can skip the simulation config" | Without proper topology, your simulation doesn't test what you think it tests. |
-| "The same Docker build works for Shadow" | Shadow requires specific build modes. Use the right `build_mode` setting. |
-| "Deterministic seeds don't matter for this test" | Determinism is Shadow's key advantage. Always set and document seeds. |
-| "I don't need network condition modeling" | If you're not using latency/loss/bandwidth, why use Shadow at all? |
+| Checkpoint | Condition to Meet |
+|------------|-------------------|
+| Simulation config defined | Proper topology ensures the simulation tests what you intend. |
+| Correct build mode selected | Shadow requires `build_mode: ""` — other modes are for NCT/NACT Docker environments. |
+| Deterministic seed configured | Reproducibility is Shadow's key advantage. Always set and document seeds. |
+| Network conditions modeled | Latency/loss/bandwidth modeling is the reason to use Shadow over Docker. |
 
 ### Common Mistakes
 

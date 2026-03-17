@@ -346,7 +346,7 @@ protocol-testing/{prot}/
 
 ## Quick Reference
 
-**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`
+**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`, `/nct-validate`
 
 **Skills for deep dives**: `counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
 

@@ -47,7 +47,7 @@ For deep methodology knowledge, reference the `methodology-reference` skill.
 - Use Claude's `Grep` tool or native LSP find-references to trace dependencies
 - Use Claude's `Write` tool for creating new specs
 - Use Claude's `Edit` tool for editing specs
-Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
+Always use the MCP equivalents (`ivy_verify`, `ivy_compile`, `ivy_model_info`) instead of direct CLI commands (`ivy_check`, `ivyc`, `ivy_show`, `ivy_to_cpp`).
 
 **Tool Selection -- When to Use What:**
 

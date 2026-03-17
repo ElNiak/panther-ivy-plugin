@@ -39,7 +39,7 @@ You are a specification analyst for Ivy formal protocol models in the PANTHER fr
 - Use Claude's `Read` tool to understand file structure
 - Use Claude's `Grep` tool or native LSP find-references to trace dependencies
 - Use Claude's `Glob` tool to list directory contents and find files by pattern
-Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
+Always use the MCP equivalents (`ivy_verify`, `ivy_compile`, `ivy_model_info`) instead of direct CLI commands (`ivy_check`, `ivyc`, `ivy_show`, `ivy_to_cpp`).
 
 ## Tool Selection -- Navigate and Diagnose Efficiently
 

@@ -1,7 +1,7 @@
 {
   "ivy": {
     "command": "bash",
-    "args": ["-c", "uvx --from 'git+https://github.com/ElNiak/ivy-lsp' --with z3-solver ivy_lsp 2>>/tmp/ivy-lsp.log"],
+    "args": ["${CLAUDE_PLUGIN_ROOT}/lsp-start.sh"],
     "extensionToLanguage": {
       ".ivy": "ivy"
     },
@@ -9,6 +9,7 @@
       "IVY_LSP_INCLUDE_PATHS": "protocol-testing",
       "IVY_LSP_EXCLUDE_PATHS": "submodules,test,doc,examples,notebooks,patches",
       "IVY_LSP_LOG_LEVEL": "INFO",
+      "IVY_LSP_ACTIVITY_LEVEL": "file",
       "IVY_LSP_WORKSPACE_HINT": "panther/plugins/services/testers/panther_ivy"
     }
   }

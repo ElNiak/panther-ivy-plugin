@@ -113,15 +113,15 @@ protocol-testing/apt/
 - NACT adds attack entity roles and the APT lifecycle framework
 - A comprehensive testing campaign uses both NCT and NACT
 
-### Red Flags -- STOP
+### Checkpoints — Verify Before Continuing
 
-| Rationalization | Reality |
-|----------------|---------|
-| "I can skip the threat model definition" | Without a threat model, you're testing random behavior, not attacks. |
-| "This attack doesn't need entity definitions" | Every attack needs attacker, target, and optionally bot/C2/MIM entities. |
-| "I can reuse the NCT behavior files directly" | NACT requires adversarial monitors -- NCT monitors enforce compliance, not attacks. |
-| "The APT stages don't apply to this protocol" | All 6 stages apply. Some may be trivial, but they must be considered. |
-| "I'll add persistence modeling later" | Without persistence, the attack model is incomplete and unrealistic. |
+| Checkpoint | Condition to Meet |
+|------------|-------------------|
+| Threat model defined | A threat model grounds the test in realistic attack scenarios. |
+| Attack entities created | Every attack needs attacker, target, and optionally bot/C2/MIM entities in `apt_entities/`. |
+| Adversarial monitors written | NACT requires adversarial monitors — NCT monitors enforce compliance, not attacks. |
+| All 6 APT stages considered | All stages apply. Some may be trivial, but each must be explicitly addressed. |
+| Persistence modeled | Include persistence for a complete and realistic attack model. |
 
 ### Common Mistakes
 
