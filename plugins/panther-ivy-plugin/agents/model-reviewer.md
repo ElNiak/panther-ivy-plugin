@@ -1,6 +1,6 @@
 ---
 name: model-reviewer
-description: Use this agent when the user asks to review Ivy formal specification models for correctness, completeness, or adherence to Ivy modeling best practices. Use before committing changes to .ivy files. Examples:
+description: "Use this agent when the user asks to review Ivy formal specification models for correctness, completeness, or adherence to Ivy modeling best practices. Use before committing changes to .ivy files. **This agent should be used proactively** after writing or modifying `.ivy` files, especially before committing changes to the specification. When Claude has just edited `.ivy` files via Write or Edit tools, it should automatically dispatch this agent."
 
   <example>
   Context: User wants a quality review of their Ivy model.
@@ -26,6 +26,15 @@ description: Use this agent when the user asks to review Ivy formal specificatio
   assistant: "Let me use the model-reviewer agent to review the Ivy specification before committing."
   <commentary>
   Pre-commit review of Ivy models catches issues before they enter the codebase.
+  </commentary>
+  </example>
+
+  <example>
+  Context: The assistant has just edited quic_connection.ivy to add a new invariant.
+  assistant: "I've added the connection state invariant."
+  assistant: "Now I'll use the model-reviewer agent to validate the changes."
+  <commentary>
+  Proactively review Ivy model changes after editing to catch issues before commit.
   </commentary>
   </example>
 

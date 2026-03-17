@@ -12,7 +12,7 @@
 
 | Skill | Description |
 |-------|-------------|
-| [methodology-reference](methodology-reference/) | Overview of all three PANTHER methodologies with links to dedicated sub-skills |
+| [methodology-reference](methodology-reference/) | Comprehensive reference for all three PANTHER methodologies (NCT, NACT, NSCT) with full workflows, red flags, common mistakes, and directory structures |
 | [nct-methodology](nct-methodology/) | NCT: specification-based protocol compliance testing, 10-step workflow, role inversion |
 | [nact-methodology](nact-methodology/) | NACT: security testing with APT 6-stage lifecycle, attack entities |
 | [nsct-methodology](nsct-methodology/) | NSCT: Shadow Network Simulator, deterministic execution, topology control |
@@ -71,8 +71,8 @@
 
 ### methodology-reference
 - **Category**: Methodology
-- **Purpose**: Overview of all three PANTHER methodologies with links to dedicated sub-skills (nct-methodology, nact-methodology, nsct-methodology).
-- **Related commands**: `/nct-check`, `/nct-compile`, `/nct-scaffold`
+- **Purpose**: Comprehensive reference for all three PANTHER methodologies (NCT, NACT, NSCT) with full workflows, red flags, common mistakes, and directory structures. Links to dedicated sub-skills for deep dives.
+- **Related commands**: `/nct-check`, `/nct-compile`, `/nct-scaffold`, `/nct-review`
 
 ### nct-methodology
 - **Category**: Methodology
@@ -138,7 +138,7 @@
 | spec-analyst | Navigates, explores, verifies, and diagnoses Ivy protocol specifications |
 | traceability-agent | Extracts RFC requirements, creates manifests, and audits coverage |
 
-### Available Commands (8)
+### Available Commands (9)
 
 | Command | Purpose |
 |---------|---------|
@@ -148,5 +148,6 @@
 | `/nct-model-info` | Display model structure (`ivy_show`) |
 | `/nct-scaffold` | Scaffold a new protocol model or test specification |
 | `/nct-health` | Run health check for Ivy LSP + MCP integration |
+| `/nct-review` | Comprehensive multi-agent specification review |
 | `/nct-validate` | Comprehensive correctness validation with full raw-output report |
 | `/nct-observability` | Query and analyze Ivy observability session logs |
