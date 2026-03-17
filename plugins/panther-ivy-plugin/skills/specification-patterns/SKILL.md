@@ -331,20 +331,25 @@ instance {prot}_serdes : serdes({prot}_packet, stream_data, {prot}_ser, {prot}_d
 ```
 
 #### Analyzing existing patterns
-Use the `ivy_pattern_analysis` MCP tool:
+Use the `ivy_patterns` MCP tool:
 ```
-ivy_pattern_analysis(protocol="quic", mode="detect")
-ivy_pattern_analysis(protocol="quic", mode="validate")
-ivy_pattern_analysis(protocol="quic", mode="compare", reference_protocol="bgp")
+ivy_patterns(mode="analyze", protocol="quic")
+ivy_patterns(mode="validate", protocol="quic")
+ivy_patterns(mode="compare", protocol="quic", reference_protocol="bgp")
 ```
 
 Template files are in `protocol-testing/patterns/` with the registry in `pattern_catalog.yaml`.
 
 ## Integration
 
-**Used by:**
+**Related skills:**
 - **methodology-reference** -- Layer decomposition in NCT/NACT/NSCT workflows
 - **ivy-writing-guide** -- Ivy language reference for writing layers
+- **tooling-reference** -- MCP tool parameters for pattern analysis
+
+**Related agents:**
+- **methodology-guide** -- Interactive workflow using these patterns
+- **spec-analyst** -- Specification navigation across layers
 
 **Related commands:**
 - `/nct-scaffold type=protocol` -- Scaffolds from the 14-layer template

@@ -77,16 +77,7 @@ invariant ack_pending(P) -> sent(P, dest(P))
 
 Invariants are checked inductively: must hold initially and be preserved by every action.
 
-### Axioms and Conjectures
-
-```ivy
-axiom connected(X, Y) -> connected(Y, X)     # Assumed true (not checked)
-conjecture forall P. sent(P, dest(P)) -> ack_pending(P)  # Checked but not inductive
-```
-
 ## Object System
-
-### Basic Objects (Namespaces)
 
 ```ivy
 object frame = {
@@ -97,30 +88,7 @@ object frame = {
 }
 ```
 
-### Type `this`
-
-Inside an object, `type this` declares the object itself as a parameterized type:
-```ivy
-object counter = {
-    type this
-    individual val(X: this) : nat
-    action increment(c: this) = { val(c) := val(c) + 1 }
-}
-```
-
-### Nested Objects
-
-```ivy
-object protocol = {
-    object client = {
-        action connect(srv: server.endpoint)
-    }
-    object server = {
-        type endpoint
-        action accept(c: client)
-    }
-}
-```
+See the [README.md](README.md) for extended examples: `type this`, nested objects, axioms/conjectures.
 
 ## Module System
 
@@ -304,7 +272,7 @@ ensure stream_data_delivered;               # [rfc9000:2.2]
 
 1. **Identify requirements**: Consult RFC text and `*_requirements.yaml` manifest
 2. **Write assertions with tags**: Tag each require/ensure/assert
-3. **Check coverage**: Use `ivy_requirement_coverage` MCP tool
+3. **Check coverage**: Use `ivy_coverage` (mode="stats") MCP tool
 4. **Review diagnostics**: Use `ivy_diagnostics` MCP tool
 
 ### Requirement Manifest
@@ -363,11 +331,7 @@ requirements:
 6. **Use `after init`**: Explicitly initialize all mutable state.
 7. **Minimize axioms**: Every axiom is an unverified assumption.
 
-**IMPORTANT**: Always use the MCP equivalents: `ivy_verify`, `ivy_compile`, `ivy_model_info` — they provide structured JSON output for automated processing.
-
 ## Integration
-
-**Used by:** All specification writing workflows
 
 **Related skills:**
 - **specification-patterns** -- Where to place each declaration type (14-layer template)

@@ -307,13 +307,18 @@ After applying the fix, re-run `ivy_verify` to confirm the counterexample is res
 
 ## Integration
 
+**Prerequisite:** `ivy-writing-guide` -- Understanding Ivy syntax for before/after monitors, invariants, and state variables.
+
 **Related skills:**
 - **workflow-reference** -- General verification debugging cycle and error taxonomy
 - **tooling-reference** -- MCP tool parameters and invocation patterns
 - **ivy-writing-guide** -- Ivy syntax for before/after monitors, invariants, state variables
 
+**Related agents:**
+- **spec-analyst** -- Automated verification and diagnosis
+
 **MCP tools used in this workflow:**
 - `ivy_verify` -- Run verification (source of counterexamples)
-- `ivy_query(mode="info")` -- Look up symbol definitions
-- `ivy_visualize(view="state_machine")` -- View state transitions
-- `ivy_coverage(mode="gaps")` -- Find related unguarded state
+- `ivy_query` (mode="info") -- Look up symbol definitions
+- `ivy_visualize` (view="state_machine") -- View state transitions
+- `ivy_coverage` (mode="gaps") -- Find related unguarded state

@@ -157,3 +157,21 @@ Examine `quic_server_test.ivy` as the canonical test structure example.
 **Missing bracket tags on assertions**
 - **Problem:** Assertions lack `[rfcNNNN:X.Y]` comments, breaking traceability
 - **Fix:** Tag every `require`/`ensure`/`assert` with its RFC section reference
+
+## Integration
+
+**Related skills:**
+- **ivy-writing-guide** -- Ivy syntax for writing monitors and test specs
+- **specification-patterns** -- 14-layer template and pattern library
+- **workflow-reference** -- Verification workflows and quality gates
+- **incremental-spec-dev** -- Add-verify-iterate loop for requirements
+- **tooling-reference** -- MCP tool parameters and LSP patterns
+
+**Related agents:**
+- **methodology-guide** -- Interactive NCT workflow execution
+- **spec-analyst** -- Specification navigation and verification
+
+**Related commands:**
+- `/nct-check` -- Quick verification
+- `/nct-compile` -- Compilation
+- `/nct-scaffold` -- Protocol and test scaffolding

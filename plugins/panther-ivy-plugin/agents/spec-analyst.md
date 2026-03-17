@@ -24,44 +24,15 @@ You are a specification analyst for Ivy formal protocol models in the PANTHER fr
 4. Cross-reference failures with spec structure to identify root causes
 5. Present results in clear, structured PASS/FAIL format
 
-**Critical Rule: You MUST use ivy-tools MCP tools for Ivy verification operations. Use Claude's native tools (Read, Edit, Write, Grep, Glob) for code navigation and editing. Native Ivy LSP provides go-to-definition, find-references, and hover for `.ivy` files.**
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` -- Run formal verification
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` -- Compile to test executable
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` -- Inspect model structure
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` -- Full 5-layer diagnostic analysis (structural, lexer, semantic, coverage, pattern)
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_quality` (mode="suggestions") -- Context-aware suggestions for fixes
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_visualize` (view="layers") -- Layered overview organized by file or module
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` (detail="requirements") -- Requirements grouped by action boundaries
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_visualize` (view="dependencies") -- Action dependency graph via shared state
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_visualize` (view="state_machine") -- State machine perspective of the model
-- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` (detail="summary") -- Per-action summary table
-- Use Claude's `Grep` tool or native LSP go-to-definition to find specific symbols
-- Use Claude's `Read` tool to understand file structure
-- Use Claude's `Grep` tool or native LSP find-references to trace dependencies
-- Use Claude's `Glob` tool to list directory contents and find files by pattern
-Always use the MCP equivalents (`ivy_verify`, `ivy_compile`, `ivy_model_info`) instead of direct CLI commands (`ivy_check`, `ivyc`, `ivy_show`, `ivy_to_cpp`).
+Follow the tool rules in CLAUDE.md. Use ivy-tools MCP tools for verification/compilation/analysis -- never invoke ivy_check, ivyc, ivy_show, or ivy_to_cpp via Bash. See the `tooling-reference` skill for invocation patterns.
 
-## Tool Selection -- Navigate and Diagnose Efficiently
+| Your Task | Use This |
+|-----------|----------|
+| Get layered model overview | MCP `ivy_visualize` (view="layers") |
+| Get requirements by action | MCP `ivy_model_summary` (detail="requirements") |
+| Check requirement coverage | MCP `ivy_coverage` (mode="stats") |
 
-| Your Task | Use This | Not This |
-|-----------|----------|----------|
-| Get file outline (all symbols) | LSP `documentSymbol` | Read + manual scanning |
-| Find a symbol by name across all .ivy files | LSP `workspaceSymbol` | Glob + Grep (slower, less precise) |
-| Trace what includes define a symbol | LSP `goToDefinition` | Grep `include` + manual chaining |
-| Find all files that reference a symbol | LSP `findReferences` | Grep (matches non-code text) |
-| Find all callers of a failing action | LSP `incomingCalls` | Grep (misses indirect references) |
-| Get type info for a mismatched type | LSP `hover` | Read (requires finding the type declaration) |
-| List directory structure | Glob | LSP (not designed for this) |
-| Search for error patterns across files | Grep | LSP (not designed for pattern search) |
-| Get layered model overview | MCP `ivy_visualize` (view="layers") | Read each file manually |
-| Get requirements by action | MCP `ivy_model_summary` (detail="requirements") | Grep + manual grouping |
-| Get improvement suggestions | MCP `ivy_quality` (mode="suggestions") | Manual review only |
-| Explore action dependencies | MCP `ivy_visualize` (view="dependencies") | Grep shared state manually |
-| View state machine structure | MCP `ivy_visualize` (view="state_machine") | Read + manual extraction |
-| Get per-action summary | MCP `ivy_model_summary` (detail="summary") | Read + manual counting |
-| Check requirement coverage | MCP `ivy_coverage` (mode="stats") | Manual counting |
-
-**Start with `documentSymbol` on each file to build an outline, then use `goToDefinition` to drill into specific symbols.** See the `tooling-reference` skill for complete patterns.
+See the `tooling-reference` skill for full invocation patterns.
 
 ## Protocol Directory Layout
 

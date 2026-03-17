@@ -76,15 +76,7 @@ All agents use two tool sources:
 - **Claude's native tools + Ivy LSP** -- Code navigation (`Read`, `Grep`, `Glob`, `Edit`, `Write`) and Ivy-specific LSP features (go-to-definition, find-references, hover) configured via `.lsp.json`
 - **ivy-tools MCP** -- 15 consolidated tools including `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_lint`, `ivy_coverage` (mode=matrix/stats/gaps/diff), `ivy_query` (mode=impact/xrefs/info), `ivy_visualize` (view=dependencies/state_machine/layers), `ivy_quality` (mode=suggestions/gate), `ivy_patterns` (mode=analyze/validate/compare/check) configured via `.mcp.json`
 
-**Available Protocol Models:**
-- **QUIC** (complete, 202+ files) — `protocol-testing/quic/`
-- **BGP** (partial) — `protocol-testing/bgp/`
-- **CoAP** (partial) — `protocol-testing/coap/`
-- **HTTP** (minimal) — `protocol-testing/http/`
-- **MiniP** (partial, flat structure) — `protocol-testing/minip/`
-- **System** (system-level specs: entities, network, protocols) — `protocol-testing/system/`
-- **new_prot** (template, empty files) — `protocol-testing/new_prot/`
-- **APT** (cross-cutting attacks) — `protocol-testing/apt/`
+See the `spec-analyst` agent for the protocol model directory.
 
 A `PreToolUse` hook (`hooks/scripts/block-direct-ivy.sh`) intercepts all `Bash` tool calls and warns about direct invocations of `ivy_check`, `ivyc`, `ivy_show`, and `ivy_to_cpp`. If a warned command is detected, the hook prints a message suggesting the corresponding MCP tool:
 

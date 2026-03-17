@@ -105,3 +105,15 @@ NSCT requires a specific Z3 build mode for Shadow NS compatibility:
 **Missing seed configuration**
 - **Problem:** Tests run with random seeds, losing reproducibility
 - **Fix:** Always configure `seed` in the experiment YAML for Shadow runs
+
+## Integration
+
+**Prerequisite:** `nct-methodology` -- NSCT reuses the same Ivy specs; understand NCT concepts first.
+
+**Related skills:**
+- **nct-methodology** -- Base NCT concepts (same Ivy specs, different execution environment)
+- **specification-patterns** -- 14-layer template (reused by NSCT)
+- **tooling-reference** -- MCP tool parameters
+
+**Related agents:**
+- **methodology-guide** -- Interactive NSCT workflow execution

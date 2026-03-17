@@ -112,7 +112,7 @@ LSP(operation="findReferences", filePath="protocol-testing/quic/quic_stack/quic_
 ### 4a. Check requirement coverage
 
 ```
-MCP: ivy_requirement_coverage(relative_path="protocol-testing/quic/quic_stack/")
+MCP: ivy_coverage(mode="stats", relative_path="protocol-testing/quic/quic_stack/")
 ```
 
 **Returns**: Coverage statistics by RFC section and normative level (MUST/SHOULD/MAY). Look for `rfc9000:7.3` — if coverage is low, this confirms the need for a new monitor.
@@ -120,7 +120,7 @@ MCP: ivy_requirement_coverage(relative_path="protocol-testing/quic/quic_stack/")
 ### 4b. Identify specific gaps
 
 ```
-MCP: ivy_coverage_gaps(test_file="protocol-testing/quic/")
+MCP: ivy_coverage(mode="gaps", test_file="protocol-testing/quic/")
 ```
 
 **Returns**: Unguarded state variables, uncovered RFC requirements, and phantom references. Look for `rfc9000:7.3` in the uncovered list.
@@ -176,7 +176,7 @@ MCP: ivy_verify(relative_path="protocol-testing/quic/quic_entities_behavior/ivy_
 Confirm the new bracket tag is registered:
 
 ```
-MCP: ivy_traceability_matrix(relative_path="protocol-testing/quic/")
+MCP: ivy_coverage(mode="matrix", relative_path="protocol-testing/quic/")
 ```
 
 **Expected**: `rfc9000:7.3` now appears as covered, mapped to the new assertion in the behavior file.
@@ -186,9 +186,9 @@ MCP: ivy_traceability_matrix(relative_path="protocol-testing/quic/")
 | Phase | Steps | Tools Used | Purpose |
 |-------|-------|-----------|---------|
 | **Navigation** | 1-3 | LSP (documentSymbol, workspaceSymbol, goToDefinition, findReferences, hover) | Understand code semantically |
-| **Analysis** | 4 | MCP (ivy_requirement_coverage, ivy_coverage_gaps) | Identify what's missing |
+| **Analysis** | 4 | MCP (ivy_coverage mode="stats", ivy_coverage mode="gaps") | Identify what's missing |
 | **Editing** | 5 | Edit | Write the new monitor |
-| **Validation** | 6-8 | MCP (ivy_lint, ivy_verify, ivy_traceability_matrix) | Confirm correctness and traceability |
+| **Validation** | 6-8 | MCP (ivy_lint, ivy_verify, ivy_coverage mode="matrix") | Confirm correctness and traceability |
 
 **LSP was used for Steps 1-3** (5 distinct operations) to navigate the codebase semantically.
 **MCP was used for Steps 4, 6-8** (4 distinct tools) for analysis and verification.
@@ -201,15 +201,21 @@ Need to FIND something?     --> LSP (goToDefinition, findReferences, workspaceSy
 Need to UNDERSTAND type?     --> LSP (hover)
 Need to SEE structure?       --> LSP (documentSymbol)
 Need to CHECK correctness?   --> MCP (ivy_lint, ivy_verify, ivy_diagnostics)
-Need to CHECK coverage?      --> MCP (ivy_requirement_coverage, ivy_coverage_gaps)
-Need to CHECK traceability?  --> MCP (ivy_traceability_matrix)
+Need to CHECK coverage?      --> MCP (ivy_coverage mode="stats", ivy_coverage mode="gaps")
+Need to CHECK traceability?  --> MCP (ivy_coverage mode="matrix")
 Need to SEARCH text/regex?   --> Grep
 Need to READ file content?   --> Read
 ```
 
 ## Integration
 
+**Prerequisite:** `tooling-reference` -- LSP and MCP tool architecture and invocation patterns.
+
 **Related skills:**
-- **tooling-reference** — LSP invocation patterns and MCP tool parameters used in this walkthrough
-- **ivy-writing-guide** — Ivy syntax for editing
-- **workflow-reference** — Verification and quality gate workflows
+- **tooling-reference** -- LSP invocation patterns and MCP tool parameters used in this walkthrough
+- **ivy-writing-guide** -- Ivy syntax for editing
+- **workflow-reference** -- Verification and quality gate workflows
+
+**Related agents:**
+- **spec-analyst** -- Specification navigation and verification
+- **methodology-guide** -- Methodology workflow execution

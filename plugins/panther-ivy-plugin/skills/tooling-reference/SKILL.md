@@ -5,22 +5,15 @@ description: "Use when choosing between LSP, MCP tools, and Claude native tools 
 
 # Tooling Reference: LSP, MCP Tools, and Claude Native Tools
 
-This skill combines the tooling architecture guide, the MCP tool parameter reference, and LSP navigation patterns into a single reference.
-
----
-
 ## Architecture
-
-The panther-ivy-plugin provides Ivy code intelligence through two complementary layers:
 
 | Layer | Role | How it works |
 |-------|------|-------------|
-| **Native Ivy LSP** | Code intelligence via LSP tool | Claude Code runs ivy_lsp as a language server -- go-to-definition, find-references, hover, and document symbols via the `LSP` tool for `.ivy` files |
-| **ivy-tools MCP** | Verification, compilation, analysis | ivy_lsp runs in MCP mode (`--mcp`) providing structured tool access to ivy_verify, ivy_compile, ivy_model_info, ivy_lint, and more |
+| **Native Ivy LSP** | Code intelligence via LSP tool | go-to-definition, find-references, hover, document symbols via the `LSP` tool for `.ivy` files |
+| **ivy-tools MCP** | Verification, compilation, analysis | 15 consolidated tools: `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_lint`, `ivy_coverage`, `ivy_query`, `ivy_visualize`, `ivy_quality`, `ivy_patterns`, etc. |
+| **Claude native** | Navigation and editing | `Read`, `Edit`, `Write`, `Grep`, `Glob` |
 
-For code navigation and editing, use Claude's built-in tools (`Read`, `Edit`, `Write`, `Grep`, `Glob`). The native LSP enriches these with Ivy-specific intelligence.
-
-## Quick Reference: When to Use What
+## When to Use What
 
 | Task | Best Tool | Why |
 |------|-----------|-----|
@@ -29,343 +22,59 @@ For code navigation and editing, use Claude's built-in tools (`Read`, `Edit`, `W
 | Get action signature / type info | LSP `hover` | Shows params, types, docs |
 | List all symbols in a file | LSP `documentSymbol` | Structured outline with hierarchy |
 | Search for a symbol by name across workspace | LSP `workspaceSymbol` | Semantic, not text-based |
-| Find what calls a function | LSP `incomingCalls` | Semantic call graph |
 | Search for a regex pattern across files | Grep | LSP does not support regex |
-| Read entire file contents | Read | LSP returns metadata, not content |
-| Find comments, strings, non-symbol text | Grep | LSP operates on symbols only |
-| Check coverage stats | MCP `ivy_requirement_coverage` | Coverage statistics |
-| Check coverage gaps | MCP `ivy_coverage_gaps` | Unguarded state, uncovered requirements |
-| Check traceability matrix | MCP `ivy_traceability_matrix` | Requirement-to-assertion mapping |
-| Verify formal properties | MCP `ivy_verify` | Verification tool |
+| Check coverage / traceability | MCP `ivy_coverage` (mode=stats/gaps/matrix) | Structured coverage data |
+| Verify formal properties | MCP `ivy_verify` | Structured JSON diagnostics |
 | Get diagnostics/errors | MCP `ivy_lint` or `ivy_diagnostics` | Claude Code does NOT receive automatic LSP diagnostics |
-
----
 
 ## LSP Tool API
 
-The LSP tool requires all four parameters:
+The LSP tool requires: `operation`, `filePath`, `line` (1-based), `character` (1-based).
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `operation` | string | One of the supported operations |
-| `filePath` | string | Absolute or relative path to the `.ivy` file |
-| `line` | integer | 1-based line number |
-| `character` | integer | 1-based character offset |
+**Operations**: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`, `workspaceSymbol`, `goToImplementation`, `prepareCallHierarchy` (NYI), `incomingCalls` (NYI), `outgoingCalls` (NYI)
 
-**Operations**: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`, `workspaceSymbol`, `goToImplementation`, `prepareCallHierarchy` (not yet implemented), `incomingCalls` (not yet implemented), `outgoingCalls` (not yet implemented)
-
-**Position tips**:
-- For `documentSymbol`: use `line=1, character=1` -- position is ignored, returns all symbols.
-- For all other operations: position must point at the symbol of interest.
-- Use `documentSymbol` first to discover symbols and their positions.
-- Use line numbers from `Read` output to determine positions.
+**Position tips**: For `documentSymbol` use `line=1, character=1`. For all others, point at the symbol of interest. Use `documentSymbol` first to discover positions.
 
 ### LSP Invocation Patterns
 
-#### Pattern 1: Discover File Structure -- `documentSymbol`
 ```
-LSP(operation="documentSymbol", filePath="protocol-testing/quic/quic_stack/quic_application.ivy", line=1, character=1)
-```
+# Pattern 1: File outline
+LSP(operation="documentSymbol", filePath="path/to/file.ivy", line=1, character=1)
 
-#### Pattern 2: Find Symbol by Name -- `workspaceSymbol`
-```
-LSP(operation="workspaceSymbol", filePath="some_file.ivy", line=109, character=8)
-```
+# Pattern 2: Find symbol by name
+LSP(operation="workspaceSymbol", filePath="any_file.ivy", line=<line>, character=<col>)
 
-#### Pattern 3: Jump to Definition -- `goToDefinition`
-```
-LSP(operation="goToDefinition", filePath="some_file.ivy", line=104, character=10)
-```
-Key advantage: resolves across `include` boundaries.
+# Pattern 3: Jump to definition (resolves across includes)
+LSP(operation="goToDefinition", filePath="file.ivy", line=<line>, character=<col>)
 
-#### Pattern 4: Find All References -- `findReferences`
-```
-LSP(operation="findReferences", filePath="some_file.ivy", line=109, character=8)
+# Pattern 4: Find all references
+LSP(operation="findReferences", filePath="file.ivy", line=<line>, character=<col>)
+
+# Pattern 5: Get type info
+LSP(operation="hover", filePath="file.ivy", line=<line>, character=<col>)
 ```
 
-#### Pattern 5: Get Type Info -- `hover`
-```
-LSP(operation="hover", filePath="some_file.ivy", line=109, character=8)
-```
-
-#### Pattern 6: Trace Call Hierarchy (not yet implemented -- may return empty results)
-```
-LSP(operation="prepareCallHierarchy", filePath="...", line=109, character=8)
-LSP(operation="incomingCalls", filePath="...", line=109, character=8)
-LSP(operation="outgoingCalls", filePath="...", line=109, character=8)
-```
-
----
-
-## MCP Tool Catalog
-
-All ivy-tools MCP tools follow this prefix: `mcp__plugin_panther-ivy-plugin_ivy-tools__<tool_name>`
-
-### Verification and Linting
-
-#### ivy_verify
-Run `ivy_check` on an Ivy file. Returns structured diagnostics.
-```
-Parameters:
-  relative_path: str           # Path to .ivy file (relative to project root)
-  isolate: str | None = None   # Optional isolate name
-
-Returns: { success, diagnostics, diagnostic_count, raw_output, duration_seconds }
-```
-Timeout: 120 seconds.
-
-#### ivy_compile
-Compile an Ivy file to a test executable using `ivyc`.
-```
-Parameters:
-  relative_path: str           # Path to .ivy file
-  target: str = "test"         # Compilation target
-  isolate: str | None = None   # Optional isolate name
-
-Returns: { success, output, duration_seconds }
-```
-Timeout: 300 seconds.
-
-#### ivy_model_info
-Display model structure using `ivy_show`.
-```
-Parameters:
-  relative_path: str           # Path to .ivy file
-  isolate: str | None = None   # Optional isolate name
-
-Returns: { success, output, duration_seconds }
-```
-Timeout: 30 seconds.
-
-#### ivy_lint
-Fast structural lint (no subprocess, milliseconds).
-```
-Parameters:
-  relative_path: str           # Path to .ivy file
-
-Returns: { file, diagnostics, diagnostic_count, error_count, warning_count }
-```
-
-#### ivy_diagnostics
-Full 5-layer diagnostic analysis (structural, lexer, semantic, coverage, pattern).
-```
-Parameters:
-  relative_path: str
-  layers: list[str] | None = None       # Optional: structural, lexer, semantic, coverage, pattern
-  min_severity: str | None = None       # Optional: error, warning, info, hint
-
-Returns: { diagnostics, diagnostic_count, by_layer }
-```
-
-### Dependency Analysis
-
-#### ivy_include_graph
-Return include dependency graph for Ivy files.
-```
-Parameters:
-  relative_path: str | None = None      # Optional file to focus on
-
-Returns (focused): { file, includes, included_by, transitive_includes }
-Returns (full): { files, total_files }
-```
-
-#### ivy_capabilities
-Check which Ivy CLI tools are available on PATH.
-```
-Parameters: none
-Returns: { ivy_check, ivyc, ivy_show }
-```
-
-### Coverage and Traceability
-
-#### ivy_requirement_coverage
-Coverage statistics by MUST/SHOULD/MAY level and layer.
-```
-Parameters:
-  relative_path: str           # Path to .ivy file or directory
-
-Returns: { total, covered, uncovered, coverage_percent, by_level, by_layer }
-```
-
-#### ivy_coverage_gaps
-Identify unguarded state vars, uncovered requirements, orphaned monitors.
-```
-Parameters:
-  test_file: str               # Path to test .ivy file
-
-Returns: { unguarded_state_vars, uncovered_requirements, orphaned_monitors, gap_count }
-```
-
-#### ivy_traceability_matrix
-RFC requirement-to-annotation mapping.
-```
-Parameters:
-  relative_path: str           # Path to .ivy file or directory
-
-Returns: { total_requirements, covered, uncovered, matrix }
-```
-
-### Semantic Query
-
-#### ivy_query_symbol
-Rich semantic info about a symbol.
-```
-Parameters:
-  symbol_name: str             # Name of the symbol to query
-
-Returns: { symbol, found, symbol_info, type_info, references }
-```
-
-#### ivy_impact_analysis
-Incoming and outgoing edges for a symbol.
-```
-Parameters:
-  symbol_name: str             # Name of the symbol to analyze
-
-Returns: { symbol, found, qualified_name, kind, file, line, incoming_edges, outgoing_edges, total_references }
-```
-
-#### ivy_cross_references
-Cross-reference graph neighborhood of a node. Note: node_id resolution is unreliable; use `ivy_query_symbol` for symbol info instead.
-```
-Parameters:
-  node_id: str                 # Node identifier in the cross-reference graph
-
-Returns: { node_id, found, node_type, incoming, outgoing }
-```
-
-### RFC Extraction
-
-#### ivy_extract_requirements
-Parse RFC text for normative statements (MUST/SHOULD/MAY).
-```
-Parameters:
-  rfc_text: str                # RFC text to parse
-
-Returns: { requirements, total, by_level }
-```
-
-#### ivy_generate_manifest
-Generate YAML requirements manifest from RFC text.
-```
-Parameters:
-  rfc_name: str                # RFC identifier (e.g., "RFC9000")
-  rfc_text: str                # RFC text to parse
-
-Returns: { yaml, total_requirements, suggested_path, by_level }
-```
-
-### Model Visualization
-
-#### ivy_action_dependency_graph
-Action dependency graph via shared state.
-```
-Parameters:
-  test_file: str               # Path to test .ivy file
-
-Returns: { nodes, edges, total_actions }
-```
-
-#### ivy_state_machine_view
-State-machine perspective of the model.
-```
-Parameters:
-  test_file: str               # Path to test .ivy file
-
-Returns: { states, transitions, total_states }
-```
-
-#### ivy_layered_overview
-Layered overview organized by file or module.
-```
-Parameters:
-  test_file: str               # Path to test .ivy file
-
-Returns: { layers, total_files }
-```
-
-#### ivy_model_summary
-Per-action requirement counts, state variable usage, RFC coverage.
-```
-Parameters:
-  test_file: str               # Path to test .ivy file
-
-Returns: { rows, total_actions }
-```
-
-#### ivy_action_requirements
-Requirements organized by action boundaries (before/after monitors).
-```
-Parameters:
-  action_name: str             # Name of the action
-  file_path: str | None = None # Optional file path
-  test_file: str | None = None # Optional test file path
-
-Returns: { actions, total_actions }
-```
-
-### Quality
-
-#### ivy_smart_suggestions
-Context-aware suggestions for improving an Ivy specification. Note: file_path/line/context parameters currently have no effect on output (known issue).
-```
-Parameters:
-  file_path: str               # Path to .ivy file
-
-Returns: { suggestions, total }
-```
-
-#### ivy_quality_gate
-Validate a protocol model against quality gates.
-```
-Parameters:
-  protocol: str                # Protocol name (e.g., "quic")
-  gate_level: str = "minimal"  # "minimal" | "standard" | "comprehensive"
-
-Returns: { checks, all_passed, gate_level }
-```
-
-### Pattern Analysis
-
-#### ivy_pattern_analysis
-Analyze formal model patterns in a protocol specification.
-```
-Parameters:
-  protocol: str                # Protocol name (e.g., "quic", "bgp")
-  mode: str = "detect"         # "detect" | "validate" | "compare"
-  pattern: str | None = None   # Optional specific pattern (e.g., "serdes", "variants")
-  reference_protocol: str | None = None  # Required for "compare" mode
-
-Mode "detect": Analyze formal model patterns in a specification
-Returns: { patterns, total_patterns, mode }
-
-Mode "validate": Cross-reference validation of detected patterns
-Returns: { patterns, issues, validation_summary }
-
-Mode "compare": Compare patterns between two protocols (requires reference_protocol)
-Returns: { protocol_a, protocol_b, comparison }
-```
-
-#### ivy_scaffold_check
-Check which layers/patterns are present or missing.
-```
-Parameters:
-  protocol: str                # Protocol name
-
-Returns: { layers_present, layers_missing, suggestions, completeness_score }
-```
-
-#### ivy_pattern_scaffold
-Generate Ivy source code from a pattern template.
-```
-Parameters:
-  protocol: str                # Protocol name
-  pattern: str                 # Pattern type to scaffold
-
-Returns: { source, pattern, file_suggestion }
-```
-
----
+## MCP Tool Catalog (Compact)
+
+All tools use prefix `mcp__plugin_panther-ivy-plugin_ivy-tools__<tool_name>`. See the [README.md](README.md) for full parameter documentation.
+
+| Tool | Modes / Views | Key Parameters |
+|------|---------------|----------------|
+| `ivy_lint` | -- | relative_path |
+| `ivy_verify` | -- | relative_path, isolate |
+| `ivy_compile` | -- | relative_path, target, isolate |
+| `ivy_model_info` | -- | relative_path, isolate |
+| `ivy_diagnostics` | -- | relative_path, layers, min_severity |
+| `ivy_include_graph` | -- | relative_path |
+| `ivy_capabilities` | -- | (none) |
+| `ivy_coverage` | stats, gaps, matrix | relative_path, test_file, protocol |
+| `ivy_query` | info, impact, xrefs | symbol_name, node_id |
+| `ivy_extract_requirements` | structured, manifest | rfc_text, rfc_name |
+| `ivy_visualize` | dependencies, state_machine, layers | test_file |
+| `ivy_model_summary` | summary, requirements | test_file, action_name |
+| `ivy_quality` | suggestions, gate | file_path, protocol, gate_level |
+| `ivy_patterns` | analyze, validate, compare, check | protocol, pattern |
+| `ivy_pattern_scaffold` | -- | protocol, pattern |
 
 ## LSP + MCP Coordination Workflows
 
@@ -374,27 +83,26 @@ Returns: { source, pattern, file_suggestion }
 2. `goToDefinition` -- read its full definition
 3. `hover` -- get type signature and docs
 4. `findReferences` -- see all usages across workspace
-5. MCP `ivy_impact_analysis` -- see incoming/outgoing semantic edges
+5. MCP `ivy_query` (mode="impact") -- see incoming/outgoing semantic edges
 
 ### Workflow B: Adding a New Requirement Monitor
 1. `documentSymbol` or `workspaceSymbol` -- find the relevant action
 2. `findReferences` -- find existing before/after monitors
 3. `Read` -- read the existing monitors to understand the pattern
-4. MCP `ivy_requirement_coverage` -- check what requirements are missing
+4. MCP `ivy_coverage` (mode="stats") -- check what requirements are missing
 5. `Edit` -- write the new monitor with bracket tag
 6. MCP `ivy_lint` -- runs automatically via post-write hook
 7. MCP `ivy_verify` -- formal verification
-8. MCP `ivy_traceability_matrix` -- confirm new requirement is covered
+8. MCP `ivy_coverage` (mode="matrix") -- confirm new requirement is covered
 
 ### Workflow C: Diagnosing a Verification Failure
 1. Read the error message -- note file, line, symbol name
 2. `goToDefinition` -- jump to the failing symbol's definition
 3. `hover` -- check type signatures for mismatches
 4. `findReferences` -- find all monitors that constrain this symbol
-5. `incomingCalls` (not yet implemented) -- trace what actions call into the failing one
-6. MCP `ivy_diagnostics` -- get the full 5-layer diagnostic analysis
-7. `Edit` -- fix the issue
-8. MCP `ivy_verify` -- re-verify
+5. MCP `ivy_diagnostics` -- get the full 5-layer diagnostic analysis
+6. `Edit` -- fix the issue
+7. MCP `ivy_verify` -- re-verify
 
 ### Recommended Workflow: Navigate -> Understand -> Edit -> Verify
 1. **Navigate** -- Use LSP to find and follow symbols. Fall back to `Grep` for regex.

@@ -274,3 +274,5 @@ Note on role inversion: if testing a **server**, the opposing role (what Ivy pla
 ```
 
 **IMPORTANT**: Use Claude's `Write` tool to create files and Claude's `Glob` tool to find files. Do NOT use Bash file operations.
+
+See the `specification-patterns` skill for the 14-layer template.

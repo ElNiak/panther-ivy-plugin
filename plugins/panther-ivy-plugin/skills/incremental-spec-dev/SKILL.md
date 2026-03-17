@@ -265,6 +265,8 @@ After MUST requirements are complete, repeat the loop for SHOULD requirements if
 
 ## Integration
 
+**Prerequisites:** `ivy-writing-guide` (Ivy syntax), `specification-patterns` (14-layer template).
+
 **Related skills:**
 - **counterexample-guide** -- Interpreting verification failures from Step 6
 - **ivy-writing-guide** -- Ivy language syntax for writing assertions (Step 3)

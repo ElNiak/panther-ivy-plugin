@@ -28,10 +28,10 @@ If neither exists, ask the user if they want to create it first with `/nct-scaff
 
 ## Step 2: Detect Current State
 
-Use the `ivy_pattern_analysis` MCP tool to check what patterns already exist:
+Use the `ivy_patterns` MCP tool to check what patterns already exist:
 
 ```
-ivy_pattern_analysis(protocol="{protocol}", mode="detect")
+ivy_patterns(mode="analyze", protocol="{protocol}")
 ```
 
 Report which patterns are already present and which are missing.
@@ -98,3 +98,5 @@ Tell the user:
 2. What placeholders remain to be filled in (marked with `TODO` or `{...}`)
 3. Suggested next steps (e.g., "Define your message types", "Add field constraints")
 4. Cross-references to the pattern-library skill for detailed documentation
+
+See the `specification-patterns` skill for pattern dependencies.

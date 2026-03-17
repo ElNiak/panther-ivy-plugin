@@ -54,3 +54,5 @@ All formal properties verified successfully.
 ```
 
 **IMPORTANT**: Do NOT run `ivy_check` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify`.
+
+See the `workflow-reference` skill for verification debugging strategies.

@@ -54,3 +54,5 @@ Display the model structure of the specified Ivy file using ivy-tools.
 6. If success is false, present the error and suggest using `/nct-check` to diagnose.
 
 **IMPORTANT**: Do NOT run `ivy_show` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info`.
+
+See the `tooling-reference` skill for `ivy_model_info` parameter details.

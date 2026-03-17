@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains 7 slash commands for Ivy formal verification operations within the panther-ivy-plugin for Claude Code. All commands use the `ivy-tools` MCP tools for verification/compilation/model-info and Claude's native tools (`Grep`, `Read`, `Glob`, `Write`) for code navigation and file operations -- they do NOT invoke Ivy CLI tools (e.g., `ivy_check`, `ivyc`, `ivy_show`) directly via Bash.
+This directory contains 8 slash commands for Ivy formal verification operations within the panther-ivy-plugin for Claude Code. All commands use the `ivy-tools` MCP tools for verification/compilation/model-info and Claude's native tools (`Grep`, `Read`, `Glob`, `Write`) for code navigation and file operations -- they do NOT invoke Ivy CLI tools (e.g., `ivy_check`, `ivyc`, `ivy_show`) directly via Bash.
 
 ## Command Reference
 
@@ -15,6 +15,7 @@ This directory contains 7 slash commands for Ivy formal verification operations 
 | `/nct-add-pattern` | Add a formal model pattern to an existing protocol specification | `protocol` -- target protocol; `pattern` -- pattern name (e.g., `"variant"`, `"shim"`, `"monitor"`) | `wire_format` -- `"binary"` or `"json"` (for serdes); `role_type` -- `"asymmetric"` or `"symmetric"` (for entity) |
 | `/nct-health` | Run a health check sequence for the Ivy LSP + MCP integration (connectivity) | (none) | (none) |
 | `/nct-validate` | Comprehensive correctness validation of LSP, MCP, and hooks with full raw-output report | (none) | (none) |
+| `/nct-observability` | Query and analyze Ivy observability session logs (JSONL) | (none) | `mode` -- `"summary"` (default), `"events"`, `"errors"`, `"timeline"` |
 
 ## Detailed Usage
 

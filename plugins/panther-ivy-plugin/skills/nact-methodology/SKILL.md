@@ -132,3 +132,21 @@ protocol-testing/apt/
 **Confusing NCT and NACT monitors**
 - **Problem:** Using `require` (compliance check) instead of attack-specific constraints
 - **Fix:** NACT monitors model what the attacker CAN do, not what the protocol SHOULD do
+
+## Integration
+
+**Prerequisite:** `nct-methodology` -- NACT extends NCT; understand NCT concepts first.
+
+**Related skills:**
+- **nct-methodology** -- Base NCT concepts that NACT extends
+- **ivy-writing-guide** -- Ivy syntax for writing attack monitors
+- **specification-patterns** -- 14-layer template (NACT reuses the same layers)
+- **workflow-reference** -- Verification of attack model consistency
+
+**Related agents:**
+- **methodology-guide** -- Interactive NACT workflow execution
+- **spec-analyst** -- Specification navigation and verification
+
+**Related commands:**
+- `/nct-check` -- Verify attack specifications
+- `/nct-scaffold` -- Scaffold attack test specs (role=attacker)

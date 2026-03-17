@@ -33,7 +33,7 @@ tail -20 /tmp/ivy-lsp.log
 
 ### Step 3: LSP responding
 
-Use the IDE LSP tool (`mcp__ide__getDiagnostics` or equivalent) to request `documentSymbol` on any `.ivy` file in the workspace. If no `.ivy` file is known, use `Glob` to find one first (e.g., `**/*.ivy`).
+Use `LSP(operation="documentSymbol", filePath="<path_to_ivy_file>", line=1, character=1)` to request a document symbol list from any `.ivy` file in the workspace. If no `.ivy` file is known, use `Glob` to find one first (e.g., `**/*.ivy`).
 
 - If the LSP returns a symbol list (even empty): **PASS** -- report the number of symbols.
 - If the LSP times out or returns an error: **FAIL** -- report the error message.
@@ -97,3 +97,5 @@ If any checks fail, add a `### Suggested Actions` section at the end:
 - If Step 5 fails: "Ensure `.ivy` files exist in the workspace and the MCP server has read access."
 - If Step 6 fails: "Model analysis failed. This may indicate a missing or corrupt protocol model."
 - If Step 7 fails: "Cross-file resolution is not working. The LSP index may need rebuilding."
+
+See the `tooling-reference` skill for LSP and MCP architecture.
