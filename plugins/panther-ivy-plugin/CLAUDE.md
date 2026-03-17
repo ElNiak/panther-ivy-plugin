@@ -31,16 +31,16 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 `ivy_lint` (fast structural check), `ivy_diagnostics` (full 5-layer diagnostics), `ivy_include_graph`, `ivy_capabilities`
 
 **Coverage & traceability**:
-`ivy_requirement_coverage` (coverage stats), `ivy_coverage_gaps` (unguarded state, uncovered reqs), `ivy_traceability_matrix` (requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text), `ivy_generate_manifest` (produce YAML manifest)
+`ivy_coverage` (mode="stats" for coverage stats, mode="gaps" for unguarded state/uncovered reqs, mode="matrix" for requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text; output="manifest" to produce YAML manifest)
 
 **Semantic query**:
-`ivy_query_symbol` (symbol info), `ivy_impact_analysis` (incoming/outgoing edges), `ivy_cross_references` (cross-reference graph neighborhood). Note: `ivy_cross_references` node_id resolution is unreliable; use `ivy_query_symbol` for symbol info instead.
+`ivy_query` (mode="info" for symbol info, mode="impact" for incoming/outgoing edges, mode="xrefs" for cross-reference graph neighborhood). Note: mode="xrefs" node_id resolution is unreliable; use mode="info" for symbol info instead.
 
 **Visualization MCP tools** (model views):
-`ivy_action_dependency_graph` (action dependency graph), `ivy_state_machine_view` (state-machine perspective), `ivy_layered_overview` (layered overview by file/module), `ivy_model_summary` (per-action summary), `ivy_action_requirements` (per-action requirements)
+`ivy_visualize` (view="dependencies" for action dependency graph, view="state_machine" for state-machine perspective, view="layers" for layered overview by file/module), `ivy_model_summary` (detail="summary" for per-action summary, detail="requirements" for per-action requirements)
 
 **Quality and pattern MCP tools**:
-`ivy_smart_suggestions` (context-aware suggestions). Note: file_path/line/context parameters currently have no effect on output (known issue). `ivy_quality_gate` (validate against quality gates), `ivy_pattern_analysis` (analyze/validate/compare patterns), `ivy_scaffold_check` (check layer/pattern completeness), `ivy_pattern_scaffold` (generate from template)
+`ivy_quality` (mode="suggestions" for context-aware suggestions — note: file_path/line/context parameters currently have no effect on output, known issue; mode="gate" to validate against quality gates), `ivy_patterns` (mode="analyze"/"validate"/"compare" for pattern analysis; mode="check" for layer/pattern completeness), `ivy_pattern_scaffold` (generate from template)
 
 **Ivy LSP** (for `.ivy` files — use the `LSP` tool explicitly):
 
@@ -56,33 +56,47 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 
 ### MCP Tool Name Reference
 
-| Logical Group | Actual MCP Tool | Key Parameters |
+| Consolidated Tool | Mode / View / Detail | Key Parameters |
 |---|---|---|
-| Lint | `ivy_lint` | relative_path |
-| Verify | `ivy_verify` | relative_path, isolate |
-| Compile | `ivy_compile` | relative_path, target, isolate |
-| Model info | `ivy_model_info` | relative_path, isolate |
-| Diagnostics | `ivy_diagnostics` | relative_path |
-| Include graph | `ivy_include_graph` | relative_path |
-| Capabilities | `ivy_capabilities` | -- |
-| Coverage: stats | `ivy_requirement_coverage` | relative_path |
-| Coverage: gaps | `ivy_coverage_gaps` | test_file |
-| Coverage: matrix | `ivy_traceability_matrix` | relative_path |
-| Query: symbol info | `ivy_query_symbol` | symbol_name |
-| Query: impact | `ivy_impact_analysis` | symbol_name |
-| Query: cross-refs | `ivy_cross_references` | node_id |
-| Extraction | `ivy_extract_requirements` | rfc_text |
-| Manifest gen | `ivy_generate_manifest` | rfc_name, rfc_text |
-| Visualization: deps | `ivy_action_dependency_graph` | test_file |
-| Visualization: SM | `ivy_state_machine_view` | test_file |
-| Visualization: layers | `ivy_layered_overview` | test_file |
-| Model: summary | `ivy_model_summary` | test_file |
-| Model: per-action reqs | `ivy_action_requirements` | action_name, file_path, test_file |
-| Quality: suggestions | `ivy_smart_suggestions` | file_path |
-| Quality: gate | `ivy_quality_gate` | protocol, gate_level |
-| Patterns: analyze | `ivy_pattern_analysis` | protocol, mode, pattern |
-| Patterns: completeness | `ivy_scaffold_check` | protocol |
-| Patterns: scaffold | `ivy_pattern_scaffold` | protocol, pattern |
+| `ivy_lint` | -- | relative_path |
+| `ivy_verify` | -- | relative_path, isolate |
+| `ivy_compile` | -- | relative_path, target, isolate |
+| `ivy_model_info` | -- | relative_path, isolate |
+| `ivy_diagnostics` | -- | relative_path, layers, min_severity |
+| `ivy_include_graph` | -- | relative_path |
+| `ivy_capabilities` | -- | -- |
+| `ivy_coverage` | mode="stats" | relative_path, test_file |
+| `ivy_coverage` | mode="gaps" | test_file, protocol |
+| `ivy_coverage` | mode="matrix" | relative_path, test_file |
+| `ivy_query` | mode="info" | symbol_name |
+| `ivy_query` | mode="impact" | symbol_name |
+| `ivy_query` | mode="xrefs" | node_id |
+| `ivy_extract_requirements` | -- | rfc_text |
+| `ivy_extract_requirements` | output="manifest" | rfc_name, rfc_text |
+| `ivy_visualize` | view="dependencies" | test_file |
+| `ivy_visualize` | view="state_machine" | test_file |
+| `ivy_visualize` | view="layers" | test_file |
+| `ivy_model_summary` | detail="summary" | test_file |
+| `ivy_model_summary` | detail="requirements" | action_name, file_path, test_file |
+| `ivy_quality` | mode="suggestions" | file_path |
+| `ivy_quality` | mode="gate" | protocol, gate_level |
+| `ivy_patterns` | mode="analyze"/"validate"/"compare" | protocol, pattern |
+| `ivy_patterns` | mode="check" | protocol |
+| `ivy_pattern_scaffold` | -- | protocol, pattern |
+
+### Coverage Tool Scoping Parameters
+
+The `ivy_coverage` tool (all modes: stats, gaps, matrix) accepts different scoping parameters:
+
+| Parameter | Scoping Semantics | Use When |
+|---|---|---|
+| `relative_path` | Directory-prefix filtering — annotations in files under this path | Browsing a subdirectory |
+| `test_file` | **Endpoint-mirror scoping** — transitive include closure of the test entry point | NCT-aligned per-endpoint coverage |
+| `protocol` | Directory-prefix `protocol-testing/{protocol}/` | Filtering by protocol |
+
+**Recommendation**: Use `test_file` for accurate NCT-aligned results. The include closure matches exactly the files PANTHER copies into the staging directory for a given test endpoint.
+
+Example: `ivy_coverage(mode="stats", test_file="quic/quic_tests/client_tests/quic_client_test.ivy")` returns coverage scoped to the client endpoint mirror's include closure only.
 
 ### Available Skills
 
@@ -297,8 +311,8 @@ After writing or modifying Ivy specifications, run this verification loop:
 
 1. **`ivy_lint`** — Fast structural check (milliseconds). Fix: missing `#lang`, unresolved includes, unmatched braces.
 2. **`ivy_verify`** — Formal property verification. If FAIL: read error line → locate with Grep/LSP go-to-definition → diagnose (missing invariant? action bug? missing precondition?) → fix → re-verify.
-3. **`ivy_requirement_coverage`** — Check MUST requirement coverage. If low, add missing `before`/`after` monitors with bracket tags.
-4. **`ivy_traceability_matrix`** — Review assertion-to-requirement mapping. Add bracket tags (`# [rfcNNNN:X.Y]`) to uncovered assertions.
+3. **`ivy_coverage`** (mode="stats") — Check MUST requirement coverage. If low, add missing `before`/`after` monitors with bracket tags.
+4. **`ivy_coverage`** (mode="matrix") — Review assertion-to-requirement mapping. Add bracket tags (`# [rfcNNNN:X.Y]`) to uncovered assertions.
 5. **Anti-pattern checklist** — before declaring work complete:
    - Missing `after init` → relations/functions start with arbitrary values, not defaults
    - Ungrounded variables in invariants → `invariant sent(P, N)` means "for ALL P and N, sent is true"
@@ -346,7 +360,7 @@ protocol-testing/{prot}/
 
 ## Quick Reference
 
-**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`, `/nct-validate`
+**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`, `/nct-validate`, `/nct-observability`
 
 **Skills for deep dives**: `counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
 

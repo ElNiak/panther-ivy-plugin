@@ -99,7 +99,8 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` with:
 
 ### M6: Symbol query (cid)
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query_symbol` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query` with:
+- `mode`: `info`
 - `symbol_name`: `cid`
 - `protocol`: `quic`
 
@@ -109,7 +110,8 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query_symbol` with:
 
 ### M7: Symbol query (quic_packet_type)
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query_symbol` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query` with:
+- `mode`: `info`
 - `symbol_name`: `quic_packet_type`
 - `protocol`: `quic`
 
@@ -119,17 +121,19 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query_symbol` with:
 
 ### M8: Coverage stats (requirements)
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_requirement_coverage` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage` with:
+- `mode`: `stats`
 - `relative_path`: `quic/`
 
-- **Expected**: `total: 101` with breakdown: MUST=45, MUST NOT=12, SHOULD=17, SHOULD NOT=3, MAY=24.
-- If total is 101 and all level counts match: **PASS**.
+- **Expected**: `total: 97` with breakdown: MUST=42, MUST NOT=12, SHOULD=16, SHOULD NOT=3, MAY=24.
+- If total is 97 and all level counts match: **PASS**.
 - If total matches but level counts differ: **PASS (partial)** — report differences.
 - Otherwise: **FAIL** — report actual values.
 
 ### M9: Coverage gaps
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage_gaps` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage` with:
+- `mode`: `gaps`
 - `protocol`: `quic`
 
 - **Expected**: Returns a list of uncovered requirements. The uncovered count should be consistent with the stats from M8 (i.e., total minus covered equals uncovered count here).
@@ -138,7 +142,8 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage_gaps` with:
 
 ### M10: Quality gate
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_quality_gate` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_quality` with:
+- `mode`: `gate`
 - `protocol`: `quic`
 - `gate_level`: `standard`
 
@@ -148,7 +153,8 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_quality_gate` with:
 
 ### M11: Scaffold check
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_scaffold_check` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_patterns` with:
+- `mode`: `check`
 - `protocol`: `quic`
 
 - **Expected**: `recovery` and `extensions` layers present in completeness report; `has_manifest: true`.
@@ -329,10 +335,10 @@ Present the final results in this format:
 |-----|----------|--------|-------|
 | quic_connection include count | 11 | ? | ? |
 | workspace total .ivy files | 680 | ? | ? |
-| total requirements | 101 | ? | ? |
-| MUST requirements | 45 | ? | ? |
+| total requirements | 97 | ? | ? |
+| MUST requirements | 42 | ? | ? |
 | MUST NOT requirements | 12 | ? | ? |
-| SHOULD requirements | 17 | ? | ? |
+| SHOULD requirements | 16 | ? | ? |
 | SHOULD NOT requirements | 3 | ? | ? |
 | MAY requirements | 24 | ? | ? |
 | cid symbol line | 29-30 | ? | ? |
@@ -351,3 +357,5 @@ If any checks fail, add a `### Suggested Actions` section at the end:
 - If H1 fails: "SessionStart hook did not fire. Check `hooks/hooks.json` and `hooks/scripts/detect-ivy-workspace.sh`."
 - If H2 fails: "PreToolUse hook not registered. Check `hooks/hooks.json` for the Bash matcher entry."
 - If `protocol-testing/` directory is missing: "Protocol models not found. Run `git submodule update --init` from the panther_ivy directory."
+
+See the `tooling-reference` skill for tool architecture.
