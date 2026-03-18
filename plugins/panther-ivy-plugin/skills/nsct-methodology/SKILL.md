@@ -40,10 +40,10 @@ NSCT follows the same phased workflow as NCT but with key replacements:
 
 | Phase | NCT | NSCT Replacement |
 |---|---|---|
-| Phase 2 (Plan) | 14-layer decomposition | **Topology design** -- nodes, links, latencies, bandwidths, loss rates |
-| Phase 3 (Build) | Ivy specification writing | **Shadow NS YAML config** -- `type: shadow_ns` experiment configuration |
-| Phase 4 (Verify) | `ivy_verify` + `ivy_compile` | Same verification + **simulation parameter validation** |
-| Phase 5 (Execute) | Docker Compose execution | **Shadow NS simulation** -- `panther run --config <config.yaml>` |
+| Phase 2 (PLAN) | 14-layer decomposition | **Topology design** -- nodes, links, latencies, bandwidths, loss rates |
+| Phase 3 (WRITE) | Ivy specification writing | **Shadow NS YAML config** -- `type: shadow_ns` experiment configuration |
+| Phase 4 (VERIFY) | `ivy_verify` + `ivy_compile` | Same verification + **simulation parameter validation** |
+| Phase 5 (FINALIZE) | Docker Compose execution | **Shadow NS simulation** -- `panther run --config <config.yaml>` |
 
 ### NSCT Workflow
 

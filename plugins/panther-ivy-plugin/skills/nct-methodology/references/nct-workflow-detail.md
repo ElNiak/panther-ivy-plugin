@@ -3,6 +3,16 @@
 This reference provides the complete NCT workflow with code examples.
 Loaded on demand by the nct-methodology skill.
 
+### Step-to-Phase Mapping
+
+| Orchestrator Phase | Steps | Summary |
+|---|---|---|
+| **EXPLORE** | 1-2 | Select protocol/RFC, extract requirements |
+| **PLAN** | 3-5 | Decompose into 14-layer template, design type + stack layers |
+| **WRITE** | 6-8 | Entity roles, behavioral constraints, test specs |
+| **VERIFY** | 9 | `ivy_verify` + `ivy_compile` (target=test) |
+| **FINALIZE** | 10 | Run against IUT via PANTHER |
+
 ## Step 1: Select Target Protocol and RFC
 
 Identify the protocol to test and the RFC(s) defining it. Extract testable requirements (MUST, SHOULD, MAY statements per RFC 2119).

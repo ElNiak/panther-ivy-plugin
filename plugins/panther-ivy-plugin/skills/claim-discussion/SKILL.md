@@ -255,7 +255,6 @@ require conn_state = open;  # [rfc9000:4.1] RESOLVED(2026-03-18): Confirmed spec
 - Never remove existing resolution comments — append if revisiting
 
 ## Integration
-- **LOADED BY:** ivy-workflow-orchestrator Phase 4 (Verify) -- for discussing verification claims
-- **LOADED BY:** /nct-check command -- for interactive claim discussion after verification
+- **USED BY:** spec-analyst/model-reviewer agents (typically during orchestrator Phase 4)
+- **USED BY:** /nct-check command -- for interactive claim discussion after verification
 - **PREREQUISITES:** interaction-patterns, counterexample-guide
-- **USED BY:** spec-analyst agent, model-reviewer agent

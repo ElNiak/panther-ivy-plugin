@@ -310,7 +310,7 @@ After applying the fix, re-run `ivy_verify` to confirm the counterexample is res
 
 ## Integration
 
-- **LOADED BY:** ivy-workflow-orchestrator Phase 4 (Verify) -- when ivy_verify fails with a counterexample
+- **USED BY:** spec-analyst/model-reviewer agents (typically during orchestrator Phase 4)
 
 **Prerequisite:** `ivy-writing-guide` -- Understanding Ivy syntax for before/after monitors, invariants, and state variables.
 

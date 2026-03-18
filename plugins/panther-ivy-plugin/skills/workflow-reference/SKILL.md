@@ -249,7 +249,7 @@ Or use the `model-reviewer` agent for a detailed human-readable review.
 
 ## Integration
 
-- **LOADED BY:** ivy-workflow-orchestrator Phase 4 (Verify)
+- **LOADED BY:** ivy-workflow-orchestrator Phase 2 (Plan) and Phase 4 (Verify)
 
 **Related skills:**
 - **ivy-toolkit** -- MCP tool documentation (see references/tool-catalog.md)

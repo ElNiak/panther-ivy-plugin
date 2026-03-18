@@ -54,29 +54,11 @@ LSP(operation="findReferences", filePath="file.ivy", line=<line>, character=<col
 LSP(operation="hover", filePath="file.ivy", line=<line>, character=<col>)
 ```
 
-## MCP Tool Catalog (Compact)
+## MCP Tool Catalog
 
-> **Note:** For full tool documentation, see **ivy-toolkit** skill (references/tool-catalog.md).
+For full MCP tool documentation, see **ivy-toolkit** skill.
 
-All tools use prefix `mcp__plugin_panther-ivy-plugin_ivy-tools__<tool_name>`. See the [README.md](README.md) for full parameter documentation.
-
-| Tool | Modes / Views | Key Parameters |
-|------|---------------|----------------|
-| `ivy_lint` | -- | relative_path |
-| `ivy_verify` | -- | relative_path, isolate |
-| `ivy_compile` | -- | relative_path, target, isolate |
-| `ivy_model_info` | -- | relative_path, isolate |
-| `ivy_diagnostics` | -- | relative_path, layers, min_severity |
-| `ivy_include_graph` | -- | relative_path |
-| `ivy_capabilities` | -- | (none) |
-| `ivy_coverage` | stats, gaps, matrix | relative_path, test_file, protocol |
-| `ivy_query` | info, impact, xrefs | symbol_name, node_id |
-| `ivy_extract_requirements` | structured, manifest | rfc_text, rfc_name |
-| `ivy_visualize` | dependencies, state_machine, layers | test_file |
-| `ivy_model_summary` | summary, requirements | test_file, action_name |
-| `ivy_quality` | suggestions, gate | file_path, protocol, gate_level |
-| `ivy_patterns` | analyze, validate, compare, check | protocol, pattern |
-| `ivy_pattern_scaffold` | -- | protocol, pattern |
+All tools use prefix `mcp__plugin_panther-ivy-plugin_ivy-tools__<tool_name>`.
 
 ## LSP + MCP Coordination Workflows
 
@@ -126,7 +108,7 @@ Use `/nct-check`, `/nct-compile`, and `/nct-model-info` commands as convenient s
 
 ## Integration
 
-- **SUPERSEDED BY:** ivy-toolkit for tool catalog. This skill provides architecture overview only.
+- **SUPERSEDED BY:** ivy-toolkit for tool catalog. This skill provides LSP patterns, tool selection guidance, and coordination workflows.
 
 **Related skills:**
 - **ivy-lsp-walkthrough** -- End-to-end example using these patterns

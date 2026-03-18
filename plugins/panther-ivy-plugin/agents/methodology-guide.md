@@ -120,7 +120,7 @@ Phase 2 -- Expansion:
 5. **Persistence** (`attack_maintain_persistence.ivy`) -- Maintain access across reboots.
 
 Phase 3 -- Extraction:
-6. **Exfiltration** (`attack_exflitration.ivy`) -- Data extraction from target.
+6. **Exfiltration** (`attack_exfiltration.ivy`) -- Data extraction from target.
 
 Cross-cutting: **White Noise** (`attack_white_noise.ivy`) -- Distraction attacks.
 
@@ -162,7 +162,7 @@ protocol-testing/apt/
 |   |-- attack_c2_communication.ivy
 |   |-- attack_privilege_escalation.ivy
 |   |-- attack_maintain_persistence.ivy
-|   |-- attack_exflitration.ivy
+|   |-- attack_exfiltration.ivy
 |   |-- attack_white_noise.ivy
 |   |-- quic_apt_lifecycle/
 |   |-- minip_apt_lifecycle/

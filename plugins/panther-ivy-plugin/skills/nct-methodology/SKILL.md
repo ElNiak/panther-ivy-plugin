@@ -46,11 +46,11 @@ The full 10-step workflow is documented in `references/nct-workflow-detail.md`. 
 
 | Phase | Steps | Gate |
 |-------|-------|------|
-| **Explore** | 1. Select protocol/RFC, 2. Extract requirements | Requirements manifest produced |
-| **Plan** | 3. Decompose into 14-layer template, 4-5. Design type + stack layers | Layer mapping reviewed |
-| **Build** | 6-8. Entity roles, behavioral constraints, test specs | Each file passes `ivy_lint` |
-| **Verify** | 9. `ivy_verify` + `ivy_compile` (target=test) | Zero verification errors |
-| **Execute** | 10. Run against IUT via PANTHER | Results collected |
+| **EXPLORE** | 1. Select protocol/RFC, 2. Extract requirements | Requirements manifest produced |
+| **PLAN** | 3. Decompose into 14-layer template, 4-5. Design type + stack layers | Layer mapping reviewed |
+| **WRITE** | 6-8. Entity roles, behavioral constraints, test specs | Each file passes `ivy_lint` |
+| **VERIFY** | 9. `ivy_verify` + `ivy_compile` (target=test) | Zero verification errors |
+| **FINALIZE** | 10. Run against IUT via PANTHER | Results collected |
 
 ### Directory Structure
 

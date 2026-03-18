@@ -32,7 +32,7 @@ Every spec task goes through this process. A single assertion addition, a new la
 a test variant — all of them. "Simple" tasks are where unexamined assumptions cause
 the most verification failures and broken includes.
 
-## Checklist (TaskCreate each item)
+## Checklist (track each phase as a task)
 
 1. **Phase 1: EXPLORE** — Understand what exists
 2. **Phase 2: PLAN** — Map requirements to layers
@@ -145,7 +145,7 @@ Proceed to next?" Do NOT write the next layer until current is approved.
 - Run `ivy_lint` for fast pattern checks
 
 **Gate:** All verification must pass. If failures:
-- Attempt 1-3: Fix and re-verify
+- Attempt 1-3: Fix and re-verify. Fix attempts return to Phase 3 (WRITE) for the fix, then re-enter Phase 4 (VERIFY).
 - After 3 attempts: STOP. Present failures to user. Ask for direction.
 
 **Loads:** workflow-reference

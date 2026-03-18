@@ -57,7 +57,7 @@ NACT follows the same ivy-workflow-orchestrator phases as NCT, with these specia
 - Define the threat model (attacker capabilities, attack surfaces)
 - Map APT stages to protocol-specific attack actions
 
-**Phase 3 (Execute):** Attack entity creation works ALONGSIDE standard spec writing:
+**Phase 3 (WRITE):** Attack entity creation works ALONGSIDE standard spec writing:
 - Create attack entities in `apt_entities/` (Attacker, Bot, C2, Target, MIM)
 - Write adversarial monitors in `apt_entities_behavior/` (what attacker CAN do, not what protocol SHOULD do)
 - Create protocol-specific bindings in `{prot}_apt_lifecycle/`

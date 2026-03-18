@@ -208,7 +208,7 @@ Analyze patterns with `ivy_patterns` MCP tool (`mode="analyze"`, `"validate"`, `
 **Related skills:**
 - **methodology-reference** -- Layer decomposition in NCT/NACT/NSCT workflows
 - **ivy-writing-guide** -- Ivy language reference for writing layers
-- **tooling-reference** -- MCP tool parameters for pattern analysis
+- **ivy-toolkit** -- MCP tool parameters for pattern analysis
 
 **Related agents:**
 - **methodology-guide** -- Interactive workflow using these patterns

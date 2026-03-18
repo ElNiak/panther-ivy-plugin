@@ -101,4 +101,4 @@ The `ivy_coverage` tool accepts different scoping parameters:
 ## Integration
 
 - **LOADED BY:** ivy-workflow-orchestrator (all phases), all methodology skills
-- **REPLACES:** Duplicated tool sections in methodology-reference, nct-methodology, workflow-reference, incremental-spec-dev, tooling-reference
+- **SUPERSEDES:** Duplicated tool sections in methodology-reference, nct-methodology, workflow-reference, incremental-spec-dev, tooling-reference

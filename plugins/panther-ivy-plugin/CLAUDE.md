@@ -100,7 +100,7 @@ Example: `ivy_coverage(mode="stats", test_file="quic/quic_tests/client_tests/qui
 
 ### Available Skills
 
-`counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
+`counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-toolkit`, `ivy-workflow-orchestrator`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
 
 **Interaction skills** (shared patterns for interactive agent workflows):
 `interaction-patterns` (checkpoint types, question formats), `claim-discussion` (verification/RFC/coverage claim resolution), `adaptive-interview` (Navigator agent interview logic)
@@ -369,6 +369,6 @@ protocol-testing/{prot}/
 
 **Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`, `/nct-validate`, `/nct-observability`
 
-**Skills for deep dives**: `counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
+**Skills for deep dives**: `counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-toolkit`, `ivy-workflow-orchestrator`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
 
 **Agents**: `methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`

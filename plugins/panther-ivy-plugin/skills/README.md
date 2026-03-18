@@ -119,6 +119,16 @@ All skills operate in one of two modes:
 
 ## Skill Details
 
+### ivy-workflow-orchestrator
+- **Category**: Orchestration & Tooling
+- **Purpose**: Central 5-phase engine (Explore → Plan → Write → Verify → Finalize) with iron laws — enforces exploration-first, plan-before-write, verify-before-compile discipline for all Ivy specification work.
+- **Related skills**: ivy-toolkit, specification-patterns, workflow-reference, ivy-writing-guide, incremental-spec-dev
+
+### ivy-toolkit
+- **Category**: Orchestration & Tooling
+- **Purpose**: Single source of truth for all ivy-tools MCP tool documentation and tool selection guidance. Supersedes duplicated tool sections in other skills.
+- **Related skills**: tooling-reference (architecture overview)
+
 ### methodology-reference
 - **Category**: Methodology
 - **Purpose**: Comprehensive reference for all three PANTHER methodologies (NCT, NACT, NSCT) with full workflows, red flags, common mistakes, and directory structures. Links to dedicated sub-skills for deep dives.
@@ -160,7 +170,7 @@ All skills operate in one of two modes:
 
 ### tooling-reference
 - **Category**: Tooling
-- **Purpose**: Authoritative tool catalog for the 15 consolidated MCP tools (with mode/view/detail dispatch), LSP operations, and Claude native tools. Includes coordination workflows and enforcement rules.
+- **Purpose**: Architecture overview of the three tool systems (LSP, MCP, Claude native), LSP invocation patterns, tool selection guidance, and LSP+MCP coordination workflows. Superseded by ivy-toolkit for MCP tool catalog.
 
 ### ivy-lsp-walkthrough
 - **Category**: Tooling
@@ -170,6 +180,19 @@ All skills operate in one of two modes:
 ### workflow-reference
 - **Category**: Workflow
 - **Purpose**: RFC-to-Ivy mapping patterns, verification workflows, quality gate pipeline, and debugging strategies.
+
+### interaction-patterns
+- **Category**: Interaction
+- **Purpose**: Reusable checkpoint types (Gate, Inform-and-Continue, Collaborative), question formats, and adaptive follow-up rules for consistent user interaction across all agents.
+
+### claim-discussion
+- **Category**: Interaction
+- **Purpose**: Structured decision trees for verification claim resolution, RFC requirement mapping, and coverage gap prioritization.
+- **Prerequisites**: interaction-patterns, counterexample-guide
+
+### adaptive-interview
+- **Category**: Interaction
+- **Purpose**: Navigator agent's interview logic: context detection, goal identification, methodology selection, target scoping, and dispatch to specialist agents.
 
 ## Skills vs Agents vs Commands
 
