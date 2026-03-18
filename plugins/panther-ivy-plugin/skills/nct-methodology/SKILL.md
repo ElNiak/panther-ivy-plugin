@@ -1,7 +1,18 @@
 ---
 name: nct-methodology
-description: "Use when working with NCT (Network-Centric Compositional Testing) - specification-based protocol compliance testing with Ivy formal models. Covers the 10-step NCT workflow, test traffic generation, directory structure, and common mistakes."
+description: "Use when working with NCT (Network-Centric Compositional Testing) - specification-based protocol compliance testing with Ivy formal models. Covers core concepts, directory structure, checkpoints, and common mistakes. Chains to ivy-workflow-orchestrator for spec creation."
 ---
+
+<HARD-GATE>
+Do NOT write any Ivy code or scaffold any spec files until you have completed
+Phase 1 (Explore) and Phase 2 (Plan) via the ivy-workflow-orchestrator skill.
+</HARD-GATE>
+
+## Iron Laws
+1. NO SPEC WRITING without completed requirement extraction
+2. NO COMPILATION without passing verification
+3. ALWAYS chain to ivy-workflow-orchestrator for spec creation/modification
+4. ALWAYS use ivy-toolkit for tool operations (never direct CLI)
 
 ## NCT -- Network-Centric Compositional Testing
 
@@ -17,6 +28,8 @@ The Ivy tester's role is the **opposite** of what it tests:
 - Testing a client IUT -> Ivy acts as a formal server (`{prot}_client_test_*.ivy` files)
 - MIM testing -> Ivy acts as man-in-the-middle (`{prot}_mim_test_*.ivy` files)
 
+**Rule:** File name indicates WHAT IS TESTED. `quic_server_test_*.ivy` = testing the server, Ivy plays client.
+
 #### Specification Structure
 Protocol specs use **monitors** (before/after clauses) attached to protocol events:
 
@@ -25,92 +38,19 @@ Protocol specs use **monitors** (before/after clauses) attached to protocol even
 - **_finalize()** -- End-state verification. Called when the test completes. Performs heuristic checks (e.g., data was received, no errors occurred).
 
 #### Test Traffic Generation
-Specifications use `export` to declare actions that the test mirror generates randomly:
-```ivy
-export frame.ack.handle
-export frame.stream.handle
-export packet_event
-export client_send_event
-```
-Z3/SMT solving ensures generated traffic complies with specification constraints.
+Specifications use `export` to declare actions that the test mirror generates randomly. Z3/SMT solving ensures generated traffic complies with specification constraints. `import` actions are provided by the IUT.
 
-### NCT Workflow
+### NCT Workflow (Summary)
 
-#### Step 1: Select Target Protocol and RFC
-Identify the protocol to test and the RFC(s) defining it. Extract testable requirements (MUST, SHOULD, MAY statements).
+The full 10-step workflow is documented in `references/nct-workflow-detail.md`. Summary:
 
-#### Step 2: Decompose into 14 Formal Layers
-Map RFC sections to the 14-layer template. Minimum viable set:
-1. Types -> Frames -> Packets -> Connection (core data flow)
-2. Entity definitions -> Entity behavior -> Shims (participants)
-3. Test specifications (verification)
-
-#### Step 3: Write Type Definitions
-Start with `{prot}_types.ivy` -- the foundation layer defining identifiers, bit vectors, enumerations used throughout the model.
-
-#### Step 4: Build Core Protocol Stack
-Progress through layers in dependency order:
-- Frame/Message layer (`{prot}_frame.ivy`) -- PDU definitions
-- Packet layer (`{prot}_packet.ivy`) -- wire-level structure
-- Protection layer (`{prot}_protection.ivy`) -- encryption/decryption
-- Connection layer (`{prot}_connection.ivy`) -- session lifecycle
-
-#### Step 5: Define Entity Roles
-Create entity definitions for each protocol participant:
-- `ivy_{prot}_client.ivy` -- client instance
-- `ivy_{prot}_server.ivy` -- server instance
-- Optionally: MIM, attacker roles
-
-#### Step 6: Write Behavioral Constraints
-Encode RFC requirements as before/after monitors in `ivy_{prot}_{role}_behavior.ivy`. This is the largest and most complex protocol-specific code.
-
-#### Step 7: Create Test Specifications
-Write role-specific test files:
-```ivy
-#lang ivy1.7
-include order
-include {prot}_infer
-include file
-include ivy_{prot}_shim_client
-include ivy_{prot}_client_behavior
-
-after init {
-    # Initialize sockets, TLS, transport parameters
-}
-
-# Export actions for test mirror generation
-export frame.ack.handle
-export frame.stream.handle
-export packet_event
-
-# End-state verification
-export action _finalize = {
-    require is_no_error;
-    require conn_total_data(the_cid) > 0;
-}
-```
-
-#### Step 8: Verify with ivy-tools
-Use `ivy_verify` MCP tool to verify formal properties: isolate assumptions, invariants, safety properties.
-
-#### Step 9: Compile Test
-Use `ivy_compile` MCP tool with `target=test` to produce executable test binary.
-
-#### Step 10: Execute Against IUT
-Run compiled test against the implementation via PANTHER experiment framework.
-
-### Tools for NCT
-
-Use Claude's built-in tools for navigation/editing. Use ivy-tools MCP tools for verification/analysis:
-
-| Step | Tool | Usage |
-|---|---|---|
-| Formal verification | `ivy_verify` | Check isolate/invariant/safety properties |
-| Compile tests | `ivy_compile` | Build test executables (target=test) |
-| Inspect model | `ivy_model_info` | View types, relations, actions, invariants |
-| Fast structural lint | `ivy_lint` | Quick structural checks |
-
-**IMPORTANT**: Always use the MCP equivalents: `ivy_verify`, `ivy_compile`, `ivy_model_info` — they provide structured JSON output for automated processing.
+| Phase | Steps | Gate |
+|-------|-------|------|
+| **Explore** | 1. Select protocol/RFC, 2. Extract requirements | Requirements manifest produced |
+| **Plan** | 3. Decompose into 14-layer template, 4-5. Design type + stack layers | Layer mapping reviewed |
+| **Build** | 6-8. Entity roles, behavioral constraints, test specs | Each file passes `ivy_lint` |
+| **Verify** | 9. `ivy_verify` + `ivy_compile` (target=test) | Zero verification errors |
+| **Execute** | 10. Run against IUT via PANTHER | Results collected |
 
 ### Directory Structure
 
@@ -126,23 +66,22 @@ protocol-testing/{prot}/
     +-- mim_tests/         # Man-in-the-middle tests
 ```
 
-### QUIC Reference Example
+**Naming**: `{prot}_{layer}.ivy` for stack layers, `ivy_{prot}_{role}.ivy` for entities, `{prot}_{role}_test_*.ivy` for tests.
 
-The QUIC model (`protocol-testing/quic/`) is the most complete NCT implementation with 50+ test variants covering: stream handling, connection close, retry, migration, transport parameter validation, error conditions, 0-RTT, congestion control, loss recovery, version negotiation, timeout handling.
+### Tools
 
-Examine `quic_server_test.ivy` as the canonical test structure example.
+See **ivy-toolkit** skill for all tool documentation.
 
-### Checkpoints — Verify Before Continuing
+### Checkpoints -- Verify Before Continuing
 
 | Checkpoint | Condition to Meet |
 |------------|-------------------|
-| Type layer complete | Types are the foundation — all other layers depend on them being defined first. |
-| Verification passes | Verify after every meaningful change — errors compound when deferred. |
+| Type layer complete | Types are the foundation -- all other layers depend on them being defined first. |
+| Verification passes | Verify after every meaningful change -- errors compound when deferred. |
 | RFC consulted | RFC is the source of truth for every requirement and assertion. |
 | Bracket tags present | Every assertion has a `# [rfcNNNN:X.Y]` tag for traceability. |
 | Role inversion correct | Testing a server = Ivy acts as client. File names reflect what is tested. |
 | `_finalize` exported | End-state properties require `_finalize` to execute. |
-| MCP tools used | Use `ivy_verify`, `ivy_compile`, `ivy_model_info` for structured output. |
 
 ### Common Mistakes
 
@@ -158,20 +97,21 @@ Examine `quic_server_test.ivy` as the canonical test structure example.
 - **Problem:** Assertions lack `[rfcNNNN:X.Y]` comments, breaking traceability
 - **Fix:** Tag every `require`/`ensure`/`assert` with its RFC section reference
 
+**Ungrounded variables in invariants**
+- **Problem:** `invariant sent(P, N)` means "for ALL P and N, sent is true"
+- **Fix:** Quantify explicitly or bind variables to specific values
+
+**Forgetting to export `_finalize`**
+- **Problem:** End-state checks never execute
+- **Fix:** Always include `export action _finalize` in test specifications
+
 ## Integration
+- **CHAINS TO:** ivy-workflow-orchestrator (for deep mode -- spec creation/modification)
+- **LOADS:** ivy-toolkit (for all tool operations)
+- **DISPATCHES:** spec-analyst (Phase 1), traceability-agent (Phase 2), methodology-guide (Phase 3)
+- **FAST MODE:** For concept questions about NCT, use this skill directly without orchestrator
+- **DEEP MODE:** For spec work, invoke ivy-workflow-orchestrator which loads this skill at Phase 1
 
-**Related skills:**
-- **ivy-writing-guide** -- Ivy syntax for writing monitors and test specs
-- **specification-patterns** -- 14-layer template and pattern library
-- **workflow-reference** -- Verification workflows and quality gates
-- **incremental-spec-dev** -- Add-verify-iterate loop for requirements
-- **tooling-reference** -- MCP tool parameters and LSP patterns
-
-**Related agents:**
-- **methodology-guide** -- Interactive NCT workflow execution
-- **spec-analyst** -- Specification navigation and verification
-
-**Related commands:**
-- `/nct-check` -- Quick verification
-- `/nct-compile` -- Compilation
-- `/nct-scaffold` -- Protocol and test scaffolding
+## Reference Files
+- **references/nct-workflow-detail.md** -- Full 10-step NCT workflow with code examples
+- **references/quic-canonical-example.md** -- QUIC protocol canonical walkthrough
