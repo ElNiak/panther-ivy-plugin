@@ -18,6 +18,21 @@ Agents are invoked automatically when the user's request matches a trigger patte
 | Navigate specs, verify, compile, diagnose failures | `spec-analyst` | All |
 | Extract RFC requirements, audit coverage, traceability gaps | `traceability-agent` | All |
 
+## Orchestrator Phase Dispatch
+
+When agents are dispatched by the `ivy-workflow-orchestrator` skill, they operate in a specific phase context:
+
+| Phase | Agent | Focus |
+|-------|-------|-------|
+| 1 Explore | spec-analyst | Discovery — directory layout, include graph, coverage stats |
+| 2 Plan | traceability-agent | RFC requirement extraction, manifest generation |
+| 3 Write | methodology-guide | Writing guidance, pattern suggestions, Ivy syntax review |
+| 4 Verify | spec-analyst | Error diagnosis, counterexample interpretation |
+| 4 Verify | model-reviewer | Quality audit (structural, type safety, invariants) |
+| 5 Finalize | traceability-agent | Coverage audit, gap reporting, statistics |
+
+All agents also operate in **fast mode** (outside orchestrator) for direct user requests.
+
 ## Agent Details
 
 ### navigator

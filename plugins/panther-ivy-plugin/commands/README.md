@@ -18,6 +18,26 @@ This directory contains 9 slash commands for Ivy formal verification operations 
 | `/nct-validate` | Comprehensive correctness validation of LSP, MCP, and hooks with full raw-output report | (none) | (none) |
 | `/nct-observability` | Query and analyze Ivy observability session logs (JSONL) | (none) | `mode` -- `"summary"` (default), `"events"`, `"errors"`, `"timeline"` |
 
+## Mode Classification
+
+Each command operates in one of three modes relative to the `ivy-workflow-orchestrator`:
+
+| Command | Mode | Orchestrator Phase |
+|---------|------|--------------------|
+| `/nct-check` | FAST | None — single-file verification |
+| `/nct-compile` | FAST | None — single-file compilation |
+| `/nct-model-info` | FAST | None — read-only query |
+| `/nct-health` | FAST | None — diagnostic |
+| `/nct-observability` | FAST | None — read-only log analysis |
+| `/nct-scaffold` | DEEP | Phase 1-5 (full workflow) |
+| `/nct-add-pattern` | DEEP | Phase 3-4 (write + verify) |
+| `/nct-validate` | HYBRID | Phase 4 alignment (fast/full parameter) |
+| `/nct-review` | HYBRID | Phase 4 alignment (multi-agent review) |
+
+**FAST** — Executes immediately, no orchestrator. Use for quick single operations.
+**DEEP** — Invokes `ivy-workflow-orchestrator` with hard gates. All phases must complete.
+**HYBRID** — Can run standalone (fast) or align with orchestrator Phase 4 during deep workflows.
+
 ## Interaction Protocol
 
 Six commands (`/nct-review`, `/nct-check`, `/nct-validate`, `/nct-scaffold`, `/nct-observability`, `/nct-health`) include **Interaction Protocol** sections that define when and how to engage the user during their workflows. These use checkpoint types (Gate, Collaborative, Inform-and-Continue) from the `interaction-patterns` skill and claim discussion templates from the `claim-discussion` skill. The remaining three commands (`/nct-compile`, `/nct-model-info`, `/nct-add-pattern`) are single-action operations that don't require interactive checkpoints.

@@ -2,11 +2,53 @@
 
 ## Overview
 
-- 14 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
+- 16 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
 - Skills are surfaced automatically by Claude Code when trigger patterns in the user's query match a skill's `description` frontmatter
 - They provide **reference material** (language guides, workflow steps, tool catalogs); agents and commands provide interactive workflows and execution
 
+## Workflow Architecture: Fast/Deep Mode
+
+All skills operate in one of two modes:
+
+- **FAST mode** — Direct tool invocation for simple tasks (check a file, query model info, explore a concept). No orchestrator required.
+- **DEEP mode** — Multi-phase workflow for spec creation/modification. Chains through the `ivy-workflow-orchestrator` skill which enforces 5 phases: Explore → Plan → Write → Verify → Finalize.
+
+```
+                    ivy-workflow-orchestrator
+                    ┌──────────────────────────────┐
+                    │ Phase 1: EXPLORE              │
+                    │   loads: ivy-toolkit           │
+                    │   loads: [methodology] skill   │
+                    │   dispatches: spec-analyst     │
+                    ├──────────────────────────────┤
+                    │ Phase 2: PLAN                 │
+                    │   loads: specification-patterns │
+                    │   loads: workflow-reference     │
+                    │   dispatches: traceability-agent│
+                    ├──────────────────────────────┤
+                    │ Phase 3: WRITE                │
+                    │   loads: ivy-writing-guide      │
+                    │   loads: incremental-spec-dev   │
+                    │   dispatches: methodology-guide │
+                    ├──────────────────────────────┤
+                    │ Phase 4: VERIFY               │
+                    │   loads: workflow-reference     │
+                    │   dispatches: spec-analyst      │
+                    │   dispatches: model-reviewer    │
+                    ├──────────────────────────────┤
+                    │ Phase 5: FINALIZE             │
+                    │   dispatches: traceability-agent│
+                    └──────────────────────────────┘
+```
+
 ## Skill Catalog
+
+### Orchestration & Tooling
+
+| Skill | Description |
+|-------|-------------|
+| [ivy-workflow-orchestrator](ivy-workflow-orchestrator/) | Central 5-phase engine with iron laws — enforces explore → plan → write → verify → finalize |
+| [ivy-toolkit](ivy-toolkit/) | Single source of truth for all MCP tool documentation and tool selection guidance |
 
 ### Methodology
 
