@@ -3,6 +3,11 @@ name: incremental-spec-dev
 description: Use when adding requirements to an Ivy specification one at a time with verification between each addition. Guides the add-verify-iterate loop for incremental formal specification development.
 ---
 
+<HARD-GATE>
+Do NOT start the incremental loop until you have completed Phase 1 (Explore) and
+Phase 2 (Plan) via the ivy-workflow-orchestrator skill. The loop operates within Phase 3.
+</HARD-GATE>
+
 # Incremental Specification Development
 
 This skill guides the iterative loop for adding RFC requirements to an Ivy formal specification one at a time. Each iteration adds exactly one requirement, verifies the model, and tracks coverage progress before moving to the next.
@@ -265,6 +270,8 @@ After MUST requirements are complete, repeat the loop for SHOULD requirements if
 
 ## Integration
 
+- **LOADED BY:** ivy-workflow-orchestrator Phase 3 (Write)
+
 **Prerequisites:** `ivy-writing-guide` (Ivy syntax), `specification-patterns` (14-layer template).
 
 **Related skills:**
@@ -272,7 +279,7 @@ After MUST requirements are complete, repeat the loop for SHOULD requirements if
 - **ivy-writing-guide** -- Ivy language syntax for writing assertions (Step 3)
 - **specification-patterns** -- 14-layer template and formal model patterns (Step 2)
 - **workflow-reference** -- RFC-to-Ivy mapping patterns and quality gate details
-- **tooling-reference** -- MCP tool parameter reference for all tools used in this workflow
+- **ivy-toolkit** -- MCP tool documentation (see references/tool-catalog.md)
 
 **Related agents:**
 - **spec-analyst** -- Automated verification and diagnosis

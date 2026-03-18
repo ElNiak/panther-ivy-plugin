@@ -310,11 +310,13 @@ After applying the fix, re-run `ivy_verify` to confirm the counterexample is res
 
 ## Integration
 
+- **LOADED BY:** ivy-workflow-orchestrator Phase 4 (Verify) -- when ivy_verify fails with a counterexample
+
 **Prerequisite:** `ivy-writing-guide` -- Understanding Ivy syntax for before/after monitors, invariants, and state variables.
 
 **Related skills:**
 - **workflow-reference** -- General verification debugging cycle and error taxonomy
-- **tooling-reference** -- MCP tool parameters and invocation patterns
+- **ivy-toolkit** -- MCP tool documentation (see references/tool-catalog.md)
 - **ivy-writing-guide** -- Ivy syntax for before/after monitors, invariants, state variables
 
 **Related agents:**

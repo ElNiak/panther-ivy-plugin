@@ -209,6 +209,8 @@ Need to READ file content?   --> Read
 
 ## Integration
 
+- **CONTEXT:** Demonstrates LSP + MCP coordination used across all orchestrator phases
+
 **Prerequisite:** `tooling-reference` -- LSP and MCP tool architecture and invocation patterns.
 
 **Related skills:**

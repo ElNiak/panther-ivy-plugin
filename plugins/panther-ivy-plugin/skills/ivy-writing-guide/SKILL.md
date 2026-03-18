@@ -333,10 +333,12 @@ requirements:
 
 ## Integration
 
+- **LOADED BY:** ivy-workflow-orchestrator Phase 3 (Write)
+
 **Related skills:**
 - **specification-patterns** -- Where to place each declaration type (14-layer template)
 - **workflow-reference** -- Verification after editing, RFC-to-Ivy mapping
-- **tooling-reference** -- MCP tool parameters
+- **ivy-toolkit** -- MCP tool documentation
 
 **Related agents:**
 - **model-reviewer** -- Reviews model quality

@@ -117,7 +117,7 @@ export action _finalize = {
 
 ### Running Verification
 
-Always use `ivy_verify` MCP tool for structured JSON output.
+See **ivy-toolkit** skill for tool documentation. Always use `ivy_verify` MCP tool for structured JSON output.
 
 - **Full model check**: `ivy_verify` with `relative_path`
 - **Specific isolate check** (faster): `ivy_verify` with `relative_path` and `isolate`
@@ -249,8 +249,10 @@ Or use the `model-reviewer` agent for a detailed human-readable review.
 
 ## Integration
 
+- **LOADED BY:** ivy-workflow-orchestrator Phase 4 (Verify)
+
 **Related skills:**
-- **tooling-reference** -- MCP tool parameters
+- **ivy-toolkit** -- MCP tool documentation (see references/tool-catalog.md)
 - **ivy-writing-guide** -- Ivy syntax reference
 - **methodology-reference** -- NCT/NACT/NSCT workflows
 

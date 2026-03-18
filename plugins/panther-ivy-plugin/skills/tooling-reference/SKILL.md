@@ -56,6 +56,8 @@ LSP(operation="hover", filePath="file.ivy", line=<line>, character=<col>)
 
 ## MCP Tool Catalog (Compact)
 
+> **Note:** For full tool documentation, see **ivy-toolkit** skill (references/tool-catalog.md).
+
 All tools use prefix `mcp__plugin_panther-ivy-plugin_ivy-tools__<tool_name>`. See the [README.md](README.md) for full parameter documentation.
 
 | Tool | Modes / Views | Key Parameters |
@@ -123,6 +125,8 @@ The PreToolUse hook warns about direct Ivy CLI calls in Bash. If a Bash command 
 Use `/nct-check`, `/nct-compile`, and `/nct-model-info` commands as convenient shortcuts.
 
 ## Integration
+
+- **SUPERSEDED BY:** ivy-toolkit for tool catalog. This skill provides architecture overview only.
 
 **Related skills:**
 - **ivy-lsp-walkthrough** -- End-to-end example using these patterns
