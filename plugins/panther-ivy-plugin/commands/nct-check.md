@@ -9,6 +9,8 @@ arguments:
     description: Optional isolate name to check specifically
     required: false
 ---
+<!-- MODE: FAST — Single-file verification, no orchestrator required -->
+<!-- For full methodology workflow, use /nct-scaffold instead -->
 
 Run formal verification on the specified Ivy file using ivy-tools.
 

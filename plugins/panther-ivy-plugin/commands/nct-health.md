@@ -3,6 +3,7 @@ name: nct-health
 description: Run a health check sequence for the Ivy LSP + MCP integration
 arguments: []
 ---
+<!-- MODE: FAST — Diagnostic health check, no orchestrator required -->
 
 Run a comprehensive health check of the Ivy LSP and MCP integration stack, reporting PASS/FAIL for each step.
 

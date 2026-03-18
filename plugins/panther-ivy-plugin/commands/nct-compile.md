@@ -12,6 +12,8 @@ arguments:
     description: Optional isolate name to compile specifically
     required: false
 ---
+<!-- MODE: FAST — Single-file compilation, no orchestrator required -->
+<!-- Warn if file has not been verified with /nct-check first -->
 
 Compile the specified Ivy model to a test executable using ivy-tools.
 

@@ -18,6 +18,7 @@ arguments:
     description: "full = 3 mutation types (header, brace, include). Default: 1 mutation (include only). false = skip all."
     required: false
 ---
+<!-- MODE: HYBRID — fast mode skips orchestrator, full mode aligns with Phase 4 -->
 
 Run a scenario-based validation of the Ivy LSP, MCP tools, plugin hooks, agents, and surface coverage. Unlike `/nct-health` (connectivity), this command checks **correctness** by simulating real user workflows — exploring the model, auditing coverage, debugging failures, editing specs — with cross-validation between tools and interactive manual review.
 
@@ -506,7 +507,7 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_include_graph` with no `rela
 
 #### F4: Find references (quic_packet_type)
 
-Use the `LSP` tool to request `findReferences` on the file and line from F1's result. If F1 did not return a location, use `quic/quic_stack/quic_types.ivy` at a position where `quic_packet_type` is likely defined.
+Use the `LSP` tool to request `findReferences` on the file and line from F1's result, at **character 8** (the start of the symbol name, not the `object` keyword). If F1 did not return a location, use `quic/quic_stack/quic_types.ivy` at line 127, character 8.
 
 - **Structural**: Returns multiple references.
 - **Cross-validation**: Reference count should be roughly consistent with F2 impact edge count. F4 gives lexical occurrences (likely more), F2 gives dependency edges (likely fewer). Both should be non-empty for the same symbol.

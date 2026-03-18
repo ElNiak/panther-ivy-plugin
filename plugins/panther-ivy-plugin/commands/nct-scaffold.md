@@ -18,6 +18,13 @@ arguments:
     description: "Layer preset: minimal (7 core layers), full (all 14), security (minimal + NACT). If omitted, interactive layer selection."
     required: false
 ---
+<!-- MODE: DEEP — Invokes ivy-workflow-orchestrator starting at Phase 1 -->
+
+<HARD-GATE>
+Before scaffolding, invoke the ivy-workflow-orchestrator skill.
+Complete Phase 1 (Explore) and Phase 2 (Plan) with user approval
+before creating any files.
+</HARD-GATE>
 
 Scaffold a new protocol or test specification from templates.
 

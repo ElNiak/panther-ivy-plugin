@@ -12,6 +12,7 @@ arguments:
     description: Dispatch mode - "auto" (default), "parallel", or "sequential". Auto uses sequential for single files, parallel for directories.
     required: false
 ---
+<!-- MODE: HYBRID — Maps to orchestrator Phase 4 (Verify) when in deep workflow -->
 
 Comprehensive Ivy specification review that dispatches multiple specialized agents and aggregates their findings.
 

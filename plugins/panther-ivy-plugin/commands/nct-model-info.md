@@ -9,6 +9,7 @@ arguments:
     description: Optional isolate name to display information about
     required: false
 ---
+<!-- MODE: FAST — Read-only model query, no orchestrator required -->
 
 Display the model structure of the specified Ivy file using ivy-tools.
 

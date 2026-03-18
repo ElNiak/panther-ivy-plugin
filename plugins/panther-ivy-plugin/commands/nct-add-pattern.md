@@ -15,6 +15,8 @@ arguments:
     description: "Role type for entity pattern: asymmetric (default) or symmetric"
     required: false
 ---
+<!-- MODE: DEEP — Invokes ivy-workflow-orchestrator at Phase 3 (Write) -->
+<!-- Phase 4 (Verify) is REQUIRED after pattern addition -->
 
 # Add Pattern to Protocol
 
