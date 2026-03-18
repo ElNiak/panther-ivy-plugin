@@ -2,20 +2,38 @@
 
 ## Overview
 
-This directory contains 4 specialized Claude Code agents for Ivy protocol testing tasks within the PANTHER framework. Each agent is defined as a Markdown file with YAML frontmatter specifying its name, description, example triggers, available tools, and color.
+This directory contains 5 specialized Claude Code agents for Ivy protocol testing tasks within the PANTHER framework. Each agent is defined as a Markdown file with YAML frontmatter specifying its name, description, example triggers, available tools, and color.
 
 Agents are invoked automatically when the user's request matches a trigger pattern described in the frontmatter `description` field, or explicitly by referencing the agent name.
+
+**All agents are now interactive.** They reference the `interaction-patterns` and `claim-discussion` skills for structured user engagement during analysis workflows. The `navigator` agent serves as the primary entry point.
 
 ## Agent Selection Guide
 
 | Task | Agent | Methodology |
 |------|-------|-------------|
+| Don't know where to start, need guidance | `navigator` | All |
 | NCT/NACT/NSCT methodology guidance, specification writing | `methodology-guide` | All |
 | Review Ivy model quality, pre-commit validation | `model-reviewer` | All |
 | Navigate specs, verify, compile, diagnose failures | `spec-analyst` | All |
 | Extract RFC requirements, audit coverage, traceability gaps | `traceability-agent` | All |
 
 ## Agent Details
+
+### navigator
+
+**Purpose:** Adaptive entry point for Ivy protocol testing workflows. Detects user expertise, goals, and workspace context through a minimal adaptive interview, then routes to the appropriate specialist agent.
+
+**When to use:**
+- User asks "What should I do next?" or needs workflow guidance
+- User is unsure which agent or tool to use
+- Starting a new testing workflow from scratch
+
+**Tools available:** `Read`, `Grep`, `Glob`, `Bash`, `Write`, `Edit`, `ToolSearch`
+
+**Skills referenced:** `adaptive-interview`, `interaction-patterns`, `claim-discussion`
+
+---
 
 ### methodology-guide
 

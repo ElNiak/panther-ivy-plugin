@@ -122,6 +122,23 @@ Present the final results in this format:
 **Overall: 9/9 PASS**
 ```
 
+### Interactive Follow-up
+
+After presenting the result table, engage the user. Reference the `interaction-patterns` skill for checkpoint format details.
+
+**If any checks FAIL → Gate**:
+- Ask: "Health check found {N} failure(s). Which would you like to investigate first?"
+- List the failed checks as numbered options (e.g., "1. LSP process alive  2. Cross-layer resolution").
+- Wait for user selection before showing suggested actions for that check.
+
+**If all checks PASS → Inform-and-Continue**:
+- State: "All 9 checks pass. System is healthy. Run `/nct-validate` for deeper correctness testing?"
+- No gate needed.
+
+**If WARNings present (but no FAILs) → Collaborative**:
+- State: "Health check passed with {N} warning(s): {list}. Any concern, or good to proceed?"
+- Continue unless the user wants to discuss.
+
 If any checks fail, add a `### Suggested Actions` section at the end:
 
 - If Step 1 fails: "Start the Ivy LSP server. Check if `ivy_lsp` is installed and in PATH."

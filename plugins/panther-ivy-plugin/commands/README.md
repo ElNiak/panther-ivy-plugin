@@ -18,6 +18,10 @@ This directory contains 9 slash commands for Ivy formal verification operations 
 | `/nct-validate` | Comprehensive correctness validation of LSP, MCP, and hooks with full raw-output report | (none) | (none) |
 | `/nct-observability` | Query and analyze Ivy observability session logs (JSONL) | (none) | `mode` -- `"summary"` (default), `"events"`, `"errors"`, `"timeline"` |
 
+## Interaction Protocol
+
+Six commands (`/nct-review`, `/nct-check`, `/nct-validate`, `/nct-scaffold`, `/nct-observability`, `/nct-health`) include **Interaction Protocol** sections that define when and how to engage the user during their workflows. These use checkpoint types (Gate, Collaborative, Inform-and-Continue) from the `interaction-patterns` skill and claim discussion templates from the `claim-discussion` skill. The remaining three commands (`/nct-compile`, `/nct-model-info`, `/nct-add-pattern`) are single-action operations that don't require interactive checkpoints.
+
 ## Detailed Usage
 
 ### `/nct-check`

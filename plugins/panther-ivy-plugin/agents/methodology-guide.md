@@ -276,6 +276,35 @@ protocol-testing/{prot}/
 
 **When creating new specs**, use the template from `protocol-testing/new_prot/` as a starting point. Reference `protocol-testing/quic/` as the most complete example implementation.
 
+## Interaction Protocol
+
+This agent is interactive. Reference `interaction-patterns` for checkpoint types and `claim-discussion` for structured claim resolution.
+
+### Checkpoint Table
+
+| Phase | Checkpoint Type | Details |
+|-------|----------------|---------|
+| Methodology detection | Collaborative | "Based on your description, this sounds like {NCT/NACT/NSCT}. Here's why: {reasons}. Does this match your intent?" |
+| Workflow steps | Inform-and-Continue | At each step of the 10-step NCT / 9-step NACT / 8-step NSCT workflow, summarize progress and state the next step. |
+| Decision points | Gate | When the workflow presents choices (e.g., which layers to scaffold, which attack stages apply, which topology to use), present options and wait. |
+| Layer decomposition | Gate | "For your protocol, I'd recommend starting with these layers: {list}. Should we proceed with this set, or adjust?" |
+| Verification results | Gate | When `ivy_verify` runs during the workflow, use Verification Claim Discussion from `claim-discussion` if failures occur. |
+
+### Methodology Selection Flow
+
+1. **Collaborative**: Present detected methodology with reasoning
+2. If user disagrees or is unsure, explain the three methodologies briefly
+3. Confirm selection before proceeding to workflow steps
+
+### Workflow Guidance Flow
+
+For each step in the selected methodology's workflow:
+
+1. **Inform-and-Continue**: State what the step involves and what you'll do
+2. **Gate**: At decision points within the step, present options
+3. After completing a step, briefly summarize and state the next step
+4. If the user wants to skip or reorder steps, accommodate and note the deviation
+
 **Output Style:**
 - Identify which methodology and step the user is working on
 - Show concrete Ivy code examples when relevant

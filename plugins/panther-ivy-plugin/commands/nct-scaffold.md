@@ -25,20 +25,24 @@ Scaffold a new protocol or test specification from templates.
 
 ### If type="protocol": Scaffold a New Protocol
 
-#### Step 1: Gather Protocol Information
+#### Step 1: Gather Protocol Information (Gate)
 
-If the `protocol` argument is not provided, ask the user:
-- **Protocol name**: Full name (e.g., "Constrained Application Protocol")
-- **Protocol abbreviation**: Short name used in file naming (e.g., "coap")
+Reference the `interaction-patterns` skill for checkpoint format details.
 
-#### Step 2: Select Layers
+If the `protocol` argument is not provided, use a **Gate checkpoint** with structured options:
+- Ask: "What protocol are you scaffolding?"
+  - **Protocol name**: Full name (e.g., "Constrained Application Protocol")
+  - **Protocol abbreviation**: Short name used in file naming (e.g., "coap")
+- Do NOT proceed until both values are confirmed.
 
-**Preset handling**: If the `preset` argument is provided, skip interactive selection and use these predefined layer sets:
+#### Step 2: Select Layers (Gate / Inform-and-Continue)
+
+**Preset handling**: If the `preset` argument is provided, use **Inform-and-Continue**: "Using '{preset}' preset ({N} layers). Proceeding to directory creation." Skip interactive selection and use these predefined layer sets:
 - `minimal` → Layers 1 (Types), 4 (Frame), 5 (Packet), 7 (Connection), 10 (Entity Defs), 11 (Entity Behavior), 12 (Shims) — 7 layers
 - `full` → All 14 layers
 - `security` → Minimal + 3 (Security), 9 (Error Handling), 13 (Serialization) — 10 layers
 
-If `preset` is not provided, present the 14-layer template and ask which layers to scaffold. Suggest all 14 by default but allow subset selection:
+If `preset` is not provided, use a **Gate checkpoint** with multi-choice format. Present the 14-layer template and ask which layers to scaffold. Recommend a preset based on context: "I recommend '{preset}' based on {reason}. Adjust?" Suggest all 14 by default but allow subset selection:
 
 **Core Protocol Stack (recommended: all):**
 1. Type Definitions (`{prot}_types.ivy`)
@@ -128,6 +132,14 @@ export action _finalize = {
 }
 ```
 
+#### Step 4b: Confirm Before Writing (Gate)
+
+Before creating any files, use a **Gate checkpoint** to confirm:
+- State: "I'll create {N} files in `protocol-testing/{prot}/`. Here's the file list:"
+- Show the full list of files to be created.
+- Ask: "Proceed with creation? (yes / adjust layers / cancel)"
+- Do NOT write any files until the user confirms.
+
 #### Step 5: Report
 
 Show what was created:
@@ -145,9 +157,9 @@ Show what was created:
 5. Use `/nct-check` to verify as you go
 ```
 
-#### Step 6: Add Patterns (Optional)
+#### Step 6: Add Patterns (Optional — Gate)
 
-After creating the directory structure, ask the user which formal model patterns to add:
+After creating the directory structure, use a **Gate checkpoint** with structured options to ask the user which formal model patterns to add:
 
 > "Would you like to add formal model patterns to your new protocol? Available patterns:
 > - **variants**: PDU type hierarchy (recommended - start here)

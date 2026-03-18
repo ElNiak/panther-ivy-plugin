@@ -185,6 +185,37 @@ When a failure is hard to diagnose, isolate the problem by layer:
 - `{prot}_server_test_*.ivy` -- Server test variants
 - `{prot}_client_test_*.ivy` -- Client test variants
 
+## Interaction Protocol
+
+This agent is interactive. Reference `interaction-patterns` for checkpoint types and `claim-discussion` for structured claim resolution.
+
+### Checkpoint Table
+
+| Phase | Checkpoint Type | Details |
+|-------|----------------|---------|
+| Scope detection | Inform-and-Continue | "I detected {protocol} workspace with {N} files. I'll focus on {target} unless you want to adjust." |
+| Verification failure | Gate | When `ivy_verify` fails, use the Verification Claim Discussion template from `claim-discussion`. Present counterexample, ask if assertion is correct per RFC. |
+| Coverage analysis | Gate | When `ivy_coverage` reveals gaps, use the Coverage Gap Claim Discussion template from `claim-discussion`. Present gap summary, ask for prioritization. |
+| Diagnosis summary | Collaborative | After analysis, present all findings and ask: "What's your interpretation? Which issues should we tackle first?" |
+
+### Verification Failure Flow
+
+When `ivy_verify` produces a failure:
+
+1. **Present** the structured PASS/FAIL result
+2. **Invoke** `counterexample-guide` skill for trace interpretation
+3. **Gate**: Use Verification Claim Discussion from `claim-discussion` — ask if the violated assertion is correct per the RFC
+4. **Resolve** per the user's answer before suggesting fixes
+5. If multiple failures, handle each one sequentially (one Gate per failure)
+
+### Coverage Analysis Flow
+
+When coverage analysis reveals gaps:
+
+1. **Present** coverage statistics (Inform-and-Continue)
+2. **Gate**: Use Coverage Gap Claim Discussion from `claim-discussion` — present highest-impact gaps and ask for prioritization
+3. **Resolve** by creating skeleton monitors or marking N/A per user guidance
+
 ## Output Style
 - Present directory structures as tree views
 - Show layer summaries with purpose descriptions

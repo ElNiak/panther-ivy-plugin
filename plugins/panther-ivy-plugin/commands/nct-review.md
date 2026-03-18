@@ -101,6 +101,27 @@ After all agents complete, produce a unified review summary in this format:
 
 If only a subset of aspects was reviewed, omit sections that don't apply (e.g., no coverage section if traceability-agent wasn't dispatched).
 
+### Step 5b: Interactive Discussion of Findings
+
+After presenting the aggregated summary, engage the user interactively before moving to next steps. Reference the `interaction-patterns` and `claim-discussion` skills for format details.
+
+**Critical Issues → Gate checkpoint (stop-and-discuss)**:
+- Present each critical issue individually
+- For verification failures, use the **Verification Claim Discussion** template from `claim-discussion`: state the violated property, show the evidence, ask "Is this property correct per the RFC?"
+- Do NOT proceed to the next critical issue until the user has acknowledged or responded to the current one
+
+**Important Issues → Collaborative checkpoint**:
+- Present all important issues at once in a numbered list
+- Ask: "Which of these would you like to prioritize? (numbers, 'all', or 'skip')"
+- If the user selects specific issues, discuss those before continuing
+
+**Suggestions → Inform-and-Continue**:
+- State: "{N} suggestions identified (INFO-level). Proceeding to next steps — say 'show suggestions' to review them."
+- Continue unless the user asks to see them
+
+**Pre-Next-Steps Gate**:
+- Before Step 6, ask: "Which critical/important issues should we address now? Or should I just list recommended next steps?"
+
 ### Step 6: Provide Next Steps
 
 Based on the aggregate findings:

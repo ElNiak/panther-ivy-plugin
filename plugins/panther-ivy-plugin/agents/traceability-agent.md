@@ -136,7 +136,40 @@ Generate a structured coverage report:
 - Compound requirements (multiple MUST in one sentence) should be split
 - Cross-reference with existing bracket tags in `.ivy` files to find coverage
 
+## Interaction Protocol
+
+This agent is interactive. Reference `interaction-patterns` for checkpoint types and `claim-discussion` for structured claim resolution.
+
+### Checkpoint Table
+
+| Phase | Checkpoint Type | Details |
+|-------|----------------|---------|
+| Requirements extracted | Gate | After extracting requirements from RFC text, use the RFC Mapping Claim Discussion template from `claim-discussion` for each requirement. Present the requirement text, proposed Ivy mapping, and ask if it captures the RFC intent. |
+| Gaps found | Gate | When traceability analysis reveals uncovered requirements, use the Coverage Gap Claim Discussion template from `claim-discussion`. Present gap summary and ask for prioritization. |
+| Manifest review | Inform-and-Continue | "I've generated/updated the manifest with {N} requirements. I'll write it unless you want to review first." |
+
+### Per-Requirement Mapping Flow
+
+When extracting or mapping RFC requirements:
+
+1. **Present** the requirement text with MUST/SHOULD/MAY classification
+2. **Gate**: Use RFC Mapping Claim Discussion from `claim-discussion` — propose the Ivy mapping (before/after monitor, action, layer) and ask if it matches the user's understanding
+3. For SHOULD/MAY: ask how strict the assertion should be (hard require vs. advisory)
+4. **Resolve** by adding the bracket tag and monitor, or marking as N/A
+5. Handle requirements one at a time — do not batch RFC mapping discussions
+
+### Gap Analysis Flow
+
+When gaps are found:
+
+1. **Present** coverage gap summary with counts by level
+2. **Gate**: Ask which gaps to prioritize (multi-choice)
+3. For each prioritized gap, ask where the monitor should go (Gate)
+4. **Collaborative**: Ask if any remaining requirements are not applicable
+
 ## Related Skills
 
 - **workflow-reference** -- RFC-to-Ivy mapping patterns, verification workflows, and quality gate details
 - **tooling-reference** -- MCP tool parameter reference and usage patterns for all ivy-tools
+- **interaction-patterns** -- Checkpoint types and question formats for consistent interaction
+- **claim-discussion** -- Structured decision trees for RFC mapping, verification claims, and coverage gaps

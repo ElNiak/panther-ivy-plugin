@@ -112,6 +112,22 @@ HH:03  ██  (2 events)
 ...
 ```
 
+### Step 4: Interactive Exploration
+
+After presenting the analysis for any mode, engage the user. Reference the `interaction-patterns` skill for checkpoint format details.
+
+**After presenting summary/events/timeline → Collaborative**:
+- Ask: "Here's the {mode} analysis. Want to drill into any specific area? (e.g., a specific tool, time range, or error pattern)"
+- If the user picks an area, filter and present the relevant subset.
+
+**If errors mode shows failures → Collaborative**:
+- Highlight the most frequent failure: "I see {N} tool failures. The most frequent: `{tool_name}` ({count} times). Want to investigate this pattern?"
+- If the user says yes, show the full error details for that tool.
+
+**If no logs found → Inform-and-Continue**:
+- State: "No observability logs found. Hooks may not have triggered yet in this session. Run any `/nct-*` command to generate events."
+- No gate needed.
+
 ## Notes
 
 - If the `mode` argument is not provided, default to `summary`.

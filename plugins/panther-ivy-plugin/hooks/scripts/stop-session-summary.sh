@@ -52,11 +52,45 @@ while IFS= read -r f; do
   fi
 done <<< "$ALL_IVY"
 
+# Count claim discussion comments added in this session
+CLAIM_RESOLVED=0
+CLAIM_IUT_FINDING=0
+CLAIM_DEFERRED=0
+CLAIM_GUARD=0
+CLAIM_NA=0
+CLAIM_KNOWN_DEV=0
+
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  [ ! -f "$f" ] && continue
+  CLAIM_RESOLVED=$((CLAIM_RESOLVED + $(grep -c 'RESOLVED(' "$f" 2>/dev/null || echo 0)))
+  CLAIM_IUT_FINDING=$((CLAIM_IUT_FINDING + $(grep -c 'IUT_FINDING(' "$f" 2>/dev/null || echo 0)))
+  CLAIM_DEFERRED=$((CLAIM_DEFERRED + $(grep -c 'DEFERRED(' "$f" 2>/dev/null || echo 0)))
+  CLAIM_GUARD=$((CLAIM_GUARD + $(grep -c 'GUARD_ADDED(' "$f" 2>/dev/null || echo 0)))
+  CLAIM_NA=$((CLAIM_NA + $(grep -c 'N/A(' "$f" 2>/dev/null || echo 0)))
+  CLAIM_KNOWN_DEV=$((CLAIM_KNOWN_DEV + $(grep -c 'KNOWN_DEVIATION(' "$f" 2>/dev/null || echo 0)))
+done <<< "$ALL_IVY"
+
+CLAIM_TOTAL=$((CLAIM_RESOLVED + CLAIM_IUT_FINDING + CLAIM_DEFERRED + CLAIM_GUARD + CLAIM_NA + CLAIM_KNOWN_DEV))
+
 # Build summary
+CLAIM_SECTION=""
+if [ "$CLAIM_TOTAL" -gt 0 ]; then
+  CLAIM_SECTION="\\n[CLAIM DISCUSSIONS] $CLAIM_TOTAL resolution(s):"
+  [ "$CLAIM_RESOLVED" -gt 0 ] && CLAIM_SECTION="${CLAIM_SECTION} $CLAIM_RESOLVED confirmed,"
+  [ "$CLAIM_IUT_FINDING" -gt 0 ] && CLAIM_SECTION="${CLAIM_SECTION} $CLAIM_IUT_FINDING IUT findings,"
+  [ "$CLAIM_GUARD" -gt 0 ] && CLAIM_SECTION="${CLAIM_SECTION} $CLAIM_GUARD guards added,"
+  [ "$CLAIM_DEFERRED" -gt 0 ] && CLAIM_SECTION="${CLAIM_SECTION} $CLAIM_DEFERRED deferred,"
+  [ "$CLAIM_NA" -gt 0 ] && CLAIM_SECTION="${CLAIM_SECTION} $CLAIM_NA N/A,"
+  [ "$CLAIM_KNOWN_DEV" -gt 0 ] && CLAIM_SECTION="${CLAIM_SECTION} $CLAIM_KNOWN_DEV known deviations,"
+  # Remove trailing comma
+  CLAIM_SECTION="${CLAIM_SECTION%,}"
+fi
+
 if [ "$ISSUE_COUNT" -gt 0 ]; then
-  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, $ISSUE_COUNT with lint issues:\\n${ISSUES}Run ivy_lint on flagged files before committing."
+  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, $ISSUE_COUNT with lint issues:\\n${ISSUES}Run ivy_lint on flagged files before committing.${CLAIM_SECTION}"
 else
-  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, all pass basic structural checks."
+  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, all pass basic structural checks.${CLAIM_SECTION}"
 fi
 
 # Output as additionalContext

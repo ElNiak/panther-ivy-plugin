@@ -2,7 +2,7 @@
 
 ## Overview
 
-- 11 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
+- 14 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
 - Skills are surfaced automatically by Claude Code when trigger patterns in the user's query match a skill's `description` frontmatter
 - They provide **reference material** (language guides, workflow steps, tool catalogs); agents and commands provide interactive workflows and execution
 
@@ -38,6 +38,14 @@
 | Skill | Description |
 |-------|-------------|
 | [workflow-reference](workflow-reference/) | Verification workflows, RFC-to-Ivy mapping, quality gate pipeline, and debugging strategies |
+
+### Interaction
+
+| Skill | Description |
+|-------|-------------|
+| [interaction-patterns](interaction-patterns/) | Reusable checkpoint types (Gate, Inform-and-Continue, Collaborative), question formats, and adaptive follow-up rules for consistent user interaction across all agents |
+| [claim-discussion](claim-discussion/) | Structured decision trees for verification claim resolution, RFC requirement mapping, and coverage gap prioritization |
+| [adaptive-interview](adaptive-interview/) | Navigator agent's interview logic: context detection, goal identification, methodology selection, target scoping, and dispatch |
 
 ## Learning Paths
 
@@ -129,10 +137,11 @@
 | **Agent** | Executes a multi-step interactive workflow using MCP tools and user input | `@agent-name` or selected by Claude Code when a task matches | Active -- calls tools, asks questions, produces artifacts |
 | **Command** | Runs a single focused operation (verify, compile, scaffold) | `/command-name [args]` | Active -- executes one action and returns results |
 
-### Available Agents (4)
+### Available Agents (5)
 
 | Agent | Purpose |
 |-------|---------|
+| navigator | Adaptive entry point — detects user expertise, goals, and context to route to the right agent or workflow |
 | model-reviewer | Reviews Ivy model files for quality, correctness, and best practices |
 | methodology-guide | Interactive guide for NCT, NACT, and NSCT methodologies |
 | spec-analyst | Navigates, explores, verifies, and diagnoses Ivy protocol specifications |
