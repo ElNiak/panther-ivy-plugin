@@ -8,7 +8,7 @@ Run a comprehensive health check of the Ivy LSP and MCP integration stack, repor
 
 ## Instructions
 
-Run the following 7 checks in order. For each check, record PASS or FAIL with a short detail message. If a check fails, continue with the remaining checks (do not abort early).
+Run the following 9 checks in order. For each check, record PASS, WARN, or FAIL with a short detail message. If a check fails, continue with the remaining checks (do not abort early).
 
 ### Step 1: LSP process alive
 
@@ -24,11 +24,18 @@ pgrep -f ivy_lsp
 
 Run via Bash:
 ```
-tail -20 /tmp/ivy-lsp.log
+tail -50 /tmp/ivy-lsp.log
+```
+
+Also run:
+```
+grep -c "ERROR.*include_resolver" /tmp/ivy-lsp.log
 ```
 
 - If the file does not exist: **FAIL** -- "Log file /tmp/ivy-lsp.log not found."
-- If the last 20 lines contain `CRITICAL` or `Traceback` or `crash`: **FAIL** -- quote the relevant line(s).
+- If the last 50 lines contain `CRITICAL` or `Traceback` or `crash`: **FAIL** -- quote the relevant line(s).
+- If include_resolver ERROR count > 10: **WARN** -- "Include resolver has N errors. Layer routing may be broken."
+- If the last 50 lines contain `ERROR` from `include_resolver`: **WARN** -- report count and a sample line.
 - Otherwise: **PASS** -- "No critical errors in recent log entries."
 
 ### Step 3: LSP responding
@@ -68,6 +75,25 @@ Use the IDE LSP `goToDefinition` on a known symbol in an `.ivy` file. If no symb
 - If the LSP returns a definition location (file + line): **PASS** -- report the target location.
 - If the LSP returns no results or errors: **FAIL** -- report the issue.
 
+### Step 8: Layer staging active
+
+Run via Bash:
+```
+grep -c "Layered staging active\|Layer.*staging.*files\|Skipping scope-based partitioned staging" /tmp/ivy-lsp.log
+```
+
+- If count > 0: **PASS** -- "Layer staging active"
+- If count = 0: **WARN** -- "Layer staging may not be initialized. Check workspace_layers in .ivyworkspace and restart the LSP."
+
+### Step 9: Cross-layer include resolution
+
+Use LSP `goToDefinition` on a symbol that requires cross-directory include resolution.
+Find a file in a subdirectory that includes a file from a different subdirectory
+(e.g., `quic_attacks_stack/*.ivy` including `quic_types` from `quic_stack/`).
+
+- If the LSP returns a definition in a different directory: **PASS**
+- If the LSP returns no results: **FAIL** -- "Cross-directory resolution is broken. Check layer staging."
+
 ## Result Presentation
 
 Present the final results in this format:
@@ -84,8 +110,10 @@ Present the final results in this format:
 | 5 | Workspace access         | PASS   | quic_types.ivy -- 0 diagnostics  |
 | 6 | Model builds             | PASS   | 15 requirements, 80% coverage    |
 | 7 | Cross-file resolution    | PASS   | quic_frame.ivy:34                |
+| 8 | Layer staging active     | PASS   | Layer staging active             |
+| 9 | Cross-layer resolution   | PASS   | quic_types resolved from attacks |
 
-**Overall: 7/7 PASS**
+**Overall: 9/9 PASS**
 ```
 
 If any checks fail, add a `### Suggested Actions` section at the end:
@@ -97,5 +125,7 @@ If any checks fail, add a `### Suggested Actions` section at the end:
 - If Step 5 fails: "Ensure `.ivy` files exist in the workspace and the MCP server has read access."
 - If Step 6 fails: "Model analysis failed. This may indicate a missing or corrupt protocol model."
 - If Step 7 fails: "Cross-file resolution is not working. The LSP index may need rebuilding."
+- If Step 8 warns: "Layer staging is not active. Ensure `.ivyworkspace` has `workspace_layers` defined."
+- If Step 9 fails: "Cross-directory resolution is broken. Check layer staging and `.ivyworkspace` configuration."
 
 See the `tooling-reference` skill for LSP and MCP architecture.

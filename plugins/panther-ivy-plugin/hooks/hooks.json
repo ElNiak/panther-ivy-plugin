@@ -22,6 +22,16 @@
         ]
       },
       {
+        "matcher": "mcp__.*ivy",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/observability/check_lsp_log.py",
+            "timeout": 3
+          }
+        ]
+      },
+      {
         "matcher": "",
         "hooks": [
           {
