@@ -14,6 +14,9 @@ arguments:
   - name: name
     description: Test name suffix (for type=test) or protocol full name (for type=protocol)
     required: false
+  - name: preset
+    description: "Layer preset: minimal (7 core layers), full (all 14), security (minimal + NACT). If omitted, interactive layer selection."
+    required: false
 ---
 
 Scaffold a new protocol or test specification from templates.
@@ -30,7 +33,12 @@ If the `protocol` argument is not provided, ask the user:
 
 #### Step 2: Select Layers
 
-Present the 14-layer template and ask which layers to scaffold. Suggest all 14 by default but allow subset selection:
+**Preset handling**: If the `preset` argument is provided, skip interactive selection and use these predefined layer sets:
+- `minimal` → Layers 1 (Types), 4 (Frame), 5 (Packet), 7 (Connection), 10 (Entity Defs), 11 (Entity Behavior), 12 (Shims) — 7 layers
+- `full` → All 14 layers
+- `security` → Minimal + 3 (Security), 9 (Error Handling), 13 (Serialization) — 10 layers
+
+If `preset` is not provided, present the 14-layer template and ask which layers to scaffold. Suggest all 14 by default but allow subset selection:
 
 **Core Protocol Stack (recommended: all):**
 1. Type Definitions (`{prot}_types.ivy`)
