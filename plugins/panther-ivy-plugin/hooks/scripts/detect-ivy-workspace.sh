@@ -16,6 +16,8 @@ detect_ivy_workspace
 # Write env var for later Bash commands
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
     printf 'IVY_WORKSPACE_ROOT="%s"\n' "$DETECTED_ROOT" >> "$CLAUDE_ENV_FILE"
+    # Propagate log symlink path so downstream hooks find the right log
+    printf 'IVY_LSP_LOG_PATH="%s"\n' "${IVY_LSP_LOG_DIR:-/tmp}/ivy-lsp-latest.log" >> "$CLAUDE_ENV_FILE"
 fi
 
 # Build context message for Claude
