@@ -70,6 +70,7 @@ hooks:
     PreToolUse:
       - block-direct-ivy.sh
       - lint-before-verify.sh
+      - check-indexing-ready.sh
       - obs_pre_tool_use.py
     PostToolUse:
       - post-write-ivy-lint.sh
@@ -78,6 +79,7 @@ hooks:
       - obs_post_tool_use_failure.py
     SessionStart:
       - detect-ivy-workspace.sh
+      - wait-for-indexing.sh
       - obs_session_start.py
     SessionEnd:
       - obs_session_end.py

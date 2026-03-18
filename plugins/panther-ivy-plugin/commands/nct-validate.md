@@ -1,6 +1,6 @@
 ---
 name: nct-validate
-description: Comprehensive correctness validation of Ivy LSP, MCP tools, plugin hooks, agents, and surface coverage against the real QUIC workspace (~55 checks across 7 phases) with error injection, agent validation, and self-review
+description: Comprehensive correctness validation of Ivy LSP, MCP tools, plugin hooks, agents, and surface coverage against the real QUIC workspace (~57 checks across 7 phases) with error injection, agent validation, and self-review
 arguments:
   - name: phase
     description: "Comma-separated phases to run: preflight, mcp, fixtures, lsp, hooks, agents, surface, selfreview. Default: all"
@@ -388,7 +388,7 @@ Use the `LSP` tool to request `workspaceSymbol` with query `cid`.
 
 ---
 
-## Phase 3: Plugin Hook Validation (12 checks)
+## Phase 3: Plugin Hook Validation (14 checks)
 
 ### H1: SessionStart hook fired
 
@@ -482,8 +482,10 @@ For every script referenced in `hooks.json`, use the `Read` tool to read the fir
 Scripts to check (from `hooks/scripts/`):
 - `block-direct-ivy.sh`
 - `lint-before-verify.sh`
+- `check-indexing-ready.sh`
 - `post-write-ivy-lint.sh`
 - `detect-ivy-workspace.sh`
+- `wait-for-indexing.sh`
 - `stop-session-summary.sh`
 - `observability/obs_pre_tool_use.py`
 - `observability/obs_post_tool_use.py`
@@ -500,6 +502,20 @@ Scripts to check (from `hooks/scripts/`):
 
 - If all scripts exist and are readable: **PASS** — report count.
 - If any missing: **FAIL** — report which scripts are missing.
+
+### H13: SessionStart hook registered (wait-for-indexing)
+
+Verify that `hooks.json` contains a `SessionStart` hook with command containing `wait-for-indexing.sh`.
+
+- If found: **PASS**.
+- If not found: **FAIL** — "wait-for-indexing hook not registered."
+
+### H14: PreToolUse hook registered (check-indexing-ready)
+
+Verify that `hooks.json` contains a `PreToolUse` hook with matcher `mcp__.*ivy` and command containing `check-indexing-ready.sh`.
+
+- If found: **PASS**.
+- If not found: **FAIL** — "check-indexing-ready hook not registered."
 
 ---
 
@@ -676,11 +692,11 @@ Present the final results in this format:
 | 1 | MCP Tools | 15 | ? | ? | ? |
 | 1B | Fixtures | 6 | ? | ? | ? |
 | 2 | LSP | 6 | ? | ? | ? |
-| 3 | Hooks | 12 | ? | ? | ? |
+| 3 | Hooks | 14 | ? | ? | ? |
 | 4 | Agents | 8 | ? | ? | ? |
 | 5 | Surface | 4 | ? | ? | ? |
 | 6 | Self-Review | 1 | ? | ? | ? |
-| **Total** | | **~55** | **?** | **?** | **?** |
+| **Total** | | **~57** | **?** | **?** | **?** |
 
 **Meta-Quality Score**: NN/100
 ```
