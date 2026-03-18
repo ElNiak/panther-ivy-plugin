@@ -62,6 +62,28 @@ Parse optional arguments from the user's invocation:
 - **Cross-validation**: When a check references a prior result, explicitly compare and note agreement or disagreement.
 - Track all results for SR1 (self-review meta-analysis) and Pass 4 (interactive table).
 
+### Interaction Protocol
+
+Reference the `interaction-patterns` skill for checkpoint format details.
+
+**Between passes → Inform-and-Continue**:
+- After each pass completes, state: "Pass {N} ({name}) complete: {pass}/{total} passed. Proceeding to Pass {next}."
+- Continue immediately unless the user intervenes.
+
+**After Pass 1 (Scenarios) if any checks fail → Collaborative**:
+- Present failures in a table: "Scenario validation found {N} failures:"
+- Ask: "Should we investigate any of these before continuing to Pass 2, or proceed?"
+- If the user picks specific checks, discuss those before continuing.
+
+**After Pass 3 (Non-Workflow) if any AG-checks fail → Gate**:
+- Present failures: "Agent validation found issues: {list}. These may indicate broken agent definitions."
+- Ask: "Investigate now, or continue to Interactive Review?"
+- Wait for user response before proceeding.
+
+**After SR1 (Self-Review) → Collaborative**:
+- Present the full report with the quality score.
+- Ask: "Here's the full validation report. What stands out, or should we address any failures?"
+
 ---
 
 ## Pass 0: Pre-flight (3 checks)
