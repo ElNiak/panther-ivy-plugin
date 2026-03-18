@@ -25,11 +25,16 @@ fi
 REINSTALL_FLAG=""
 [ "${IVY_LSP_FORCE_REINSTALL:-}" = "1" ] && REINSTALL_FLAG="--reinstall"
 
+# --- PID tracking for cleanup ---
+PID_DIR="/tmp/ivy-lsp-pids"
+mkdir -p "$PID_DIR"
+echo "$$" > "$PID_DIR/lsp-$$.pid"
+
 if [ -n "$IVY_LSP_SRC" ]; then
     log "Using LOCAL ivy-lsp: $IVY_LSP_SRC"
     # shellcheck disable=SC2086
-    exec uvx $REINSTALL_FLAG --from "$IVY_LSP_SRC" --with z3-solver ivy_lsp 2>>"$LOG_FILE"
+    exec uvx $REINSTALL_FLAG --from "$IVY_LSP_SRC" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
 else
     log "Using REMOTE ivy-lsp: git+https://github.com/ElNiak/ivy-lsp"
-    exec uvx --from "git+https://github.com/ElNiak/ivy-lsp" --with z3-solver ivy_lsp 2>>"$LOG_FILE"
+    exec uvx --from "git+https://github.com/ElNiak/ivy-lsp" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
 fi

@@ -1,20 +1,39 @@
 #!/usr/bin/env bash
 # SessionStart hook: wait for ivy-lsp MCP server to be ready.
 #
-# Polls the MCP log for the "Starting ivy-lsp MCP server" message.
-# The MCP server builds models lazily on first tool call, so we only
-# need to confirm the server process started. Surfaces status as
-# additionalContext for Claude.
+# Polls the MCP log for the "[MCP-READY]" sentinel logged after tool
+# registration completes. Surfaces status as additionalContext for Claude.
 set -euo pipefail
 
 MCP_LOG="${IVY_MCP_LOG_PATH:-/tmp/ivy-mcp-latest.log}"
 LSP_LOG="${IVY_LSP_LOG_PATH:-/tmp/ivy-lsp-lsp-latest.log}"
-MAX_WAIT="${IVY_LSP_INDEX_TIMEOUT:-15}"
+MAX_WAIT="${IVY_LSP_INDEX_TIMEOUT:-30}"
+
+# --- Guard: skip polling if MCP log is unavailable ---
+# If IVY_MCP_LOG_PATH was not explicitly set AND the fallback file doesn't exist,
+# the MCP server has not been configured yet (detect-ivy-workspace.sh may not have run).
+# Exit early with an informational message rather than polling for 30s needlessly.
+if [ -z "${IVY_MCP_LOG_PATH+x}" ] && [ ! -f "/tmp/ivy-mcp-latest.log" ]; then
+    SKIP_MSG="[ivy-indexing] MCP server log not available — skipping readiness check"
+    SKIP_ESCAPED=$(printf '%s' "$SKIP_MSG" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])" 2>/dev/null)
+    if [ -z "$SKIP_ESCAPED" ]; then
+        SKIP_ESCAPED="$SKIP_MSG"
+    fi
+    cat <<EOFSKIP
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "$SKIP_ESCAPED"
+  }
+}
+EOFSKIP
+    exit 0
+fi
 
 # --- Wait for MCP server startup ---
 MCP_READY=0
 for _i in $(seq 1 "$MAX_WAIT"); do
-    if [ -f "$MCP_LOG" ] && grep -q "Starting ivy-lsp MCP server" "$MCP_LOG" 2>/dev/null; then
+    if [ -f "$MCP_LOG" ] && grep -q "\[MCP-READY\]" "$MCP_LOG" 2>/dev/null; then
         MCP_READY=1
         break
     fi
@@ -39,7 +58,10 @@ else
 fi
 
 # Escape for JSON
-ESCAPED=$(printf '%s' "$MSG" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])" 2>/dev/null || echo "$MSG")
+ESCAPED=$(printf '%s' "$MSG" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])" 2>/dev/null)
+if [ -z "$ESCAPED" ]; then
+    ESCAPED="[ivy-indexing] Status message could not be JSON-escaped"
+fi
 
 cat <<EOFJ
 {

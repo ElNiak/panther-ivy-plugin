@@ -6,8 +6,6 @@
       ".ivy": "ivy"
     },
     "env": {
-      "IVY_LSP_INCLUDE_PATHS": "protocol-testing",
-      "IVY_LSP_EXCLUDE_PATHS": "submodules,test,doc,examples,notebooks,patches",
       "IVY_LSP_LOG_LEVEL": "INFO",
       "IVY_LSP_ACTIVITY_LEVEL": "file",
       "IVY_LSP_WORKSPACE_HINT": "panther/plugins/services/testers/panther_ivy"

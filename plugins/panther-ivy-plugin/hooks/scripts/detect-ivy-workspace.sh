@@ -19,6 +19,8 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
     # Propagate log symlink paths so downstream hooks find the right logs
     printf 'IVY_LSP_LOG_PATH="%s"\n' "${IVY_LSP_LOG_DIR:-/tmp}/ivy-lsp-lsp-latest.log" >> "$CLAUDE_ENV_FILE"
     printf 'IVY_MCP_LOG_PATH="%s"\n' "${IVY_LSP_LOG_DIR:-/tmp}/ivy-mcp-latest.log" >> "$CLAUDE_ENV_FILE"
+    printf 'IVY_SESSION_ID="%s"\n' "$$" >> "$CLAUDE_ENV_FILE"
+    printf 'IVY_MCP_PID_FILE="/tmp/ivy-mcp-%s.pid"\n' "$$" >> "$CLAUDE_ENV_FILE"
 fi
 
 # Build context message for Claude
@@ -31,7 +33,10 @@ else
 fi
 
 # Escape context for JSON safety using proper JSON escaping
-context_escaped=$(printf '%s' "$context" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])")
+context_escaped=$(printf '%s' "$context" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])" 2>/dev/null)
+if [ -z "$context_escaped" ]; then
+    context_escaped="[ivy-workspace] Context could not be JSON-escaped"
+fi
 
 # Output hook result as JSON
 cat <<EOF

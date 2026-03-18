@@ -30,8 +30,12 @@ log() {
 detect_ivy_workspace
 
 if [ "$DETECTED_TYPE" = "panther" ]; then
-    export IVY_LSP_INCLUDE_PATHS="${IVY_LSP_INCLUDE_PATHS:-}"
-    export IVY_LSP_EXCLUDE_PATHS="${IVY_LSP_EXCLUDE_PATHS:-submodules,test,doc,examples,notebooks,patches}"
+    if [ -f "$DETECTED_ROOT/.ivyworkspace" ]; then
+        log "Found .ivyworkspace — deferring path config to Python marker detection"
+    else
+        export IVY_LSP_INCLUDE_PATHS="${IVY_LSP_INCLUDE_PATHS:-protocol-testing}"
+        export IVY_LSP_EXCLUDE_PATHS="${IVY_LSP_EXCLUDE_PATHS:-submodules,test,doc,examples,notebooks,patches,ivy}"
+    fi
     log "Detected PANTHER project: workspace=$DETECTED_ROOT"
 elif [ "$DETECTED_TYPE" = "standalone" ]; then
     log "Detected standalone ivy project: workspace=$DETECTED_ROOT"
@@ -53,6 +57,11 @@ REINSTALL_FLAG=""
 if [ "${IVY_LSP_FORCE_REINSTALL:-}" = "1" ]; then
     REINSTALL_FLAG="--reinstall"
 fi
+
+# --- PID tracking for cleanup ---
+PID_DIR="/tmp/ivy-lsp-pids"
+mkdir -p "$PID_DIR"
+echo "$$" > "$PID_DIR/mcp-$$.pid"
 
 if [ -n "$IVY_LSP_SRC" ]; then
     log "Using local ivy-lsp source: $IVY_LSP_SRC"
