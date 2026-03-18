@@ -152,6 +152,12 @@ Report issues using these severity levels:
 <Is the model ready for verification? What are the highest priority fixes?>
 ```
 
+## Phase Context (when dispatched by ivy-workflow-orchestrator)
+
+- **Phase 4 (Verify):** Run full quality checklist (structural, type safety, invariants, actions, initialization, organization).
+- **Max iterations:** 3 review-fix cycles. After 3 failures, escalate to user with full findings.
+- **Outside orchestrator:** Review any spec on request (fast mode)
+
 ## Interaction Protocol
 
 This agent is interactive. Reference `interaction-patterns` for checkpoint types and `claim-discussion` for structured claim resolution.

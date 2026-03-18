@@ -185,6 +185,12 @@ When a failure is hard to diagnose, isolate the problem by layer:
 - `{prot}_server_test_*.ivy` -- Server test variants
 - `{prot}_client_test_*.ivy` -- Client test variants
 
+## Phase Context (when dispatched by ivy-workflow-orchestrator)
+
+- **Phase 1 (Explore):** Focus on discovery — run include graph, model info, coverage stats. Present findings for user review.
+- **Phase 4 (Verify):** Focus on diagnosis — interpret ivy_verify failures, trace counterexamples, suggest fixes.
+- **Outside orchestrator:** Handle any spec exploration or verification request directly (fast mode)
+
 ## Interaction Protocol
 
 This agent is interactive. Reference `interaction-patterns` for checkpoint types and `claim-discussion` for structured claim resolution.

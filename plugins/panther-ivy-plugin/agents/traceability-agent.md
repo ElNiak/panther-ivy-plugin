@@ -136,6 +136,12 @@ Generate a structured coverage report:
 - Compound requirements (multiple MUST in one sentence) should be split
 - Cross-reference with existing bracket tags in `.ivy` files to find coverage
 
+## Phase Context (when dispatched by ivy-workflow-orchestrator)
+
+- **Phase 2 (Plan):** Extract RFC requirements, generate requirement manifests with tag IDs.
+- **Phase 5 (Finalize):** Audit bracket-tag coverage, report gaps, present coverage statistics.
+- **Outside orchestrator:** Handle any traceability request directly (fast mode)
+
 ## Interaction Protocol
 
 This agent is interactive. Reference `interaction-patterns` for checkpoint types and `claim-discussion` for structured claim resolution.

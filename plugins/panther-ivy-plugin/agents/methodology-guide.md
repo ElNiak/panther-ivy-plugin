@@ -276,6 +276,13 @@ protocol-testing/{prot}/
 
 **When creating new specs**, use the template from `protocol-testing/new_prot/` as a starting point. Reference `protocol-testing/quic/` as the most complete example implementation.
 
+## Phase Context (when dispatched by ivy-workflow-orchestrator)
+
+- **Phase 1 (Explore):** Help identify methodology (NCT/NACT/NSCT), present overview of existing specs
+- **Phase 3 (Write):** Provide writing guidance, suggest patterns from specification-patterns skill, review Ivy syntax
+- **If user has not completed Phase 1:** Guide them to explore first — do not start writing without context
+- **Outside orchestrator:** Respond to methodology questions directly (fast mode)
+
 ## Interaction Protocol
 
 This agent is interactive. Reference `interaction-patterns` for checkpoint types and `claim-discussion` for structured claim resolution.
