@@ -27,7 +27,7 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/observability/check_lsp_log.py",
-            "timeout": 3
+            "timeout": 5
           }
         ]
       },
@@ -37,7 +37,7 @@
           {
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-indexing-ready.sh",
-            "timeout": 3
+            "timeout": 5
           }
         ]
       },
@@ -60,6 +60,16 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-write-ivy-lint.sh",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "ivy_verify|ivy_coverage|ivy_extract_requirements|ivy_quality",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/interaction-checkpoint.py",
+            "timeout": 5
           }
         ]
       },
@@ -110,12 +120,21 @@
           {
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/wait-for-indexing.sh",
-            "timeout": 35
+            "timeout": 20
           }
         ]
       }
     ],
     "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/cleanup-ivy-lsp.sh",
+            "timeout": 5
+          }
+        ]
+      },
       {
         "hooks": [
           {

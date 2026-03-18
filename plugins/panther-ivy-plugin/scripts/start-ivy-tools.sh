@@ -19,6 +19,7 @@ _IVY_LOG_DIR="${IVY_LSP_LOG_DIR:-/tmp}"
 _IVY_LOG_TS="$(date +%Y-%m-%dT%H%M%S)"
 LOG_FILE="${IVY_LSP_LOG_FILE:-${_IVY_LOG_DIR}/ivy-lsp-${_IVY_LOG_TS}-$$.log}"
 ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-latest.log"
+ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-mcp-latest.log"
 
 log() {
     echo "[ivy-tools] $*" >>"$LOG_FILE"
@@ -29,7 +30,7 @@ log() {
 detect_ivy_workspace
 
 if [ "$DETECTED_TYPE" = "panther" ]; then
-    export IVY_LSP_INCLUDE_PATHS="${IVY_LSP_INCLUDE_PATHS:-protocol-testing}"
+    export IVY_LSP_INCLUDE_PATHS="${IVY_LSP_INCLUDE_PATHS:-}"
     export IVY_LSP_EXCLUDE_PATHS="${IVY_LSP_EXCLUDE_PATHS:-submodules,test,doc,examples,notebooks,patches}"
     log "Detected PANTHER project: workspace=$DETECTED_ROOT"
 elif [ "$DETECTED_TYPE" = "standalone" ]; then
