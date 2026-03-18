@@ -343,13 +343,13 @@ protocol-testing/{prot}/
 
 **Health check**: Run `/nct-health` to verify LSP + MCP are working correctly.
 
-**Log file**: `/tmp/ivy-lsp.log` — both LSP and MCP server logs go here.
+**Log file**: `/tmp/ivy-lsp-latest.log` (symlink to current instance; per-instance files named `ivy-lsp-<timestamp>-<pid>.log`) — both LSP and MCP server logs go here.
 
 **Common failures**:
-- LSP not starting: check if `uvx` is on PATH, check `/tmp/ivy-lsp.log` for startup errors
+- LSP not starting: check if `uvx` is on PATH, check `/tmp/ivy-lsp-latest.log` for startup errors
 - Empty LSP results: workspace indexing may not be complete — check log for "indexed N files"
 - Z3 import error (ARM/Apple Silicon): use `development-scp-refactor` branch for stability
-- MCP server unresponsive: run `ivy_capabilities` to test connectivity, check `/tmp/ivy-lsp.log`
+- MCP server unresponsive: run `ivy_capabilities` to test connectivity, check `/tmp/ivy-lsp-latest.log`
 
 **Debug environment variables**:
 - `IVY_LSP_LOG_LEVEL=DEBUG` — verbose logging

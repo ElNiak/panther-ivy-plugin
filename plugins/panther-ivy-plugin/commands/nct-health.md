@@ -18,24 +18,30 @@ pgrep -f ivy_lsp
 ```
 
 - If exit code is 0 and PIDs are returned: **PASS** -- report the PID(s).
+- If more than 6 PIDs are returned: **WARN** -- "N ivy_lsp processes running. Consider killing stale instances with `pkill -f ivy_lsp`."
 - If exit code is non-zero or no output: **FAIL** -- "No ivy_lsp process found."
 
 ### Step 2: LSP log health
 
 Run via Bash:
 ```
-tail -50 /tmp/ivy-lsp.log
+tail -50 /tmp/ivy-lsp-latest.log
 ```
 
 Also run:
 ```
-grep -c "ERROR.*include_resolver" /tmp/ivy-lsp.log
+grep -c "include_resolver ERROR" /tmp/ivy-lsp-latest.log
 ```
 
-- If the file does not exist: **FAIL** -- "Log file /tmp/ivy-lsp.log not found."
-- If the last 50 lines contain `CRITICAL` or `Traceback` or `crash`: **FAIL** -- quote the relevant line(s).
+Also run:
+```
+grep -c "CRITICAL\|Traceback" /tmp/ivy-lsp-latest.log
+```
+
+- If the file does not exist: **FAIL** -- "Log file /tmp/ivy-lsp-latest.log not found."
+- If CRITICAL/Traceback count > 0: **FAIL** -- "Log contains N critical errors. Run `grep CRITICAL /tmp/ivy-lsp-latest.log` for details."
 - If include_resolver ERROR count > 10: **WARN** -- "Include resolver has N errors. Layer routing may be broken."
-- If the last 50 lines contain `ERROR` from `include_resolver`: **WARN** -- report count and a sample line.
+- If the last 50 lines contain `CRITICAL` or `Traceback` or `crash`: **FAIL** -- quote the relevant line(s).
 - Otherwise: **PASS** -- "No critical errors in recent log entries."
 
 ### Step 3: LSP responding
@@ -79,7 +85,7 @@ Use the IDE LSP `goToDefinition` on a known symbol in an `.ivy` file. If no symb
 
 Run via Bash:
 ```
-grep -c "Layered staging active\|Layer.*staging.*files\|Skipping scope-based partitioned staging" /tmp/ivy-lsp.log
+grep -c "Layered staging active\|Skipping scope-based partitioned staging" /tmp/ivy-lsp-latest.log
 ```
 
 - If count > 0: **PASS** -- "Layer staging active"
@@ -119,7 +125,7 @@ Present the final results in this format:
 If any checks fail, add a `### Suggested Actions` section at the end:
 
 - If Step 1 fails: "Start the Ivy LSP server. Check if `ivy_lsp` is installed and in PATH."
-- If Step 2 fails: "Inspect `/tmp/ivy-lsp.log` for crash details. Consider restarting the LSP."
+- If Step 2 fails: "Inspect `/tmp/ivy-lsp-latest.log` for crash details. Consider restarting the LSP."
 - If Step 3 fails: "The LSP process may be running but unresponsive. Try restarting it."
 - If Step 4 fails: "The MCP server is not reachable. Check the plugin configuration in `.claude/plugins.json`."
 - If Step 5 fails: "Ensure `.ivy` files exist in the workspace and the MCP server has read access."

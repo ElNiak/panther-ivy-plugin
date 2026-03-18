@@ -751,12 +751,12 @@ For agent checks (A1-A8):
 If any checks fail, add a `### Suggested Actions` section at the end:
 
 - If P1 fails: "Start the Ivy LSP server. Check if `ivy_lsp` is installed and in PATH."
-- If P2 fails: "The MCP server is not reachable. Check plugin configuration and `/tmp/ivy-lsp.log`."
-- If P3 fails: "LSP is running but not responding to requests. Check workspace indexing in `/tmp/ivy-lsp.log`."
+- If P2 fails: "The MCP server is not reachable. Check plugin configuration and `/tmp/ivy-lsp-latest.log`."
+- If P3 fails: "LSP is running but not responding to requests. Check workspace indexing in `/tmp/ivy-lsp-latest.log`."
 - If any M1-M12 check fails: "MCP tool returned unexpected values. Compare raw output against ground truth in `tests/ground-truth/quic-workspace.yaml`."
 - If any M13-M15 check fails: "Error injection test failed. Check that `ivy_lint` properly detects the mutation type. Verify file was restored cleanly with `git diff`."
 - If any FX check fails: "Fixture test failed — tool did not handle edge-case input gracefully. Check tool error handling in the MCP server."
-- If any L-check fails: "LSP feature returned unexpected results. Check `/tmp/ivy-lsp.log` for errors. Line numbers may have shifted if .ivy files were edited."
+- If any L-check fails: "LSP feature returned unexpected results. Check `/tmp/ivy-lsp-latest.log` for errors. Line numbers may have shifted if .ivy files were edited."
 - If H1 fails: "SessionStart hook did not fire. Check `hooks/hooks.json` and `hooks/scripts/detect-ivy-workspace.sh`."
 - If H2-H11 fail: "Hook not registered. Check `hooks/hooks.json` for the expected event type and script path."
 - If H12 fails: "Hook script(s) missing or unreadable. Verify script files exist in `hooks/scripts/`."

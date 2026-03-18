@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PreToolUse hook: surface recent LSP errors before MCP tool calls.
 
-Reads the last 50 lines of /tmp/ivy-lsp.log and filters for CRITICAL,
+Reads the last 50 lines of /tmp/ivy-lsp-latest.log and filters for CRITICAL,
 ERROR, or Traceback entries from the last 60 seconds. If found, returns
 a warning in the hook response so the user sees it.
 """
@@ -11,7 +11,7 @@ import os
 import time
 from collections import deque
 
-LOG_PATH = os.environ.get("IVY_LSP_LOG_PATH", "/tmp/ivy-lsp.log")
+LOG_PATH = os.environ.get("IVY_LSP_LOG_PATH", "/tmp/ivy-lsp-latest.log")
 MAX_LINES = 50
 MAX_AGE_SECONDS = 60
 ERROR_PATTERNS = ("CRITICAL", "ERROR", "Traceback")
