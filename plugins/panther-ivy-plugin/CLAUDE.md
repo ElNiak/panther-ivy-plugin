@@ -102,9 +102,12 @@ Example: `ivy_coverage(mode="stats", test_file="quic/quic_tests/client_tests/qui
 
 `counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
 
+**Interaction skills** (shared patterns for interactive agent workflows):
+`interaction-patterns` (checkpoint types, question formats), `claim-discussion` (verification/RFC/coverage claim resolution), `adaptive-interview` (Navigator agent interview logic)
+
 ### Available Agents
 
-`methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`
+`navigator` (adaptive entry point — detects goals and routes to specialist agents), `methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`
 
 ## NCT — Network-Centric Compositional Testing
 
@@ -343,13 +346,17 @@ protocol-testing/{prot}/
 
 **Health check**: Run `/nct-health` to verify LSP + MCP are working correctly.
 
-**Log file**: `/tmp/ivy-lsp-latest.log` (symlink to current instance; per-instance files named `ivy-lsp-<timestamp>-<pid>.log`) — both LSP and MCP server logs go here.
+**Log files**:
+- `/tmp/ivy-lsp-latest.log` — symlink to whichever server started last (backward compat)
+- `/tmp/ivy-lsp-lsp-latest.log` — LSP server log (indexing, hover, definitions)
+- `/tmp/ivy-mcp-latest.log` — MCP server log (tool calls, model building)
+- Per-instance files: `ivy-lsp-<timestamp>-<pid>.log`
 
 **Common failures**:
-- LSP not starting: check if `uvx` is on PATH, check `/tmp/ivy-lsp-latest.log` for startup errors
-- Empty LSP results: workspace indexing may not be complete — check log for "indexed N files"
+- LSP not starting: check if `uvx` is on PATH, check `/tmp/ivy-lsp-lsp-latest.log` for startup errors
+- Empty LSP results: workspace indexing may not be complete — check LSP log for "Indexed N files"
 - Z3 import error (ARM/Apple Silicon): use `development-scp-refactor` branch for stability
-- MCP server unresponsive: run `ivy_capabilities` to test connectivity, check `/tmp/ivy-lsp-latest.log`
+- MCP server unresponsive: run `ivy_capabilities` to test connectivity, check `/tmp/ivy-mcp-latest.log`
 
 **Debug environment variables**:
 - `IVY_LSP_LOG_LEVEL=DEBUG` — verbose logging

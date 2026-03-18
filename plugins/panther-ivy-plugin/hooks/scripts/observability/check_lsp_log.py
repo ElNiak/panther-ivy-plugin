@@ -11,7 +11,7 @@ import os
 import time
 from collections import deque
 
-LOG_PATH = os.environ.get("IVY_LSP_LOG_PATH", "/tmp/ivy-lsp-latest.log")
+LOG_PATH = os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log")
 MAX_LINES = 50
 MAX_AGE_SECONDS = 60
 ERROR_PATTERNS = ("CRITICAL", "ERROR", "Traceback")

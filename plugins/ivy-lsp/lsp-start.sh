@@ -10,6 +10,7 @@ _IVY_LOG_DIR="${IVY_LSP_LOG_DIR:-/tmp}"
 _IVY_LOG_TS="$(date +%Y-%m-%dT%H%M%S)"
 LOG_FILE="${IVY_LSP_LOG_FILE:-${_IVY_LOG_DIR}/ivy-lsp-${_IVY_LOG_TS}-$$.log}"
 ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-latest.log"
+ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-lsp-latest.log"
 log() { echo "[ivy-lsp] $*" >>"$LOG_FILE"; }
 
 if [ -f "$COMMON" ]; then
