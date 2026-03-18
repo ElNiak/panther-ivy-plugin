@@ -15,7 +15,7 @@ LOG_PATH = os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log")
 MAX_LINES = 50
 MAX_AGE_SECONDS = 60
 ERROR_PATTERNS = ("CRITICAL", "ERROR", "Traceback")
-_ALLOW = json.dumps({"decision": "allow"})
+_ALLOW = "{}"
 
 
 def main():
@@ -55,7 +55,7 @@ def main():
         LOG_PATH,
         "\n".join(f"  {e}" for e in recent_errors[-5:]),  # last 5
     )
-    print(json.dumps({"decision": "allow", "message": warning_text}))
+    print(json.dumps({"systemMessage": warning_text}))
 
 
 if __name__ == "__main__":

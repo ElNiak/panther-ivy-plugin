@@ -10,9 +10,9 @@ MCP_LOG="${IVY_MCP_LOG_PATH:-/tmp/ivy-mcp-latest.log}"
 
 # Fast path: MCP server started → allow silently
 if [ -f "$MCP_LOG" ] && grep -q "Starting ivy-lsp MCP server" "$MCP_LOG" 2>/dev/null; then
-    echo '{"decision":"allow"}'
+    echo '{}'
     exit 0
 fi
 
 # No startup message found — warn but allow
-echo '{"decision":"allow","message":"WARNING: Ivy MCP server may not be fully started yet. Results could be incomplete."}'
+echo '{"systemMessage":"WARNING: Ivy MCP server may not be fully started yet. Results could be incomplete."}'
