@@ -101,7 +101,7 @@ surface:
   command_count: 9
   skill_count: 11
   agent_count: 4
-  min_mcp_tools: 15
+  min_mcp_tools: 18
 
 agents:
   spec-analyst:
