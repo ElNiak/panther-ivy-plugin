@@ -6,7 +6,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMMON="$SCRIPT_DIR/../panther-ivy-plugin/scripts/workspace-common.sh"
 
-LOG_FILE="${IVY_LSP_LOG_FILE:-/tmp/ivy-lsp.log}"
+_IVY_LOG_DIR="${IVY_LSP_LOG_DIR:-/tmp}"
+_IVY_LOG_TS="$(date +%Y-%m-%dT%H%M%S)"
+LOG_FILE="${IVY_LSP_LOG_FILE:-${_IVY_LOG_DIR}/ivy-lsp-${_IVY_LOG_TS}-$$.log}"
+ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-latest.log"
 log() { echo "[ivy-lsp] $*" >>"$LOG_FILE"; }
 
 if [ -f "$COMMON" ]; then
