@@ -42,7 +42,7 @@ The Ivy LSP runs internally via `.lsp.json` and powers MCP tools. Do not call th
 **Quality and pattern MCP tools**:
 `ivy_quality` (mode="suggestions" for context-aware suggestions — note: file_path/line/context parameters currently have no effect on output, known issue; mode="gate" to validate against quality gates), `ivy_patterns` (mode="analyze"/"validate"/"compare" for pattern analysis; mode="check" for layer/pattern completeness), `ivy_pattern_scaffold` (generate from template)
 
-**Note**: Claude Code does not receive automatic diagnostics — use `ivy_diagnostics` MCP tool instead (mode="structural" for fast checks, or omit mode for full 5-layer analysis). See the `tooling-reference` skill for usage patterns.
+**Note**: The LSP server pushes structural diagnostics immediately on file edits. If diagnostics are not visible in `<new-diagnostics>` blocks, the PostToolUse hook fallback runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes. Use the `tooling-reference` skill for usage patterns.
 
 **Claude native tools**: `Read`/`Grep`/`Glob` for navigation, `Edit`/`Write` for modification.
 

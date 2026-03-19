@@ -25,7 +25,7 @@ description: "Use when choosing between LSP, MCP tools, and Claude native tools 
 | Search for a regex pattern across files | Grep | LSP does not support regex |
 | Check coverage / traceability | MCP `ivy_coverage` (mode=stats/gaps/matrix) | Structured coverage data |
 | Verify formal properties | MCP `ivy_verify` | Structured JSON diagnostics |
-| Get diagnostics/errors | MCP `ivy_diagnostics` (mode="structural" for fast check, or full 5-layer) | Claude Code does NOT receive automatic LSP diagnostics |
+| Get diagnostics/errors | MCP `ivy_diagnostics` (mode="structural" for fast check, or full 5-layer) | LSP pushes structural diagnostics on edit; PostToolUse hook provides fallback |
 
 ## LSP Tool API
 
@@ -94,11 +94,12 @@ All tools use prefix `mcp__plugin_panther-ivy-plugin_ivy-tools__<tool_name>`.
 3. **Edit** -- Use `Edit`/`Write`. Run MCP `ivy_diagnostics(mode="structural")` after edits.
 4. **Verify** -- Use MCP `ivy_verify`, `ivy_compile` to confirm properties hold.
 
-## What LSP Does NOT Provide in Claude Code
+## Diagnostics in Claude Code
 
-- **No automatic diagnostics**: Claude Code does not support `textDocument/publishDiagnostics`.
-- **Use MCP tools instead**: Run `ivy_diagnostics(mode="structural")` (fast, ms) or `ivy_diagnostics` (thorough, 5-layer) after edits.
-- **Post-write hook**: The plugin's PostToolUse hook runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes.
+- **Automatic structural diagnostics**: The LSP pushes structural diagnostics immediately on `.ivy` file edits (no debounce).
+- **Full diagnostics**: The debounced pipeline delivers complete T1+T2 diagnostics ~150ms after the last edit.
+- **Fallback**: If `<new-diagnostics>` blocks are not visible, the PostToolUse hook runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes.
+- **Manual**: Run `ivy_diagnostics(mode="structural")` (fast, ms) or `ivy_diagnostics` (thorough, 5-layer) for on-demand analysis.
 
 ## Enforcement
 
