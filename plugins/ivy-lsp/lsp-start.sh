@@ -28,13 +28,28 @@ REINSTALL_FLAG=""
 # --- PID tracking for cleanup ---
 PID_DIR="/tmp/ivy-lsp-pids"
 mkdir -p "$PID_DIR"
-echo "$$" > "$PID_DIR/lsp-$$.pid"
+
+# Kill stale LSP servers from previous sessions
+for pidfile in "$PID_DIR"/lsp-*.pid; do
+    [ -f "$pidfile" ] || continue
+    old_pid="$(cat "$pidfile" 2>/dev/null)" || continue
+    [ "$old_pid" = "$$" ] && continue
+    if kill -0 "$old_pid" 2>/dev/null; then
+        log "Killing stale LSP server (PID=$old_pid)"
+        kill -TERM "$old_pid" 2>/dev/null || true
+    fi
+    rm -f "$pidfile" 2>/dev/null || true
+done
 
 if [ -n "$IVY_LSP_SRC" ]; then
     log "Using LOCAL ivy-lsp: $IVY_LSP_SRC"
     # shellcheck disable=SC2086
-    exec uvx $REINSTALL_FLAG --from "$IVY_LSP_SRC" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
+    uvx $REINSTALL_FLAG --from "$IVY_LSP_SRC" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE" &
 else
     log "Using REMOTE ivy-lsp: git+https://github.com/ElNiak/ivy-lsp"
-    exec uvx --from "git+https://github.com/ElNiak/ivy-lsp" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
+    uvx --from "git+https://github.com/ElNiak/ivy-lsp" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE" &
 fi
+CHILD=$!
+echo "$CHILD" > "$PID_DIR/lsp-$CHILD.pid"
+trap 'rm -f "$PID_DIR/lsp-$CHILD.pid" 2>/dev/null' EXIT TERM INT
+wait "$CHILD"

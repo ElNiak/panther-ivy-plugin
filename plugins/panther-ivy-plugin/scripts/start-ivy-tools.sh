@@ -18,7 +18,6 @@ source "$SCRIPT_DIR/workspace-common.sh"
 _IVY_LOG_DIR="${IVY_LSP_LOG_DIR:-/tmp}"
 _IVY_LOG_TS="$(date +%Y-%m-%dT%H%M%S)"
 LOG_FILE="${IVY_LSP_LOG_FILE:-${_IVY_LOG_DIR}/ivy-lsp-${_IVY_LOG_TS}-$$.log}"
-ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-latest.log"
 ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-mcp-latest.log"
 
 log() {
@@ -61,23 +60,39 @@ fi
 # --- PID tracking for cleanup ---
 PID_DIR="/tmp/ivy-lsp-pids"
 mkdir -p "$PID_DIR"
-echo "$$" > "$PID_DIR/mcp-$$.pid"
+
+# Kill stale MCP servers from previous sessions
+for pidfile in "$PID_DIR"/mcp-*.pid; do
+    [ -f "$pidfile" ] || continue
+    old_pid="$(cat "$pidfile" 2>/dev/null)" || continue
+    [ "$old_pid" = "$$" ] && continue
+    if kill -0 "$old_pid" 2>/dev/null; then
+        log "Killing stale MCP server (PID=$old_pid)"
+        kill -TERM "$old_pid" 2>/dev/null || true
+    fi
+    rm -f "$pidfile" 2>/dev/null || true
+done
+
+trap 'rm -f "$PID_DIR/mcp-$$.pid" 2>/dev/null' EXIT TERM INT
 
 if [ -n "$IVY_LSP_SRC" ]; then
     log "Using local ivy-lsp source: $IVY_LSP_SRC"
     # shellcheck disable=SC2086
-    exec uvx \
+    uvx \
         $REINSTALL_FLAG \
         --from "${IVY_LSP_SRC}[mcp]" \
         ivy_lsp \
         --mcp \
         --workspace "$DETECTED_ROOT" \
-        2>>"$LOG_FILE"
+        2>>"$LOG_FILE" &
 else
-    exec uvx \
+    uvx \
         --from "git+https://github.com/ElNiak/ivy-lsp[mcp]" \
         ivy_lsp \
         --mcp \
         --workspace "$DETECTED_ROOT" \
-        2>>"$LOG_FILE"
+        2>>"$LOG_FILE" &
 fi
+CHILD=$!
+echo "$CHILD" > "$PID_DIR/mcp-$$.pid"
+wait "$CHILD"

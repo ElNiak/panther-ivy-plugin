@@ -69,6 +69,9 @@ detect_ivy_workspace() {
     # 3. Fallback to CWD
     DETECTED_ROOT="$PWD"
     DETECTED_TYPE="fallback"
+
+    # Canonicalize through symlinks for worktree consistency
+    DETECTED_ROOT="$(python3 -c "import os; print(os.path.realpath('$DETECTED_ROOT'))" 2>/dev/null || echo "$DETECTED_ROOT")"
 }
 
 # Resolve ivy-lsp source path.
