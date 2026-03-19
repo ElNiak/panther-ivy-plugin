@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Launch Ivy LSP, preferring local source when available.
 # Priority: IVY_LSP_DEV_ROOT env var > local submodule > GitHub remote
+#
+# NOTE: The LSP runs over stdio (pygls reads stdin, writes stdout).
+# We MUST use `exec` so the uvx process inherits the shell's stdio fds.
+# Backgrounding (`&`) would detach stdin and break the LSP protocol.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -41,15 +45,17 @@ for pidfile in "$PID_DIR"/lsp-*.pid; do
     rm -f "$pidfile" 2>/dev/null || true
 done
 
+# Write PID file before exec (exec replaces this shell, keeping the same PID).
+# The trap won't fire after exec, so the PID file is cleaned up by:
+#   1. The stale-cleanup loop above on next startup
+#   2. The panther-ivy-plugin SessionEnd cleanup hook
+echo "$$" > "$PID_DIR/lsp-$$.pid"
+
 if [ -n "$IVY_LSP_SRC" ]; then
     log "Using LOCAL ivy-lsp: $IVY_LSP_SRC"
     # shellcheck disable=SC2086
-    uvx $REINSTALL_FLAG --from "$IVY_LSP_SRC" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE" &
+    exec uvx $REINSTALL_FLAG --from "$IVY_LSP_SRC" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
 else
     log "Using REMOTE ivy-lsp: git+https://github.com/ElNiak/ivy-lsp"
-    uvx --from "git+https://github.com/ElNiak/ivy-lsp" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE" &
+    exec uvx --from "git+https://github.com/ElNiak/ivy-lsp" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
 fi
-CHILD=$!
-echo "$CHILD" > "$PID_DIR/lsp-$CHILD.pid"
-trap 'rm -f "$PID_DIR/lsp-$CHILD.pid" 2>/dev/null' EXIT TERM INT
-wait "$CHILD"
