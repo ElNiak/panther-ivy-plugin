@@ -33,22 +33,14 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 **Coverage & traceability**:
 `ivy_coverage` (mode="stats" for coverage stats, mode="gaps" for unguarded state/uncovered reqs, mode="matrix" for requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text; output="manifest" to produce YAML manifest)
 
-**Semantic query** (via LSP -- `ivy_query` has been removed):
-Use LSP `hover` for symbol info, LSP `findReferences` for cross-references, and LSP `incomingCalls`/`outgoingCalls` for impact analysis.
+**Semantic query**:
+The Ivy LSP runs internally via `.lsp.json` and powers MCP tools. Do not call the `LSP` tool directly — use `Read`/`Grep`/`Glob` for navigation, `ivy_model_info` for model structure, and `ivy_diagnostics` for analysis.
 
 **Visualization MCP tools** (model views):
 `ivy_visualize` (view="dependencies" for action dependency graph, view="state_machine" for state-machine perspective, view="layers" for layered overview by file/module), `ivy_model_summary` (detail="summary" for per-action summary, detail="requirements" for per-action requirements)
 
 **Quality and pattern MCP tools**:
 `ivy_quality` (mode="suggestions" for context-aware suggestions — note: file_path/line/context parameters currently have no effect on output, known issue; mode="gate" to validate against quality gates), `ivy_patterns` (mode="analyze"/"validate"/"compare" for pattern analysis; mode="check" for layer/pattern completeness), `ivy_pattern_scaffold` (generate from template)
-
-**Ivy LSP** (for `.ivy` files — use the `LSP` tool explicitly):
-
-| Category | Operations |
-|----------|-----------|
-| Navigation | `goToDefinition` (cross-include), `goToImplementation` (action→before/after monitors), `findReferences` |
-| Inspection | `hover` (type info + RFC annotations), `documentSymbol` (file outline), `workspaceSymbol` (cross-file search) |
-| Call graph | `prepareCallHierarchy`, `incomingCalls`, `outgoingCalls` (not yet implemented -- may return empty results) |
 
 **Note**: Claude Code does not receive automatic diagnostics — use `ivy_diagnostics` MCP tool instead (mode="structural" for fast checks, or omit mode for full 5-layer analysis). See the `tooling-reference` skill for usage patterns.
 
