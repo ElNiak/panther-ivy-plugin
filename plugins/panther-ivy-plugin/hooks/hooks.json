@@ -12,6 +12,15 @@
         ]
       },
       {
+        "matcher": "LSP",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Do not call the LSP tool directly on .ivy files. The Ivy LSP runs internally via .lsp.json and MCP bridge. Use MCP tools (ivy_model_info, ivy_diagnostics, ivy_coverage) for analysis, and Read/Grep/Glob for navigation. If you need symbol references, use Grep with \\b word boundaries."
+          }
+        ]
+      },
+      {
         "matcher": "ivy_verify",
         "hooks": [
           {
