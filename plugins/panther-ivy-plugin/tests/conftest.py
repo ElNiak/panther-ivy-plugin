@@ -18,10 +18,8 @@ def plugin_root() -> Path:
 
 @pytest.fixture
 def ivy_lsp_root() -> Path:
-    """Path to the sibling ivy-lsp plugin root directory."""
-    lsp_root = PLUGIN_ROOT.parent / "ivy-lsp"
-    assert lsp_root.is_dir(), f"ivy-lsp sibling directory not found at {lsp_root}"
-    return lsp_root
+    """Path to the plugin root containing .lsp.json (unified plugin)."""
+    return PLUGIN_ROOT
 
 
 @pytest.fixture

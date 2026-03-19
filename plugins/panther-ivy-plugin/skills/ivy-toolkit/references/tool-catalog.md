@@ -41,17 +41,8 @@ Returns: { success, output, duration_seconds }
 ```
 Timeout: 30 seconds.
 
-### ivy_lint
-Fast structural lint (no subprocess, milliseconds).
-```
-Parameters:
-  relative_path: str           # Path to .ivy file
-
-Returns: { file, diagnostics, diagnostic_count, error_count, warning_count }
-```
-
 ### ivy_diagnostics
-Full 5-layer diagnostic analysis (structural, lexer, semantic, coverage, pattern).
+Diagnostic analysis with two modes: `mode="structural"` for fast structural lint (milliseconds, no subprocess), or `mode="full"` for 5-layer analysis (structural, lexer, semantic, coverage, pattern). Defaults to full analysis if mode is omitted.
 ```
 Parameters:
   relative_path: str
@@ -101,25 +92,12 @@ Mode "matrix": RFC requirement-to-annotation mapping
 Returns: { total_requirements, covered, uncovered, matrix }
 ```
 
-## Semantic Query
+## Semantic Query (Removed -- Use LSP)
 
-### ivy_query
-Consolidated semantic query tool with three modes.
-```
-Parameters:
-  mode: str                    # "info" | "impact" | "xrefs"
-  symbol_name: str | None      # Symbol name (info, impact modes)
-  node_id: str | None          # Node identifier (xrefs mode)
-
-Mode "info": Rich semantic info about a symbol
-Returns: { symbol, found, symbol_info, type_info, references }
-
-Mode "impact": Incoming and outgoing edges for a symbol
-Returns: { symbol, found, qualified_name, kind, file, line, incoming_edges, outgoing_edges, total_references }
-
-Mode "xrefs": Cross-reference graph neighborhood. Note: node_id resolution is unreliable; use mode="info" instead.
-Returns: { node_id, found, node_type, incoming, outgoing }
-```
+`ivy_query` has been removed. Its capabilities are now provided by the Ivy LSP server:
+- **Symbol info** (was `ivy_query(mode="info")`): Use LSP `hover` for type info and docs
+- **Impact analysis** (was `ivy_query(mode="impact")`): Use LSP `incomingCalls`/`outgoingCalls` for call edges
+- **Cross-references** (was `ivy_query(mode="xrefs")`): Use LSP `findReferences` for all usages
 
 ## RFC Extraction
 

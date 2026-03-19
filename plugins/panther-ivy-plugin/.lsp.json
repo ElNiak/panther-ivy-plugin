@@ -1,7 +1,7 @@
 {
   "ivy": {
     "command": "bash",
-    "args": ["${CLAUDE_PLUGIN_ROOT}/lsp-start.sh"],
+    "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/start-ivy-server.sh", "--mode", "lsp"],
     "extensionToLanguage": {
       ".ivy": "ivy"
     },
@@ -12,7 +12,8 @@
       "IVY_LSP_FAST_INDEX_WORKERS": "8",
       "IVY_LSP_PARSE_WORKERS": "4",
       "IVY_LSP_BULK_WORKERS": "6",
-      "IVY_LSP_COMPILE_WORKERS": "2"
+      "IVY_LSP_COMPILE_WORKERS": "2",
+      "IVY_MCP_PORT": "19847"
     }
   }
 }

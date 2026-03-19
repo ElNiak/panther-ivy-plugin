@@ -15,9 +15,8 @@
         "matcher": "ivy_verify",
         "hooks": [
           {
-            "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/lint-before-verify.sh",
-            "timeout": 5
+            "type": "prompt",
+            "prompt": "Tip: Consider running ivy_diagnostics(mode=\"structural\") first for fast structural validation (milliseconds vs seconds). This catches syntax errors before the heavier formal verification."
           }
         ]
       },

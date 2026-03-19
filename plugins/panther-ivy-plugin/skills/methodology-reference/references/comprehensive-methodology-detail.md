@@ -79,7 +79,7 @@ Run compiled test against the implementation via PANTHER experiment framework.
 | Formal verification | `ivy_verify` | Check isolate/invariant/safety properties |
 | Compile tests | `ivy_compile` | Build test executables (target=test) |
 | Inspect model | `ivy_model_info` | View types, relations, actions, invariants |
-| Fast structural lint | `ivy_lint` | Quick structural checks |
+| Fast structural lint | `ivy_diagnostics(mode="structural")` | Quick structural checks |
 
 ### NCT Directory Structure
 

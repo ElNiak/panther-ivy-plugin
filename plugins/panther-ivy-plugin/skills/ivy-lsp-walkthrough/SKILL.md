@@ -149,12 +149,12 @@ Use the `Edit` tool to insert this monitor in the appropriate behavior file.
 
 ## Step 6: Lint (Automatic + Manual)
 
-The PostToolUse hook runs `ivy_lint` automatically after the Edit. Check its output for structural issues.
+The PostToolUse hook runs `ivy_diagnostics(mode="structural")` automatically after the Edit. Check its output for structural issues.
 
 Also run manually for certainty:
 
 ```
-MCP: ivy_lint(relative_path="protocol-testing/quic/quic_entities_behavior/ivy_quic_server_behavior.ivy")
+MCP: ivy_diagnostics(mode="structural", relative_path="protocol-testing/quic/quic_entities_behavior/ivy_quic_server_behavior.ivy")
 ```
 
 **Expected**: 0 errors, 0 warnings if the monitor syntax is correct.
@@ -188,7 +188,7 @@ MCP: ivy_coverage(mode="matrix", relative_path="protocol-testing/quic/")
 | **Navigation** | 1-3 | LSP (documentSymbol, workspaceSymbol, goToDefinition, findReferences, hover) | Understand code semantically |
 | **Analysis** | 4 | MCP (ivy_coverage mode="stats", ivy_coverage mode="gaps") | Identify what's missing |
 | **Editing** | 5 | Edit | Write the new monitor |
-| **Validation** | 6-8 | MCP (ivy_lint, ivy_verify, ivy_coverage mode="matrix") | Confirm correctness and traceability |
+| **Validation** | 6-8 | MCP (ivy_diagnostics, ivy_verify, ivy_coverage mode="matrix") | Confirm correctness and traceability |
 
 **LSP was used for Steps 1-3** (5 distinct operations) to navigate the codebase semantically.
 **MCP was used for Steps 4, 6-8** (4 distinct tools) for analysis and verification.
@@ -200,7 +200,7 @@ MCP: ivy_coverage(mode="matrix", relative_path="protocol-testing/quic/")
 Need to FIND something?     --> LSP (goToDefinition, findReferences, workspaceSymbol)
 Need to UNDERSTAND type?     --> LSP (hover)
 Need to SEE structure?       --> LSP (documentSymbol)
-Need to CHECK correctness?   --> MCP (ivy_lint, ivy_verify, ivy_diagnostics)
+Need to CHECK correctness?   --> MCP (ivy_diagnostics, ivy_verify)
 Need to CHECK coverage?      --> MCP (ivy_coverage mode="stats", ivy_coverage mode="gaps")
 Need to CHECK traceability?  --> MCP (ivy_coverage mode="matrix")
 Need to SEARCH text/regex?   --> Grep

@@ -3,7 +3,9 @@
     "ivy-tools": {
       "command": "bash",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/scripts/start-ivy-tools.sh"
+        "${CLAUDE_PLUGIN_ROOT}/scripts/start-ivy-server.sh",
+        "--mode",
+        "mcp-bridge"
       ],
       "env": {
         "IVY_LSP_LOG_LEVEL": "DEBUG",

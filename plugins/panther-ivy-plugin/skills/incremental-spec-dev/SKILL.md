@@ -68,12 +68,12 @@ Rules for writing the assertion:
 - **State variable guards**: `require var_name(args)` for safety properties that depend on protocol state
 - **Refer to the ivy-writing-guide skill** for full Ivy syntax details
 
-### Step 4: Fast Check with `ivy_lint`
+### Step 4: Fast Check with `ivy_diagnostics(mode="structural")`
 
 Run structural validation (completes in milliseconds):
 
 ```
-ivy_lint(relative_path="{path_to_modified_file}")
+ivy_diagnostics(mode="structural", relative_path="{path_to_modified_file}")
 ```
 
 This catches:
@@ -244,9 +244,9 @@ After MUST requirements are complete, repeat the loop for SHOULD requirements if
 
 ### 2. Lint Before Verify
 
-**Effective approach**: Run `ivy_lint` before `ivy_verify` after every edit.
+**Effective approach**: Run `ivy_diagnostics(mode="structural")` before `ivy_verify` after every edit.
 
-**Why**: `ivy_lint` catches structural errors in milliseconds; `ivy_verify` takes seconds to minutes. Catching a typo in 50ms instead of 120s compounds across dozens of iterations.
+**Why**: `ivy_diagnostics(mode="structural")` catches structural errors in milliseconds; `ivy_verify` takes seconds to minutes. Catching a typo in 50ms instead of 120s compounds across dozens of iterations.
 
 ### 3. Check Coverage Gaps Before Writing Guards
 

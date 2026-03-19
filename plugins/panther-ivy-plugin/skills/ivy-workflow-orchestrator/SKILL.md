@@ -142,7 +142,7 @@ Proceed to next?" Do NOT write the next layer until current is approved.
 - Run `ivy_verify` on each new/modified file (via workflow-reference skill)
 - Dispatch `spec-analyst` agent for error diagnosis
 - Dispatch `model-reviewer` agent for quality audit
-- Run `ivy_lint` for fast pattern checks
+- Run `ivy_diagnostics(mode="structural")` for fast pattern checks
 
 **Gate:** All verification must pass. If failures:
 - Attempt 1-3: Fix and re-verify. Fix attempts return to Phase 3 (WRITE) for the fix, then re-enter Phase 4 (VERIFY).

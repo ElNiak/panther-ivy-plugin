@@ -54,7 +54,7 @@ if [ -n "$ERRORS" ]; then
   REL_PATH=$(basename "$FILE_PATH" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])")
   ERRORS_ESCAPED=$(printf '%s' "$ERRORS" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])")
   # Return additionalContext so Claude sees the issues (non-blocking)
-  printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"[IVY-LINT] Structural issues in %s:\\n%sRun ivy_lint MCP tool for full diagnostics."}}' "$REL_PATH" "$ERRORS_ESCAPED"
+  printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"[IVY-LINT] Structural issues in %s:\\n%sRun ivy_diagnostics(mode=\\\"structural\\\") MCP tool for full diagnostics."}}' "$REL_PATH" "$ERRORS_ESCAPED"
 fi
 
 exit 0

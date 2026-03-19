@@ -12,7 +12,7 @@ This document is your self-contained operating guide. Skills provide supplementa
 
 **RFC-first reasoning**: Start from the RFC requirement, not from code patterns. Ask "which RFC section does this implement?" before writing any monitor. Always add bracket tags (`# [rfcNNNN:X.Y]`).
 
-**Verify-as-you-go**: Run `ivy_lint` and `ivy_verify` after every meaningful change — don't batch verification. Treat verification failures as immediate feedback, not deferred cleanup.
+**Verify-as-you-go**: Run `ivy_diagnostics(mode="structural")` and `ivy_verify` after every meaningful change — don't batch verification. Treat verification failures as immediate feedback, not deferred cleanup.
 
 Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation, analysis), agents, and skills.
 
@@ -28,13 +28,13 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 | `ivy_to_cpp` | `ivy_compile` | C++ code generation |
 
 **Analysis MCP tools** (read-only, no CLI equivalent):
-`ivy_lint` (fast structural check), `ivy_diagnostics` (full 5-layer diagnostics), `ivy_include_graph`, `ivy_capabilities`
+`ivy_diagnostics` (mode="structural" for fast structural check, mode="full" for 5-layer diagnostics), `ivy_include_graph`, `ivy_capabilities`
 
 **Coverage & traceability**:
 `ivy_coverage` (mode="stats" for coverage stats, mode="gaps" for unguarded state/uncovered reqs, mode="matrix" for requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text; output="manifest" to produce YAML manifest)
 
-**Semantic query**:
-`ivy_query` (mode="info" for symbol info, mode="impact" for incoming/outgoing edges, mode="xrefs" for cross-reference graph neighborhood). Note: mode="xrefs" node_id resolution is unreliable; use mode="info" for symbol info instead.
+**Semantic query** (via LSP -- `ivy_query` has been removed):
+Use LSP `hover` for symbol info, LSP `findReferences` for cross-references, and LSP `incomingCalls`/`outgoingCalls` for impact analysis.
 
 **Visualization MCP tools** (model views):
 `ivy_visualize` (view="dependencies" for action dependency graph, view="state_machine" for state-machine perspective, view="layers" for layered overview by file/module), `ivy_model_summary` (detail="summary" for per-action summary, detail="requirements" for per-action requirements)
@@ -50,7 +50,7 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 | Inspection | `hover` (type info + RFC annotations), `documentSymbol` (file outline), `workspaceSymbol` (cross-file search) |
 | Call graph | `prepareCallHierarchy`, `incomingCalls`, `outgoingCalls` (not yet implemented -- may return empty results) |
 
-**Note**: Claude Code does not receive automatic diagnostics — use `ivy_lint`/`ivy_diagnostics` MCP tools instead. See the `tooling-reference` skill for usage patterns.
+**Note**: Claude Code does not receive automatic diagnostics — use `ivy_diagnostics` MCP tool instead (mode="structural" for fast checks, or omit mode for full 5-layer analysis). See the `tooling-reference` skill for usage patterns.
 
 **Claude native tools**: `Read`/`Grep`/`Glob` for navigation, `Edit`/`Write` for modification.
 
@@ -58,19 +58,15 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 
 | Consolidated Tool | Mode / View / Detail | Key Parameters |
 |---|---|---|
-| `ivy_lint` | -- | relative_path |
 | `ivy_verify` | -- | relative_path, isolate |
 | `ivy_compile` | -- | relative_path, target, isolate |
 | `ivy_model_info` | -- | relative_path, isolate |
-| `ivy_diagnostics` | -- | relative_path, layers, min_severity |
+| `ivy_diagnostics` | mode="structural"\|"full" | relative_path, layers, min_severity |
 | `ivy_include_graph` | -- | relative_path |
 | `ivy_capabilities` | -- | -- |
 | `ivy_coverage` | mode="stats" | relative_path, test_file |
 | `ivy_coverage` | mode="gaps" | test_file, protocol |
 | `ivy_coverage` | mode="matrix" | relative_path, test_file |
-| `ivy_query` | mode="info" | symbol_name |
-| `ivy_query` | mode="impact" | symbol_name |
-| `ivy_query` | mode="xrefs" | node_id |
 | `ivy_extract_requirements` | -- | rfc_text |
 | `ivy_extract_requirements` | output="manifest" | rfc_name, rfc_text |
 | `ivy_visualize` | view="dependencies" | test_file |
@@ -312,7 +308,7 @@ export action _finalize = {                # End-state verification
 
 After writing or modifying Ivy specifications, run this verification loop:
 
-1. **`ivy_lint`** — Fast structural check (milliseconds). Fix: missing `#lang`, unresolved includes, unmatched braces.
+1. **`ivy_diagnostics(mode="structural")`** — Fast structural check (milliseconds). Fix: missing `#lang`, unresolved includes, unmatched braces.
 2. **`ivy_verify`** — Formal property verification. If FAIL: read error line → locate with Grep/LSP go-to-definition → diagnose (missing invariant? action bug? missing precondition?) → fix → re-verify.
 3. **`ivy_coverage`** (mode="stats") — Check MUST requirement coverage. If low, add missing `before`/`after` monitors with bracket tags.
 4. **`ivy_coverage`** (mode="matrix") — Review assertion-to-requirement mapping. Add bracket tags (`# [rfcNNNN:X.Y]`) to uncovered assertions.

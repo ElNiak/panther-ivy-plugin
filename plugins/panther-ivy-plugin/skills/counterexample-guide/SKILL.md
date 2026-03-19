@@ -74,13 +74,13 @@ Walk through the steps and look for:
 
 ### Step 4: Look Up the Violated Symbol
 
-Use MCP tools to understand the symbol's definition and context:
+Use LSP to understand the symbol's definition and context:
 
 ```
-ivy_query(mode="info", symbol_name="conn_seen")
+LSP(operation="hover", filePath="path/to/file.ivy", line=<line>, character=<col>)
 ```
 
-This returns the symbol's type, file, line, and references -- helping you understand where it is defined and what sets it.
+This returns the symbol's type signature and documentation. Use `findReferences` to find all usages across the workspace, and `goToDefinition` to jump to the definition.
 
 ### Step 5: View State Machine Context
 
@@ -285,11 +285,9 @@ Execution trace (3 steps):
 
 ### Investigation
 
-```
-ivy_query(mode="info", symbol_name="stream_data_sent")
-```
+Use LSP `hover` on the `stream_data_sent` symbol to get its type info, then `findReferences` to see where it is set.
 
-Reveals `stream_data_sent` is set in `after frame.stream.handle` only when `f.length > 0`, but no `before` guard requires `f.length > 0` during test generation.
+This reveals `stream_data_sent` is set in `after frame.stream.handle` only when `f.length > 0`, but no `before` guard requires `f.length > 0` during test generation.
 
 ### Fix
 
@@ -324,6 +322,6 @@ After applying the fix, re-run `ivy_verify` to confirm the counterexample is res
 
 **MCP tools used in this workflow:**
 - `ivy_verify` -- Run verification (source of counterexamples)
-- `ivy_query` (mode="info") -- Look up symbol definitions
+- LSP `hover` / `findReferences` / `goToDefinition` -- Look up symbol definitions and usages
 - `ivy_visualize` (view="state_machine") -- View state transitions
 - `ivy_coverage` (mode="gaps") -- Find related unguarded state

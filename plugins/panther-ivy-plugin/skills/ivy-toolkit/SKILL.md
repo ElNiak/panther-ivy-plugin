@@ -23,7 +23,7 @@ Three complementary tool systems:
 | System | Purpose | Examples |
 |--------|---------|---------|
 | **Native Ivy LSP** | Navigation, diagnostics, go-to-definition | documentSymbol, definition, references, hover |
-| **ivy-tools MCP** | Verification, compilation, analysis | ivy_verify, ivy_compile, ivy_model_info, ivy_lint |
+| **ivy-tools MCP** | Verification, compilation, analysis | ivy_verify, ivy_compile, ivy_model_info, ivy_diagnostics |
 | **Claude native tools** | File I/O, search, editing | Read, Write, Edit, Grep, Glob |
 
 **Workflow:** Navigate (LSP) -> Understand (LSP+MCP) -> Edit (Claude) -> Verify (MCP)
@@ -35,12 +35,10 @@ Three complementary tool systems:
 | `ivy_verify` | Formal verification | After writing/modifying specs | FAST + DEEP |
 | `ivy_compile` | Compile to test binary | After verification passes | FAST + DEEP |
 | `ivy_model_info` | Show model structure | Understanding a spec file | FAST |
-| `ivy_lint` | Fast pattern checks | Before full verification | FAST + DEEP |
-| `ivy_diagnostics` | Full 5-layer diagnostics | Deep structural analysis | DEEP |
+| `ivy_diagnostics` | Structural check (mode="structural") or full 5-layer (mode="full") | Before full verification / deep analysis | FAST + DEEP |
 | `ivy_include_graph` | Show include dependencies | Phase 1 exploration | DEEP |
 | `ivy_capabilities` | Check server capabilities | Diagnostics | FAST |
 | `ivy_coverage` | Requirement coverage stats | Phase 1 + Phase 5 | DEEP |
-| `ivy_query` | Query symbol information | Navigation | FAST |
 | `ivy_extract_requirements` | Extract RFC requirements | Phase 2 planning | DEEP |
 | `ivy_visualize` | Dependency visualization | Understanding architecture | FAST |
 | `ivy_model_summary` | Summarize model | Quick overview | FAST |
@@ -51,7 +49,7 @@ Three complementary tool systems:
 ## Mode Mapping
 
 **FAST mode tools** -- safe for single-operation commands (/nct-check, /nct-model-info):
-- ivy_verify, ivy_compile, ivy_model_info, ivy_lint, ivy_capabilities, ivy_query,
+- ivy_verify, ivy_compile, ivy_model_info, ivy_diagnostics(mode="structural"), ivy_capabilities,
   ivy_visualize, ivy_model_summary, ivy_patterns, ivy_pattern_scaffold
 
 **DEEP mode tools** -- used during orchestrated workflows (ivy-workflow-orchestrator):

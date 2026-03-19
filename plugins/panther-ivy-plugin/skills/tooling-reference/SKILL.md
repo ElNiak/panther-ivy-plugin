@@ -10,7 +10,7 @@ description: "Use when choosing between LSP, MCP tools, and Claude native tools 
 | Layer | Role | How it works |
 |-------|------|-------------|
 | **Native Ivy LSP** | Code intelligence via LSP tool | go-to-definition, find-references, hover, document symbols via the `LSP` tool for `.ivy` files |
-| **ivy-tools MCP** | Verification, compilation, analysis | 15 consolidated tools: `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_lint`, `ivy_coverage`, `ivy_query`, `ivy_visualize`, `ivy_quality`, `ivy_patterns`, etc. |
+| **ivy-tools MCP** | Verification, compilation, analysis | Consolidated tools: `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_diagnostics`, `ivy_coverage`, `ivy_visualize`, `ivy_quality`, `ivy_patterns`, etc. |
 | **Claude native** | Navigation and editing | `Read`, `Edit`, `Write`, `Grep`, `Glob` |
 
 ## When to Use What
@@ -25,7 +25,7 @@ description: "Use when choosing between LSP, MCP tools, and Claude native tools 
 | Search for a regex pattern across files | Grep | LSP does not support regex |
 | Check coverage / traceability | MCP `ivy_coverage` (mode=stats/gaps/matrix) | Structured coverage data |
 | Verify formal properties | MCP `ivy_verify` | Structured JSON diagnostics |
-| Get diagnostics/errors | MCP `ivy_lint` or `ivy_diagnostics` | Claude Code does NOT receive automatic LSP diagnostics |
+| Get diagnostics/errors | MCP `ivy_diagnostics` (mode="structural" for fast check, or full 5-layer) | Claude Code does NOT receive automatic LSP diagnostics |
 
 ## LSP Tool API
 
@@ -67,7 +67,7 @@ All tools use prefix `mcp__plugin_panther-ivy-plugin_ivy-tools__<tool_name>`.
 2. `goToDefinition` -- read its full definition
 3. `hover` -- get type signature and docs
 4. `findReferences` -- see all usages across workspace
-5. MCP `ivy_query` (mode="impact") -- see incoming/outgoing semantic edges
+5. LSP `incomingCalls`/`outgoingCalls` -- see incoming/outgoing call edges
 
 ### Workflow B: Adding a New Requirement Monitor
 1. `documentSymbol` or `workspaceSymbol` -- find the relevant action
@@ -75,7 +75,7 @@ All tools use prefix `mcp__plugin_panther-ivy-plugin_ivy-tools__<tool_name>`.
 3. `Read` -- read the existing monitors to understand the pattern
 4. MCP `ivy_coverage` (mode="stats") -- check what requirements are missing
 5. `Edit` -- write the new monitor with bracket tag
-6. MCP `ivy_lint` -- runs automatically via post-write hook
+6. MCP `ivy_diagnostics(mode="structural")` -- fast structural check after edit
 7. MCP `ivy_verify` -- formal verification
 8. MCP `ivy_coverage` (mode="matrix") -- confirm new requirement is covered
 
@@ -91,14 +91,14 @@ All tools use prefix `mcp__plugin_panther-ivy-plugin_ivy-tools__<tool_name>`.
 ### Recommended Workflow: Navigate -> Understand -> Edit -> Verify
 1. **Navigate** -- Use LSP to find and follow symbols. Fall back to `Grep` for regex.
 2. **Understand** -- Use LSP `hover` for types. Use `Read` for full implementations.
-3. **Edit** -- Use `Edit`/`Write`. Run MCP `ivy_lint` after edits.
+3. **Edit** -- Use `Edit`/`Write`. Run MCP `ivy_diagnostics(mode="structural")` after edits.
 4. **Verify** -- Use MCP `ivy_verify`, `ivy_compile` to confirm properties hold.
 
 ## What LSP Does NOT Provide in Claude Code
 
 - **No automatic diagnostics**: Claude Code does not support `textDocument/publishDiagnostics`.
-- **Use MCP tools instead**: Run `ivy_lint` (fast, ms) or `ivy_diagnostics` (thorough, 5-layer) after edits.
-- **Post-write hook**: The plugin's PostToolUse hook runs `ivy_lint` automatically after `.ivy` file writes.
+- **Use MCP tools instead**: Run `ivy_diagnostics(mode="structural")` (fast, ms) or `ivy_diagnostics` (thorough, 5-layer) after edits.
+- **Post-write hook**: The plugin's PostToolUse hook runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes.
 
 ## Enforcement
 

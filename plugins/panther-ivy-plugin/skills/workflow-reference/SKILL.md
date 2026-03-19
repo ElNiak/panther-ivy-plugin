@@ -191,7 +191,7 @@ The panther-ivy-plugin includes a quality evaluation pipeline. It evaluates spec
 
 | Dimension | Weight | Tool Used | What It Checks |
 |-----------|--------|-----------|----------------|
-| Structural | 25% | `ivy_lint` | `#lang` header, balanced braces, includes, file structure |
+| Structural | 25% | `ivy_diagnostics(mode="structural")` | `#lang` header, balanced braces, includes, file structure |
 | Type Safety | 30% | `ivy_verify` | Formal verification, invariants, type correctness |
 | Semantic | 20% | `ivy_model_info` + checklist | Naming, invariant coverage, guards, initialization |
 | Traceability | 25% | `ivy_coverage` (mode="matrix") | Bracket tags, RFC coverage, orphaned/untagged assertions |
@@ -206,7 +206,7 @@ The panther-ivy-plugin includes a quality evaluation pipeline. It evaluates spec
 ### Gate Details
 
 #### Gate 1: Structural Quality (25%)
-1. Run `ivy_lint` via MCP -- fast structural check (milliseconds)
+1. Run `ivy_diagnostics(mode="structural")` via MCP -- fast structural check (milliseconds)
 2. Verify: `#lang ivy1.7` header, includes reference existing files, balanced braces
 3. Score: 100 if 0 errors, -20 per error, -5 per warning (floor at 0)
 

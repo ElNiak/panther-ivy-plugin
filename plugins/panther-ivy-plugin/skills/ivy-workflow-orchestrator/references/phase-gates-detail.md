@@ -26,7 +26,7 @@
 
 ## Phase 4: VERIFY — Gate Conditions
 - ivy_verify MUST pass on ALL new/modified files
-- ivy_lint MUST report no errors
+- ivy_diagnostics(mode="structural") MUST report no errors
 - model-reviewer agent MUST report no CRITICAL issues
 - Max 3 fix attempts. After 3 failures: STOP and escalate to user
 

@@ -138,7 +138,7 @@ attribute frame.rst_stream.handle.weight = "0.02"  # Rarely generate resets
 
 ## Step 8: Verify with ivy-tools
 
-Use `ivy_lint` for fast structural check, then `ivy_verify` for formal property verification.
+Use `ivy_diagnostics(mode="structural")` for fast structural check, then `ivy_verify` for formal property verification.
 Check isolate assumptions, invariants, and safety properties.
 
 ## Step 9: Compile Test
