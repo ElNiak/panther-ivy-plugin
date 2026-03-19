@@ -12,15 +12,6 @@
         ]
       },
       {
-        "matcher": "LSP",
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "Do not call the LSP tool directly on .ivy files. The Ivy LSP runs internally via .lsp.json and MCP bridge. Use MCP tools (ivy_model_info, ivy_diagnostics, ivy_coverage) for analysis, and Read/Grep/Glob for navigation. If you need symbol references, use Grep with \\b word boundaries."
-          }
-        ]
-      },
-      {
         "matcher": "ivy_verify",
         "hooks": [
           {
@@ -34,6 +25,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-mcp-health.py",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/observability/check_lsp_log.py",
             "timeout": 5
           },
@@ -41,6 +37,15 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-indexing-ready.sh",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "ivy_coverage",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Tip: Always scope ivy_coverage with test_file for large workspaces. Run ivy_diagnostics first. Use mode=stats before mode=matrix."
           }
         ]
       },

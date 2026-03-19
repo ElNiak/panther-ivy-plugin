@@ -73,6 +73,44 @@ done <<< "$ALL_IVY"
 
 CLAIM_TOTAL=$((CLAIM_RESOLVED + CLAIM_IUT_FINDING + CLAIM_DEFERRED + CLAIM_GUARD + CLAIM_NA + CLAIM_KNOWN_DEV))
 
+# --- Session metrics from observability events ---
+EVENTS_DIR="/tmp/ivy-events"
+SESSION_METRICS=""
+if [ -d "$EVENTS_DIR" ]; then
+  # Find the most recent events file
+  LATEST_EVENTS=$(ls -t "$EVENTS_DIR"/*.jsonl 2>/dev/null | head -1)
+  if [ -n "$LATEST_EVENTS" ] && [ -f "$LATEST_EVENTS" ]; then
+    SESSION_METRICS=$(python3 -c "
+import json, sys, collections
+counts = collections.Counter()
+durations = collections.defaultdict(float)
+errors = 0
+try:
+    with open('$LATEST_EVENTS') as f:
+        for line in f:
+            try:
+                e = json.loads(line)
+                if e.get('event') in ('PreToolUse', 'PostToolUse'):
+                    tool = e.get('data', {}).get('tool_name', 'unknown')
+                    counts[tool] += 1
+                if e.get('event') == 'PostToolUseFailure':
+                    errors += 1
+            except json.JSONDecodeError:
+                continue
+except Exception:
+    pass
+if counts:
+    top = ', '.join(f'{t}={c}' for t, c in counts.most_common(5))
+    print(f'Tool calls: {sum(counts.values())} ({top}). Errors: {errors}')
+" 2>/dev/null || true)
+  fi
+fi
+
+METRICS_SECTION=""
+if [ -n "$SESSION_METRICS" ]; then
+  METRICS_SECTION="\\n[TOOL METRICS] $SESSION_METRICS"
+fi
+
 # Build summary
 CLAIM_SECTION=""
 if [ "$CLAIM_TOTAL" -gt 0 ]; then
@@ -88,9 +126,9 @@ if [ "$CLAIM_TOTAL" -gt 0 ]; then
 fi
 
 if [ "$ISSUE_COUNT" -gt 0 ]; then
-  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, $ISSUE_COUNT with lint issues:\\n${ISSUES}Run ivy_lint on flagged files before committing.${CLAIM_SECTION}"
+  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, $ISSUE_COUNT with lint issues:\\n${ISSUES}Run ivy_lint on flagged files before committing.${CLAIM_SECTION}${METRICS_SECTION}"
 else
-  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, all pass basic structural checks.${CLAIM_SECTION}"
+  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, all pass basic structural checks.${CLAIM_SECTION}${METRICS_SECTION}"
 fi
 
 # Output as additionalContext

@@ -62,15 +62,34 @@ if [ -f "$LSP_LOG" ] && grep -q "Indexed .* files" "$LSP_LOG" 2>/dev/null; then
     LSP_STATUS=$(grep "Indexed .* files" "$LSP_LOG" | tail -1)
 fi
 
+# --- Check model pre-warming status (non-blocking) ---
+MODEL_STATUS=""
+if [ -f "$MCP_LOG" ] && grep -q "\[INDEX-MODEL-READY\]" "$MCP_LOG" 2>/dev/null; then
+    MODEL_STATUS="ready"
+elif [ -f "$MCP_LOG" ] && grep -q "\[INDEX-PREWARM\]" "$MCP_LOG" 2>/dev/null; then
+    MODEL_STATUS="building"
+fi
+
 # --- Build context message ---
 if [ -n "$MSG" ]; then
     # Crash or process-died message was already set in the polling loop
     :
 elif [ "$MCP_READY" = "1" ]; then
-    if [ -n "$LSP_STATUS" ]; then
-        MSG="[ivy-indexing] MCP server ready. LSP: $LSP_STATUS."
+    # Base MCP ready message
+    BASE_MSG="[ivy-indexing] MCP server ready."
+    # Append model status
+    if [ "$MODEL_STATUS" = "ready" ]; then
+        MODEL_MSG=" Model: ready."
+    elif [ "$MODEL_STATUS" = "building" ]; then
+        MODEL_MSG=" Model: building (will be ready for coverage/traceability tools shortly)."
     else
-        MSG="[ivy-indexing] MCP server ready. LSP indexing status unknown (model builds lazily on first tool call)."
+        MODEL_MSG=" Model builds lazily on first tool call."
+    fi
+    # Append LSP status if available
+    if [ -n "$LSP_STATUS" ]; then
+        MSG="${BASE_MSG}${MODEL_MSG} LSP: $LSP_STATUS."
+    else
+        MSG="${BASE_MSG}${MODEL_MSG}"
     fi
 else
     MSG="[ivy-indexing] WARNING: MCP server did not start within ${MAX_WAIT}s. MCP tools may be unavailable."
