@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Observability hook: PostToolUse — logs successful tool completions."""
 
+import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+
+_SKIP_TOOLS = {"Read", "Grep", "Glob", "LS"}
 
 try:
     from log_event import log_event, read_stdin
@@ -12,6 +15,10 @@ try:
     data = read_stdin()
     session_id = data.get("session_id", "")
     tool_name = data.get("tool_name", "")
+
+    # Skip high-frequency read-only tools unless explicitly opted in
+    if tool_name in _SKIP_TOOLS and not os.environ.get("IVY_OBSERVABILITY_ALL_TOOLS"):
+        sys.exit(0)
     is_mcp = tool_name.startswith("mcp__") if tool_name else False
 
     payload = {

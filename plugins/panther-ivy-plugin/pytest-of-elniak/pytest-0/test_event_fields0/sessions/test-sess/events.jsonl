@@ -1,0 +1,1 @@
+{"timestamp": "2026-03-17T15:22:05.016251+00:00", "event_type": "PreToolUse", "session_id": "sess-123", "cwd": "/Users/elniak/Documents/Documents/Work/Project/Protocol-Testing-Security/PANTHER/master/.claude/worktrees/lsp-to-claude/panther/plugins/services/testers/panther_ivy/submodules/panther-ivy-plugin/plugins/panther-ivy-plugin", "payload": {"tool": "Bash"}}

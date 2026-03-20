@@ -105,6 +105,32 @@ class TestLogEvent:
         # Should return a path or None, but not raise
         assert result is None or isinstance(result, Path)
 
+    def test_missing_session_id_normalized_to_unknown(self, tmp_path):
+        log_dir = tmp_path / "sessions" / "unknown"
+        log_event("Stop", "", log_dir_override=log_dir)
+        event = _read_last_event(log_dir / "events.jsonl")
+        assert event["session_id"] == "unknown"
+
+    def test_extended_schema_fields(self, tmp_path):
+        log_dir = tmp_path / "sessions" / "sess-42"
+        log_event(
+            "PostToolUse",
+            "sess-42",
+            {"tool": "Bash"},
+            log_dir_override=log_dir,
+            channel="mcp",
+            name="ivy_verify",
+            status="error",
+            duration_ms=12.345,
+            call_id="cid-42",
+        )
+        event = _read_last_event(log_dir / "events.jsonl")
+        assert event["channel"] == "mcp"
+        assert event["name"] == "ivy_verify"
+        assert event["status"] == "error"
+        assert event["call_id"] == "cid-42"
+        assert event["duration_ms"] == 12.35
+
     def test_disabled_via_env(self, tmp_path, monkeypatch):
         monkeypatch.setenv("IVY_OBSERVABILITY_ENABLED", "0")
         log_dir = tmp_path / "sessions" / "test-sess"

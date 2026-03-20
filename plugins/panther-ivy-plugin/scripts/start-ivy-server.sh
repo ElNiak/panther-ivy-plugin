@@ -68,6 +68,7 @@ if [ "$MODE" = "mcp" ]; then
 fi
 
 log "Detected workspace: $DETECTED_ROOT (type=$DETECTED_TYPE)"
+export IVY_WORKSPACE_ROOT="$DETECTED_ROOT"
 [ "$MODE" = "mcp" ] && log "Include paths: ${IVY_LSP_INCLUDE_PATHS:-<none>}"
 [ "$MODE" = "mcp" ] && log "Exclude paths: ${IVY_LSP_EXCLUDE_PATHS:-<none>}"
 
@@ -83,6 +84,9 @@ if [ "$MODE" = "mcp-bridge" ]; then
     PORT_FILE="/tmp/ivy-mcp-${_BRIDGE_WS_HASH}.port"
     BRIDGE_TIMEOUT=15  # seconds
 
+    # Remove stale port file from previous session so we wait for a fresh one
+    rm -f "$PORT_FILE" 2>/dev/null
+
     log "Waiting for sidecar port file: $PORT_FILE (timeout=${BRIDGE_TIMEOUT}s)"
     WAITED=0
     while [ ! -f "$PORT_FILE" ] && [ "$WAITED" -lt "$((BRIDGE_TIMEOUT * 10))" ]; do
@@ -92,7 +96,17 @@ if [ "$MODE" = "mcp-bridge" ]; then
 
     if [ -f "$PORT_FILE" ]; then
         MCP_PORT=$(cat "$PORT_FILE")
-        log "Sidecar found on port $MCP_PORT, starting stdio↔HTTP bridge"
+        log "Port file found (port=$MCP_PORT), verifying TCP readiness..."
+        TCP_WAITED=0
+        while ! nc -z 127.0.0.1 "$MCP_PORT" 2>/dev/null && [ "$TCP_WAITED" -lt 100 ]; do
+            sleep 0.1
+            TCP_WAITED=$((TCP_WAITED + 1))
+        done
+        if nc -z 127.0.0.1 "$MCP_PORT" 2>/dev/null; then
+            log "Sidecar confirmed listening on port $MCP_PORT"
+        else
+            log "Port $MCP_PORT not responding after 10s, bridge may reconnect"
+        fi
         if [ -n "$IVY_LSP_SRC" ]; then
             log "Using LOCAL ivy-lsp: $IVY_LSP_SRC"
             # shellcheck disable=SC2086
@@ -147,13 +161,14 @@ trap 'rm -f "$PID_DIR/${_PID_PREFIX}-$$.pid" 2>/dev/null' EXIT TERM INT
 
 # --- Launch ---
 if [ "$MODE" = "lsp" ]; then
+    # Include mcp + uvicorn so the MCP HTTP sidecar can start alongside the LSP.
     if [ -n "$IVY_LSP_SRC" ]; then
         log "Using LOCAL ivy-lsp: $IVY_LSP_SRC"
         # shellcheck disable=SC2086
-        exec uvx $REINSTALL_FLAG --from "$IVY_LSP_SRC" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
+        exec uvx $REINSTALL_FLAG --from "${IVY_LSP_SRC}[mcp]" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
     else
         log "Using REMOTE ivy-lsp: git+https://github.com/ElNiak/ivy-lsp"
-        exec uvx --from "git+https://github.com/ElNiak/ivy-lsp" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
+        exec uvx --from "git+https://github.com/ElNiak/ivy-lsp[mcp]" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
     fi
 else
     if [ -n "$IVY_LSP_SRC" ]; then

@@ -91,8 +91,10 @@ elif [ "$MCP_READY" = "1" ]; then
     else
         MSG="${BASE_MSG}${MODEL_MSG}"
     fi
+    # Append soft retry guidance for edge cases
+    MSG="${MSG} Note: If an ivy MCP tool fails unexpectedly, wait 5 seconds and retry once — the server may be recovering."
 else
-    MSG="[ivy-indexing] WARNING: MCP server did not start within ${MAX_WAIT}s. MCP tools may be unavailable."
+    MSG="[ivy-indexing] WARNING: MCP server did not start within ${MAX_WAIT}s. MCP tools may be unavailable. IMPORTANT: If any ivy MCP tool call fails with a server error, wait 10 seconds and retry the same call up to 3 times before reporting failure to the user."
 fi
 
 # Escape for JSON

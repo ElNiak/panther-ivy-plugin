@@ -74,11 +74,11 @@ done <<< "$ALL_IVY"
 CLAIM_TOTAL=$((CLAIM_RESOLVED + CLAIM_IUT_FINDING + CLAIM_DEFERRED + CLAIM_GUARD + CLAIM_NA + CLAIM_KNOWN_DEV))
 
 # --- Session metrics from observability events ---
-EVENTS_DIR="/tmp/ivy-events"
+EVENTS_DIR="${IVY_OBSERVABILITY_DIR:-/tmp/ivy-observability}/sessions"
 SESSION_METRICS=""
 if [ -d "$EVENTS_DIR" ]; then
-  # Find the most recent events file
-  LATEST_EVENTS=$(ls -t "$EVENTS_DIR"/*.jsonl 2>/dev/null | head -1)
+  # Find the most recent events.jsonl file (written by log_event.py)
+  LATEST_EVENTS=$(find "$EVENTS_DIR" -name "events.jsonl" -mmin -60 2>/dev/null | sort -r | head -1)
   if [ -n "$LATEST_EVENTS" ] && [ -f "$LATEST_EVENTS" ]; then
     SESSION_METRICS=$(python3 -c "
 import json, sys, collections
@@ -90,10 +90,10 @@ try:
         for line in f:
             try:
                 e = json.loads(line)
-                if e.get('event') in ('PreToolUse', 'PostToolUse'):
-                    tool = e.get('data', {}).get('tool_name', 'unknown')
+                if e.get('event_type') in ('PreToolUse', 'PostToolUse'):
+                    tool = e.get('payload', {}).get('tool_name', 'unknown')
                     counts[tool] += 1
-                if e.get('event') == 'PostToolUseFailure':
+                if e.get('event_type') == 'PostToolUseFailure':
                     errors += 1
             except json.JSONDecodeError:
                 continue

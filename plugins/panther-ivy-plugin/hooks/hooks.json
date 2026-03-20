@@ -50,7 +50,7 @@
         ]
       },
       {
-        "matcher": "",
+        "matcher": "mcp__|Bash|Write|Edit|Agent",
         "hooks": [
           {
             "type": "command",
@@ -82,7 +82,7 @@
         ]
       },
       {
-        "matcher": "",
+        "matcher": "mcp__|Bash|Write|Edit|Agent",
         "hooks": [
           {
             "type": "command",

@@ -10,6 +10,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 
 def _resolve_log_dir(session_id: str) -> Path:
@@ -37,6 +38,11 @@ def log_event(
     payload: dict | None = None,
     *,
     log_dir_override: Path | None = None,
+    channel: str = "hook",
+    name: str | None = None,
+    status: str = "ok",
+    duration_ms: float | None = None,
+    call_id: str | None = None,
 ) -> Path | None:
     """Append a structured JSON event to the session's events.jsonl file.
 
@@ -55,20 +61,28 @@ def log_event(
         if os.environ.get("IVY_OBSERVABILITY_ENABLED", "1") == "0":
             return None
 
-        log_dir = log_dir_override or _resolve_log_dir(session_id or "unknown")
+        safe_session_id = (session_id or "unknown").strip() or "unknown"
+        log_dir = log_dir_override or _resolve_log_dir(safe_session_id)
         log_dir.mkdir(parents=True, exist_ok=True)
 
-        event = {
+        event: dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "event_type": event_type,
-            "session_id": session_id,
+            "session_id": safe_session_id,
+            "channel": channel,
+            "name": name or event_type,
+            "status": status,
             "cwd": os.environ.get("PWD", os.getcwd()),
         }
+        if duration_ms is not None:
+            event["duration_ms"] = round(duration_ms, 2)
+        if call_id:
+            event["call_id"] = call_id
         if payload:
             event["payload"] = payload
 
         events_file = log_dir / "events.jsonl"
-        with open(events_file, "a") as f:
+        with open(events_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(event, default=str) + "\n")
 
         return events_file
@@ -76,9 +90,10 @@ def log_event(
         return None
 
 
-def read_stdin() -> dict:
+def read_stdin() -> dict[str, Any]:
     """Read and parse JSON from stdin. Returns empty dict on failure."""
     try:
-        return json.load(sys.stdin)
-    except Exception:
+        data = json.load(sys.stdin)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError, TypeError):
         return {}
