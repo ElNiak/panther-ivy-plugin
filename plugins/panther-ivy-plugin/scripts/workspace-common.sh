@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Shared workspace detection and ivy-lsp resolution functions.
-# Sourced by start-ivy-tools.sh, ivy-lsp-wrapper.sh, and detect-ivy-workspace.sh.
+# Sourced by start-ivy-server.sh.
 
 set -euo pipefail
 

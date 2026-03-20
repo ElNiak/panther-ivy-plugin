@@ -5,7 +5,7 @@
       "args": [
         "${CLAUDE_PLUGIN_ROOT}/scripts/start-ivy-server.sh",
         "--mode",
-        "mcp-bridge"
+        "mcp"
       ],
       "env": {
         "IVY_LSP_LOG_LEVEL": "DEBUG",

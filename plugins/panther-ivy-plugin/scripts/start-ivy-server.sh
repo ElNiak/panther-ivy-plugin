@@ -4,9 +4,8 @@
 # Usage:
 #   start-ivy-server.sh --mode lsp        # Language Server Protocol (stdio)
 #   start-ivy-server.sh --mode mcp        # Model Context Protocol (stdio, standalone)
-#   start-ivy-server.sh --mode mcp-bridge # stdio↔HTTP bridge to LSP sidecar
 #
-# All modes share workspace detection, ivy-lsp source resolution, PID tracking,
+# Both modes share workspace detection, ivy-lsp source resolution, PID tracking,
 # and log setup. They differ in launch flags and workspace configuration.
 set -euo pipefail
 
@@ -19,17 +18,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ "$MODE" != "lsp" && "$MODE" != "mcp" && "$MODE" != "mcp-bridge" ]]; then
-    echo "Usage: $0 --mode lsp|mcp|mcp-bridge" >&2
+if [[ "$MODE" != "lsp" && "$MODE" != "mcp" ]]; then
+    echo "Usage: $0 --mode lsp|mcp" >&2
     exit 1
-fi
-
-# Deprecation notice: MCP is now served by the unified LSP process via HTTP sidecar.
-# Standalone --mode mcp is kept for backward compatibility and CI usage.
-if [ "$MODE" = "mcp" ]; then
-    echo "[ivy-mcp] NOTE: Standalone MCP mode is deprecated. MCP tools are now" >&2
-    echo "[ivy-mcp] served by the LSP process via HTTP sidecar on port \${IVY_MCP_PORT:-19847}." >&2
-    echo "[ivy-mcp] This mode is kept for backward compatibility." >&2
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -46,14 +37,24 @@ if [ "$MODE" = "lsp" ]; then
     ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-latest.log"
     ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-lsp-latest.log"
 else
-    # Both mcp and mcp-bridge share the mcp log symlink
     ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-mcp-latest.log"
 fi
 
 log() { echo "[ivy-${MODE}] $*" >>"$LOG_FILE"; }
 
 # --- Workspace detection ---
-detect_ivy_workspace
+# Use IVY_WORKSPACE_ROOT from SessionStart hook if available (avoids re-detection)
+if [ -n "${IVY_WORKSPACE_ROOT:-}" ] && [ -d "$IVY_WORKSPACE_ROOT" ]; then
+    DETECTED_ROOT="$IVY_WORKSPACE_ROOT"
+    if [ -d "$DETECTED_ROOT/protocol-testing" ]; then
+        DETECTED_TYPE="panther"
+        panther_ivy_dir="$DETECTED_ROOT"
+    else
+        DETECTED_TYPE="standalone"
+    fi
+else
+    detect_ivy_workspace
+fi
 
 if [ "$MODE" = "mcp" ]; then
     # MCP needs include/exclude paths for workspace scoping
@@ -77,51 +78,6 @@ resolve_ivy_lsp_source
 
 REINSTALL_FLAG=""
 [ "${IVY_LSP_FORCE_REINSTALL:-}" = "1" ] && REINSTALL_FLAG="--reinstall"
-
-# --- mcp-bridge: wait for sidecar, then relay stdio↔HTTP ---
-if [ "$MODE" = "mcp-bridge" ]; then
-    _BRIDGE_WS_HASH="$(printf '%s' "$DETECTED_ROOT" | shasum -a 256 | cut -c1-12)"
-    PORT_FILE="/tmp/ivy-mcp-${_BRIDGE_WS_HASH}.port"
-    BRIDGE_TIMEOUT=15  # seconds
-
-    # Remove stale port file from previous session so we wait for a fresh one
-    rm -f "$PORT_FILE" 2>/dev/null
-
-    log "Waiting for sidecar port file: $PORT_FILE (timeout=${BRIDGE_TIMEOUT}s)"
-    WAITED=0
-    while [ ! -f "$PORT_FILE" ] && [ "$WAITED" -lt "$((BRIDGE_TIMEOUT * 10))" ]; do
-        sleep 0.1
-        WAITED=$((WAITED + 1))
-    done
-
-    if [ -f "$PORT_FILE" ]; then
-        MCP_PORT=$(cat "$PORT_FILE")
-        log "Port file found (port=$MCP_PORT), verifying TCP readiness..."
-        TCP_WAITED=0
-        while ! nc -z 127.0.0.1 "$MCP_PORT" 2>/dev/null && [ "$TCP_WAITED" -lt 100 ]; do
-            sleep 0.1
-            TCP_WAITED=$((TCP_WAITED + 1))
-        done
-        if nc -z 127.0.0.1 "$MCP_PORT" 2>/dev/null; then
-            log "Sidecar confirmed listening on port $MCP_PORT"
-        else
-            log "Port $MCP_PORT not responding after 10s, bridge may reconnect"
-        fi
-        if [ -n "$IVY_LSP_SRC" ]; then
-            log "Using LOCAL ivy-lsp: $IVY_LSP_SRC"
-            # shellcheck disable=SC2086
-            exec uvx $REINSTALL_FLAG --from "${IVY_LSP_SRC}[mcp]" \
-                python -m ivy_lsp.mcp_bridge "$MCP_PORT" 2>>"$LOG_FILE"
-        else
-            log "Using REMOTE ivy-lsp: git+https://github.com/ElNiak/ivy-lsp"
-            exec uvx --from "git+https://github.com/ElNiak/ivy-lsp[mcp]" \
-                python -m ivy_lsp.mcp_bridge "$MCP_PORT" 2>>"$LOG_FILE"
-        fi
-    else
-        log "Sidecar not available after ${BRIDGE_TIMEOUT}s, falling back to standalone MCP"
-        MODE="mcp"  # fall through to existing mcp launch below
-    fi
-fi
 
 # --- PID tracking for cleanup ---
 PID_DIR="/tmp/ivy-lsp-pids"
