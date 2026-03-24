@@ -77,14 +77,17 @@ def main():
     _write_state(state)
 
     if state["consecutive_failures"] >= _MAX_CONSECUTIVE_FAILURES:
-        # Block the tool call
+        # Block the tool call via permissionDecision (current API)
         output = {
-            "decision": "block",
-            "reason": (
-                f"MCP server appears crashed ({state['consecutive_failures']} "
-                "consecutive failures). Run /nct-health to diagnose, or restart "
-                "the session to recover."
-            ),
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    f"MCP server appears crashed ({state['consecutive_failures']} "
+                    "consecutive failures). Run /nct-health to diagnose, or restart "
+                    "the session to recover."
+                ),
+            }
         }
         print(json.dumps(output))
     else:

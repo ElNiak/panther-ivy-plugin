@@ -79,13 +79,16 @@ def main():
     file_group = _find_group_for_layer(file_layer, workspace_root)
 
     output = {
-        "decision": "block",
-        "reason": (
-            f"BLOCKED: '{os.path.basename(file_path)}' is in layer '{file_layer}' "
-            f"(workspace group: {file_group or 'unknown'}).\n"
-            f"Active workspace: '{active_group}' (set by: {set_by}).\n"
-            f"To allow: /set-workspace {file_group or file_layer} | /clear-workspace"
-        ),
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": (
+                f"BLOCKED: '{os.path.basename(file_path)}' is in layer '{file_layer}' "
+                f"(workspace group: {file_group or 'unknown'}).\n"
+                f"Active workspace: '{active_group}' (set by: {set_by}).\n"
+                f"To allow: /set-workspace {file_group or file_layer} | /clear-workspace"
+            ),
+        }
     }
     print(json.dumps(output))
 
