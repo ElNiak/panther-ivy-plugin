@@ -353,6 +353,15 @@ protocol-testing/{prot}/
 
 **Restart**: Kill the `ivy_lsp` process — Claude Code automatically restarts it on the next LSP or MCP call.
 
+### LSP Indexing Awareness
+
+When `<new-diagnostics>` contains `[ivy-lsp] indexing in progress`, the LSP is still building its workspace index:
+
+1. **STOP** — do NOT call MCP tools (ivy_verify, ivy_coverage, ivy_diagnostics, etc.) until indexing completes
+2. **Wait 10-15 seconds**, then call `ivy_health_check` to confirm readiness
+3. **Indexing is complete** when the diagnostic disappears or `ivy_health_check` shows the server ready
+4. The diagnostic is transient (typically 5-30 seconds after server startup)
+
 ## Quick Reference
 
 **Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`, `/nct-validate`, `/nct-observability`

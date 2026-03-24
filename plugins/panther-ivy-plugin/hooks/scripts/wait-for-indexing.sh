@@ -56,9 +56,23 @@ for _i in $(seq 1 "$MAX_WAIT"); do
     done
 done
 
-# --- Check LSP indexing status (non-blocking) ---
+# --- Wait for LSP indexing (non-blocking, max 10s additional) ---
 LSP_STATUS=""
-if [ -f "$LSP_LOG" ] && grep -q "Indexed .* files" "$LSP_LOG" 2>/dev/null; then
+LSP_INDEXED=0
+if [ "$MCP_READY" = "1" ] && [ -f "$LSP_LOG" ]; then
+    for _j in $(seq 1 10); do
+        if grep -q "Indexed .* files" "$LSP_LOG" 2>/dev/null; then
+            LSP_INDEXED=1
+            LSP_STATUS=$(grep "Indexed .* files" "$LSP_LOG" | tail -1)
+            break
+        fi
+        sleep 1
+    done
+    if [ "$LSP_INDEXED" = "0" ]; then
+        LSP_STATUS="still indexing"
+    fi
+elif [ -f "$LSP_LOG" ] && grep -q "Indexed .* files" "$LSP_LOG" 2>/dev/null; then
+    LSP_INDEXED=1
     LSP_STATUS=$(grep "Indexed .* files" "$LSP_LOG" | tail -1)
 fi
 
@@ -85,9 +99,11 @@ elif [ "$MCP_READY" = "1" ]; then
     else
         MODEL_MSG=" Model builds lazily on first tool call."
     fi
-    # Append LSP status if available
-    if [ -n "$LSP_STATUS" ]; then
+    # Append LSP status
+    if [ "$LSP_INDEXED" = "1" ] && [ -n "$LSP_STATUS" ]; then
         MSG="${BASE_MSG}${MODEL_MSG} LSP: $LSP_STATUS."
+    elif [ "$LSP_STATUS" = "still indexing" ]; then
+        MSG="${BASE_MSG}${MODEL_MSG} LSP: still indexing. WAIT 10 seconds before calling MCP tools — results will be incomplete until indexing finishes."
     else
         MSG="${BASE_MSG}${MODEL_MSG}"
     fi
