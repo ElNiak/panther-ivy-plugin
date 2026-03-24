@@ -139,6 +139,12 @@ export action _finalize = {
 }
 ```
 
+#### Step 4a: Workspace Confirmation (Gate)
+
+Before creating any files, call `ivy_workspace(action="get")` to confirm the active workspace. If no workspace is set for this protocol, use a **Gate checkpoint**:
+- Ask: "No active workspace for `{protocol}` is set. Run `/set-workspace {protocol}` before creating files to enable edit isolation? (yes / skip / cancel)"
+- If the user confirms, proceed with workspace activation before creating files.
+
 #### Step 4b: Confirm Before Writing (Gate)
 
 Before creating any files, use a **Gate checkpoint** to confirm:

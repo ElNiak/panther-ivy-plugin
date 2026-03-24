@@ -23,6 +23,8 @@ If the verification fails but no counterexample is present, the failure is likel
 
 ---
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 ## Interpretation Workflow
 
 Follow these steps in order when you receive a counterexample.

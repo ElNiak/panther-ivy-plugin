@@ -32,6 +32,8 @@ Every spec task goes through this process. A single assertion addition, a new la
 a test variant — all of them. "Simple" tasks are where unexamined assumptions cause
 the most verification failures and broken includes.
 
+> **Workspace Check**: Verify active workspace with `/set-workspace` before starting. If workspace changes mid-workflow, re-verify before write operations.
+
 ## Checklist (track each phase as a task)
 
 1. **Phase 1: EXPLORE** — Understand what exists

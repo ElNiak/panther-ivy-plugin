@@ -76,6 +76,18 @@ elif [ -f "$LSP_LOG" ] && grep -q "Indexed .* files" "$LSP_LOG" 2>/dev/null; the
     LSP_STATUS=$(grep "Indexed .* files" "$LSP_LOG" | tail -1)
 fi
 
+# --- Report active workspace size (non-blocking) ---
+WORKSPACE_INFO=""
+if [ -n "${IVY_ACTIVE_WORKSPACE:-}" ]; then
+    WORKSPACE_ROOT="${IVY_WORKSPACE_ROOT:-}"
+    if [ -n "$WORKSPACE_ROOT" ] && [ -f "${WORKSPACE_ROOT}/.ivy-workspace-state.json" ]; then
+        IVY_FILE_COUNT=$(find "$WORKSPACE_ROOT/protocol-testing/${IVY_ACTIVE_WORKSPACE}/" -name "*.ivy" 2>/dev/null | wc -l | tr -d ' ')
+        WORKSPACE_INFO=" Active workspace: ${IVY_ACTIVE_WORKSPACE} (${IVY_FILE_COUNT} .ivy files)."
+    else
+        WORKSPACE_INFO=" Active workspace: ${IVY_ACTIVE_WORKSPACE}."
+    fi
+fi
+
 # --- Check model pre-warming status (non-blocking) ---
 MODEL_STATUS=""
 if [ -f "$MCP_LOG" ] && grep -q "\[INDEX-MODEL-READY\]" "$MCP_LOG" 2>/dev/null; then
@@ -106,6 +118,10 @@ elif [ "$MCP_READY" = "1" ]; then
         MSG="${BASE_MSG}${MODEL_MSG} LSP: still indexing. WAIT 10 seconds before calling MCP tools — results will be incomplete until indexing finishes."
     else
         MSG="${BASE_MSG}${MODEL_MSG}"
+    fi
+    # Append workspace info if available
+    if [ -n "$WORKSPACE_INFO" ]; then
+        MSG="${MSG}${WORKSPACE_INFO}"
     fi
     # Append soft retry guidance for edge cases
     MSG="${MSG} Note: If an ivy MCP tool fails unexpectedly, wait 5 seconds and retry once — the server may be recovering."

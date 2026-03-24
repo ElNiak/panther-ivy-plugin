@@ -5,6 +5,8 @@ description: "Use when editing .ivy files, creating test specifications, or addi
 
 # Ivy Writing Guide
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 This skill combines the Ivy language reference, test specification patterns, and RFC bracket-tag annotation conventions. Use it whenever editing or creating `.ivy` files.
 
 ---

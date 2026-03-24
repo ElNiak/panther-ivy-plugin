@@ -54,6 +54,7 @@ Before asking anything:
 - Check recent git changes: `git diff --name-only HEAD~3..HEAD 2>/dev/null | grep '\.ivy$'`
 - Note the detected protocol, recent files, and any user-mentioned targets
 - Assess expertise from the user's language
+- Check active workspace via `ivy_workspace(action="get")`. If not set, suggest `/set-workspace` before routing to specialist agents.
 
 ### 2. Run Adaptive Interview
 

@@ -13,6 +13,8 @@ arguments:
 
 Display the model structure of the specified Ivy file using ivy-tools.
 
+<!-- Workspace: Active workspace provides scoped include resolution for model introspection. Use /set-workspace <protocol> if not already set. -->
+
 ## Instructions
 
 1. Accept the file path argument. If no file is provided, ask the user which .ivy file to inspect.

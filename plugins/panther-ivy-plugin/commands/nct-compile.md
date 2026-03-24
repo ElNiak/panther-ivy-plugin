@@ -17,6 +17,8 @@ arguments:
 
 Compile the specified Ivy model to a test executable using ivy-tools.
 
+<!-- Workspace: Active workspace scopes include resolution for compilation. Use /set-workspace <protocol> if not already set. -->
+
 ## Instructions
 
 1. Accept the file path argument. If no file is provided, ask the user which .ivy file to compile.

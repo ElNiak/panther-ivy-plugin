@@ -6,6 +6,8 @@ prerequisites: ["interaction-patterns", "counterexample-guide"]
 
 # Claim Discussion
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 Structured discussion templates for resolving verification claims, RFC mapping decisions, and coverage gap priorities. Each template is a decision tree that guides agent-user interaction to a concrete resolution.
 
 ## A. Verification Claim Discussion

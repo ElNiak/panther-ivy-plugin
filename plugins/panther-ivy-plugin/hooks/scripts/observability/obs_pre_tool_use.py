@@ -50,6 +50,7 @@ try:
             "tool_name": tool_name,
             "tool_use_id": data.get("tool_use_id", ""),
             "tool_summary": _summarize_tool_input(tool_name, tool_input if isinstance(tool_input, dict) else {}),
+            "active_workspace": os.environ.get("IVY_ACTIVE_WORKSPACE", ""),
         },
     )
 except Exception:

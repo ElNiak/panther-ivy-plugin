@@ -5,6 +5,8 @@ description: "Use when structuring a new formal protocol specification into modu
 
 # Specification Patterns: 14-Layer Template and Formal Model Patterns
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 This skill combines the 14-layer structural template with the formal model pattern library. Use it when creating new protocol specifications or adding patterns to existing ones.
 
 ---

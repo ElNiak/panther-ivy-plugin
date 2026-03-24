@@ -20,6 +20,8 @@ arguments:
 
 # Add Pattern to Protocol
 
+<!-- Workspace: Ensure /set-workspace <protocol> is active before adding patterns to prevent accidental writes to other protocol directories. -->
+
 ## Step 1: Validate Protocol Directory
 
 Check that the protocol directory exists under `protocol-testing/`:

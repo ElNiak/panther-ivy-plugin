@@ -34,6 +34,7 @@ For deep methodology knowledge, reference the `methodology-reference` skill.
 7. For NSCT: configure Shadow NS topology and simulation parameters
 
 **Critical Rule: You MUST use ivy-tools MCP tools for Ivy verification operations. Use Claude's native tools (Read, Edit, Write, Grep, Glob) for code navigation and editing. Native Ivy LSP provides go-to-definition, find-references, and hover for `.ivy` files.**
+- `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_workspace` for workspace management — call `ivy_workspace(action="get")` to check active workspace before write operations; use `ivy_workspace(action="set", target="{protocol}")` to activate
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` for formal verification (NOT `ivy_check` via Bash)
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` for compilation (NOT `ivyc` via Bash)
 - `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` for model introspection (NOT `ivy_show` via Bash)

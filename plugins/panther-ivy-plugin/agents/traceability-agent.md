@@ -113,6 +113,10 @@ Generate a structured coverage report:
 - require conn_state = open; (connection.ivy:23) -- missing bracket tag
 ```
 
+## Workspace Awareness
+
+Before starting traceability work, check the active workspace with `ivy_workspace(action="get")`. Anchor all manifest file paths and `ivy_coverage` tool parameters within the active workspace directory. If no workspace is active, suggest `/set-workspace <protocol>` to ensure correct scoping of coverage data and manifest locations.
+
 ## Key Conventions
 
 - Tag IDs follow the pattern: `rfc{number}:{section}` (e.g., `rfc9000:4.1`)

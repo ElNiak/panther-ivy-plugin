@@ -24,6 +24,13 @@ if [ -z "$FILE_PATH" ] || [[ "$FILE_PATH" != *.ivy ]]; then
   exit 0
 fi
 
+# Workspace scoping note:
+# Even when an active workspace is set (IVY_ACTIVE_WORKSPACE), lint runs on ALL .ivy files
+# regardless of whether they are inside or outside the active workspace. Catching syntax
+# errors (missing #lang, unbalanced braces) is always valuable and does not depend on
+# workspace scope. Write isolation (blocking out-of-workspace writes) is enforced by the
+# PreToolUse hook (check-workspace-scope.py), not here.
+
 # Skip if file doesn't exist
 if [ ! -f "$FILE_PATH" ]; then
   exit 0

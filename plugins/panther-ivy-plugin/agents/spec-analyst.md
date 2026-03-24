@@ -77,6 +77,10 @@ protocol-testing/{prot}/
 | new_prot | Template (empty files) | `protocol-testing/new_prot/` |
 | APT | Cross-cutting attacks | `protocol-testing/apt/` |
 
+## Workspace Awareness
+
+Before starting analysis, check the active workspace with `ivy_workspace(action="get")`. All `relative_path` and `test_file` parameters passed to MCP tools should be anchored within the active workspace. If no workspace is set, suggest `/set-workspace <protocol>` to the user for accurate scoping.
+
 ## Navigation Strategy
 
 1. **Start broad**: Use `Glob` to see the directory structure of a protocol

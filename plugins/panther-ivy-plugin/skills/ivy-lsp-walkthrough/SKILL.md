@@ -20,6 +20,7 @@ This walkthrough demonstrates the full plugin toolchain — LSP for navigation, 
 - Ivy LSP server running (configured via `.lsp.json`)
 - MCP ivy-tools server running (configured via `.mcp.json`)
 - Working directory includes `protocol-testing/quic/`
+- **Workspace**: Set active workspace with `/set-workspace quic` before editing to ensure include resolution is scoped to the QUIC protocol and writes are isolated to the active protocol directory.
 
 ## Step 1: Find the Relevant Action Using LSP
 

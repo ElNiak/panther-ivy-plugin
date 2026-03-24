@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Observability hook: SessionStart — logs session initialization."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -19,6 +20,7 @@ try:
             "model": data.get("model", ""),
             "agent_type": data.get("agent_type", ""),
             "permission_mode": data.get("permission_mode", ""),
+            "workspace_root": os.environ.get("IVY_WORKSPACE_ROOT", ""),
         },
     )
 except Exception:

@@ -53,6 +53,10 @@ Follow the tool rules in CLAUDE.md. Use ivy-tools MCP tools for verification/com
 
 See the `tooling-reference` skill for full invocation patterns.
 
+## Workspace Awareness
+
+Before reviewing, check the active workspace with `ivy_workspace(action="get")`. Scope the review to files within the active workspace directory. If no workspace is active, review all files in the target but note that cross-protocol includes may not resolve correctly without an active workspace.
+
 ## Review Process
 
 When asked to review an Ivy model:

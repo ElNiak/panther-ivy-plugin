@@ -54,6 +54,10 @@ Parse optional arguments from the user's invocation:
 - Pass 0 (pre-flight) **always runs first** when any downstream pass is requested.
 - SR1 (self-review) **always runs last** (unless explicitly excluded via `phase` argument).
 
+### Pre-flight: Workspace Check
+
+Before running any passes, call `ivy_workspace(action="get")` and report the active workspace state. Include "Workspace: {protocol or 'none'}" in the Pass 0 pre-flight summary.
+
 ### General Rules
 
 - For each check: call the specified tool, validate response **structure** (fields present, no stack traces, sane values), record PASS/FAIL/SKIPPED with a 1-2 sentence **reflection** connecting the result to prior checks.

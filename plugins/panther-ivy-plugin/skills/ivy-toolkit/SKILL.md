@@ -76,6 +76,8 @@ The Ivy LSP provides these operations through the native LSP tool:
 
 ## Coverage Tool Scoping
 
+> **Workspace**: For accurate scoping, first activate the workspace with `/set-workspace <protocol>`. All tool paths are workspace-relative.
+
 The `ivy_coverage` tool accepts different scoping parameters:
 
 | Parameter | Scoping Semantics | Use When |

@@ -6,6 +6,8 @@ prerequisites: ["interaction-patterns"]
 
 # Adaptive Interview
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 Defines the Navigator agent's interview logic for determining user goals and routing to the appropriate workflow or agent.
 
 ## Interview Phases

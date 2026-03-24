@@ -48,6 +48,8 @@ Entity definitions reside in `apt_entities/` with behavioral constraints in `apt
 
 ### Phase Specializations (NACT vs NCT)
 
+> **Workspace**: Before starting, set the active workspace with `/set-workspace <protocol>` to ensure edit isolation and correct include resolution.
+
 NACT follows the same ivy-workflow-orchestrator phases as NCT, with these specializations:
 
 **Phase 1 (Explore):** Same as NCT -- navigate existing models, understand protocol structure.

@@ -71,6 +71,7 @@ The Ivy LSP runs internally via `.lsp.json` and powers MCP tools. Do not call th
 | `ivy_patterns` | mode="analyze"/"validate"/"compare" | protocol, pattern |
 | `ivy_patterns` | mode="check" | protocol |
 | `ivy_pattern_scaffold` | -- | protocol, pattern |
+| `ivy_workspace` | action="set"\|"get"\|"list"\|"clear" | target (for set), roles (optional) |
 
 ### Coverage Tool Scoping Parameters
 
@@ -96,6 +97,42 @@ Example: `ivy_coverage(mode="stats", test_file="quic/quic_tests/client_tests/qui
 ### Available Agents
 
 `navigator` (adaptive entry point — detects goals and routes to specialist agents), `methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`
+
+## Workspace Awareness
+
+The plugin supports active workspace scoping to prevent cross-protocol collisions in Ivy formal models.
+
+### Commands
+- `/set-workspace <protocol>` — activate workspace (e.g., `/set-workspace quic`, `/set-workspace apt`)
+- `/set-workspace <protocol> <roles>` — activate with role filter (e.g., `/set-workspace quic client+server`)
+- `/clear-workspace` — remove workspace restrictions
+- `/set-workspace` (no args) — show current workspace and available groups
+
+### How It Works
+- **Edit isolation**: When a workspace is active, writes to `.ivy` files outside the active protocol are **blocked** by a PreToolUse hook
+- **Include resolution**: The LSP resolver only searches within active layers + stdlib (`ivy/include/1.7`)
+- **Auto-restore**: Previous session's workspace is restored on session start with a notice
+- **Auto-detection**: Per-protocol `.ivyworkspace` markers auto-scope when opening protocol files
+- **Progressive narrowing**: Without explicit workspace, the system suggests scoping after cross-protocol edits
+
+### Scoping Rules
+- All MCP tool `relative_path` and `test_file` parameters are workspace-relative
+- Use `test_file` parameter for NCT-aligned coverage scoping
+- Reads across protocols are always allowed (only writes are constrained)
+- Stdlib files (`ivy/include/1.7/`) are always accessible regardless of workspace
+- Setting `/clear-workspace` removes all restrictions
+
+### Available Workspaces
+`quic`, `apt`, `apt_quic`, `minip`, `bgp`, `coap`, `scaffolds`
+
+### MCP Tool
+`ivy_workspace` — programmatic workspace management:
+| Action | Parameters | Purpose |
+|--------|-----------|---------|
+| `set` | `target`, optional `roles` | Activate a workspace |
+| `get` | — | Show current workspace state |
+| `list` | — | Show available workspace groups |
+| `clear` | — | Remove workspace restrictions |
 
 ## NCT — Network-Centric Compositional Testing
 

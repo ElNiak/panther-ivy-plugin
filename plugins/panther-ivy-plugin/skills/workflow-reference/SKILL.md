@@ -5,6 +5,8 @@ description: "Use when translating RFC normative language into Ivy constructs, r
 
 # Workflow Reference: RFC-to-Ivy Mapping, Verification, and Quality Gates
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 This skill combines three workflow references: translating RFC requirements into formal Ivy constructs, running verification and debugging failures, and the quality evaluation pipeline.
 
 ---

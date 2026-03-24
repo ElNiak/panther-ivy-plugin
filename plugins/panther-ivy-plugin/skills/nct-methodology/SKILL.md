@@ -42,6 +42,8 @@ Specifications use `export` to declare actions that the test mirror generates ra
 
 ### NCT Workflow (Summary)
 
+> **Workspace**: Before starting, set the active workspace with `/set-workspace <protocol>` to ensure edit isolation and correct include resolution.
+
 The full 10-step workflow is documented in `references/nct-workflow-detail.md`. Summary:
 
 | Phase | Steps | Gate |

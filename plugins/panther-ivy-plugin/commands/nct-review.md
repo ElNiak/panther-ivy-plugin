@@ -16,6 +16,8 @@ arguments:
 
 Comprehensive Ivy specification review that dispatches multiple specialized agents and aggregates their findings.
 
+<!-- Workspace: Active workspace scopes coverage and traceability analysis. Use /set-workspace <protocol> before review for accurate protocol-scoped results. -->
+
 ## Instructions
 
 ### Step 1: Resolve Target

@@ -10,6 +10,8 @@ Phase 2 (Plan) via the ivy-workflow-orchestrator skill.
 
 # PANTHER Formal Testing Methodologies
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 This is the authoritative reference for all three PANTHER formal testing methodologies: NCT, NACT, and NSCT. All three share the same Ivy formal specification language, 14-layer template, and before/after monitor pattern. They differ in execution environment and testing focus.
 
 ---

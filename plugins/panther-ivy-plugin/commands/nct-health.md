@@ -9,40 +9,59 @@ Run a comprehensive health check of the Ivy LSP and MCP integration stack, repor
 
 ## Instructions
 
+**Workspace Status**: Before running checks, call `ivy_workspace(action="get")` to confirm the active workspace. Report the current workspace state as a preliminary line in the results table (e.g., "Active workspace: quic" or "No workspace active").
+
 Run the following 9 checks in order. For each check, record PASS, WARN, or FAIL with a short detail message. If a check fails, continue with the remaining checks (do not abort early).
 
 ### Step 1: LSP process alive
 
-Run via Bash:
+**Primary: PID tracking files.** Run via Bash:
+```
+for f in /tmp/ivy-lsp-pids/*.pid; do
+  [ -f "$f" ] || continue
+  pid=$(cat "$f")
+  if kill -0 "$pid" 2>/dev/null; then
+    echo "ALIVE $(basename "$f") pid=$pid"
+  else
+    echo "STALE $(basename "$f") pid=$pid"
+  fi
+done
+```
+
+**Fallback: pgrep** (catches untracked instances). Run via Bash:
 ```
 pgrep -f ivy_lsp
 ```
 
-- If exit code is 0 and PIDs are returned: **PASS** -- report the PID(s).
-- If more than 6 PIDs are returned: **WARN** -- "N ivy_lsp processes running. Consider killing stale instances with `pkill -f ivy_lsp`."
-- If exit code is non-zero or no output: **FAIL** -- "No ivy_lsp process found."
+Classification:
+- **PASS**: At least one tracked `lsp-*` PID file reports ALIVE.
+- **WARN**: Stale PID files exist alongside live ones (suggest cleanup), OR more than 6 total processes found, OR only untracked processes found via pgrep (no PID files).
+- **FAIL**: No live processes found by either method.
 
 ### Step 2: LSP log health
 
-Run via Bash:
+**Check log freshness.** Run via Bash:
 ```
-tail -50 /tmp/ivy-lsp-latest.log
-```
-
-Also run:
-```
-grep -c "include_resolver ERROR" /tmp/ivy-lsp-latest.log
+python3 -c "import os,time; s=os.stat('/tmp/ivy-lsp-latest.log'); age=time.time()-s.st_mtime; print(f'age_seconds={int(age)}')"
 ```
 
-Also run:
+**Count errors in recent lines only (NOT the entire file).** Run via Bash:
 ```
-grep -c "CRITICAL\|Traceback" /tmp/ivy-lsp-latest.log
+tail -50 /tmp/ivy-lsp-latest.log | grep -v -E '\[SIGTERM\]|shutdown|write to closed|BrokenPipeError|ConnectionResetError|interpreter shutdown' | grep -c -E 'CRITICAL|Traceback'
 ```
 
-- If the file does not exist: **FAIL** -- "Log file /tmp/ivy-lsp-latest.log not found."
-- If CRITICAL/Traceback count > 0: **FAIL** -- "Log contains N critical errors. Run `grep CRITICAL /tmp/ivy-lsp-latest.log` for details."
-- If include_resolver ERROR count > 10: **WARN** -- "Include resolver has N errors. Layer routing may be broken."
-- If the last 50 lines contain `CRITICAL` or `Traceback` or `crash`: **FAIL** -- quote the relevant line(s).
+**Count include_resolver errors in recent lines.** Run via Bash:
+```
+tail -200 /tmp/ivy-lsp-latest.log | grep -c "include_resolver ERROR"
+```
+
+**Shutdown noise filter**: Lines matching any of the following patterns are benign session teardown artifacts and MUST NOT cause a FAIL: `[SIGTERM]`, `shutdown`, `write to closed`, `BrokenPipeError`, `ConnectionResetError`, `interpreter shutdown`. These occur when LSP instances are killed at session end.
+
+Classification:
+- If the log file does not exist: **FAIL** -- "Log file /tmp/ivy-lsp-latest.log not found."
+- If non-shutdown CRITICAL/Traceback count (from `tail -50`) > 0: **FAIL** -- quote the relevant non-shutdown line(s).
+- If include_resolver ERROR count (from `tail -200`) > 10: **WARN** -- "Include resolver has N errors in recent entries. Layer routing may be broken."
+- If log age > 300 seconds but Step 1 shows LSP is running: **WARN** -- "Log is stale (Ns old) but LSP is alive. Symlink may point to a prior instance's log."
 - Otherwise: **PASS** -- "No critical errors in recent log entries."
 
 ### Step 3: LSP responding
@@ -61,8 +80,9 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_capabilities` with no argume
 
 ### Step 5: Workspace access
 
-Use `Glob` to find any `.ivy` file in the workspace. Then call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` with:
+Use `Glob` to find any `.ivy` file in the workspace. Then call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` with:
 - `relative_path`: the path to the found `.ivy` file
+- `mode`: `"structural"`
 
 - If the tool returns a result (even with diagnostics): **PASS** -- report the file and diagnostic count.
 - If no `.ivy` files exist in the workspace: **FAIL** -- "No .ivy files found in workspace."
@@ -84,13 +104,22 @@ Use the IDE LSP `goToDefinition` on a known symbol in an `.ivy` file. If no symb
 
 ### Step 8: Layer staging active
 
-Run via Bash:
-```
-grep -c "Layered staging active\|Skipping scope-based partitioned staging" /tmp/ivy-lsp-latest.log
-```
+**Primary: Use MCP capabilities data from Step 4.** Extract `staging_health` from the `ivy_capabilities` result already obtained in Step 4. If Step 4 failed, skip to the fallback.
 
-- If count > 0: **PASS** -- "Layer staging active"
-- If count = 0: **WARN** -- "Layer staging may not be initialized. Check workspace_layers in .ivyworkspace and restart the LSP."
+Report: `layers_active`, `layer_count`, `total_staged`, `files_mapped_to_layers`.
+
+Classification:
+- If `staging_health.layers_active` is `true`: **PASS** -- report layer_count and total_staged.
+- If `staging_health.layers_active` is `false` but `total_staged > 0`: **WARN** -- "Flat staging (no layers) with N staged files. No collision risk but layer routing is inactive."
+- If `staging_health.symlink_failures > 0`: **WARN** -- "N symlink failures detected in staging."
+- If Step 4 failed (no capabilities data): fall back to log grep as secondary confirmation only.
+
+**Fallback (secondary, only if Step 4 failed).** Run via Bash:
+```
+tail -200 /tmp/ivy-lsp-latest.log | grep -c "Layered staging active\|Skipping scope-based partitioned staging"
+```
+- If count > 0: **WARN** -- "Layer staging seen in log (MCP unavailable for authoritative check)."
+- If count = 0: **WARN** -- "Layer staging status unknown. Check workspace_layers in .ivyworkspace and restart the LSP."
 
 ### Step 9: Cross-layer include resolution
 

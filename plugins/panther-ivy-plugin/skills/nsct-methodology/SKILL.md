@@ -47,6 +47,8 @@ NSCT follows the same phased workflow as NCT but with key replacements:
 
 ### NSCT Workflow
 
+> **Workspace**: Before starting, set the active workspace with `/set-workspace <protocol>` to ensure edit isolation and correct include resolution.
+
 1. **Define network topology** -- nodes, links, latencies, bandwidths, loss rates
 2. **Configure simulation parameters** -- duration, seed, logging level
 3. **Map IUT implementations to simulated nodes** -- set up protocol implementations

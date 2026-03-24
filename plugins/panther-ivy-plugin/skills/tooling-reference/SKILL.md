@@ -5,6 +5,8 @@ description: "Use when choosing between LSP, MCP tools, and Claude native tools 
 
 # Tooling Reference: LSP, MCP Tools, and Claude Native Tools
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 ## Architecture
 
 | Layer | Role | How it works |

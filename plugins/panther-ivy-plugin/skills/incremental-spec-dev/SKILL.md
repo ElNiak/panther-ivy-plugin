@@ -10,6 +10,8 @@ Phase 2 (Plan) via the ivy-workflow-orchestrator skill. The loop operates within
 
 # Incremental Specification Development
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 This skill guides the iterative loop for adding RFC requirements to an Ivy formal specification one at a time. Each iteration adds exactly one requirement, verifies the model, and tracks coverage progress before moving to the next.
 
 ---

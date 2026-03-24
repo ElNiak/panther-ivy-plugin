@@ -5,6 +5,8 @@ description: "Use when any agent needs to interact with the user during a workfl
 
 # Interaction Patterns
 
+> **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
+
 Reusable interaction checkpoints for all Ivy plugin agents. Every agent references this skill for consistent user engagement.
 
 ## Checkpoint Types
