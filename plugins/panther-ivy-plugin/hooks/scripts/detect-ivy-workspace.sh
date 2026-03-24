@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # SessionStart hook: detect Ivy workspace and inject context for Claude.
 #
+# Uses the unified Python detection module (ivy_lsp.workspace_context) when
+# available, falling back to the bash-based detection in workspace-common.sh.
+#
 # Outputs:
 #   - JSON with hookSpecificOutput.additionalContext for Claude
 #   - Writes IVY_WORKSPACE_ROOT to CLAUDE_ENV_FILE (if set)
@@ -11,7 +14,26 @@ PLUGIN_SCRIPTS_DIR="$SCRIPT_DIR/../../scripts"
 # shellcheck source=../../scripts/workspace-common.sh
 source "$PLUGIN_SCRIPTS_DIR/workspace-common.sh"
 
-detect_ivy_workspace
+# --- Detection: try Python module first, fall back to bash ---
+DETECT_JSON=""
+DETECTED_ROOT=""
+DETECTED_TYPE=""
+
+# Resolve ivy-lsp source so we can run python3 -m ivy_lsp detect
+resolve_ivy_lsp_source
+if [ -n "${IVY_LSP_SRC:-}" ]; then
+    DETECT_JSON=$(PYTHONPATH="$IVY_LSP_SRC" python3 -m ivy_lsp detect "$PWD" 2>/dev/null) || true
+fi
+
+if [ -n "$DETECT_JSON" ]; then
+    DETECTED_ROOT=$(echo "$DETECT_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin).get('workspace_root',''))" 2>/dev/null) || true
+    DETECTED_TYPE=$(echo "$DETECT_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin).get('project_type','fallback'))" 2>/dev/null) || true
+fi
+
+# Fallback to bash detection if Python detection failed
+if [ -z "$DETECTED_ROOT" ]; then
+    detect_ivy_workspace
+fi
 
 # Write env var for later Bash commands
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
@@ -39,6 +61,33 @@ if [ "$DETECTED_TYPE" = "panther" ] && [ -d "$DETECTED_ROOT/protocol-testing" ];
     MODEL_INFO=" | Models: ${IVY_COUNT} .ivy files"
 fi
 
+# --- Active workspace restore ---
+WORKSPACE_RESTORE_MSG=""
+STATE_FILE="${DETECTED_ROOT}/.ivy-workspace-state.json"
+if [ -f "$STATE_FILE" ]; then
+    ACTIVE_GROUP=$(python3 -c "
+import json, sys
+try:
+    d = json.load(open('$STATE_FILE'))
+    print(d.get('active_group', ''))
+except: pass
+" 2>/dev/null)
+    SET_BY=$(python3 -c "
+import json, sys
+try:
+    d = json.load(open('$STATE_FILE'))
+    print(d.get('set_by', ''))
+except: pass
+" 2>/dev/null)
+
+    if [ -n "$ACTIVE_GROUP" ] && [ "$SET_BY" = "explicit" ]; then
+        if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+            echo "IVY_ACTIVE_WORKSPACE=$ACTIVE_GROUP" >> "$CLAUDE_ENV_FILE"
+        fi
+        WORKSPACE_RESTORE_MSG="Active workspace restored: $ACTIVE_GROUP (set by: $SET_BY). Use /set-workspace to change or /clear-workspace to remove restrictions."
+    fi
+fi
+
 # Build context message for Claude
 if [ "$DETECTED_TYPE" = "panther" ]; then
     context="[ivy-workspace] Detected PANTHER project at: $DETECTED_ROOT. Ivy models are in protocol-testing/. The ivy-tools MCP server and LSP are scoped to this directory. MCP: ${MCP_STATUS}${MODEL_INFO}."
@@ -46,6 +95,13 @@ elif [ "$DETECTED_TYPE" = "standalone" ]; then
     context="[ivy-workspace] Detected standalone Ivy project at: $DETECTED_ROOT. MCP: ${MCP_STATUS}."
 else
     context="[ivy-workspace] No Ivy project detected. Using CWD as workspace: $DETECTED_ROOT."
+fi
+
+# Append workspace status to context
+if [ -n "$WORKSPACE_RESTORE_MSG" ]; then
+    context="$context $WORKSPACE_RESTORE_MSG"
+else
+    context="$context No active workspace set. Use /set-workspace <protocol> to restrict edits. Available: quic, apt, apt_quic, minip, bgp, coap, scaffolds"
 fi
 
 # Escape context for JSON safety using proper JSON escaping
