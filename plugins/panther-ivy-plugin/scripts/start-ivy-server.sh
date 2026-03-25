@@ -27,18 +27,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=workspace-common.sh
 source "$SCRIPT_DIR/workspace-common.sh"
 
-# --- Log setup (separate files per mode) ---
+# --- Log setup (initial — may be re-routed after session detection) ---
 _IVY_LOG_DIR="${IVY_LSP_LOG_DIR:-/tmp}"
 _IVY_LOG_TS="$(date +%Y-%m-%dT%H%M%S)"
 LOG_FILE="${IVY_LSP_LOG_FILE:-${_IVY_LOG_DIR}/ivy-${MODE}-${_IVY_LOG_TS}-$$.log}"
-
-# Mode-specific symlinks
-if [ "$MODE" = "lsp" ]; then
-    ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-latest.log"
-    ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-lsp-latest.log"
-else
-    ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-mcp-latest.log"
-fi
 
 log() { echo "[ivy-${MODE}] $*" >>"$LOG_FILE"; }
 
@@ -72,6 +64,48 @@ log "Detected workspace: $DETECTED_ROOT (type=$DETECTED_TYPE)"
 export IVY_WORKSPACE_ROOT="$DETECTED_ROOT"
 [ "$MODE" = "mcp" ] && log "Include paths: ${IVY_LSP_INCLUDE_PATHS:-<none>}"
 [ "$MODE" = "mcp" ] && log "Exclude paths: ${IVY_LSP_EXCLUDE_PATHS:-<none>}"
+
+# Ensure IVY_SESSION_ID tracks the Claude session id. Prefer explicitly
+# propagated values, then Claude env vars, then workspace session cache.
+if [ -z "${IVY_SESSION_ID:-}" ]; then
+    if [ -n "${CLAUDE_SESSION_ID:-}" ]; then
+        export IVY_SESSION_ID="$CLAUDE_SESSION_ID"
+    elif [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+        export IVY_SESSION_ID="$CLAUDE_CODE_SESSION_ID"
+    else
+        _WS_HASH_FOR_SESSION="$(printf '%s' "$DETECTED_ROOT" | shasum -a 256 | cut -c1-12)"
+        _SESSION_FILE="/tmp/ivy-session-${_WS_HASH_FOR_SESSION}.id"
+        if [ -s "$_SESSION_FILE" ]; then
+            export IVY_SESSION_ID="$(head -n 1 "$_SESSION_FILE" | tr -d '\r\n')"
+        fi
+    fi
+fi
+
+if [ -n "${IVY_SESSION_ID:-}" ]; then
+    log "Session id resolved: ${IVY_SESSION_ID}"
+else
+    log "Session id unresolved; IVY_SESSION_ID is empty"
+fi
+
+# --- Session-aware log redirection ---
+if [ -n "${IVY_SESSION_ID:-}" ] && [ -n "${IVY_WORKSPACE_ROOT:-}" ]; then
+    SESSION_LOG_DIR="${IVY_WORKSPACE_ROOT}/.observability/sessions/${IVY_SESSION_ID}"
+    mkdir -p "$SESSION_LOG_DIR"
+
+    LOG_FILE="${SESSION_LOG_DIR}/ivy-${MODE}-${_IVY_LOG_TS}-$$.log"
+    export IVY_LSP_LOG_FILE="$LOG_FILE"
+    export IVY_LSP_DEBUG_LOG_PATH="${SESSION_LOG_DIR}/debug-trace.log"
+
+    log "Log files redirected to session dir: $SESSION_LOG_DIR"
+fi
+
+# Mode-specific symlinks (backward compat — always point to current log file)
+if [ "$MODE" = "lsp" ]; then
+    ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-latest.log"
+    ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-lsp-lsp-latest.log"
+else
+    ln -sfn "$LOG_FILE" "${_IVY_LOG_DIR}/ivy-mcp-latest.log"
+fi
 
 # --- Resolve ivy-lsp source ---
 resolve_ivy_lsp_source
