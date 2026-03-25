@@ -55,17 +55,18 @@ def _check_sidecar_alive() -> bool:
     except (OSError, ValueError):
         return False
     # TCP connect with retry
-    for attempt in range(3):
+    # 2 retries × 1.5s socket timeout = 3s max, within the 5s hook timeout
+    for attempt in range(2):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2.0)
+            sock.settimeout(1.5)
             result = sock.connect_ex(("127.0.0.1", port))
             sock.close()
             if result == 0:
                 return True
         except OSError:
             pass
-        if attempt < 2:
+        if attempt < 1:
             time.sleep(0.2)
     return False
 
