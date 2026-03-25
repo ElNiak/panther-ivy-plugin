@@ -5,6 +5,7 @@ Writes structured JSON events to per-session JSONL log files.
 Zero external dependencies — stdlib only.
 """
 
+import hashlib
 import json
 import os
 import sys
@@ -30,6 +31,25 @@ def _resolve_log_dir(session_id: str) -> Path:
         return Path(workspace) / ".observability" / "sessions" / session_id
 
     return Path("/tmp/ivy-observability") / "sessions" / session_id
+
+
+def _resolve_session_id(raw_session_id: str) -> str:
+    """Resolve session ID from session file, falling back to raw payload ID.
+
+    The session file contains the date-prefixed ID written by SessionStart hook.
+    Hook scripts are short-lived, so no caching is needed.
+    """
+    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip()
+    if ws_root:
+        ws_hash = hashlib.sha256(ws_root.encode()).hexdigest()[:12]
+        session_file = Path("/tmp") / f"ivy-session-{ws_hash}.id"
+        try:
+            value = session_file.read_text().strip()
+            if value:
+                return value
+        except OSError:
+            pass
+    return (raw_session_id or "unknown").strip() or "unknown"
 
 
 def log_event(
@@ -61,7 +81,7 @@ def log_event(
         if os.environ.get("IVY_OBSERVABILITY_ENABLED", "1") == "0":
             return None
 
-        safe_session_id = (session_id or "unknown").strip() or "unknown"
+        safe_session_id = _resolve_session_id(session_id)
         log_dir = log_dir_override or _resolve_log_dir(safe_session_id)
         log_dir.mkdir(parents=True, exist_ok=True)
 
