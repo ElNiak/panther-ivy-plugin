@@ -40,8 +40,11 @@ def _write_state(state: dict) -> None:
 
 
 def _check_sidecar_alive() -> bool:
-    """Test if the MCP sidecar port is reachable."""
-    # Find the port file
+    """Test if the MCP sidecar port is reachable (with retry).
+
+    Retries up to 3 times with 200ms delay to handle the startup race
+    where the port file exists but uvicorn hasn't bound yet.
+    """
     import glob
     port_files = glob.glob("/tmp/ivy-mcp-*.port")
     if not port_files:
@@ -51,15 +54,20 @@ def _check_sidecar_alive() -> bool:
             port = int(f.read().strip())
     except (OSError, ValueError):
         return False
-    # TCP connect test
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(2.0)
-        result = sock.connect_ex(("127.0.0.1", port))
-        sock.close()
-        return result == 0
-    except OSError:
-        return False
+    # TCP connect with retry
+    for attempt in range(3):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(2.0)
+            result = sock.connect_ex(("127.0.0.1", port))
+            sock.close()
+            if result == 0:
+                return True
+        except OSError:
+            pass
+        if attempt < 2:
+            time.sleep(0.2)
+    return False
 
 
 def main():
