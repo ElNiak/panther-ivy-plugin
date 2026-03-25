@@ -18,6 +18,23 @@ source "$PLUGIN_SCRIPTS_DIR/workspace-common.sh"
 DETECT_JSON=""
 DETECTED_ROOT=""
 DETECTED_TYPE=""
+RESOLVED_SESSION_ID=""
+
+# Extract canonical Claude session id from hook JSON input when available.
+# SessionStart hooks provide a JSON payload on stdin with "session_id".
+HOOK_INPUT="$(cat 2>/dev/null || true)"
+if [ -n "$HOOK_INPUT" ]; then
+    RESOLVED_SESSION_ID=$(printf '%s' "$HOOK_INPUT" | python3 -c "import json,sys; print((json.load(sys.stdin).get('session_id') or '').strip())" 2>/dev/null) || true
+fi
+if [ -z "$RESOLVED_SESSION_ID" ]; then
+    RESOLVED_SESSION_ID="${CLAUDE_SESSION_ID:-${CLAUDE_CODE_SESSION_ID:-${IVY_SESSION_ID:-}}}"
+fi
+
+# Apply date prefix for chronologically sortable session directories
+if [ -n "$RESOLVED_SESSION_ID" ]; then
+    _SESSION_DATE="$(date +%Y-%m-%dT%H%M)"
+    RESOLVED_SESSION_ID="${_SESSION_DATE}-${RESOLVED_SESSION_ID}"
+fi
 
 # Resolve ivy-lsp source so we can run python3 -m ivy_lsp detect
 resolve_ivy_lsp_source
@@ -41,8 +58,15 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
     # Propagate log symlink paths so downstream hooks find the right logs
     printf 'IVY_LSP_LOG_PATH="%s"\n' "${IVY_LSP_LOG_DIR:-/tmp}/ivy-lsp-lsp-latest.log" >> "$CLAUDE_ENV_FILE"
     printf 'IVY_MCP_LOG_PATH="%s"\n' "${IVY_LSP_LOG_DIR:-/tmp}/ivy-mcp-latest.log" >> "$CLAUDE_ENV_FILE"
-    printf 'IVY_SESSION_ID="%s"\n' "$$" >> "$CLAUDE_ENV_FILE"
+    printf 'IVY_SESSION_ID="%s"\n' "$RESOLVED_SESSION_ID" >> "$CLAUDE_ENV_FILE"
     printf 'IVY_MCP_PID_FILE="/tmp/ivy-mcp-%s.pid"\n' "$$" >> "$CLAUDE_ENV_FILE"
+fi
+
+# Persist session id per workspace so launchers can recover it even if
+# CLAUDE_ENV_FILE variables are not present in spawned server environments.
+if [ -n "$RESOLVED_SESSION_ID" ]; then
+    WS_HASH="$(printf '%s' "$DETECTED_ROOT" | shasum -a 256 | cut -c1-12)"
+    printf '%s\n' "$RESOLVED_SESSION_ID" > "/tmp/ivy-session-${WS_HASH}.id" 2>/dev/null || true
 fi
 
 # Determine MCP server status (non-blocking quick check)
