@@ -6,22 +6,35 @@ the sidecar port. Maintains a failure counter in a state file.
 After 3 consecutive failures, blocks the tool call with advice.
 """
 
+import fcntl
 import json
+import os
 import socket
 import time
 
 
-_STATE_FILE = "/tmp/ivy-mcp-health-state.json"
 _MAX_CONSECUTIVE_FAILURES = 3
 _STATE_TTL = 300  # Reset state after 5 minutes of no activity
 
 
+def _get_state_path() -> str:
+    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
+    sid = os.environ.get("IVY_SESSION_ID", "unknown")
+    state_dir = os.path.join(ws_root, ".observability", "sessions", sid)
+    os.makedirs(state_dir, exist_ok=True)
+    return os.path.join(state_dir, "mcp-health-state.json")
+
+
 def _read_state() -> dict:
     """Read the health state file, returning defaults if missing/stale."""
+    path = _get_state_path()
     try:
-        with open(_STATE_FILE) as f:
-            state = json.load(f)
-        # Reset if stale
+        with open(path) as f:
+            fcntl.flock(f, fcntl.LOCK_SH)
+            try:
+                state = json.load(f)
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
         if time.time() - state.get("last_update", 0) > _STATE_TTL:
             return {"consecutive_failures": 0, "last_update": time.time()}
         return state
@@ -31,10 +44,15 @@ def _read_state() -> dict:
 
 def _write_state(state: dict) -> None:
     """Write the health state file."""
+    path = _get_state_path()
     state["last_update"] = time.time()
     try:
-        with open(_STATE_FILE, "w") as f:
-            json.dump(state, f)
+        with open(path, "w") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                json.dump(state, f)
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
     except OSError:
         pass
 

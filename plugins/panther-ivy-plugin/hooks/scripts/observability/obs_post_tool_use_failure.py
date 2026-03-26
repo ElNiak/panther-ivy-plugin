@@ -4,6 +4,7 @@
 Also increments the MCP health circuit breaker counter for ivy MCP tools.
 """
 
+import fcntl
 import json
 import os
 import sys
@@ -12,8 +13,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-_STATE_FILE = "/tmp/ivy-mcp-health-state.json"
 _MAX_CONSECUTIVE_FAILURES = 3
+
+
+def _get_state_path() -> str:
+    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
+    sid = os.environ.get("IVY_SESSION_ID", "unknown")
+    state_dir = os.path.join(ws_root, ".observability", "sessions", sid)
+    os.makedirs(state_dir, exist_ok=True)
+    return os.path.join(state_dir, "mcp-health-state.json")
 
 try:
     from log_event import log_event, read_stdin
@@ -37,14 +45,23 @@ try:
     # Increment circuit breaker for MCP ivy tools
     if "ivy" in tool_name.lower():
         try:
+            state_path = _get_state_path()
             state = {"consecutive_failures": 0, "last_update": time.time()}
-            if os.path.exists(_STATE_FILE):
-                with open(_STATE_FILE) as f:
-                    state = json.load(f)
+            if os.path.exists(state_path):
+                with open(state_path) as f:
+                    fcntl.flock(f, fcntl.LOCK_SH)
+                    try:
+                        state = json.load(f)
+                    finally:
+                        fcntl.flock(f, fcntl.LOCK_UN)
             state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
             state["last_update"] = time.time()
-            with open(_STATE_FILE, "w") as f:
-                json.dump(state, f)
+            with open(state_path, "w") as f:
+                fcntl.flock(f, fcntl.LOCK_EX)
+                try:
+                    json.dump(state, f)
+                finally:
+                    fcntl.flock(f, fcntl.LOCK_UN)
 
             if state["consecutive_failures"] >= _MAX_CONSECUTIVE_FAILURES:
                 output = {
