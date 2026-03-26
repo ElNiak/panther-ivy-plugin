@@ -65,20 +65,12 @@ export IVY_WORKSPACE_ROOT="$DETECTED_ROOT"
 [ "$MODE" = "mcp" ] && log "Include paths: ${IVY_LSP_INCLUDE_PATHS:-<none>}"
 [ "$MODE" = "mcp" ] && log "Exclude paths: ${IVY_LSP_EXCLUDE_PATHS:-<none>}"
 
-# Ensure IVY_SESSION_ID tracks the Claude session id. Prefer explicitly
-# propagated values, then Claude env vars, then workspace session cache.
+# Ensure IVY_SESSION_ID tracks the Claude session id.
+# Delegates to resolve_session_id() from workspace-common.sh (which tries
+# the canonical ivy-lsp Python resolver first, then a bash fallback).
 if [ -z "${IVY_SESSION_ID:-}" ]; then
-    if [ -n "${CLAUDE_SESSION_ID:-}" ]; then
-        export IVY_SESSION_ID="$CLAUDE_SESSION_ID"
-    elif [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
-        export IVY_SESSION_ID="$CLAUDE_CODE_SESSION_ID"
-    else
-        _WS_HASH_FOR_SESSION="$(printf '%s' "$DETECTED_ROOT" | shasum -a 256 | cut -c1-12)"
-        _SESSION_FILE="/tmp/ivy-session-${_WS_HASH_FOR_SESSION}.id"
-        if [ -s "$_SESSION_FILE" ]; then
-            export IVY_SESSION_ID="$(head -n 1 "$_SESSION_FILE" | tr -d '\r\n')"
-        fi
-    fi
+    IVY_SESSION_ID="$(resolve_session_id)"
+    export IVY_SESSION_ID
 fi
 
 if [ -n "${IVY_SESSION_ID:-}" ]; then

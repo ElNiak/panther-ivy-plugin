@@ -133,9 +133,24 @@ def _find_group_for_layer(layer_id, workspace_root):
     return None
 
 
+def _resolve_session_id(hook_input=None):
+    """Resolve Claude session id — delegates to ivy-lsp canonical resolver."""
+    try:
+        from ivy_lsp.infra.observability.session import resolve_session_id
+        return resolve_session_id(hook_payload=hook_input)
+    except ImportError:
+        pass
+    # Fallback if ivy-lsp not importable
+    if hook_input:
+        payload_session = str(hook_input.get("session_id", "")).strip()
+        if payload_session:
+            return payload_session
+    return os.environ.get("IVY_SESSION_ID", "unknown")
+
+
 def _progressive_narrowing(file_path, workspace_root):
     """Track inferred protocol from edits; suggest /set-workspace on cross-protocol."""
-    session_id = os.environ.get("IVY_SESSION_ID", "unknown")
+    session_id = _resolve_session_id()
     tmpdir = os.environ.get("TMPDIR", "/tmp")
     state_path = os.path.join(tmpdir, f"ivy-inferred-protocol-{session_id}.json")
 

@@ -9,13 +9,24 @@ Zero external dependencies — stdlib only.
 # Fields: timestamp, session_id, channel, event_type, name, status, cwd
 # Optional: duration_ms, call_id, payload
 
-import hashlib
 import json
 import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+try:
+    from ivy_lsp.infra.observability.session import resolve_session_id as _canonical_resolve
+    from ivy_lsp.infra.observability.session import workspace_hash
+except ImportError:
+    # Fallback if ivy-lsp not importable
+    import hashlib
+
+    def workspace_hash(workspace_root: str) -> str:
+        return hashlib.sha256(workspace_root.encode()).hexdigest()[:12]
+
+    _canonical_resolve = None
 
 
 def _resolve_log_dir(session_id: str) -> Path:
@@ -37,26 +48,24 @@ def _resolve_log_dir(session_id: str) -> Path:
     return Path("/tmp/ivy-observability") / "sessions" / session_id
 
 
-def _workspace_hash(workspace_root: str) -> str:
-    """12-char SHA-256 hex hash matching the ivy-lsp convention."""
-    return hashlib.sha256(workspace_root.encode()).hexdigest()[:12]
-
-
 def _resolve_session_id(raw_session_id: str) -> str:
-    """Resolve session ID with priority matching ivy-lsp.
+    """Resolve session ID — delegates to ivy-lsp canonical resolver with fallback.
 
-    Resolution order:
-      1. IVY_SESSION_ID environment variable (explicit override)
-      2. /tmp/ivy-session-<ws_hash>.id file (written by SessionStart hook)
-      3. raw_session_id from stdin JSON
-      4. "unknown" fallback
+    When ivy-lsp is importable the full priority chain is used:
+      hook_payload > CLAUDE_SESSION_ID > CLAUDE_CODE_SESSION_ID >
+      IVY_SESSION_ID > session file > "unknown"
+
+    Fallback (ivy-lsp unavailable):
+      IVY_SESSION_ID > session file > raw_session_id > "unknown"
     """
+    if _canonical_resolve is not None:
+        return _canonical_resolve()
+    # Inline fallback matching ivy-lsp priority
     from_env = os.environ.get("IVY_SESSION_ID", "").strip()
     if from_env:
         return from_env
-
     ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
-    ws_hash = _workspace_hash(ws_root)
+    ws_hash = workspace_hash(ws_root)
     session_file = Path("/tmp") / f"ivy-session-{ws_hash}.id"
     try:
         value = session_file.read_text().strip()
@@ -64,7 +73,6 @@ def _resolve_session_id(raw_session_id: str) -> str:
             return value
     except OSError:
         pass
-
     return (raw_session_id or "unknown").strip() or "unknown"
 
 

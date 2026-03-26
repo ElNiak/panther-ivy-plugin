@@ -114,3 +114,29 @@ resolve_ivy_lsp_source() {
         depth=$((depth + 1))
     done
 }
+
+# Resolve session ID using the canonical ivy-lsp implementation with bash fallback.
+# Usage: resolve_session_id [workspace_root]
+resolve_session_id() {
+    local ws_root="${1:-${IVY_WORKSPACE_ROOT:-$PWD}}"
+    # Delegate to Python canonical implementation
+    if [ -n "${IVY_LSP_SRC:-}" ]; then
+        local result
+        result=$(PYTHONPATH="$IVY_LSP_SRC" python3 -c \
+            "from ivy_lsp.infra.observability.session import resolve_session_id; print(resolve_session_id())" \
+            2>/dev/null) || true
+        if [ -n "$result" ] && [ "$result" != "unknown" ]; then
+            echo "$result"
+            return 0
+        fi
+    fi
+    # Bash fallback (same priority chain minus hook_payload: 2→3→4→5)
+    [ -n "${CLAUDE_SESSION_ID:-}" ] && { echo "$CLAUDE_SESSION_ID"; return 0; }
+    [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && { echo "$CLAUDE_CODE_SESSION_ID"; return 0; }
+    [ -n "${IVY_SESSION_ID:-}" ] && { echo "$IVY_SESSION_ID"; return 0; }
+    local ws_hash
+    ws_hash="$(printf '%s' "$ws_root" | shasum -a 256 | cut -c1-12)"
+    local session_file="/tmp/ivy-session-${ws_hash}.id"
+    [ -s "$session_file" ] && { head -n 1 "$session_file" | tr -d '\r\n'; return 0; }
+    echo "unknown"
+}
