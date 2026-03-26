@@ -151,8 +151,10 @@ def _resolve_session_id(hook_input=None):
 def _progressive_narrowing(file_path, workspace_root):
     """Track inferred protocol from edits; suggest /set-workspace on cross-protocol."""
     session_id = _resolve_session_id()
-    tmpdir = os.environ.get("TMPDIR", "/tmp")
-    state_path = os.path.join(tmpdir, f"ivy-inferred-protocol-{session_id}.json")
+    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
+    state_dir = os.path.join(ws_root, ".observability", "sessions", session_id)
+    os.makedirs(state_dir, exist_ok=True)
+    state_path = os.path.join(state_dir, "inferred-protocol.json")
 
     current_layer = _get_file_layer(file_path, workspace_root)
     if not current_layer:
