@@ -17,15 +17,15 @@ Query and analyze the JSONL session logs written by the panther-ivy-plugin obser
 ### Step 1: Locate the Log Directory
 
 Search for logs in priority order:
-1. `$IVY_OBSERVABILITY_DIR` environment variable
-2. `$IVY_WORKSPACE_ROOT/.observability/`
-3. `/tmp/ivy-observability/`
+1. `$IVY_OBSERVABILITY_DIR/sessions/` (explicit override)
+2. `$IVY_WORKSPACE_ROOT/.observability/sessions/` (primary — workspace-local)
+3. `/tmp/ivy-observability/sessions/` (fallback)
 
 Use Bash to check each path:
 ```bash
-echo "${IVY_OBSERVABILITY_DIR:-unset}" && ls "${IVY_OBSERVABILITY_DIR:-/nonexistent}" 2>/dev/null || \
-ls "${IVY_WORKSPACE_ROOT:-.}/.observability/" 2>/dev/null || \
-ls /tmp/ivy-observability/ 2>/dev/null || \
+echo "${IVY_OBSERVABILITY_DIR:-unset}" && ls "${IVY_OBSERVABILITY_DIR:-/nonexistent}/sessions/" 2>/dev/null || \
+ls "${IVY_WORKSPACE_ROOT:-.}/.observability/sessions/" 2>/dev/null || \
+ls /tmp/ivy-observability/sessions/ 2>/dev/null || \
 echo "No observability logs found"
 ```
 
@@ -33,7 +33,7 @@ If no logs are found, report: "No observability logs found. Hooks may not have b
 
 ### Step 2: Read Log Files
 
-JSONL log files are named by session (e.g., `session-<id>.jsonl`). Each line is a JSON object with at least:
+Each session has its own directory (e.g., `sessions/<session_id>/events.jsonl`). Each line is a JSON object with at least:
 - `timestamp` -- ISO 8601 timestamp
 - `event_type` -- Event category (e.g., `PostToolUseSuccess`, `PostToolUseFailure`, `SessionStart`, `SessionEnd`)
 - `tool_name` -- MCP tool name (for tool events)
