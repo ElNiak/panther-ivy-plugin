@@ -69,6 +69,9 @@ if [ -n "$RESOLVED_SESSION_ID" ]; then
     printf '%s\n' "$RESOLVED_SESSION_ID" > "/tmp/ivy-session-${WS_HASH}.id" 2>/dev/null || true
 fi
 
+# Prune sessions older than 7 days
+find "${IVY_WORKSPACE_ROOT:-${DETECTED_ROOT}}/.observability/sessions" -maxdepth 1 -type d -mtime +7 -exec rm -rf {} + 2>/dev/null || true
+
 # Determine MCP server status (non-blocking quick check)
 MCP_LOG="${IVY_MCP_LOG_PATH:-/tmp/ivy-mcp-latest.log}"
 MCP_STATUS="not started"

@@ -74,7 +74,9 @@ done <<< "$ALL_IVY"
 CLAIM_TOTAL=$((CLAIM_RESOLVED + CLAIM_IUT_FINDING + CLAIM_DEFERRED + CLAIM_GUARD + CLAIM_NA + CLAIM_KNOWN_DEV))
 
 # --- Session metrics from observability events ---
-EVENTS_DIR="${IVY_OBSERVABILITY_DIR:-/tmp/ivy-observability}/sessions"
+EVENTS_DIR="${IVY_OBSERVABILITY_DIR:-${IVY_WORKSPACE_ROOT:+${IVY_WORKSPACE_ROOT}/.observability}/sessions}"
+# Fallback to /tmp if workspace root not set
+[ -z "$EVENTS_DIR" ] && EVENTS_DIR="/tmp/ivy-observability/sessions"
 SESSION_METRICS=""
 if [ -d "$EVENTS_DIR" ]; then
   # Find the most recent events.jsonl file (written by log_event.py)
