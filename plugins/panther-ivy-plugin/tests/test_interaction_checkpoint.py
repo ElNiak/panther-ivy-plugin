@@ -6,7 +6,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-SCRIPT = str(Path(__file__).parent / "interaction-checkpoint.py")
+SCRIPT = str(
+    Path(__file__).resolve().parent.parent / "hooks" / "scripts" / "interaction-checkpoint.py"
+)
 
 
 def run_hook(tool_name: str, tool_output: str) -> dict | None:
