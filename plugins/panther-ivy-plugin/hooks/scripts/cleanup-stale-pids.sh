@@ -17,10 +17,12 @@ done
 
 # Phase 2: Kill orphaned ivy_lsp processes for THIS workspace.
 # Source workspace-common.sh for detect_ivy_workspace().
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts"
+# Path: hooks/scripts/ -> ../../ -> plugin root -> scripts/
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../scripts" && pwd)"
 if [ -f "$SCRIPT_DIR/workspace-common.sh" ]; then
-    # shellcheck source=../scripts/workspace-common.sh
+    # shellcheck source=../../scripts/workspace-common.sh
     source "$SCRIPT_DIR/workspace-common.sh"
+    set +euo pipefail  # Restore: cleanup hooks must never fail
     detect_ivy_workspace 2>/dev/null || true
 fi
 
