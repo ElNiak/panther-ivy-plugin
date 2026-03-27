@@ -385,8 +385,9 @@ protocol-testing/{prot}/
 
 **Debug environment variables**:
 - `IVY_LSP_LOG_LEVEL=DEBUG` — verbose logging
-- `IVY_LSP_FORCE_REINSTALL=1` — force `uvx` to reinstall the package
+- `IVY_LSP_FORCE_REINSTALL=1` — force `uvx` to reinstall the package (not set by default; use when modifying local ivy-lsp source)
 - `IVY_LSP_DEV_ROOT=/path/to/local/ivy-lsp` — use local development copy
+- `PANTHER_IVY_ENABLE_SERENA=1` — enable the Serena MCP server (disabled by default; requires panther-serena submodule with pre-built `.venv`)
 
 **Restart**: Kill the `ivy_lsp` process — Claude Code automatically restarts it on the next LSP or MCP call.
 

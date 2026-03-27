@@ -323,3 +323,65 @@ echo "SRC=[$IVY_LSP_SRC]"
         )
         assert result.returncode == 0
         assert "SRC=[]" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# Fix 3A: Serena opt-in gate tests
+# ---------------------------------------------------------------------------
+
+
+class TestSerenaOptIn:
+    """Test the PANTHER_IVY_ENABLE_SERENA gate in start-serena.sh."""
+
+    @pytest.fixture
+    def start_serena_sh(self, plugin_root) -> Path:
+        path = plugin_root / "scripts" / "start-serena.sh"
+        assert path.is_file(), f"start-serena.sh not found at {path}"
+        return path
+
+    def test_serena_disabled_by_default(self, start_serena_sh, tmp_path):
+        """When PANTHER_IVY_ENABLE_SERENA is not set, script exits 0."""
+        result = subprocess.run(
+            ["bash", str(start_serena_sh)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            cwd=str(tmp_path),
+            env={"PATH": "/usr/bin:/bin", "HOME": str(tmp_path)},
+        )
+        assert result.returncode == 0
+        assert "Disabled" in result.stderr
+
+    def test_serena_disabled_when_zero(self, start_serena_sh, tmp_path):
+        """When PANTHER_IVY_ENABLE_SERENA=0, script exits 0."""
+        result = subprocess.run(
+            ["bash", str(start_serena_sh)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            cwd=str(tmp_path),
+            env={
+                "PATH": "/usr/bin:/bin",
+                "HOME": str(tmp_path),
+                "PANTHER_IVY_ENABLE_SERENA": "0",
+            },
+        )
+        assert result.returncode == 0
+        assert "Disabled" in result.stderr
+
+    def test_serena_enabled_without_source_fails(self, start_serena_sh, tmp_path):
+        """When PANTHER_IVY_ENABLE_SERENA=1 but no panther-serena found, exits non-zero."""
+        result = subprocess.run(
+            ["bash", str(start_serena_sh)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            cwd=str(tmp_path),
+            env={
+                "PATH": "/usr/bin:/bin",
+                "HOME": str(tmp_path),
+                "PANTHER_IVY_ENABLE_SERENA": "1",
+            },
+        )
+        # Script should fail because panther-serena is not found
+        assert result.returncode != 0
