@@ -138,5 +138,12 @@ resolve_session_id() {
     ws_hash="$(printf '%s' "$ws_root" | shasum -a 256 | cut -c1-12)"
     local session_file="/tmp/ivy-session-${ws_hash}.id"
     [ -s "$session_file" ] && { head -n 1 "$session_file" | tr -d '\r\n'; return 0; }
+    # Wait briefly for SessionStart hook to write the session file
+    local retries=0
+    while [ $retries -lt 3 ] && [ ! -s "$session_file" ]; do
+        sleep 1
+        retries=$((retries + 1))
+    done
+    [ -s "$session_file" ] && { head -n 1 "$session_file" | tr -d '\r\n'; return 0; }
     echo "unknown"
 }
