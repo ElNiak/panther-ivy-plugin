@@ -139,7 +139,8 @@ done
 # Background (&) would redirect stdin from /dev/null in non-interactive shells,
 # breaking MCP/LSP stdio transport.
 echo $$ > "$PID_DIR/${_PID_PREFIX}-$$.pid"
-trap 'rm -f "$PID_DIR/${_PID_PREFIX}-$$.pid" 2>/dev/null' EXIT TERM INT
+export IVY_PID_FILE="$PID_DIR/${_PID_PREFIX}-$$.pid"
+trap 'rm -f "$IVY_PID_FILE" 2>/dev/null' EXIT TERM INT
 
 # --- Launch ---
 if [ "$MODE" = "lsp" ]; then
