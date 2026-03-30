@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """PreToolUse hook: circuit breaker for MCP tools.
 
-Checks if the MCP sidecar is reachable by testing TCP connectivity to
-the sidecar port. Maintains a failure counter in a state file.
-After 3 consecutive failures, blocks the tool call with advice.
+Uses a two-tier check to determine if the MCP server is reachable:
+1. PID check (primary): validates the MCP process is alive via PID files.
+2. TCP sidecar check (fallback): only when no PID files exist, tests TCP
+   connectivity to the sidecar HTTP port.
+
+Maintains a failure counter in a state file.  After 3 consecutive
+definitive failures, blocks the tool call with advice.
 """
 
 import fcntl
+import glob
 import json
 import os
 import socket
@@ -15,10 +20,27 @@ import time
 
 _MAX_CONSECUTIVE_FAILURES = 3
 _STATE_TTL = 300  # Reset state after 5 minutes of no activity
+_STALE_PORT_AGE = 120  # Port file older than 2 min with no TCP → stale
+_PID_DIR = "/tmp/ivy-lsp-pids"
 
 
 def _get_state_path() -> str:
-    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
+    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip()
+    if not ws_root:
+        # Walk up from CWD looking for panther_ivy (mirrors workspace-common.sh)
+        check = os.getcwd()
+        for _ in range(10):
+            candidate = os.path.join(check, "panther", "plugins", "services",
+                                     "testers", "panther_ivy")
+            if os.path.isdir(os.path.join(candidate, "protocol-testing")):
+                ws_root = candidate
+                break
+            parent = os.path.dirname(check)
+            if parent == check:
+                break
+            check = parent
+        if not ws_root:
+            ws_root = os.getcwd()
     sid = os.environ.get("IVY_SESSION_ID", "unknown")
     state_dir = os.path.join(ws_root, ".observability", "sessions", sid)
     os.makedirs(state_dir, exist_ok=True)
@@ -57,79 +79,161 @@ def _write_state(state: dict) -> None:
         pass
 
 
-def _check_sidecar_alive() -> bool:
-    """Test if the MCP sidecar port is reachable (with retry).
+def _check_pid_alive():
+    """Check MCP process liveness via PID files.
 
-    Retries up to 3 times with 200ms delay to handle the startup race
-    where the port file exists but uvicorn hasn't bound yet.
+    Returns:
+        True  — at least one live MCP PID found.
+        False — only dead PID(s) found (process crashed).
+        None  — no PID files exist (inconclusive).
     """
-    import glob
+    pid_files = glob.glob(os.path.join(_PID_DIR, "mcp-*.pid"))
+    if not pid_files:
+        return None
+
+    found_any = False
+    for pf in pid_files:
+        try:
+            with open(pf) as f:
+                pid = int(f.read().strip())
+        except (OSError, ValueError):
+            continue
+        found_any = True
+        try:
+            os.kill(pid, 0)  # signal 0: check existence
+            return True  # At least one live process
+        except ProcessLookupError:
+            try:
+                os.unlink(pf)
+            except OSError:
+                pass
+            continue  # Dead PID, cleaned up stale file
+        except PermissionError:
+            return True  # Process exists but owned by another user
+
+    return False if found_any else None
+
+
+def _check_sidecar_alive():
+    """TCP fallback: test if the MCP sidecar HTTP port is reachable.
+
+    Returns:
+        True  — sidecar port responds.
+        False — port file is fresh but port is closed (sidecar crashed).
+        None  — no port files, or port file is stale (stdio assumed).
+    """
     port_files = glob.glob("/tmp/ivy-mcp-*.port")
     if not port_files:
-        return False
+        return None  # No sidecar expected → stdio mode
+
+    port_file = port_files[0]
     try:
-        with open(port_files[0]) as f:
+        with open(port_file) as f:
             port = int(f.read().strip())
     except (OSError, ValueError):
-        return False
-    # TCP connect with retry
-    # 2 retries × 1.5s socket timeout = 3s max, within the 5s hook timeout
-    for attempt in range(2):
+        return None
+
+    # Check staleness: if port file is old and port is unreachable, it's stale
+    try:
+        file_age = time.time() - os.path.getmtime(port_file)
+    except OSError:
+        file_age = float("inf")
+
+    # TCP connect (single attempt, short timeout to stay within hook budget)
+    reachable = False
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1.5)
+        result = sock.connect_ex(("127.0.0.1", port))
+        sock.close()
+        reachable = result == 0
+    except OSError:
+        pass
+
+    if reachable:
+        return True
+
+    # Port not listening — stale or crashed?
+    if file_age > _STALE_PORT_AGE:
+        # Stale port file from a previous session — clean it up
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1.5)
-            result = sock.connect_ex(("127.0.0.1", port))
-            sock.close()
-            if result == 0:
-                return True
+            os.unlink(port_file)
         except OSError:
             pass
-        if attempt < 1:
-            time.sleep(0.2)
-    return False
+        return None  # Inconclusive, not a failure
+
+    return False  # Fresh port file but port closed → sidecar crashed
 
 
 def main():
     state = _read_state()
 
-    if _check_sidecar_alive():
-        # Reset failure counter on success
+    # --- Tier 1: PID check (fast, no network) ---
+    pid_result = _check_pid_alive()
+    if pid_result is True:
         if state["consecutive_failures"] > 0:
             state["consecutive_failures"] = 0
             _write_state(state)
-        return  # Allow tool call
+        return  # Allow
 
-    # Sidecar unreachable — increment failure counter
-    state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
-    _write_state(state)
+    if pid_result is False:
+        # MCP process is dead — definitive failure
+        state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
+        _write_state(state)
+        _emit_result(state)
+        return
 
-    if state["consecutive_failures"] >= _MAX_CONSECUTIVE_FAILURES:
-        # Block the tool call via permissionDecision (current API)
+    # --- Tier 2: TCP sidecar fallback (only when no PID files) ---
+    tcp_result = _check_sidecar_alive()
+    if tcp_result is True:
+        if state["consecutive_failures"] > 0:
+            state["consecutive_failures"] = 0
+            _write_state(state)
+        return  # Allow
+
+    if tcp_result is False:
+        # Fresh port file but sidecar not responding — definitive failure
+        state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
+        _write_state(state)
+        _emit_result(state)
+        return
+
+    # tcp_result is None — no sidecar expected (stdio mode) or stale port cleaned
+    # Allow the tool call; if the MCP server is truly down, Claude Code will
+    # report the error directly on the tool result.
+    if state["consecutive_failures"] > 0:
+        state["consecutive_failures"] = 0
+        _write_state(state)
+    return
+
+
+def _emit_result(state: dict) -> None:
+    """Print the hook JSON output based on failure count."""
+    failures = state["consecutive_failures"]
+    if failures >= _MAX_CONSECUTIVE_FAILURES:
         output = {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason": (
-                    f"MCP server appears crashed ({state['consecutive_failures']} "
+                    f"MCP server appears crashed ({failures} "
                     "consecutive failures). Run /nct-health to diagnose, or restart "
                     "the session to recover."
                 ),
             }
         }
-        print(json.dumps(output))
     else:
-        # Warn but allow
         output = {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "additionalContext": (
-                    f"[ivy-health] MCP sidecar connectivity check failed "
-                    f"({state['consecutive_failures']}/{_MAX_CONSECUTIVE_FAILURES}). "
+                    f"[ivy-health] MCP health check failed "
+                    f"({failures}/{_MAX_CONSECUTIVE_FAILURES}). "
                     "Tool may fail."
                 ),
             }
         }
-        print(json.dumps(output))
+    print(json.dumps(output))
 
 
 if __name__ == "__main__":
