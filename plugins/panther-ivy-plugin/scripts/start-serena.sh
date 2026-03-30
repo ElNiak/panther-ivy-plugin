@@ -139,4 +139,6 @@ fi
 
 # --- Launch Serena MCP server ---
 log "Launching serena-mcp-server with project root: $DETECTED_ROOT"
+# Ensure serena + ivy-lsp are importable regardless of .pth file state (uv sync race)
+export PYTHONPATH="$SERENA_SRC/src:${IVY_LSP_SRC:+$IVY_LSP_SRC:}${PYTHONPATH:-}"
 exec "$SERENA_BIN" --project "$DETECTED_ROOT" --context claude-code 2>>"$LOG_FILE"
