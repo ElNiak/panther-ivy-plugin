@@ -56,14 +56,16 @@ def _resolve_session_id(raw_session_id: str) -> str:
       IVY_SESSION_ID > session file > "unknown"
 
     Fallback (ivy-lsp unavailable):
-      IVY_SESSION_ID > session file > raw_session_id > "unknown"
+      IVY_SESSION_ID > CLAUDE_SESSION_ID > CLAUDE_CODE_SESSION_ID >
+      session file > raw_session_id > "unknown"
     """
     if _canonical_resolve is not None:
         return _canonical_resolve()
     # Inline fallback matching ivy-lsp priority
-    from_env = os.environ.get("IVY_SESSION_ID", "").strip()
-    if from_env:
-        return from_env
+    for var in ("IVY_SESSION_ID", "CLAUDE_SESSION_ID", "CLAUDE_CODE_SESSION_ID"):
+        from_env = os.environ.get(var, "").strip()
+        if from_env:
+            return from_env
     ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
     ws_hash = workspace_hash(ws_root)
     session_file = Path("/tmp") / f"ivy-session-{ws_hash}.id"
