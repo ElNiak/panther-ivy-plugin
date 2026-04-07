@@ -72,6 +72,14 @@ The Ivy LSP runs internally via `.lsp.json` and powers MCP tools. Do not call th
 | `ivy_patterns` | mode="check" | protocol |
 | `ivy_pattern_scaffold` | -- | protocol, pattern |
 | `ivy_workspace` | action="set"\|"get"\|"list"\|"clear" | target (for set), roles (optional) |
+| `ivy_health_check` | -- | -- |
+| `ivy_scope` | -- | protocol |
+| `ivy_index` | -- | protocol |
+| `ivy_manifest` | -- | protocol |
+| `ivy_verification_dashboard` | -- | protocol |
+| `ivy_find_variants` | -- | type_name |
+| `ivy_serdes_correlation` | -- | type_name |
+| `ivy_change_impact` | -- | type_name, change_type |
 
 ### Coverage Tool Scoping Parameters
 
