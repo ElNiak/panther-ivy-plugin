@@ -66,7 +66,7 @@ Produce a summary table:
 | Tool | Calls | Avg Duration | Failures |
 |------|-------|-------------|----------|
 | ivy_verify | N | Nms | N |
-| ivy_lint | N | Nms | N |
+| ivy_diagnostics | N | Nms | N |
 | ... | | | |
 ```
 
