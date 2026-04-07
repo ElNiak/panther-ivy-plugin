@@ -82,6 +82,15 @@
         ]
       },
       {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "If you just wrote or edited an .ivy file, consider dispatching the model-reviewer agent to verify model quality, or run ivy_diagnostics(mode=\"structural\") for a quick structural check."
+          }
+        ]
+      },
+      {
         "matcher": "ivy_verify|ivy_coverage|ivy_extract_requirements|ivy_quality",
         "hooks": [
           {
