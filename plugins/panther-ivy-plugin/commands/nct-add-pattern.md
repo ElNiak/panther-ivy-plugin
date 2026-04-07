@@ -93,7 +93,7 @@ Use Claude's `Write` tool to create the generated files in the appropriate subdi
 
 ## Step 6: Verify
 
-Run `ivy_lint` on the generated files to verify structural correctness.
+Run `ivy_diagnostics(relative_path=<file>, mode="structural")` on each generated file to verify structural correctness.
 
 ## Step 7: Report
 
