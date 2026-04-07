@@ -42,7 +42,7 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 **Quality and pattern MCP tools**:
 `ivy_quality` (mode="suggestions" for context-aware suggestions — note: file_path/line/context parameters currently have no effect on output, known issue; mode="gate" to validate against quality gates), `ivy_patterns` (mode="analyze"/"validate"/"compare" for pattern analysis; mode="check" for layer/pattern completeness), `ivy_pattern_scaffold` (generate from template)
 
-**Note**: The LSP server pushes structural diagnostics immediately on file edits. If diagnostics are not visible in `<new-diagnostics>` blocks, the PostToolUse hook fallback runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes. Use the `tooling-reference` skill for usage patterns.
+**Note**: The LSP server pushes structural diagnostics immediately on file edits. If diagnostics are not visible in `<new-diagnostics>` blocks, the PostToolUse hook fallback runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes. Use the `ivy-toolkit` skill for usage patterns.
 
 **Claude native tools**: `Read`/`Grep`/`Glob` for navigation, `Edit`/`Write` for modification.
 
