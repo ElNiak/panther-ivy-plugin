@@ -34,7 +34,7 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 `ivy_coverage` (mode="stats" for coverage stats, mode="gaps" for unguarded state/uncovered reqs, mode="matrix" for requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text; output="manifest" to produce YAML manifest)
 
 **Semantic query**:
-The Ivy LSP runs internally via `.lsp.json` and powers MCP tools. Do not call the `LSP` tool directly — use `Read`/`Grep`/`Glob` for navigation, `ivy_model_info` for model structure, and `ivy_diagnostics` for analysis.
+**LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted in two contexts only: (1) validation/health commands (`/nct-validate`, `/nct-health`) and (2) the `ivy-lsp-walkthrough` skill. For LSP invocation patterns, see the `lsp-patterns` skill.
 
 **Visualization MCP tools** (model views):
 `ivy_visualize` (view="dependencies" for action dependency graph, view="state_machine" for state-machine perspective, view="layers" for layered overview by file/module), `ivy_model_summary` (detail="summary" for per-action summary, detail="requirements" for per-action requirements)
