@@ -203,16 +203,14 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_include_graph` with:
 
 #### A8: Symbol query (cid)
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query` with:
-- `mode`: `info`
-- `symbol_name`: `cid`
-- `protocol`: `quic`
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` with:
+- `relative_path`: `quic/quic_stack/quic_types.ivy`
 
-- **Structural**: `found: true`; response has `file` and `line` fields.
-- **Reflection**: This is the MCP equivalent of the LSP hover/definition checks — does it agree?
-- **Cross-validation**: File and line must be consistent with A3 (hover), A4 (goToDefinition), and A6 (workspaceSymbol). This is a **4-way agreement check** on `cid` location: A3 + A4 + A6 + A8 must all point to the same file.
-- **Record**: File path and line number.
-- If found with file and line: **PASS**. Otherwise: **FAIL** — "ivy_query did not find cid."
+- **Structural**: Response has a non-empty `types` or `relations` section that includes `cid`.
+- **Reflection**: This is the MCP equivalent of the LSP hover/definition checks — does it agree? Grep the returned model for `cid` to confirm it is declared here.
+- **Cross-validation**: The file must be consistent with A3 (hover), A4 (goToDefinition), and A6 (workspaceSymbol). This is a **4-way agreement check** on `cid` location: A3 + A4 + A6 + A8 must all point to the same file.
+- **Record**: File path confirmed; note whether `cid` appears in the model info output.
+- If `cid` found in model info: **PASS**. Otherwise: **FAIL** — "ivy_model_info did not include cid in quic_types."
 
 ---
 
@@ -244,18 +242,17 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage` with:
 
 #### B3: Query first gap from B2
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query` with:
-- `mode`: `info`
-- `symbol_name`: First uncovered symbol or requirement identifier from B2's results.
-
 **Skip if B2 returned an empty gaps list** (no uncovered requirements to investigate).
 
-If B2 returns requirement IDs rather than symbol names, use the requirement's associated file or action as the query target instead.
+If B2 returns requirement IDs rather than symbol names, use the requirement's associated file as the target instead.
 
-- **Structural**: Response present — `found: true` or graceful `not found` are both valid outcomes.
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` with:
+- `relative_path`: The file associated with the first gap symbol from B2's results (e.g. `quic/quic_stack/quic_types.ivy`). Grep the returned model to see if the gap symbol appears.
+
+- **Structural**: Response present with model info; no crash.
 - **Reflection**: Can we navigate to where this gap lives? This simulates a user drilling into a coverage gap to understand it.
-- **Record**: Query result (found/not found, file, line if available).
-- If graceful response: **PASS**. Otherwise: **FAIL** — "ivy_query crashed on gap symbol."
+- **Record**: Whether the gap symbol appears in the returned model info.
+- If graceful response: **PASS**. Otherwise: **FAIL** — "ivy_model_info crashed on gap symbol file."
 
 #### B4: Coverage matrix (quic)
 
@@ -290,7 +287,7 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_summary` with:
 
 ---
 
-### Scenario C: Debug Verification Failure — "ivy_verify failed, now what?" (5 checks)
+### Scenario C: Debug Verification Failure — "ivy_verify failed, now what?" (4 checks)
 
 Simulates the debugging workflow after a verification failure. Uses the known error in quic_types.ivy.
 
@@ -311,14 +308,13 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` with:
 
 **Skip if C1 succeeded.**
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query` with:
-- `mode`: `info`
-- `symbol_name`: The symbol name from C1's error output.
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` with:
+- `relative_path`: The file reported in C1's error output (e.g. `quic/quic_stack/quic_types.ivy`). Grep the returned model for the symbol name from the error to confirm it is declared there.
 
-- **Structural**: `found: true` or graceful not-found response.
-- **Reflection**: Can we locate the failing symbol? Does the query agree with verify's error location?
-- **Record**: Symbol location (file, line).
-- If response present: **PASS**. Otherwise: **FAIL** — "ivy_query crashed on error symbol."
+- **Structural**: Response present with model info; no crash.
+- **Reflection**: Can we locate the failing symbol? Does the model info agree with verify's error location?
+- **Record**: Whether the error symbol appears in the returned model info.
+- If response present: **PASS**. Otherwise: **FAIL** — "ivy_model_info crashed on error symbol file."
 
 #### C3: Hover on error location
 
@@ -342,19 +338,6 @@ Use the `LSP` tool to request `findReferences` at the same position used for C3.
 - **Record**: Reference count and file list.
 - If references returned: **PASS**. Otherwise: **FAIL** — "findReferences returned no results for error symbol."
 
-#### C5: Impact analysis for error symbol
-
-**Skip if C1 succeeded.**
-
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query` with:
-- `mode`: `impact`
-- `symbol_name`: The symbol from C1's error output.
-
-- **Structural**: Non-empty impact result with edges.
-- **Cross-validation**: C4 returns lexical references (all occurrences), C5 returns dependency edges (modules). These are different quantities — C5 edges will typically be fewer than C4 references. Check that both are non-empty and that C5 files are a subset of C4 files.
-- **Record**: Incoming/outgoing edge counts.
-- If non-empty impact result: **PASS**. Otherwise: **FAIL** — "Impact analysis returned empty for error symbol."
-
 ---
 
 ### Scenario D: Edit-Verify Loop — "I'm adding a monitor" (4 checks + 2 actions)
@@ -368,11 +351,12 @@ If D3 fails to apply, D4-D6 are SKIPPED. If D5 fails, report FAIL with remediati
 
 #### D1: Lint baseline (quic_types)
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` with:
 - `relative_path`: `quic/quic_stack/quic_types.ivy`
+- `mode`: `structural`
 
 - **Structural**: `diagnostic_count = 0` (file must be clean to proceed).
-- **Reflection**: Baseline lint — the file must be clean before we can test mutation detection.
+- **Reflection**: Baseline structural check — the file must be clean before we can test mutation detection.
 - **Record**: diagnostic_count value.
 - If `diagnostic_count = 0`: **PASS**. If not clean: **FAIL** — skip D2-D6 (cannot run mutation on dirty file).
 
@@ -395,15 +379,16 @@ This is an action, not a check. It does not produce PASS/FAIL.
 3. Use the `Edit` tool to insert `include nonexistent_module_xyzzy` as a new line after line 1 (`#lang ivy1.7`).
 4. If the Edit fails: SKIP D4-D6.
 
-#### D4: Lint detects mutation
+#### D4: Structural check detects mutation
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` with:
 - `relative_path`: `quic/quic_stack/quic_types.ivy`
+- `mode`: `structural`
 
-- **Structural**: `diagnostic_count > 0` (lint detected the injected error).
+- **Structural**: `diagnostic_count > 0` (structural check detected the injected error).
 - **Reflection**: Is the error message actionable? Does it name the bad include (`nonexistent_module_xyzzy`)?
 - **Record**: diagnostic_count and error message.
-- If `diagnostic_count > 0`: **PASS**. If `diagnostic_count = 0`: **FAIL** — "Lint did not detect bad include."
+- If `diagnostic_count > 0`: **PASS**. If `diagnostic_count = 0`: **FAIL** — "ivy_diagnostics(structural) did not detect bad include."
 
 #### D5: [ACTION] Restore file
 
@@ -413,15 +398,16 @@ This is an action, not a check. It does not produce PASS/FAIL.
 2. Run via Bash: `git stash drop <recorded-stash-ref>`
 3. If `git checkout` fails: fall back to `git stash pop`. If both fail: report **FAIL** with "file may be corrupted — run `git diff` to check."
 
-#### D6: Lint recovery
+#### D6: Structural check recovery
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` with:
 - `relative_path`: `quic/quic_stack/quic_types.ivy`
+- `mode`: `structural`
 
 - **Structural**: `diagnostic_count = 0` (file restored to clean state).
 - **Cross-validation**: Matches D1 baseline exactly — both should report 0 diagnostics.
 - **Record**: diagnostic_count value.
-- If `diagnostic_count = 0`: **PASS**. Otherwise: **FAIL** — "File restoration failed — lint still shows diagnostics."
+- If `diagnostic_count = 0`: **PASS**. Otherwise: **FAIL** — "File restoration failed — ivy_diagnostics(structural) still shows diagnostics."
 
 ---
 
@@ -429,15 +415,16 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` with:
 
 Simulates the checks a user would run before committing changes.
 
-#### E1: Lint (quic_frame)
+#### E1: Structural check (quic_frame)
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` with:
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` with:
 - `relative_path`: `quic/quic_stack/quic_frame.ivy`
+- `mode`: `structural`
 
 - **Structural**: Response present with `diagnostic_count` field.
-- **Reflection**: Baseline lint for a core protocol file. Record whether it is clean.
+- **Reflection**: Baseline structural check for a core protocol file. Record whether it is clean.
 - **Record**: diagnostic_count value.
-- If response present: **PASS**. Otherwise: **FAIL** — "Lint returned no result."
+- If response present: **PASS**. Otherwise: **FAIL** — "ivy_diagnostics(structural) returned no result."
 
 #### E2: Quality gate (quic)
 
@@ -496,31 +483,19 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics` with:
 
 ---
 
-### Scenario F: Impact Analysis — "What breaks if I change quic_packet_type?" (5 checks)
+### Scenario F: Impact Analysis — "What breaks if I change quic_packet_type?" (4 checks)
 
 Simulates assessing the blast radius of a type change.
 
 #### F1: Query info (quic_packet_type)
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query` with:
-- `mode`: `info`
-- `symbol_name`: `quic_packet_type`
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` with:
+- `relative_path`: `quic/quic_stack/quic_types.ivy`
 
-- **Structural**: `found: true`; response has `kind` field.
-- **Reflection**: quic_packet_type is a widely-used enumeration type. Note its file and line.
-- **Record**: File, line, kind.
-- If found with kind: **PASS**. Otherwise: **FAIL** — "ivy_query did not find quic_packet_type."
-
-#### F2: Impact analysis (quic_packet_type)
-
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query` with:
-- `mode`: `impact`
-- `symbol_name`: `quic_packet_type`
-
-- **Structural**: Non-empty impact result with incoming/outgoing edges.
-- **Reflection**: How many incoming/outgoing edges? As a core type, quic_packet_type should have significant impact across the model.
-- **Record**: Incoming and outgoing edge counts.
-- If non-empty impact result: **PASS**. Otherwise: **FAIL** — "Impact analysis returned empty for quic_packet_type."
+- **Structural**: Response has a non-empty `types` section; grep the output for `quic_packet_type` to confirm its declaration.
+- **Reflection**: quic_packet_type is a widely-used enumeration type. Note its presence in the model info.
+- **Record**: Whether `quic_packet_type` appears in the model info output and its declared kind.
+- If `quic_packet_type` found in model info: **PASS**. Otherwise: **FAIL** — "ivy_model_info did not include quic_packet_type in quic_types."
 
 #### F3: Include graph (full workspace)
 
@@ -536,7 +511,7 @@ Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_include_graph` with no `rela
 Use the `LSP` tool to request `findReferences` on the file and line from F1's result, at **character 8** (the start of the symbol name, not the `object` keyword). If F1 did not return a location, use `quic/quic_stack/quic_types.ivy` at line 127, character 8.
 
 - **Structural**: Returns multiple references.
-- **Cross-validation**: Reference count should be roughly consistent with F2 impact edge count. F4 gives lexical occurrences (likely more), F2 gives dependency edges (likely fewer). Both should be non-empty for the same symbol.
+- **Cross-validation**: Reference count should be non-empty for a widely-used type like quic_packet_type.
 - **Record**: Reference count and file list.
 - If multiple references returned: **PASS**. Otherwise: **FAIL** — "findReferences returned no results for quic_packet_type."
 
@@ -545,7 +520,7 @@ Use the `LSP` tool to request `findReferences` on the file and line from F1's re
 Use the `LSP` tool to request `goToDefinition` at the same position used for F4.
 
 - **Structural**: Resolves to a file with `uri` and `range`.
-- **Cross-validation**: Same file as F1 query result — both MCP (ivy_query) and LSP (goToDefinition) should agree on where quic_packet_type is defined.
+- **Cross-validation**: Same file as F1 model_info result — both MCP (ivy_model_info) and LSP (goToDefinition) should agree on where quic_packet_type is defined.
 - **Record**: Target file and line.
 - If definition resolved: **PASS**. Otherwise: **FAIL** — "goToDefinition returned no result for quic_packet_type."
 
@@ -555,14 +530,13 @@ Use the `LSP` tool to request `goToDefinition` at the same position used for F4.
 
 Fixture-based negative tests that validate graceful handling of edge-case inputs. No file mutations — uses bad inputs or invalid positions. These always run (not skipped in fast mode).
 
-#### FX1: Nonexistent symbol query
+#### FX1: Model info — nonexistent file
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_query` with:
-- `mode`: `info`
-- `symbol_name`: `nonexistent_xyzzy_42`
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` with:
+- `relative_path`: `quic/quic_stack/nonexistent_xyzzy_42.ivy`
 
-- **Structural**: `found: false` or graceful empty result; no stack traces in output.
-- If graceful not-found response: **PASS**. Otherwise: **FAIL** — "Ungraceful error on nonexistent symbol."
+- **Structural**: Graceful empty result or clear "file not found" response; no stack traces in output.
+- If graceful not-found response: **PASS**. Otherwise: **FAIL** — "Ungraceful error on nonexistent file path."
 
 #### FX2: Coverage stats — nonexistent protocol
 
@@ -676,13 +650,10 @@ After the gap sweep (or after Pass 1 if gap sweep is skipped), present this matr
 ```markdown
 | Tool                         | Scenario | Gap Sweep | Status   |
 |------------------------------|----------|-----------|----------|
-| ivy_lint                     | D, E     |           | covered  |
 | ivy_verify                   | C        |           | covered  |
 | ivy_compile                  | E        |           | covered  |
-| ivy_model_info               | A        |           | covered  |
+| ivy_model_info               | A, B, C, F, FX |    | covered  |
 | ivy_diagnostics              | D, E     |           | covered  |
-| ivy_query(info)              | A, B, C, F |         | covered  |
-| ivy_query(impact)            | C, F     |           | covered  |
 | ivy_coverage(stats)          | B        |           | covered  |
 | ivy_coverage(gaps)           | B        |           | covered  |
 | ivy_coverage(matrix)         | B        |           | covered  |
@@ -976,7 +947,6 @@ After all automated checks complete, present a consolidated table of all recorde
 | # | Check | Value |
 |---|-------|-------|
 | 11| C1: verify result | {PASS/FAIL on symbol (line)} |
-| 12| C5: impact edges | {incoming} incoming, {outgoing} outgoing |
 
 ## Scenario D: Edit-Verify (if run)
 | # | Check | Value |
@@ -996,8 +966,7 @@ After all automated checks complete, present a consolidated table of all recorde
 | # | Check | Value |
 |---|-------|-------|
 | 19| F1: quic_packet_type info | {kind} in {file} |
-| 20| F2: impact edges | {incoming} incoming, {outgoing} outgoing |
-| 21| F3: workspace total files | {total_files} |
+| 20| F3: workspace total files | {total_files} |
 
 ## Cross-Validation Summary
 | Pair | Agreement |
@@ -1005,10 +974,8 @@ After all automated checks complete, present a consolidated table of all recorde
 | A3+A4+A6+A8 cid location | {agree/disagree}: {details} |
 | D1+D6 lint baseline/recovery | {agree/disagree}: {details} |
 | B1 total vs level sum | {total} = {sum breakdown} |
-| C4 refs vs C5 impact | {agreement details} |
 | E1+E6 lint vs diagnostics | {agree/disagree}: {details} |
 | F1+F5 definition location | {agree/disagree}: {details} |
-| F2+F4 impact vs references | {agree/disagree}: {details} |
 | D1+D2 lint vs diagnostics | {agree/disagree}: {details} |
 | A1+A2 model_info vs documentSymbol | {agree/disagree}: {details} |
 
@@ -1027,19 +994,17 @@ Every check produced PASS, FAIL, or SKIPPED (no undefined status). Count any mis
 
 ### 2. Cross-Validation Consistency
 
-Evaluate each of the 9 defined cross-validation pairs. Flag any that disagreed.
+Evaluate each of the 7 defined cross-validation pairs. Flag any that disagreed.
 
 | Pair | What must agree |
 |------|-----------------|
 | A1 (model_info) + A2 (documentSymbol) | Type names overlap |
-| A3 (hover cid) + A4 (goToDefinition cid) + A6 (workspaceSymbol cid) + A8 (ivy_query cid) | All locate cid in same file |
-| D1 (lint baseline) + D6 (lint recovery) | Both report 0 diagnostics |
-| D1 (lint) + D2 (diagnostics) | Both report clean on same file |
-| E1 (lint) + E6 (diagnostics) | Both report clean on same file |
+| A3 (hover cid) + A4 (goToDefinition cid) + A6 (workspaceSymbol cid) + A8 (ivy_model_info) | All locate cid in same file |
+| D1 (diagnostics baseline) + D6 (diagnostics recovery) | Both report 0 diagnostics |
+| D1 (diagnostics) + D2 (diagnostics full) | Both report clean on same file |
+| E1 (diagnostics structural) + E6 (diagnostics full) | Both report clean on same file |
 | B1 (coverage total) + B1 (level sum) | total = MUST + MUST_NOT + SHOULD + SHOULD_NOT + MAY |
-| C4 (findReferences) + C5 (impact) | Both non-empty, C5 files subset of C4 files |
-| F1 (query info) + F5 (goToDefinition) | Same file for quic_packet_type |
-| F2 (impact) + F4 (findReferences) | Both non-empty for quic_packet_type |
+| F1 (model_info) + F5 (goToDefinition) | Same file for quic_packet_type |
 
 Compute: `cross_validation_agreement = pairs_that_agree / total_pairs_evaluated` (pairs where one side is SKIPPED are excluded from the denominator).
 
@@ -1129,7 +1094,7 @@ If any checks fail, include a `### Suggested Actions` section at the end of the 
 - If P2 fails: "The MCP server is not reachable. Check plugin configuration and `/tmp/ivy-lsp-latest.log`."
 - If P3 fails: "LSP is running but not responding to requests. Check workspace indexing in `/tmp/ivy-lsp-latest.log`."
 - If any Scenario A-F check fails: "MCP or LSP tool returned unexpected results. Check `/tmp/ivy-lsp-latest.log` for errors. Verify the workspace is fully indexed."
-- If any D-check fails (mutation): "Mutation test failed. Check that `ivy_lint` properly detects the mutation type. Verify file was restored cleanly with `git diff`."
+- If any D-check fails (mutation): "Mutation test failed. Check that `ivy_diagnostics(mode=\"structural\")` properly detects the mutation type. Verify file was restored cleanly with `git diff`."
 - If any FX check fails: "Negative test failed — tool did not handle edge-case input gracefully. Check tool error handling in the MCP server. See `/tmp/ivy-mcp-latest.log`."
 - If any H-check fails: "Hook not registered or script missing. Check `hooks/hooks.json` for the expected event type and script path. Verify scripts exist in `hooks/scripts/`."
 - If any AG-check fails: "Agent did not respond as expected. Verify agent definition in `agents/` directory. Check that the agent's tools are available."
