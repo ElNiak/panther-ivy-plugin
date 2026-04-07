@@ -70,7 +70,7 @@ Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash.
 | View state machine structure | MCP `ivy_visualize` (view="state_machine") | Read + manual extraction |
 | Get per-action summary | MCP `ivy_model_summary` (detail="summary") | Read + manual counting |
 
-See the `tooling-reference` skill for full LSP invocation patterns and LSP+MCP coordination workflows.
+See the `ivy-toolkit` skill for tool selection, coordination workflows, and the `lsp-patterns` skill for LSP invocation patterns.
 
 ---
 

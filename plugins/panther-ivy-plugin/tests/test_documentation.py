@@ -1,6 +1,6 @@
 """Validate documentation accuracy.
 
-Ensures that the tooling-reference SKILL.md lists LSP operations that have
+Ensures that the lsp-patterns SKILL.md lists LSP operations that have
 corresponding handler registrations in server.py, and that no pre-consolidation
 MCP tool names appear in any skill, agent, or command files.
 """
@@ -31,9 +31,9 @@ _IVY_LSP_SRC = _SUBMODULES_DIR / "ivy-lsp" / "ivy_lsp"
 
 
 def _read_skill_md() -> str:
-    """Read the tooling-reference SKILL.md content."""
-    path = _PLUGIN_ROOT / "skills" / "tooling-reference" / "SKILL.md"
-    assert path.is_file(), f"tooling-reference/SKILL.md not found at {path}"
+    """Read the lsp-patterns SKILL.md content."""
+    path = _PLUGIN_ROOT / "skills" / "lsp-patterns" / "SKILL.md"
+    assert path.is_file(), f"lsp-patterns/SKILL.md not found at {path}"
     return path.read_text()
 
 
@@ -107,10 +107,10 @@ def _find_registered_features_in_server() -> set[str]:
 
 
 class TestToolingReferenceAccuracy:
-    """Verify the tooling-reference SKILL.md matches the ivy-lsp implementation."""
+    """Verify the lsp-patterns SKILL.md matches the ivy-lsp implementation."""
 
     def test_skill_md_exists(self):
-        path = _PLUGIN_ROOT / "skills" / "tooling-reference" / "SKILL.md"
+        path = _PLUGIN_ROOT / "skills" / "lsp-patterns" / "SKILL.md"
         assert path.is_file()
 
     def test_lsp_operations_listed(self):

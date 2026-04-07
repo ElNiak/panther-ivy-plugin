@@ -1102,4 +1102,4 @@ If any checks fail, include a `### Suggested Actions` section at the end of the 
 - If SR1 fails: "Self-review found issues. Address the specific sub-check failures listed in the SR1 details."
 - If `protocol-testing/` directory is missing: "Protocol models not found. Run `git submodule update --init` from the panther_ivy directory."
 
-See the `tooling-reference` skill for tool architecture.
+See the `ivy-toolkit` skill for tool architecture.

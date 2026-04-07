@@ -58,4 +58,4 @@ Display the model structure of the specified Ivy file using ivy-tools.
 
 **IMPORTANT**: Do NOT run `ivy_show` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info`.
 
-See the `tooling-reference` skill for `ivy_model_info` parameter details.
+See the `ivy-toolkit` skill for `ivy_model_info` parameter details.

@@ -137,4 +137,4 @@ After presenting the analysis for any mode, engage the user. Reference the `inte
 - If multiple session log files exist, analyze the most recent one unless the user specifies otherwise.
 - The observability hooks are configured in the plugin's `hooks/` directory. If no logs exist, the hooks may not have been triggered.
 
-See the `tooling-reference` skill for tool architecture.
+See the `ivy-toolkit` skill for tool architecture.

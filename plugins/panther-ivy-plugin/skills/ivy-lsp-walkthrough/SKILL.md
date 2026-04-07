@@ -170,7 +170,7 @@ MCP: ivy_verify(relative_path="protocol-testing/quic/quic_entities_behavior/ivy_
 
 **If PASS**: The new monitor is consistent with the existing model.
 
-**If FAIL**: Use the diagnosis workflow from the `tooling-reference` skill — read the error, use LSP `goToDefinition` to locate the failing symbol, `hover` for type info, `findReferences` to trace constraints.
+**If FAIL**: Use the Workflow C diagnosis workflow from the `ivy-toolkit` skill — read the error, use LSP `goToDefinition` to locate the failing symbol, `hover` for type info, `findReferences` to trace constraints.
 
 ## Step 8: Check Traceability Using MCP
 
@@ -212,10 +212,11 @@ Need to READ file content?   --> Read
 
 - **CONTEXT:** Demonstrates LSP + MCP coordination used across all orchestrator phases
 
-**Prerequisite:** `tooling-reference` -- LSP and MCP tool architecture and invocation patterns.
+**Prerequisite:** `lsp-patterns` -- LSP invocation patterns; `ivy-toolkit` -- MCP tool architecture and selection.
 
 **Related skills:**
-- **tooling-reference** -- LSP invocation patterns and MCP tool parameters used in this walkthrough
+- **lsp-patterns** -- LSP invocation patterns used in this walkthrough
+- **ivy-toolkit** -- MCP tool parameters and coordination workflows
 - **ivy-writing-guide** -- Ivy syntax for editing
 - **workflow-reference** -- Verification and quality gate workflows
 

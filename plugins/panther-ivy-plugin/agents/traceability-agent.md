@@ -180,6 +180,6 @@ When gaps are found:
 ## Related Skills
 
 - **workflow-reference** -- RFC-to-Ivy mapping patterns, verification workflows, and quality gate details
-- **tooling-reference** -- MCP tool parameter reference and usage patterns for all ivy-tools
+- **ivy-toolkit** -- MCP tool parameter reference, selection matrix, and coordination workflows for all ivy-tools
 - **interaction-patterns** -- Checkpoint types and question formats for consistent interaction
 - **claim-discussion** -- Structured decision trees for RFC mapping, verification claims, and coverage gaps

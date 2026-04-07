@@ -314,4 +314,4 @@ If any checks fail, add a `### Suggested Actions` section at the end:
 - If Step 8 fails: "Cross-file resolution is not working. The LSP index may need rebuilding."
 - If Step 9 fails: "Cross-directory resolution is broken. Check layer staging and `.ivyworkspace` configuration."
 
-See the `tooling-reference` skill for LSP and MCP architecture.
+See the `ivy-toolkit` skill for MCP architecture and the `lsp-patterns` skill for LSP architecture.

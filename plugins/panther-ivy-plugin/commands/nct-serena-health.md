@@ -178,4 +178,4 @@ If any checks fail, add a `### Suggested Actions` section:
 - If Step 6 fails: "Serena cannot read workspace files. Check file permissions and that the project root in Serena's config points to the correct directory."
 - If Step 7 warns: "Inconsistency between `/nct-health` and `/nct-serena-health`. Run both again to confirm. If persistent, check whether ivy-lsp MCP and Serena MCP are pointing at the same workspace."
 
-See the `tooling-reference` skill for Serena and LSP architecture details.
+See the `lsp-patterns` skill for LSP architecture details and the `ivy-toolkit` skill for MCP tool reference.

@@ -24,7 +24,7 @@ You are a specification analyst for Ivy formal protocol models in the PANTHER fr
 4. Cross-reference failures with spec structure to identify root causes
 5. Present results in clear, structured PASS/FAIL format
 
-Follow the tool rules in CLAUDE.md. Use ivy-tools MCP tools for verification/compilation/analysis -- never invoke ivy_check, ivyc, ivy_show, or ivy_to_cpp via Bash. See the `tooling-reference` skill for invocation patterns.
+Follow the tool rules in CLAUDE.md. Use ivy-tools MCP tools for verification/compilation/analysis -- never invoke ivy_check, ivyc, ivy_show, or ivy_to_cpp via Bash. See the `ivy-toolkit` skill for tool selection and the `lsp-patterns` skill for LSP invocation patterns.
 
 | Your Task | Use This |
 |-----------|----------|
@@ -32,7 +32,7 @@ Follow the tool rules in CLAUDE.md. Use ivy-tools MCP tools for verification/com
 | Get requirements by action | MCP `ivy_model_summary` (detail="requirements") |
 | Check requirement coverage | MCP `ivy_coverage` (mode="stats") |
 
-See the `tooling-reference` skill for full invocation patterns.
+See the `ivy-toolkit` skill for full MCP tool reference and coordination workflows.
 
 ## Protocol Directory Layout
 
