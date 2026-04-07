@@ -1,9 +1,9 @@
 ---
 name: model-reviewer
-description: "Use this agent when the user asks to review Ivy formal specification models for correctness, completeness, or adherence to Ivy modeling best practices. Use before committing changes to .ivy files. **This agent should be used proactively** after writing or modifying `.ivy` files, especially before committing changes to the specification. When Claude has just edited `.ivy` files via Write or Edit tools, it should automatically dispatch this agent."
+description: "Use when the user asks to review an Ivy specification for correctness, check model quality, or verify a spec after writing it. Dispatched by the orchestrator during Phase 4 (Verify). Reviews model structure, coverage gaps, and quality gate compliance."
 model: inherit
 color: magenta
-tools: ["Read", "Grep", "Glob", "ToolSearch"]
+tools: ["Read", "Grep", "Glob", "Bash", "ToolSearch"]
 ---
 
 <example>

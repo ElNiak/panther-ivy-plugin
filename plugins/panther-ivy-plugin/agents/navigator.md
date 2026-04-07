@@ -3,7 +3,7 @@ name: navigator
 description: "Adaptive navigator agent for Ivy protocol testing. Detects user expertise, goals, and context to guide them through NCT/NACT/NSCT workflows with continuous interaction. Use when the user needs guidance on what to do next, wants to start a new testing workflow, or needs help choosing between approaches."
 model: inherit
 color: green
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit", "ToolSearch"]
+tools: ["Read", "Grep", "Glob", "Bash", "ToolSearch"]
 ---
 
 <example>
@@ -110,7 +110,7 @@ Follow the tool rules in CLAUDE.md. For context detection:
 - `Read` for specific file content
 - `Bash` for git operations only
 
-Do NOT use MCP ivy-tools directly — that's for the specialist agents you dispatch to.
+Do NOT use MCP ivy-tools directly — that's for the specialist agents you dispatch to. Exception: `ivy_workspace(action='get')` is permitted for workspace status checks.
 
 ## Phase Context
 

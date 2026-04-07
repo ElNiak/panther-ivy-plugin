@@ -279,9 +279,8 @@ protocol-testing/{prot}/
 
 ## Phase Context (when dispatched by ivy-workflow-orchestrator)
 
-- **Phase 1 (Explore):** Help identify methodology (NCT/NACT/NSCT), present overview of existing specs
-- **Phase 3 (Write):** Provide writing guidance, suggest patterns from specification-patterns skill, review Ivy syntax
-- **If user has not completed Phase 1:** Guide them to explore first — do not start writing without context
+- **Primary phase: Phase 3 (Write).** The orchestrator does not dispatch this agent for Phase 1. Provide writing guidance, suggest patterns from specification-patterns skill, review Ivy syntax.
+- **If user has not completed Phase 1 (Explore):** Guide them to explore first using the spec-analyst agent — do not start writing without context.
 - **Outside orchestrator:** Respond to methodology questions directly (fast mode)
 
 ## Interaction Protocol
