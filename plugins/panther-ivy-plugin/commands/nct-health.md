@@ -15,7 +15,14 @@ Run a comprehensive health check of the Ivy LSP and MCP integration stack, repor
 
 ## Instructions
 
-**Workspace Status**: Before running checks, call `ivy_workspace(action="get")` to confirm the active workspace. Report the current workspace state as a preliminary line in the results table.
+**Workspace Status**: Before running checks, call `ivy_workspace(action="get")` to confirm the active workspace.
+
+If no workspace is active:
+1. Check if a `protocol` argument was provided, or if the current directory implies a protocol (e.g., CWD contains `protocol-testing/quic/`).
+2. If a protocol can be inferred, auto-set: `ivy_workspace(action="set", target="<inferred_protocol>")` and output: "Auto-set workspace to <protocol> (inferred from context)."
+3. If no protocol can be inferred, output: "No workspace active and cannot infer protocol. Use the `workspace-management` skill or run `ivy_workspace(action='set', target='<protocol>')` first." Then continue checks in workspace-agnostic mode (no edit isolation).
+
+Report the current workspace state as a preliminary line in the results table.
 
 Run the following 9 checks in order across 3 phases. For each check, record PASS, WARN, or FAIL with a short detail message. If a check fails, continue with the remaining checks (do not abort early) **unless Phase 1 fails entirely** — in that case skip Phases 2-3 and report "Server unreachable."
 

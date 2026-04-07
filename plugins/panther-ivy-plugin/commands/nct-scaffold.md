@@ -141,9 +141,12 @@ export action _finalize = {
 
 #### Step 4a: Workspace Confirmation (Gate)
 
-Before creating any files, call `ivy_workspace(action="get")` to confirm the active workspace. If no workspace is set for this protocol, use a **Gate checkpoint**:
-- Ask: "No active workspace for `{protocol}` is set. Run `/set-workspace {protocol}` before creating files to enable edit isolation? (yes / skip / cancel)"
-- If the user confirms, proceed with workspace activation before creating files.
+Before creating any files, call `ivy_workspace(action="get")` to confirm the active workspace.
+
+If no workspace is active:
+1. Check if the `protocol` argument was provided, or if the current directory implies a protocol (e.g., CWD contains `protocol-testing/quic/`).
+2. If a protocol can be inferred, auto-set: `ivy_workspace(action="set", target="<inferred_protocol>")` and output: "Auto-set workspace to <protocol> (inferred from context)." Then proceed.
+3. If no protocol can be inferred, output: "No workspace active and cannot infer protocol. Use the `workspace-management` skill or run `ivy_workspace(action='set', target='<protocol>')` first." Do NOT write any files until a workspace is active.
 
 #### Step 4b: Confirm Before Writing (Gate)
 

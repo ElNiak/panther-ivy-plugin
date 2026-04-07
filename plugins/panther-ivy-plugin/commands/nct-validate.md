@@ -58,6 +58,11 @@ Parse optional arguments from the user's invocation:
 
 Before running any passes, call `ivy_workspace(action="get")` and report the active workspace state. Include "Workspace: {protocol or 'none'}" in the Pass 0 pre-flight summary.
 
+If no workspace is active:
+1. Check if a `protocol` argument was provided, or if the current directory implies a protocol (e.g., CWD contains `protocol-testing/quic/`).
+2. If a protocol can be inferred, auto-set: `ivy_workspace(action="set", target="<inferred_protocol>")` and output: "Auto-set workspace to <protocol> (inferred from context)."
+3. If no protocol can be inferred, output: "No workspace active and cannot infer protocol. Use the `workspace-management` skill or run `ivy_workspace(action='set', target='<protocol>')` first." Then proceed — validation runs workspace-agnostic.
+
 ### General Rules
 
 - For each check: call the specified tool, validate response **structure** (fields present, no stack traces, sane values), record PASS/FAIL/SKIPPED with a 1-2 sentence **reflection** connecting the result to prior checks.
