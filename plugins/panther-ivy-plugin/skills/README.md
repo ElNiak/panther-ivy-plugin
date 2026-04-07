@@ -137,7 +137,7 @@ All skills operate in one of two modes:
 ### ivy-toolkit
 - **Category**: Orchestration & Tooling
 - **Purpose**: Single source of truth for all ivy-tools MCP tool documentation and tool selection guidance. Supersedes duplicated tool sections in other skills.
-- **Related skills**: tooling-reference (architecture overview)
+- **Related skills**: lsp-patterns (LSP invocation patterns)
 
 ### methodology-reference
 - **Category**: Methodology

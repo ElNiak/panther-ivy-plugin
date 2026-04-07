@@ -107,7 +107,7 @@ All agents also operate in **fast mode** (outside orchestrator) for direct user 
 
 All agents use two tool sources:
 - **Claude's native tools + Ivy LSP** -- Code navigation (`Read`, `Grep`, `Glob`, `Edit`, `Write`) and Ivy-specific LSP features (go-to-definition, find-references, hover) configured via `.lsp.json`
-- **ivy-tools MCP** -- 15 consolidated tools including `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_lint`, `ivy_coverage` (mode=matrix/stats/gaps), `ivy_query` (mode=impact/xrefs/info), `ivy_visualize` (view=dependencies/state_machine/layers), `ivy_quality` (mode=suggestions/gate), `ivy_patterns` (mode=analyze/validate/compare/check) configured via `.mcp.json`
+- **ivy-tools MCP** -- 22 MCP tools (see CLAUDE.md for the full reference table) configured via `.mcp.json`
 
 **Available Protocol Models:**
 - **QUIC** (complete, 202+ files) — `protocol-testing/quic/`
