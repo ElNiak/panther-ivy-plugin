@@ -2,7 +2,7 @@
 
 ## Overview
 
-- 16 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
+- 20 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
 - Skills are surfaced automatically by Claude Code when trigger patterns in the user's query match a skill's `description` frontmatter
 - They provide **reference material** (language guides, workflow steps, tool catalogs); agents and commands provide interactive workflows and execution
 
@@ -72,8 +72,8 @@ All skills operate in one of two modes:
 
 | Skill | Description |
 |-------|-------------|
-| [tooling-reference](tooling-reference/) | Complete tool catalog: LSP operations, 15 MCP tools (consolidated with mode dispatch), Claude native tools, and coordination workflows |
 | [ivy-lsp-walkthrough](ivy-lsp-walkthrough/) | End-to-end example of LSP + MCP coordination on the QUIC specification |
+| [lsp-patterns](lsp-patterns/) | LSP invocation patterns for validation and health-check contexts |
 
 ### Workflow
 
@@ -88,6 +88,15 @@ All skills operate in one of two modes:
 | [interaction-patterns](interaction-patterns/) | Reusable checkpoint types (Gate, Inform-and-Continue, Collaborative), question formats, and adaptive follow-up rules for consistent user interaction across all agents |
 | [claim-discussion](claim-discussion/) | Structured decision trees for verification claim resolution, RFC requirement mapping, and coverage gap prioritization |
 | [adaptive-interview](adaptive-interview/) | Navigator agent's interview logic: context detection, goal identification, methodology selection, target scoping, and dispatch |
+
+### Utility
+
+| Skill | Description | Category |
+|-------|-------------|----------|
+| `healthcheck` | Fast triage of Ivy MCP sidecar & LSP stack health | Utility |
+| `ivy-protocol-model-builder` | Interactive 6-phase workflow for creating new formal Ivy protocol specifications | Process |
+| `propagation-patterns` | Patterns for propagating type changes across ser/deser state machines | Reference |
+| `workspace-management` | Set, clear, and auto-detect active Ivy protocol workspace | Utility |
 
 ## Learning Paths
 
@@ -106,9 +115,10 @@ All skills operate in one of two modes:
 
 ### Path C: Understanding the Tooling
 
-1. **tooling-reference** -- Architecture (LSP + MCP + native), 15 consolidated tools, coordination workflows
-2. **ivy-lsp-walkthrough** -- Concrete end-to-end example
-3. **workflow-reference** -- Verify-debug-fix cycle
+1. **ivy-toolkit** -- Architecture (LSP + MCP + native), consolidated tools, coordination workflows
+2. **lsp-patterns** -- LSP invocation patterns, scoped-access policy
+3. **ivy-lsp-walkthrough** -- Concrete end-to-end example
+4. **workflow-reference** -- Verify-debug-fix cycle
 
 ### Path D: Incremental Specification Development
 
@@ -168,14 +178,14 @@ All skills operate in one of two modes:
 - **Purpose**: Systematic workflow for reading counterexample traces from ivy_verify, diagnosing root causes, and applying fixes.
 - **Prerequisites**: ivy-writing-guide
 
-### tooling-reference
+### lsp-patterns
 - **Category**: Tooling
-- **Purpose**: Architecture overview of the three tool systems (LSP, MCP, Claude native), LSP invocation patterns, tool selection guidance, and LSP+MCP coordination workflows. Superseded by ivy-toolkit for MCP tool catalog.
+- **Purpose**: LSP invocation patterns permitted in validation and health-check contexts. Reference for when and how to call LSP tools (hover, goToDefinition, findReferences, documentSymbol) within the scoped-access policy.
 
 ### ivy-lsp-walkthrough
 - **Category**: Tooling
 - **Purpose**: End-to-end walkthrough: adding rfc9000:7.3 to the QUIC spec using LSP for navigation and MCP for analysis/verification.
-- **Prerequisites**: tooling-reference
+- **Prerequisites**: ivy-toolkit, lsp-patterns
 
 ### workflow-reference
 - **Category**: Workflow
@@ -193,6 +203,22 @@ All skills operate in one of two modes:
 ### adaptive-interview
 - **Category**: Interaction
 - **Purpose**: Navigator agent's interview logic: context detection, goal identification, methodology selection, target scoping, and dispatch to specialist agents.
+
+### healthcheck
+- **Category**: Utility
+- **Purpose**: Fast triage checklist for the Ivy MCP sidecar and LSP stack. Checks port/PID files, SSE connection state, indexer readiness, and process lifecycle. Use before any MCP tool call when the server appears unresponsive.
+
+### ivy-protocol-model-builder
+- **Category**: Process
+- **Purpose**: Interactive 6-phase workflow for creating new formal Ivy protocol specifications from scratch. Covers RFC requirement extraction, 14-layer template scaffolding, incremental verification, and coverage gating.
+
+### propagation-patterns
+- **Category**: Reference
+- **Purpose**: Patterns for propagating type changes across serializer/deserializer state machines. Covers dependency-ordered update sequences, variant type propagation, and re-verification checkpoints.
+
+### workspace-management
+- **Category**: Utility
+- **Purpose**: Set, clear, and auto-detect the active Ivy protocol workspace. Covers the `ivy_workspace` MCP tool, `.ivyworkspace` markers, write-isolation semantics, and workspace restore on session start.
 
 ## Skills vs Agents vs Commands
 
