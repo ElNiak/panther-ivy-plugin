@@ -77,13 +77,7 @@ Walk through the steps and look for:
 
 ### Step 4: Look Up the Violated Symbol
 
-Use LSP to understand the symbol's definition and context:
-
-```
-LSP(operation="hover", filePath="path/to/file.ivy", line=<line>, character=<col>)
-```
-
-This returns the symbol's type signature and documentation. Use `findReferences` to find all usages across the workspace, and `goToDefinition` to jump to the definition.
+Use `ivy_model_info` to understand the symbol's definition, or `Grep` to find its declaration across include files.
 
 ### Step 5: View State Machine Context
 

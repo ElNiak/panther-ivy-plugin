@@ -4,6 +4,8 @@ description: Use when you need a concrete end-to-end example of LSP + MCP coordi
 loads: [lsp-patterns, ivy-writing-guide]
 ---
 
+> **LSP Scoped Access:** This skill is one of the approved contexts for direct LSP calls. See the `lsp-patterns` skill for invocation reference.
+
 # End-to-End Walkthrough: Adding an RFC Requirement
 
 This walkthrough demonstrates the full plugin toolchain — LSP for navigation, MCP for analysis/verification — on the real QUIC specification. It shows how to add explicit enforcement of an RFC requirement.
