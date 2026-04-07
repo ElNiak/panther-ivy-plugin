@@ -97,7 +97,7 @@ Example: `ivy_coverage(mode="stats", test_file="quic/quic_tests/client_tests/qui
 
 ### Available Skills
 
-`counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-toolkit`, `ivy-workflow-orchestrator`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
+`counterexample-guide`, `healthcheck`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-protocol-model-builder`, `ivy-toolkit`, `ivy-workflow-orchestrator`, `ivy-writing-guide`, `lsp-patterns`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `propagation-patterns`, `specification-patterns`, `workspace-management`, `workflow-reference`
 
 **Interaction skills** (shared patterns for interactive agent workflows):
 `interaction-patterns` (checkpoint types, question formats), `claim-discussion` (verification/RFC/coverage claim resolution), `adaptive-interview` (Navigator agent interview logic)
@@ -410,8 +410,8 @@ When `<new-diagnostics>` contains `[ivy-lsp] indexing in progress`, the LSP is s
 
 ## Quick Reference
 
-**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`, `/nct-validate`, `/nct-observability`
+**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`, `/nct-validate`, `/nct-observability`, `/nct-review`, `/nct-serena-health`, `/nct-propagate`
 
-**Skills for deep dives**: `counterexample-guide`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-toolkit`, `ivy-workflow-orchestrator`, `ivy-writing-guide`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `specification-patterns`, `tooling-reference`, `workflow-reference`
+**Skills for deep dives**: `counterexample-guide`, `healthcheck`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-protocol-model-builder`, `ivy-toolkit`, `ivy-workflow-orchestrator`, `ivy-writing-guide`, `lsp-patterns`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `propagation-patterns`, `specification-patterns`, `workspace-management`, `workflow-reference`
 
-**Agents**: `methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`
+**Agents**: `navigator`, `methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`
