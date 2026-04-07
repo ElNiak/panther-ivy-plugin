@@ -86,7 +86,7 @@ done
 - Workspace hash in filename doesn't match current workspace → **WARNING** — "Port file workspace hash mismatch"
 - Port file fresh + TCP works + hash matches → **INFO** — "MCP sidecar reachable on port N"
 
-To compute workspace hash for cross-validation, check the `.ivyworkspace` location found in Check 1.3.
+Note: workspace hash cross-validation is deferred until after Check 1.3 determines the `.ivyworkspace` location. Record the port file hash from the filename now and compare after Check 1.3 completes.
 
 ### Check 1.3 — Workspace Detection & Env Vars
 
@@ -139,19 +139,20 @@ Run these checks using MCP tool calls. Only executes if Phase 1 had zero CRITICA
 
 Call the `ivy_health_check` MCP tool with no arguments.
 
-**Parse the response for `model_status` field.**
+**Parse the response for the `model_status` object, then read its `state` field.**
 
 **Severity rules:**
 - Tool call fails or times out → **CRITICAL** — "ivy_health_check unreachable"
-- `model_status` is `"not_built"` → **CRITICAL** — "Model not built, indexing never started"
-- `model_status` is `"building"` → **WARNING** — "Model still building, some tools unavailable"
-- `model_status` is `"ready"` → **INFO** — "Model ready"
+- `model_status.state` is `"not_built"` → **CRITICAL** — "Model not built, indexing never started"
+- `model_status.state` is `"failed"` → **CRITICAL** — "Model build failed"
+- `model_status.state` is `"building"` → **WARNING** — "Model still building, some tools unavailable"
+- `model_status.state` is `"ready"` → **INFO** — "Model ready"
 
 ### Check 2.2 — MCP Tool Smoke Tests
 
 **What to call:**
 
-1. Call `ivy_capabilities` with no arguments. Validate response contains keys: `cli_tools`, `mcp_tool_count`, `model_status`, `staging_health`.
+1. Call `ivy_capabilities` with no arguments. Validate response contains keys: `cli_tools`, `mcp_tools`, `mcp_tool_count`, `staging_health`.
 
 2. Call `ivy_workspace` with no arguments. Validate returned `workspace_root` matches expected workspace path.
 
@@ -167,6 +168,7 @@ Call the `ivy_health_check` MCP tool with no arguments.
 From the `ivy_capabilities` response obtained in Check 2.2, extract the `staging_health` object.
 
 **Severity rules:**
+- If `ivy_capabilities` response unavailable from Check 2.2 → **WARNING** — "Staging health unknown (capabilities unavailable)"
 - `symlink_failures > 0` → **WARNING** — "N symlink failures in layer staging"
 - `layer_count` doesn't match `.ivyworkspace` layer count → **WARNING** — "Layer count mismatch: staging=N, config=M"
 - All staging healthy → **INFO** — "Layer staging healthy (N layers, 0 failures)"
@@ -176,6 +178,8 @@ From the `ivy_capabilities` response obtained in Check 2.2, extract the `staging
 ## Phase 3: Test Suite
 
 Always runs regardless of earlier phases.
+
+**Precondition:** Run from the PANTHER repository root (the worktree root).
 
 **What to run:**
 
@@ -215,3 +219,11 @@ Phases executed: 1, 3, 4 (Phase 2 skipped: sidecar not reachable)
 If any CRITICAL findings exist, suggest next steps:
 - "Run `/nct-health` for deep diagnostics"
 - Specific remediation per finding (e.g., "Restart LSP server", "Clean stale PID files in /tmp/ivy-lsp-pids/")
+
+---
+
+## Integration
+
+- **Complements:** `/nct-health` command — use `/nct-health` for deep 9-step diagnostics after fast triage
+- **Uses data from:** `check-mcp-health.py` hook (same PID/port file paths)
+- **Related tools:** `ivy_health_check`, `ivy_capabilities`, `ivy_workspace` MCP tools
