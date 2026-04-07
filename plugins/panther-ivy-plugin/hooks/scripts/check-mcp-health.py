@@ -15,6 +15,7 @@ import glob
 import json
 import os
 import socket
+import subprocess
 import time
 
 
@@ -99,17 +100,15 @@ def _check_pid_alive():
         except (OSError, ValueError):
             continue
         found_any = True
-        try:
-            os.kill(pid, 0)  # signal 0: check existence
+        result = subprocess.run(["ps", "-p", str(pid)], capture_output=True)
+        if result.returncode == 0:
             return True  # At least one live process
-        except ProcessLookupError:
+        else:
             try:
                 os.unlink(pf)
             except OSError:
                 pass
             continue  # Dead PID, cleaned up stale file
-        except PermissionError:
-            return True  # Process exists but owned by another user
 
     return False if found_any else None
 

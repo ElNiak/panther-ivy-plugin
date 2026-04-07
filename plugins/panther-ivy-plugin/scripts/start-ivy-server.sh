@@ -123,7 +123,7 @@ for pidfile in "$PID_DIR"/${_PID_PREFIX}-*.pid; do
     [ -f "$pidfile" ] || continue
     old_pid="$(cat "$pidfile" 2>/dev/null)" || continue
     [ "$old_pid" = "$$" ] && continue
-    if kill -0 "$old_pid" 2>/dev/null; then
+    if ps -p "$old_pid" > /dev/null 2>&1; then
         log "Killing stale ${MODE} server for this workspace (PID=$old_pid)"
         kill -TERM "$old_pid" 2>/dev/null || true
     fi
@@ -134,7 +134,7 @@ done
 for pidfile in "$PID_DIR"/${MODE}-*.pid; do
     [ -f "$pidfile" ] || continue
     old_pid="$(cat "$pidfile" 2>/dev/null)" || continue
-    if ! kill -0 "$old_pid" 2>/dev/null; then
+    if ! ps -p "$old_pid" > /dev/null 2>&1; then
         rm -f "$pidfile" 2>/dev/null || true
     fi
 done

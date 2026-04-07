@@ -9,7 +9,7 @@ if [ -d "$PID_DIR" ]; then
     for pidfile in "$PID_DIR"/*.pid; do
         [ -f "$pidfile" ] || continue
         pid="$(cat "$pidfile" 2>/dev/null)" || continue
-        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+        if [ -n "$pid" ] && ps -p "$pid" > /dev/null 2>&1; then
             kill -TERM "$pid" 2>/dev/null || true
         fi
         rm -f "$pidfile" 2>/dev/null || true

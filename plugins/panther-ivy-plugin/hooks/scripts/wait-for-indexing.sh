@@ -49,7 +49,7 @@ for _i in $(seq 1 "$MAX_WAIT"); do
     for pidfile in /tmp/ivy-lsp-pids/mcp-*.pid; do
         [ -f "$pidfile" ] || continue
         mcp_pid="$(cat "$pidfile" 2>/dev/null)" || continue
-        if ! kill -0 "$mcp_pid" 2>/dev/null; then
+        if ! ps -p "$mcp_pid" > /dev/null 2>&1; then
             MSG="[ivy-indexing] MCP server process died (PID=$mcp_pid)"
             break 2
         fi
