@@ -4,6 +4,7 @@ description: This skill should be used when the user wants to "create a protocol
   "scaffold a new protocol", "write test specifications", "full NCT/NACT/NSCT workflow",
   or any task that involves creating or significantly modifying Ivy formal specifications.
   Do NOT use for read-only operations (check, model-info, lint).
+loads: [ivy-toolkit, specification-patterns, workflow-reference, ivy-writing-guide, incremental-spec-dev]
 ---
 
 # Ivy Workflow Orchestrator

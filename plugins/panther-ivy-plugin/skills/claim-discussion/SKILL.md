@@ -1,6 +1,7 @@
 ---
 name: claim-discussion
 description: "Use when discussing verification claims, RFC requirement interpretations, or coverage gap priorities with the user. Provides structured decision trees for each claim type."
+loads: [counterexample-guide, interaction-patterns]
 prerequisites: ["interaction-patterns", "counterexample-guide"]
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: ivy-protocol-model-builder
 description: "This skill should be used when the user asks to 'create an Ivy model', 'build a formal spec for a protocol', 'add a new protocol to panther_ivy', 'write Ivy tests for [protocol]', 'formalize [protocol] in Ivy', or wants to create a new protocol-testing directory with Ivy formal specifications. Guides classification, blueprint, and phased implementation with review checkpoints."
+loads: [ivy-writing-guide, specification-patterns, nct-methodology]
 ---
 
 # Ivy Protocol Model Builder

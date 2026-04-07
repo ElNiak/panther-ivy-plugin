@@ -1,6 +1,7 @@
 ---
 name: nsct-methodology
 description: "Use when working with NSCT (Network-Simulator Centric Compositional Testing), Shadow Network Simulator, large-scale topology testing, or deterministic network simulation. Covers Shadow NS configuration and when to use NSCT vs NCT."
+loads: [nct-methodology, ivy-toolkit]
 prerequisites:
   - nct-methodology
 ---

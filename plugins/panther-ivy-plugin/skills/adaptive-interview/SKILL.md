@@ -1,6 +1,7 @@
 ---
 name: adaptive-interview
 description: "Use when the Navigator agent needs to interview the user to determine their goal and guide them through the appropriate Ivy testing workflow."
+loads: [interaction-patterns]
 prerequisites: ["interaction-patterns"]
 ---
 

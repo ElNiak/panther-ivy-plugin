@@ -1,6 +1,7 @@
 ---
 name: nct-methodology
 description: "Use when working with NCT (Network-Centric Compositional Testing) - specification-based protocol compliance testing with Ivy formal models. Covers core concepts, directory structure, checkpoints, and common mistakes. Chains to ivy-workflow-orchestrator for spec creation."
+loads: [ivy-toolkit, specification-patterns]
 ---
 
 <HARD-GATE>
