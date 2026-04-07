@@ -62,6 +62,10 @@ fi
 
 log "Detected workspace: $DETECTED_ROOT (type=$DETECTED_TYPE)"
 export IVY_WORKSPACE_ROOT="$DETECTED_ROOT"
+# Ensure the Python detection (Step 1) uses the bash-detected root for both
+# MCP and LSP modes.  Without this, LSP mode falls through to git-worktree
+# heuristics that can resolve to the wrong worktree sibling.
+export IVY_LSP_WORKSPACE="$DETECTED_ROOT"
 [ "$MODE" = "mcp" ] && log "Include paths: ${IVY_LSP_INCLUDE_PATHS:-<none>}"
 [ "$MODE" = "mcp" ] && log "Exclude paths: ${IVY_LSP_EXCLUDE_PATHS:-<none>}"
 
