@@ -263,3 +263,8 @@ Or use the `model-reviewer` agent for a detailed human-readable review.
 - **spec-analyst** -- Verification and diagnosis
 - **traceability-agent** -- Coverage review
 - **model-reviewer** -- Quality review
+
+## Related Skills
+
+- **`counterexample-guide`** — Detailed trace interpretation when the verification cycle produces a counterexample.
+- **`claim-discussion`** — Structured decision trees for resolving what a verification result means (spec bug vs. IUT non-compliance vs. coverage gap).

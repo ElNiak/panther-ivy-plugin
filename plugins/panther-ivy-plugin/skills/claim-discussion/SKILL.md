@@ -261,3 +261,8 @@ require conn_state = open;  # [rfc9000:4.1] RESOLVED(2026-03-18): Confirmed spec
 - **USED BY:** spec-analyst/model-reviewer agents (typically during orchestrator Phase 4)
 - **USED BY:** /nct-check command -- for interactive claim discussion after verification
 - **PREREQUISITES:** interaction-patterns, counterexample-guide
+
+## Related Skills
+
+- **`counterexample-guide`** — Technical trace interpretation for verification failures. Use when a claim discussion requires understanding the concrete counterexample.
+- **`workflow-reference`** — Verification cycle and quality gate context. Provides the iterative check-diagnose-fix workflow around claim resolution.

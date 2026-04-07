@@ -328,3 +328,8 @@ After applying the fix, re-run `ivy_verify` to confirm the counterexample is res
 - LSP `hover` / `findReferences` / `goToDefinition` -- Look up symbol definitions and usages
 - `ivy_visualize` (view="state_machine") -- View state transitions
 - `ivy_coverage` (mode="gaps") -- Find related unguarded state
+
+## Related Skills
+
+- **`claim-discussion`** — Structured decision trees for verification claims, RFC interpretations, and coverage gaps. Use after diagnosing a counterexample to decide whether it reveals a spec bug or IUT non-compliance.
+- **`workflow-reference`** — The full verify-fix cycle (check → diagnose → fix → re-check). Provides quality gates and RFC-to-Ivy mapping context.
