@@ -18,7 +18,7 @@ arguments:
     description: "full = 3 mutation types (header, brace, include). Default: 1 mutation (include only). false = skip all."
     required: false
 ---
-<!-- MODE: HYBRID — fast mode skips orchestrator, full mode aligns with Phase 4 -->
+<!-- MODE: DEEP — 75+ checks, 5 agent dispatches, mutation testing, interactive review -->
 
 Run a scenario-based validation of the Ivy LSP, MCP tools, plugin hooks, agents, and surface coverage. Unlike `/nct-health` (connectivity), this command checks **correctness** by simulating real user workflows — exploring the model, auditing coverage, debugging failures, editing specs — with cross-validation between tools and interactive manual review.
 
