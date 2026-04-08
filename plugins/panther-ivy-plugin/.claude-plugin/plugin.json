@@ -1,7 +1,7 @@
 {
   "name": "panther-ivy-plugin",
   "description": "Unified Ivy formal protocol testing plugin providing both LSP (diagnostics, navigation, hover) and MCP (ivy-tools: verification, compilation, coverage analysis) servers. NCT/NACT/NSCT methodology guidance with agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": {
     "name": "ElNiak",
     "email": "elniak@github.com"
@@ -9,5 +9,23 @@
   "repository": "https://github.com/ElNiak/panther-ivy-plugin",
   "license": "MIT",
   "keywords": ["ivy", "formal-verification", "protocol-testing", "panther", "interactive"],
-  "homepage": "https://github.com/ElNiak/panther-ivy-plugin"
+  "homepage": "https://github.com/ElNiak/panther-ivy-plugin",
+  "userConfig": {
+    "log_level": {
+      "description": "Ivy LSP/MCP log verbosity (DEBUG, INFO, WARN, ERROR)",
+      "sensitive": false
+    },
+    "enable_serena": {
+      "description": "Enable the Serena MCP server for semantic code intelligence (requires panther-serena submodule)",
+      "sensitive": false
+    },
+    "force_reinstall": {
+      "description": "Force uvx to reinstall ivy-lsp on every server start (use when modifying local ivy-lsp source)",
+      "sensitive": false
+    },
+    "observability_enabled": {
+      "description": "Enable observability event logging to JSONL files (true/false)",
+      "sensitive": false
+    }
+  }
 }

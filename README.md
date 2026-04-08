@@ -2,7 +2,7 @@
 
 NCT/NACT/NSCT methodology guidance for Ivy protocol testing via native Ivy LSP and ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.
 
-**Version:** 0.5.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
+**Version:** 0.8.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
 
 ## Overview
 
@@ -31,7 +31,7 @@ This is a **Claude Code plugin** for the PANTHER-Ivy tester. It provides methodo
 
 - **PANTHER framework** with the Ivy tester plugin installed (`panther/plugins/services/testers/panther_ivy/`)
 - **Ivy toolchain** available (either locally or via Docker-based execution through PANTHER)
-- **Native Ivy LSP** (configured automatically via `.lsp.json`) -- go-to-definition, find-references, hover, document symbols for `.ivy` files (diagnostics via MCP `ivy_lint`/`ivy_diagnostics`)
+- **Native Ivy LSP** (configured automatically via `.lsp.json`) -- go-to-definition, find-references, hover, document symbols for `.ivy` files (diagnostics via MCP `ivy_diagnostics`)
 - **ivy-tools MCP server** (configured automatically via `.mcp.json`):
   - [ivy-tools](https://github.com/ElNiak/ivy-lsp) -- Ivy verification, compilation, analysis, linting, and traceability tools
 
@@ -47,10 +47,10 @@ Claude Code auto-discovers plugins via the `.claude-plugin/` directory. No `pip 
 
 | Component | Count | Description | Details |
 |-----------|-------|-------------|---------|
-| Agents | 4 | Methodology guide, model reviewer, spec analyst, traceability agent | [agents/](agents/) |
-| Commands | 7 | Slash commands for verification, compilation, and scaffolding | [commands/](commands/) |
-| Skills | 6 | Domain knowledge for Ivy language, methodologies, and tooling | [skills/](skills/) |
-| Hooks | 3 | PreToolUse (warn CLI), PostToolUse (lint .ivy), SessionStart (workspace detection) | -- |
+| Agents | 5 | Navigator, methodology guide, model reviewer, spec analyst, traceability agent | [agents/](agents/) |
+| Commands | 11 | Slash commands for verification, compilation, scaffolding, review, health, observability | [commands/](commands/) |
+| Skills | 20 | Domain knowledge, methodologies, tooling, interaction patterns, workspace management | [skills/](skills/) |
+| Hooks | 25 | 12 event types: PreToolUse, PostToolUse, PostToolUseFailure, SessionStart/End, Stop, Subagent, Compact, Prompt, Notification, Permission | [hooks/](hooks/) |
 
 ## Tooling Architecture
 

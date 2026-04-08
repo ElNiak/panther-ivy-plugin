@@ -4,14 +4,16 @@
 import json
 import os
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from hook_utils import resolve_session_id, emit_hook_output, read_stdin
 
 
 def main():
     # Read hook input from stdin
-    try:
-        hook_input = json.load(sys.stdin)
-    except (json.JSONDecodeError, EOFError):
-        # Can't parse input — allow (fail open)
+    hook_input = read_stdin()
+    if not hook_input:
         return
 
     tool_input = hook_input.get("tool_input", {})
@@ -58,17 +60,14 @@ def main():
 
     if file_layer is None:
         # File not in any layer — warn but allow
-        output = {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "additionalContext": (
-                    "This file has no registered workspace layer. If creating a new protocol:\n"
-                    " 1. Create protocol-testing/<name>/.ivyworkspace marker\n"
-                    " 2. Or run scripts/generate_protocol_markers.py after adding to root .ivyworkspace"
-                ),
-            }
-        }
-        print(json.dumps(output))
+        emit_hook_output(
+            "PreToolUse",
+            additional_context=(
+                "This file has no registered workspace layer. If creating a new protocol:\n"
+                " 1. Create protocol-testing/<name>/.ivyworkspace marker\n"
+                " 2. Or run scripts/generate_protocol_markers.py after adding to root .ivyworkspace"
+            ),
+        )
         return
 
     if file_layer in active_layers:
@@ -78,19 +77,15 @@ def main():
     # Find which group this file belongs to for the suggestion
     file_group = _find_group_for_layer(file_layer, workspace_root)
 
-    output = {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": (
-                f"BLOCKED: '{os.path.basename(file_path)}' is in layer '{file_layer}' "
-                f"(workspace group: {file_group or 'unknown'}).\n"
-                f"Active workspace: '{active_group}' (set by: {set_by}).\n"
-                f"To allow: /set-workspace {file_group or file_layer} | /clear-workspace"
-            ),
-        }
-    }
-    print(json.dumps(output))
+    emit_hook_output(
+        "PreToolUse",
+        deny_reason=(
+            f"BLOCKED: '{os.path.basename(file_path)}' is in layer '{file_layer}' "
+            f"(workspace group: {file_group or 'unknown'}).\n"
+            f"Active workspace: '{active_group}' (set by: {set_by}).\n"
+            f"To allow: /set-workspace {file_group or file_layer} | /clear-workspace"
+        ),
+    )
 
 
 def _get_file_layer(file_path, workspace_root):
@@ -133,24 +128,9 @@ def _find_group_for_layer(layer_id, workspace_root):
     return None
 
 
-def _resolve_session_id(hook_input=None):
-    """Resolve Claude session id — delegates to ivy-lsp canonical resolver."""
-    try:
-        from ivy_lsp.infra.observability.session import resolve_session_id
-        return resolve_session_id(hook_payload=hook_input)
-    except ImportError:
-        pass
-    # Fallback if ivy-lsp not importable
-    if hook_input:
-        payload_session = str(hook_input.get("session_id", "")).strip()
-        if payload_session:
-            return payload_session
-    return os.environ.get("IVY_SESSION_ID", "unknown")
-
-
 def _progressive_narrowing(file_path, workspace_root):
     """Track inferred protocol from edits; suggest /set-workspace on cross-protocol."""
-    session_id = _resolve_session_id()
+    session_id = resolve_session_id()
     ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
     state_dir = os.path.join(ws_root, ".observability", "sessions", session_id)
     os.makedirs(state_dir, exist_ok=True)
@@ -170,33 +150,27 @@ def _progressive_narrowing(file_path, workspace_root):
 
     if previous_layer and previous_layer != current_layer:
         # Cross-protocol edit — warn
-        output = {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "additionalContext": (
-                    f"You are editing files across different protocol layers "
-                    f"('{previous_layer}' and '{current_layer}'). "
-                    f"Cross-protocol editing without workspace isolation may cause "
-                    f"include collisions.\n"
-                    f"Suggestion: /set-workspace <protocol> to restrict edits."
-                ),
-            }
-        }
-        print(json.dumps(output))
+        emit_hook_output(
+            "PreToolUse",
+            additional_context=(
+                f"You are editing files across different protocol layers "
+                f"('{previous_layer}' and '{current_layer}'). "
+                f"Cross-protocol editing without workspace isolation may cause "
+                f"include collisions.\n"
+                f"Suggestion: /set-workspace <protocol> to restrict edits."
+            ),
+        )
     elif not previous_layer:
         # First edit — suggest
         group = _find_group_for_layer(current_layer, workspace_root)
         if group:
-            output = {
-                "hookSpecificOutput": {
-                    "hookEventName": "PreToolUse",
-                    "additionalContext": (
-                        f"No active workspace set. This file is in the '{current_layer}' layer.\n"
-                        f"Consider /set-workspace {group} to enable edit isolation."
-                    ),
-                }
-            }
-            print(json.dumps(output))
+            emit_hook_output(
+                "PreToolUse",
+                additional_context=(
+                    f"No active workspace set. This file is in the '{current_layer}' layer.\n"
+                    f"Consider /set-workspace {group} to enable edit isolation."
+                ),
+            )
 
     # Update inferred state
     inferred["inferred_layer"] = current_layer

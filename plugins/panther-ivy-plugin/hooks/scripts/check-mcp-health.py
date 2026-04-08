@@ -16,8 +16,11 @@ import json
 import os
 import socket
 import subprocess
+import sys
 import time
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+from hook_utils import get_mcp_health_state_path, emit_hook_output
 
 _MAX_CONSECUTIVE_FAILURES = 3
 _STATE_TTL = 300  # Reset state after 5 minutes of no activity
@@ -25,32 +28,9 @@ _STALE_PORT_AGE = 120  # Port file older than 2 min with no TCP → stale
 _PID_DIR = "/tmp/ivy-lsp-pids"
 
 
-def _get_state_path() -> str:
-    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip()
-    if not ws_root:
-        # Walk up from CWD looking for panther_ivy (mirrors workspace-common.sh)
-        check = os.getcwd()
-        for _ in range(10):
-            candidate = os.path.join(check, "panther", "plugins", "services",
-                                     "testers", "panther_ivy")
-            if os.path.isdir(os.path.join(candidate, "protocol-testing")):
-                ws_root = candidate
-                break
-            parent = os.path.dirname(check)
-            if parent == check:
-                break
-            check = parent
-        if not ws_root:
-            ws_root = os.getcwd()
-    sid = os.environ.get("IVY_SESSION_ID", "unknown")
-    state_dir = os.path.join(ws_root, ".observability", "sessions", sid)
-    os.makedirs(state_dir, exist_ok=True)
-    return os.path.join(state_dir, "mcp-health-state.json")
-
-
 def _read_state() -> dict:
     """Read the health state file, returning defaults if missing/stale."""
-    path = _get_state_path()
+    path = get_mcp_health_state_path()
     try:
         with open(path) as f:
             fcntl.flock(f, fcntl.LOCK_SH)
@@ -67,7 +47,7 @@ def _read_state() -> dict:
 
 def _write_state(state: dict) -> None:
     """Write the health state file."""
-    path = _get_state_path()
+    path = get_mcp_health_state_path()
     state["last_update"] = time.time()
     try:
         with open(path, "w") as f:
@@ -210,29 +190,23 @@ def _emit_result(state: dict) -> None:
     """Print the hook JSON output based on failure count."""
     failures = state["consecutive_failures"]
     if failures >= _MAX_CONSECUTIVE_FAILURES:
-        output = {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": (
-                    f"MCP server appears crashed ({failures} "
-                    "consecutive failures). Run /nct-health to diagnose, or restart "
-                    "the session to recover."
-                ),
-            }
-        }
+        emit_hook_output(
+            "PreToolUse",
+            deny_reason=(
+                f"MCP server appears crashed ({failures} "
+                "consecutive failures). Run /nct-health to diagnose, or restart "
+                "the session to recover."
+            ),
+        )
     else:
-        output = {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "additionalContext": (
-                    f"[ivy-health] MCP health check failed "
-                    f"({failures}/{_MAX_CONSECUTIVE_FAILURES}). "
-                    "Tool may fail."
-                ),
-            }
-        }
-    print(json.dumps(output))
+        emit_hook_output(
+            "PreToolUse",
+            additional_context=(
+                f"[ivy-health] MCP health check failed "
+                f"({failures}/{_MAX_CONSECUTIVE_FAILURES}). "
+                "Tool may fail."
+            ),
+        )
 
 
 if __name__ == "__main__":

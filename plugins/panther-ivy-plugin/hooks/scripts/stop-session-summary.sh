@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # stop-session-summary.sh
 #
-# Stop hook: output a session summary with ivy_lint status of modified .ivy files.
+# Stop hook: output a session summary with ivy_diagnostics status of modified .ivy files.
 # Non-blocking — always exits 0. Outputs additionalContext JSON.
 
 set -euo pipefail
@@ -128,7 +128,7 @@ if [ "$CLAIM_TOTAL" -gt 0 ]; then
 fi
 
 if [ "$ISSUE_COUNT" -gt 0 ]; then
-  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, $ISSUE_COUNT with lint issues:\\n${ISSUES}Run ivy_lint on flagged files before committing.${CLAIM_SECTION}${METRICS_SECTION}"
+  SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, $ISSUE_COUNT with lint issues:\\n${ISSUES}Run ivy_diagnostics(mode=\"structural\") on flagged files before committing.${CLAIM_SECTION}${METRICS_SECTION}"
 else
   SUMMARY="[IVY SESSION SUMMARY] $FILE_COUNT .ivy file(s) modified, all pass basic structural checks.${CLAIM_SECTION}${METRICS_SECTION}"
 fi

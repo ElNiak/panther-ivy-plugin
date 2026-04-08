@@ -92,20 +92,13 @@ fi
 WORKSPACE_RESTORE_MSG=""
 STATE_FILE="${DETECTED_ROOT}/.ivy-workspace-state.json"
 if [ -f "$STATE_FILE" ]; then
-    ACTIVE_GROUP=$(python3 -c "
+    read -r ACTIVE_GROUP SET_BY <<< "$(python3 -c "
 import json, sys
 try:
-    d = json.load(open('$STATE_FILE'))
-    print(d.get('active_group', ''))
-except: pass
-" 2>/dev/null)
-    SET_BY=$(python3 -c "
-import json, sys
-try:
-    d = json.load(open('$STATE_FILE'))
-    print(d.get('set_by', ''))
-except: pass
-" 2>/dev/null)
+    d = json.load(open(sys.argv[1]))
+    print(d.get('active_group', ''), d.get('set_by', ''))
+except: print(' ')
+" "$STATE_FILE" 2>/dev/null)"
 
     if [ -n "$ACTIVE_GROUP" ] && [ "$SET_BY" = "explicit" ]; then
         if [ -n "${CLAUDE_ENV_FILE:-}" ]; then

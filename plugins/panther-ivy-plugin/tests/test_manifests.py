@@ -104,7 +104,7 @@ class TestHooksJson:
                     # Extract the script path from the command template
                     # Format: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.sh"
                     if "${CLAUDE_PLUGIN_ROOT}" in command:
-                        relative = command.split("${CLAUDE_PLUGIN_ROOT}/", 1)[1]
+                        relative = command.split("${CLAUDE_PLUGIN_ROOT}/", 1)[1].split()[0]
                         script_path = plugin_root / relative
                         assert script_path.is_file(), (
                             f"Hook script not found: {script_path} "

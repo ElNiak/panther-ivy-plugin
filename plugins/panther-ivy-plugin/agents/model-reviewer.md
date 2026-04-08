@@ -1,9 +1,13 @@
 ---
 name: model-reviewer
 description: "Use when the user asks to review an Ivy specification for correctness, check model quality, or verify a spec after writing it. Dispatched by the orchestrator during Phase 4 (Verify). Reviews model structure, coverage gaps, and quality gate compliance."
-model: inherit
+model: opus
 color: magenta
-tools: ["Read", "Grep", "Glob", "Bash", "ToolSearch"]
+tools: ["Read", "Grep", "Glob", "ToolSearch"]
+maxTurns: 15
+skills:
+  - interaction-patterns
+  - claim-discussion
 ---
 
 <example>

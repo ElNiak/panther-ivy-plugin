@@ -12,16 +12,10 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from hook_utils import get_mcp_health_state_path
 
 _MAX_CONSECUTIVE_FAILURES = 3
-
-
-def _get_state_path() -> str:
-    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
-    sid = os.environ.get("IVY_SESSION_ID", "unknown")
-    state_dir = os.path.join(ws_root, ".observability", "sessions", sid)
-    os.makedirs(state_dir, exist_ok=True)
-    return os.path.join(state_dir, "mcp-health-state.json")
 
 try:
     from log_event import log_event, read_stdin
@@ -45,7 +39,7 @@ try:
     # Increment circuit breaker for MCP ivy tools
     if "ivy" in tool_name.lower():
         try:
-            state_path = _get_state_path()
+            state_path = get_mcp_health_state_path()
             state = {"consecutive_failures": 0, "last_update": time.time()}
             if os.path.exists(state_path):
                 with open(state_path) as f:
