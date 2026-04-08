@@ -1,5 +1,0 @@
-#lang ivy1.7
-
-object foo = {
-    type t
-}
