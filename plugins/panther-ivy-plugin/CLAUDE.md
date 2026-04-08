@@ -138,7 +138,7 @@ Example: `ivy_coverage(mode="stats", test_file="quic/quic_tests/client_tests/qui
 ### Shortcut Commands
 
 **Direct tool access** (bypass workflows):
-`/nct-check` (ivy_verify), `/nct-compile` (ivy_compile), `/nct-model-info` (ivy_model_info), `/nct-observability` (JSONL logs)
+`/nct-check` (ivy_verify), `/nct-compile` (ivy_compile), `/nct-model-info` (ivy_model_info), `/nct-health` (9-step diagnostic), `/nct-observability` (JSONL logs)
 
 ### Internal Components
 
@@ -453,6 +453,6 @@ When `<new-diagnostics>` contains `[ivy-lsp] indexing in progress`, the LSP is s
 ## Quick Reference
 
 **Workflows**: navigate, verify, build, review, triage
-**Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-observability
+**Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-health, /nct-observability
 **Internal agents**: spec-analyst, model-reviewer, traceability-agent
 **Internal knowledge**: counterexample-guide, specification-patterns, propagation-patterns, ivy-writing-guide, ivy-toolkit, claim-discussion, methodology-reference
