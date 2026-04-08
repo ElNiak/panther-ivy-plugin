@@ -1,6 +1,6 @@
 ---
 name: nct-scaffold
-description: Scaffold a new protocol or test specification from templates
+description: "DEPRECATED: Use the build workflow instead. This command will be removed."
 arguments:
   - name: type
     description: What to scaffold - "protocol" for new protocol from 14-layer template, "test" for new test specification

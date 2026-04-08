@@ -9,6 +9,8 @@ arguments:
     description: Optional isolate name to display information about
     required: false
 ---
+> **Shortcut command** — directly calls `ivy_model_info`. For model inspection within a review, use the `review` workflow.
+
 <!-- MODE: FAST — Read-only model query, no orchestrator required -->
 
 Display the model structure of the specified Ivy file using ivy-tools.

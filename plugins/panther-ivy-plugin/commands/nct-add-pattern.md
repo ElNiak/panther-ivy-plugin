@@ -1,6 +1,6 @@
 ---
 name: nct-add-pattern
-description: Add a formal model pattern to a protocol specification
+description: "DEPRECATED: Use the build workflow instead. This command will be removed."
 arguments:
   - name: protocol
     description: Protocol name (e.g., quic, bgp, minip, mark)

@@ -1,6 +1,6 @@
 ---
 name: nct-review
-description: Comprehensive Ivy specification review dispatching model-reviewer, spec-analyst, and traceability-agent
+description: "DEPRECATED: Use the review workflow instead. This command will be removed."
 arguments:
   - name: aspects
     description: Which review aspects to run - "model", "verify", "coverage", or "all" (default). Comma-separated for multiple.

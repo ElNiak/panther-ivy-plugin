@@ -1,6 +1,6 @@
 ---
 name: nct-propagate
-description: Propagate an Ivy type change across ser/deser, shims, tests, and behavior files
+description: "DEPRECATED: Use the build workflow instead. This command will be removed."
 arguments:
   - name: change
     description: "Natural language description of the change (e.g., 'add seq_num : byte to ping_packet')"

@@ -9,6 +9,8 @@ arguments:
     description: Optional isolate name to check specifically
     required: false
 ---
+> **Shortcut command** — directly calls `ivy_verify`. For guided verification with failure diagnosis, use the `verify` workflow.
+
 <!-- MODE: FAST — Single-file verification, no orchestrator required -->
 <!-- For full methodology workflow, use /nct-scaffold instead -->
 

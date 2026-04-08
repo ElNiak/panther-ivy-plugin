@@ -12,6 +12,8 @@ arguments:
     description: Optional isolate name to compile specifically
     required: false
 ---
+> **Shortcut command** — directly calls `ivy_compile`. For guided compilation within a build cycle, use the `build` workflow.
+
 <!-- MODE: FAST — Single-file compilation, no orchestrator required -->
 <!-- Warn if file has not been verified with /nct-check first -->
 

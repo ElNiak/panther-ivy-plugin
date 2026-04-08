@@ -1,6 +1,6 @@
 ---
 name: nct-serena-health
-description: Validate the Serena integration chain (serena-mcp-server -> SolidLSP -> IvyLanguageServer -> ivy_lsp)
+description: "DEPRECATED: Use the triage workflow instead. This command will be removed."
 arguments: []
 ---
 <!-- MODE: FAST — Diagnostic health check, no orchestrator required -->

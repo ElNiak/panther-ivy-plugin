@@ -1,6 +1,6 @@
 ---
 name: nct-health
-description: Run a health check sequence for the Ivy LSP + MCP integration
+description: "DEPRECATED: Use the triage workflow instead. This command will be removed."
 arguments: []
 ---
 <!-- MODE: HYBRID — multi-phase checks with agent dispatch -->

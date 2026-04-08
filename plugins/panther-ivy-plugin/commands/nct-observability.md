@@ -6,6 +6,8 @@ arguments:
     description: "Analysis mode: summary (default), events, errors, timeline"
     required: false
 ---
+> **Shortcut command** — queries session JSONL logs. Always available, never suppressed by active workflows.
+
 <!-- MODE: FAST — Read-only log analysis, no orchestrator required -->
 
 Query and analyze the JSONL session logs written by the panther-ivy-plugin observability hooks. These logs record tool usage, verification results, and session events.

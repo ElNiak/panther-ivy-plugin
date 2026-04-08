@@ -1,6 +1,6 @@
 ---
 name: nct-validate
-description: Scenario-based validation of Ivy LSP, MCP tools, hooks, agents, and surface coverage (~75 checks across 5 passes) with cross-validation, interactive review, and optional mutation testing
+description: "DEPRECATED: Use the verify workflow instead. This command will be removed."
 arguments:
   - name: phase
     description: "Comma-separated passes to run: preflight, scenarios, gapsweep, nonworkflow, interactive. Default: all"
