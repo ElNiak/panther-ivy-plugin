@@ -5,6 +5,7 @@ and invoking the function in various directory structures.
 """
 
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,7 @@ def _run_workspace_detection(
     workspace_common_sh: Path,
     cwd: Path,
     extra_script: str = "",
+    env: dict | None = None,
 ) -> subprocess.CompletedProcess:
     """Source workspace-common.sh in a bash subprocess, run
     detect_ivy_workspace, and print the results.
@@ -24,6 +26,7 @@ def _run_workspace_detection(
         workspace_common_sh: Path to workspace-common.sh
         cwd: Working directory where the detection runs
         extra_script: Additional bash commands to run after sourcing
+        env: Subprocess environment (None inherits parent).
     """
     script = f"""
 set -euo pipefail
@@ -39,6 +42,7 @@ echo "ROOT=$DETECTED_ROOT"
         text=True,
         timeout=10,
         cwd=str(cwd),
+        env=env,
     )
 
 
@@ -84,19 +88,21 @@ class TestDetectIvyWorkspace:
         assert info["type"] == "panther"
         assert info["root"] == str(panther_ivy)
 
-    def test_standalone_project_detection(self, workspace_common_sh, tmp_path):
+    def test_standalone_project_detection(self, workspace_common_sh):
         """A directory with 3+ .ivy files (no PANTHER structure) should be
         detected as 'standalone' type."""
-        # Create enough .ivy files to trigger standalone detection (>= 3)
-        for i in range(4):
-            (tmp_path / f"spec_{i}.ivy").write_text(f"#lang ivy1.7\n# spec {i}\n")
+        with tempfile.TemporaryDirectory() as td:
+            isolated = Path(td).resolve()
+            for i in range(4):
+                (isolated / f"spec_{i}.ivy").write_text(f"#lang ivy1.7\n# spec {i}\n")
 
-        result = _run_workspace_detection(workspace_common_sh, tmp_path)
-        assert result.returncode == 0, f"Script failed: {result.stderr}"
+            env = {"PATH": "/usr/bin:/bin", "HOME": str(isolated)}
+            result = _run_workspace_detection(workspace_common_sh, isolated, env=env)
+            assert result.returncode == 0, f"Script failed: {result.stderr}"
 
-        info = _parse_detection_output(result)
-        assert info["type"] == "standalone"
-        assert info["root"] == str(tmp_path)
+            info = _parse_detection_output(result)
+            assert info["type"] == "standalone"
+            assert info["root"] == str(isolated)
 
     def test_fallback_no_ivy_files(self, workspace_common_sh, tmp_path):
         """An empty directory should fall back with type 'fallback' and
@@ -119,30 +125,21 @@ class TestDetectIvyWorkspace:
         # Accept either fallback or standalone due to parent-walking behavior
         assert info["type"] in ("fallback", "standalone")
 
-    def test_few_ivy_files_not_standalone(self, workspace_common_sh, tmp_path):
+    def test_few_ivy_files_not_standalone(self, workspace_common_sh):
         """Only 1-2 .ivy files in the immediate directory should NOT trigger
-        standalone detection on their own.
+        standalone detection on their own."""
+        with tempfile.TemporaryDirectory() as td:
+            isolated = Path(td) / "deep" / "isolated"
+            isolated.mkdir(parents=True)
+            (isolated / "a.ivy").write_text("#lang ivy1.7\n")
+            (isolated / "b.ivy").write_text("#lang ivy1.7\n")
 
-        NOTE: detect_ivy_workspace walks UP from CWD (up to depth 8).
-        If sibling test directories in the same pytest tmp tree contain
-        .ivy files, the walk-up may reach a level with >= 3 total .ivy
-        files and report 'standalone'. We create an isolated subdirectory
-        with exactly 2 .ivy files and accept that the walk-up behavior
-        may still detect 'standalone' from parent directories.
-        """
-        isolated = tmp_path / "deep" / "isolated"
-        isolated.mkdir(parents=True)
-        (isolated / "a.ivy").write_text("#lang ivy1.7\n")
-        (isolated / "b.ivy").write_text("#lang ivy1.7\n")
+            env = {"PATH": "/usr/bin:/bin", "HOME": str(isolated)}
+            result = _run_workspace_detection(workspace_common_sh, isolated, env=env)
+            assert result.returncode == 0, f"Script failed: {result.stderr}"
 
-        result = _run_workspace_detection(workspace_common_sh, isolated)
-        assert result.returncode == 0, f"Script failed: {result.stderr}"
-
-        info = _parse_detection_output(result)
-        # The direct directory has only 2 .ivy files, so locally it should
-        # not trigger standalone. However, the parent-walking behavior may
-        # find .ivy files from sibling test directories.
-        assert info["type"] in ("fallback", "standalone")
+            info = _parse_detection_output(result)
+            assert info["type"] in ("fallback", "standalone")
 
     def test_panther_takes_priority_over_standalone(
         self, workspace_common_sh, tmp_path
@@ -169,19 +166,22 @@ class TestDetectIvyWorkspace:
         info = _parse_detection_output(result)
         assert info["type"] == "panther"
 
-    def test_nested_ivy_files_detected(self, workspace_common_sh, tmp_path):
+    def test_nested_ivy_files_detected(self, workspace_common_sh):
         """ivy files in subdirectories (up to maxdepth 2) should count
         toward standalone detection."""
-        subdir = tmp_path / "models"
-        subdir.mkdir()
-        for i in range(3):
-            (subdir / f"spec_{i}.ivy").write_text("#lang ivy1.7\n")
+        with tempfile.TemporaryDirectory() as td:
+            isolated = Path(td)
+            subdir = isolated / "models"
+            subdir.mkdir()
+            for i in range(3):
+                (subdir / f"spec_{i}.ivy").write_text("#lang ivy1.7\n")
 
-        result = _run_workspace_detection(workspace_common_sh, tmp_path)
-        assert result.returncode == 0, f"Script failed: {result.stderr}"
+            env = {"PATH": "/usr/bin:/bin", "HOME": str(isolated)}
+            result = _run_workspace_detection(workspace_common_sh, isolated, env=env)
+            assert result.returncode == 0, f"Script failed: {result.stderr}"
 
-        info = _parse_detection_output(result)
-        assert info["type"] == "standalone"
+            info = _parse_detection_output(result)
+            assert info["type"] == "standalone"
 
 
 class TestFindPantherIvy:
@@ -253,27 +253,30 @@ echo "FOUND=$result"
         assert result.returncode == 0
         assert f"FOUND={panther_ivy}" in result.stdout
 
-    def test_not_found_returns_nonzero(self, workspace_common_sh, tmp_path):
+    def test_not_found_returns_nonzero(self, workspace_common_sh):
         """find_panther_ivy should return non-zero when no panther_ivy
         directory exists."""
-        script = f"""
+        with tempfile.TemporaryDirectory() as td:
+            isolated = Path(td)
+            script = f"""
 set -euo pipefail
 source "{workspace_common_sh}"
-if find_panther_ivy "{tmp_path}"; then
+if find_panther_ivy "{isolated}"; then
     echo "FOUND=yes"
 else
     echo "FOUND=no"
 fi
 """
-        result = subprocess.run(
-            ["bash", "-c", script],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            cwd=str(tmp_path),
-        )
-        assert result.returncode == 0
-        assert "FOUND=no" in result.stdout
+            result = subprocess.run(
+                ["bash", "-c", script],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=str(isolated),
+                env={"PATH": "/usr/bin:/bin", "HOME": str(isolated)},
+            )
+            assert result.returncode == 0
+            assert "FOUND=no" in result.stdout
 
 
 class TestResolveIvyLspSource:
@@ -306,23 +309,26 @@ echo "SRC=$IVY_LSP_SRC"
         assert result.returncode == 0
         assert f"SRC={dev_root}" in result.stdout
 
-    def test_empty_when_no_source_found(self, workspace_common_sh, tmp_path):
+    def test_empty_when_no_source_found(self, workspace_common_sh):
         """When no ivy-lsp source is found, IVY_LSP_SRC should be empty."""
-        script = f"""
+        with tempfile.TemporaryDirectory() as td:
+            isolated = Path(td)
+            script = f"""
 set -euo pipefail
 source "{workspace_common_sh}"
 resolve_ivy_lsp_source
 echo "SRC=[$IVY_LSP_SRC]"
 """
-        result = subprocess.run(
-            ["bash", "-c", script],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            cwd=str(tmp_path),
-        )
-        assert result.returncode == 0
-        assert "SRC=[]" in result.stdout
+            result = subprocess.run(
+                ["bash", "-c", script],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=str(isolated),
+                env={"PATH": "/usr/bin:/bin", "HOME": str(isolated)},
+            )
+            assert result.returncode == 0
+            assert "SRC=[]" in result.stdout
 
 
 # ---------------------------------------------------------------------------

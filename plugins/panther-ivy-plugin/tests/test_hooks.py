@@ -6,6 +6,7 @@ Tests invoke the scripts via subprocess.run() with controlled JSON input.
 
 import json
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -347,26 +348,28 @@ class TestDetectIvyWorkspaceHook:
         assert "PANTHER" in ctx or "panther" in ctx.lower()
 
     def test_standalone_project_detected(
-        self, hook_scripts_dir, tmp_path, has_python3
+        self, hook_scripts_dir, has_python3
     ):
         """A directory with 3+ .ivy files (no PANTHER structure) should be
         detected as 'standalone' type."""
         if not has_python3:
             pytest.skip("python3 required by hook script")
 
-        # Create 3 .ivy files to trigger standalone detection
-        for i in range(3):
-            (tmp_path / f"model{i}.ivy").write_text(f"#lang ivy1.7\n# model {i}\n")
+        with tempfile.TemporaryDirectory() as td:
+            isolated = Path(td)
+            for i in range(3):
+                (isolated / f"model{i}.ivy").write_text(f"#lang ivy1.7\n# model {i}\n")
 
-        result = _run_hook(
-            self._script(hook_scripts_dir),
-            {},
-            cwd=tmp_path,
-        )
-        assert result.returncode == 0
-        output = json.loads(result.stdout)
-        ctx = output["hookSpecificOutput"]["additionalContext"]
-        assert "standalone" in ctx.lower()
+            result = _run_hook(
+                self._script(hook_scripts_dir),
+                {},
+                cwd=isolated,
+                env={"PATH": "/usr/bin:/bin", "HOME": str(isolated)},
+            )
+            assert result.returncode == 0
+            output = json.loads(result.stdout)
+            ctx = output["hookSpecificOutput"]["additionalContext"]
+            assert "standalone" in ctx.lower()
 
     def test_fallback_when_no_ivy_files(
         self, hook_scripts_dir, tmp_path, has_python3

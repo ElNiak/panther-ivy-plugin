@@ -31,13 +31,17 @@ def _run_python_hook(
     script: Path,
     json_input: dict,
     env_extra: dict | None = None,
+    event_type: str | None = None,
 ) -> subprocess.CompletedProcess:
     """Run a Python hook script with JSON piped to stdin."""
     run_env = os.environ.copy()
     if env_extra:
         run_env.update(env_extra)
+    cmd = ["python3", str(script)]
+    if event_type:
+        cmd.extend(["--event", event_type])
     return subprocess.run(
-        ["python3", str(script)],
+        cmd,
         input=json.dumps(json_input),
         capture_output=True,
         text=True,
@@ -160,10 +164,10 @@ class TestLogEvent:
 # Integration tests: observability hook scripts
 # ---------------------------------------------------------------------------
 
-# Map of script name -> (event_type, sample_input, expected_payload_keys)
-_HOOK_SPECS = {
-    "obs_session_start.py": (
-        "SessionStart",
+# Map of event_type -> (sample_input, expected_payload_keys)
+# All events except PostToolUseFailure use observe.py --event <type>
+_OBSERVE_SPECS = {
+    "SessionStart": (
         {
             "session_id": "int-test",
             "source": "startup",
@@ -173,8 +177,7 @@ _HOOK_SPECS = {
         },
         ["source", "model", "agent_type", "permission_mode"],
     ),
-    "obs_pre_tool_use.py": (
-        "PreToolUse",
+    "PreToolUse": (
         {
             "session_id": "int-test",
             "tool_name": "Bash",
@@ -183,15 +186,83 @@ _HOOK_SPECS = {
         },
         ["tool_name", "tool_use_id", "tool_summary"],
     ),
-    "obs_post_tool_use.py": (
-        "PostToolUse",
+    "PostToolUse": (
         {
             "session_id": "int-test",
-            "tool_name": "Read",
+            "tool_name": "Bash",
             "tool_use_id": "tu_2",
         },
         ["tool_name", "tool_use_id", "is_mcp_tool"],
     ),
+    "Stop": (
+        {
+            "session_id": "int-test",
+            "stop_hook_active": False,
+            "last_assistant_message": "Done.",
+        },
+        ["stop_hook_active", "message_length"],
+    ),
+    "SubagentStart": (
+        {
+            "session_id": "int-test",
+            "agent_id": "agent-42",
+            "agent_type": "Explore",
+        },
+        ["agent_id", "agent_type"],
+    ),
+    "SubagentStop": (
+        {
+            "session_id": "int-test",
+            "agent_id": "agent-42",
+            "agent_type": "Explore",
+            "stop_hook_active": False,
+            "last_assistant_message": "Found it.",
+        },
+        ["agent_id", "agent_type", "stop_hook_active", "message_length"],
+    ),
+    "SessionEnd": (
+        {
+            "session_id": "int-test",
+            "reason": "prompt_input_exit",
+        },
+        ["reason"],
+    ),
+    "PreCompact": (
+        {
+            "session_id": "int-test",
+            "trigger": "auto",
+            "custom_instructions": "keep context",
+        },
+        ["trigger", "has_custom_instructions"],
+    ),
+    "UserPromptSubmit": (
+        {
+            "session_id": "int-test",
+            "prompt": "Fix the bug in auth module",
+        },
+        ["prompt_length", "prompt_preview"],
+    ),
+    "Notification": (
+        {
+            "session_id": "int-test",
+            "notification_type": "permission_prompt",
+            "title": "Permission needed",
+            "message": "Allow Bash?",
+        },
+        ["notification_type", "title", "message_length"],
+    ),
+    "PermissionRequest": (
+        {
+            "session_id": "int-test",
+            "tool_name": "Bash",
+            "permission_suggestions": ["allow", "deny"],
+        },
+        ["tool_name", "suggestion_count"],
+    ),
+}
+
+# obs_post_tool_use_failure.py is still a standalone script (has circuit breaker logic)
+_STANDALONE_SPECS = {
     "obs_post_tool_use_failure.py": (
         "PostToolUseFailure",
         {
@@ -203,96 +274,52 @@ _HOOK_SPECS = {
         },
         ["tool_name", "tool_use_id", "error", "is_interrupt"],
     ),
-    "obs_stop.py": (
-        "Stop",
-        {
-            "session_id": "int-test",
-            "stop_hook_active": False,
-            "last_assistant_message": "Done.",
-        },
-        ["stop_hook_active", "message_length"],
-    ),
-    "obs_subagent_start.py": (
-        "SubagentStart",
-        {
-            "session_id": "int-test",
-            "agent_id": "agent-42",
-            "agent_type": "Explore",
-        },
-        ["agent_id", "agent_type"],
-    ),
-    "obs_subagent_stop.py": (
-        "SubagentStop",
-        {
-            "session_id": "int-test",
-            "agent_id": "agent-42",
-            "agent_type": "Explore",
-            "stop_hook_active": False,
-            "last_assistant_message": "Found it.",
-        },
-        ["agent_id", "agent_type", "stop_hook_active", "message_length"],
-    ),
-    "obs_session_end.py": (
-        "SessionEnd",
-        {
-            "session_id": "int-test",
-            "reason": "prompt_input_exit",
-        },
-        ["reason"],
-    ),
-    "obs_pre_compact.py": (
-        "PreCompact",
-        {
-            "session_id": "int-test",
-            "trigger": "auto",
-            "custom_instructions": "keep context",
-        },
-        ["trigger", "has_custom_instructions"],
-    ),
-    "obs_user_prompt_submit.py": (
-        "UserPromptSubmit",
-        {
-            "session_id": "int-test",
-            "prompt": "Fix the bug in auth module",
-        },
-        ["prompt_length", "prompt_preview"],
-    ),
-    "obs_notification.py": (
-        "Notification",
-        {
-            "session_id": "int-test",
-            "notification_type": "permission_prompt",
-            "title": "Permission needed",
-            "message": "Allow Bash?",
-        },
-        ["notification_type", "title", "message_length"],
-    ),
-    "obs_permission_request.py": (
-        "PermissionRequest",
-        {
-            "session_id": "int-test",
-            "tool_name": "Bash",
-            "permission_suggestions": ["allow", "deny"],
-        },
-        ["tool_name", "suggestion_count"],
-    ),
 }
+
+_OBSERVE_SCRIPT = _OBS_DIR / "observe.py"
 
 
 class TestObsHooksHappyPath:
-    """Integration tests: each hook script produces correct JSONL output."""
+    """Integration tests: observe.py --event produces correct JSONL output."""
 
-    @pytest.fixture(params=list(_HOOK_SPECS.keys()))
-    def hook_spec(self, request):
-        return request.param, _HOOK_SPECS[request.param]
+    @pytest.fixture(params=list(_OBSERVE_SPECS.keys()))
+    def event_type(self, request):
+        return request.param
 
-    def test_happy_path(self, obs_scripts_dir, tmp_path, has_python3, hook_spec):
+    def test_happy_path_observe(self, tmp_path, has_python3, event_type):
         if not has_python3:
             pytest.skip("python3 required")
 
-        script_name, (event_type, sample_input, expected_keys) = hook_spec
-        script = obs_scripts_dir / script_name
+        sample_input, expected_keys = _OBSERVE_SPECS[event_type]
+        result = _run_python_hook(
+            _OBSERVE_SCRIPT,
+            sample_input,
+            env_extra={"IVY_OBSERVABILITY_DIR": str(tmp_path)},
+            event_type=event_type,
+        )
+        assert result.returncode == 0
 
+        events_file = tmp_path / "sessions" / "int-test" / "events.jsonl"
+        assert events_file.exists(), f"events.jsonl not created for {event_type}"
+
+        event = _read_last_event(events_file)
+        assert event["event_type"] == event_type
+        assert event["session_id"] == "int-test"
+        for key in expected_keys:
+            assert key in event.get("payload", {}), (
+                f"Missing payload key '{key}' in {event_type} output"
+            )
+
+    @pytest.fixture(params=list(_STANDALONE_SPECS.keys()))
+    def standalone_spec(self, request):
+        return request.param, _STANDALONE_SPECS[request.param]
+
+    def test_happy_path_standalone(self, obs_scripts_dir, tmp_path, has_python3, standalone_spec):
+        if not has_python3:
+            pytest.skip("python3 required")
+
+        script_name, (event_type, sample_input, expected_keys) = standalone_spec
+        script = obs_scripts_dir / script_name
         result = _run_python_hook(
             script,
             sample_input,
@@ -305,27 +332,21 @@ class TestObsHooksHappyPath:
 
         event = _read_last_event(events_file)
         assert event["event_type"] == event_type
-        assert event["session_id"] == "int-test"
-        for key in expected_keys:
-            assert key in event.get("payload", {}), (
-                f"Missing payload key '{key}' in {script_name} output"
-            )
 
 
 class TestObsHooksGracefulFailure:
     """Integration tests: hooks exit 0 on bad input."""
 
-    @pytest.fixture(params=list(_HOOK_SPECS.keys()))
-    def script_name(self, request):
+    @pytest.fixture(params=list(_OBSERVE_SPECS.keys()))
+    def event_type(self, request):
         return request.param
 
-    def test_invalid_json(self, obs_scripts_dir, has_python3, script_name):
+    def test_invalid_json(self, has_python3, event_type):
         if not has_python3:
             pytest.skip("python3 required")
 
-        script = obs_scripts_dir / script_name
         result = subprocess.run(
-            ["python3", str(script)],
+            ["python3", str(_OBSERVE_SCRIPT), "--event", event_type],
             input="not valid json {{{",
             capture_output=True,
             text=True,
@@ -333,61 +354,64 @@ class TestObsHooksGracefulFailure:
         )
         assert result.returncode == 0
 
-    def test_missing_session_id(self, obs_scripts_dir, tmp_path, has_python3, script_name):
+    def test_missing_session_id(self, tmp_path, has_python3, event_type):
         if not has_python3:
             pytest.skip("python3 required")
 
-        script = obs_scripts_dir / script_name
         result = _run_python_hook(
-            script,
+            _OBSERVE_SCRIPT,
             {"tool_name": "Bash"},
             env_extra={"IVY_OBSERVABILITY_DIR": str(tmp_path)},
+            event_type=event_type,
         )
         assert result.returncode == 0
 
 
 class TestObsPreToolUseSummarization:
-    """Tests for tool input summarization in obs_pre_tool_use.py."""
+    """Tests for tool input summarization in observe.py --event PreToolUse."""
 
-    def _run(self, obs_scripts_dir, tmp_path, tool_name, tool_input):
-        script = obs_scripts_dir / "obs_pre_tool_use.py"
+    def _run(self, tmp_path, tool_name, tool_input):
         result = _run_python_hook(
-            script,
+            _OBSERVE_SCRIPT,
             {
                 "session_id": "sum-test",
                 "tool_name": tool_name,
                 "tool_use_id": "tu_sum",
                 "tool_input": tool_input,
             },
-            env_extra={"IVY_OBSERVABILITY_DIR": str(tmp_path)},
+            env_extra={
+                "IVY_OBSERVABILITY_DIR": str(tmp_path),
+                "IVY_OBSERVABILITY_ALL_TOOLS": "1",
+            },
+            event_type="PreToolUse",
         )
         assert result.returncode == 0
         events_file = tmp_path / "sessions" / "sum-test" / "events.jsonl"
         return _read_last_event(events_file)
 
-    def test_bash_command_truncated(self, obs_scripts_dir, tmp_path, has_python3):
+    def test_bash_command_truncated(self, tmp_path, has_python3):
         if not has_python3:
             pytest.skip("python3 required")
-        event = self._run(obs_scripts_dir, tmp_path, "Bash", {"command": "x" * 500})
+        event = self._run(tmp_path, "Bash", {"command": "x" * 500})
         summary = event["payload"]["tool_summary"]
         assert len(summary["command"]) == 200
 
-    def test_write_shows_file_path_and_length(self, obs_scripts_dir, tmp_path, has_python3):
+    def test_write_shows_file_path_and_length(self, tmp_path, has_python3):
         if not has_python3:
             pytest.skip("python3 required")
         event = self._run(
-            obs_scripts_dir, tmp_path, "Write",
+            tmp_path, "Write",
             {"file_path": "/tmp/test.py", "content": "hello world"},
         )
         summary = event["payload"]["tool_summary"]
         assert summary["file_path"] == "/tmp/test.py"
         assert summary["content_length"] == 11
 
-    def test_mcp_tool_parsed(self, obs_scripts_dir, tmp_path, has_python3):
+    def test_mcp_tool_parsed(self, tmp_path, has_python3):
         if not has_python3:
             pytest.skip("python3 required")
         event = self._run(
-            obs_scripts_dir, tmp_path,
+            tmp_path,
             "mcp__plugin_ivy__ivy_verify",
             {"file": "model.ivy"},
         )
@@ -395,21 +419,21 @@ class TestObsPreToolUseSummarization:
         assert summary["mcp_server"] == "plugin_ivy"
         assert summary["mcp_tool"] == "ivy_verify"
 
-    def test_read_shows_file_path(self, obs_scripts_dir, tmp_path, has_python3):
+    def test_read_shows_file_path(self, tmp_path, has_python3):
         if not has_python3:
             pytest.skip("python3 required")
         event = self._run(
-            obs_scripts_dir, tmp_path, "Read",
+            tmp_path, "Read",
             {"file_path": "/tmp/data.txt"},
         )
         summary = event["payload"]["tool_summary"]
         assert summary["file_path"] == "/tmp/data.txt"
 
-    def test_unknown_tool_shows_keys(self, obs_scripts_dir, tmp_path, has_python3):
+    def test_unknown_tool_shows_keys(self, tmp_path, has_python3):
         if not has_python3:
             pytest.skip("python3 required")
         event = self._run(
-            obs_scripts_dir, tmp_path, "CustomTool",
+            tmp_path, "CustomTool",
             {"alpha": 1, "beta": 2},
         )
         summary = event["payload"]["tool_summary"]
