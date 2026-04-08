@@ -2,7 +2,7 @@
 
 NCT/NACT/NSCT methodology guidance for Ivy protocol testing via native Ivy LSP and ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.
 
-**Version:** 0.8.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
+**Version:** 0.9.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
 
 ## Overview
 
@@ -11,7 +11,7 @@ This is a **Claude Code plugin** for the PANTHER-Ivy tester. It provides methodo
 **What it does:**
 - Guides users through three testing methodologies (NCT, NACT, NSCT) with interactive agents
 - Provides domain knowledge via skills (Ivy language, 14-layer template, RFC mapping, tool catalogs)
-- Offers slash commands for common operations (verify, compile, scaffold, inspect)
+- Offers slash commands for common operations (verify, compile, inspect, health, observability)
 - Enforces MCP tool usage over direct CLI invocations via a PreToolUse hook
 
 **What it does NOT do:**
@@ -47,10 +47,10 @@ Claude Code auto-discovers plugins via the `.claude-plugin/` directory. No `pip 
 
 | Component | Count | Description | Details |
 |-----------|-------|-------------|---------|
-| Agents | 5 | Navigator, methodology guide, model reviewer, spec analyst, traceability agent | [agents/](agents/) |
-| Commands | 11 | Slash commands for verification, compilation, scaffolding, review, health, observability | [commands/](commands/) |
-| Skills | 20 | Domain knowledge, methodologies, tooling, interaction patterns, workspace management | [skills/](skills/) |
-| Hooks | 25 | 12 event types: PreToolUse, PostToolUse, PostToolUseFailure, SessionStart/End, Stop, Subagent, Compact, Prompt, Notification, Permission | [hooks/](hooks/) |
+| Agents | 3 (internal) | Model reviewer, spec analyst, traceability agent — dispatched by workflows, not user-facing | [agents/](plugins/panther-ivy-plugin/agents/) |
+| Commands | 5 (shortcuts) | Slash commands for verification, compilation, model info, health, observability | [commands/](plugins/panther-ivy-plugin/commands/) |
+| Skills | 12 (5 workflows + 7 knowledge) | Workflow skills (navigate, verify, build, review, triage) + domain knowledge (methodology, patterns, Ivy language, tooling, counterexamples, propagation, claims) | [skills/](plugins/panther-ivy-plugin/skills/) |
+| Hooks | 29 hooks across 12 event types | PreToolUse, PostToolUse, PostToolUseFailure, SessionStart/End, Stop, Subagent, PreCompact, UserPromptSubmit, Notification, PermissionRequest | [hooks/](plugins/panther-ivy-plugin/hooks/) |
 
 ## Tooling Architecture
 
@@ -80,22 +80,20 @@ A **SessionStart hook** (`hooks/scripts/detect-ivy-workspace.sh`) detects the Iv
 /nct-check file=protocol-testing/quic/quic_stack/quic_packet.ivy
 ```
 
-**Scaffold a new protocol:**
-```
-/nct-scaffold type=protocol name=coap
-```
+**Build a new protocol model:**
+Ask Claude "I need to write an Ivy specification for the CoAP protocol" to activate the `build` workflow, which scaffolds layers, generates templates, and guides you through the 14-layer architecture.
 
-For interactive guidance, ask Claude directly -- the agents activate automatically:
-- "Walk me through the QUIC protocol specification structure" (triggers `spec-analyst`)
-- "I need to write an Ivy specification for the CoAP protocol" (triggers `methodology-guide`)
-- "Which MUST requirements from RFC 9000 are we missing?" (triggers `traceability-agent`)
+For interactive guidance, ask Claude directly -- workflow routing activates automatically:
+- "Walk me through the QUIC protocol specification structure" (activates `navigate` workflow)
+- "I need to write an Ivy specification for the CoAP protocol" (activates `build` workflow)
+- "Which MUST requirements from RFC 9000 are we missing?" (activates `review` workflow)
 
 ## Methodology Overview
 
 | | NCT | NACT | NSCT |
 |---|-----|------|------|
 | **Description** | Formal spec plays one role against an IUT to verify RFC compliance | Extends NCT with APT lifecycle to model attacks | Runs specs in Shadow NS for deterministic, large-scale testing |
-| **Guide Agent** | `methodology-guide` | `methodology-guide` | `methodology-guide` |
+| **Entry Workflow** | `build` / `verify` | `build` / `verify` | `build` / `verify` |
 | **Methodology Skill** | `methodology-reference` | `methodology-reference` | `methodology-reference` |
 | **Key Concepts** | Role inversion, before/after monitors, `_finalize`, Z3/SMT | APT 6-stage lifecycle, attack entities, protocol bindings | Shadow NS, topology control, deterministic replay, scale testing |
 | **Typical Workflow** | 10-step: RFC analysis to compiled test binary | 9-step: threat model to attack test binary | NCT specs + Shadow NS config for simulated execution |
@@ -113,37 +111,49 @@ For interactive guidance, ask Claude directly -- the agents activate automatical
 ```
 panther-ivy-plugin/
 ├── .claude-plugin/
-│   └── plugin.json          # Plugin manifest (name, version, description)
-├── .mcp.json                # ivy-tools MCP server configuration
-│                            # Note: .lsp.json lives in sibling plugin plugins/ivy-lsp/
-├── agents/                  # 4 agent definitions
-│   ├── README.md            # Agent catalog and selection guide
-│   ├── methodology-guide.md # NCT/NACT/NSCT methodology guide
-│   ├── model-reviewer.md    # Model quality reviewer
-│   ├── spec-analyst.md      # Specification explorer and verifier
-│   └── traceability-agent.md # RFC requirement extraction and coverage audit
-├── commands/                # 7 slash commands
-│   ├── README.md            # Command reference and workflows
-│   ├── nct-check.md         # /nct-check -- formal verification
-│   ├── nct-compile.md       # /nct-compile -- compile to test binary
-│   ├── nct-model-info.md    # /nct-model-info -- model structure
-│   ├── nct-scaffold.md      # /nct-scaffold -- scaffold protocol or test
-│   ├── nct-add-pattern.md   # /nct-add-pattern -- add formal model pattern
-│   ├── nct-health.md        # /nct-health -- health check for LSP + MCP integration
-│   └── nct-validate.md      # /nct-validate -- comprehensive correctness validation
-├── hooks/
-│   ├── hooks.json           # Hook definitions (PreToolUse, PostToolUse, SessionStart)
-│   └── scripts/
-│       ├── block-direct-ivy.sh      # Warns about direct Ivy CLI, suggests MCP
-│       └── post-write-ivy-lint.sh   # Fast structural lint after .ivy writes
-├── skills/                  # 6 skill directories
-│   ├── README.md            # Skill catalog and learning paths
-│   ├── methodology-reference/ # NCT/NACT/NSCT methodology reference
-│   ├── specification-patterns/ # 14-layer template + pattern library
-│   ├── ivy-writing-guide/   # Ivy language reference + RFC annotations
-│   ├── tooling-reference/   # LSP + MCP tool catalog + coordination
-│   ├── ivy-lsp-walkthrough/ # End-to-end LSP + MCP example
-│   └── workflow-reference/  # Verification, RFC mapping, quality gates
+│   └── marketplace.json     # Marketplace metadata
+├── plugins/
+│   ├── ivy-lsp/
+│   │   └── .lsp.json        # Native Ivy LSP configuration
+│   └── panther-ivy-plugin/
+│       ├── .claude-plugin/
+│       │   └── plugin.json  # Plugin manifest (name, version, description)
+│       ├── .mcp.json        # ivy-tools MCP server configuration
+│       ├── .lsp.json        # LSP configuration (co-located)
+│       ├── CLAUDE.md        # Operating guide (workflow routing, tool rules, methodology)
+│       ├── routing-rules.json # Smart routing rules for UserPromptSubmit hook
+│       ├── settings.json    # Plugin settings
+│       ├── agents/          # 3 internal agents (dispatched by workflows)
+│       │   ├── README.md
+│       │   ├── model-reviewer.md
+│       │   ├── spec-analyst.md
+│       │   └── traceability-agent.md
+│       ├── commands/        # 5 shortcut commands
+│       │   ├── README.md
+│       │   ├── nct-check.md         # /nct-check -- formal verification
+│       │   ├── nct-compile.md       # /nct-compile -- compile to test binary
+│       │   ├── nct-model-info.md    # /nct-model-info -- model structure
+│       │   ├── nct-health.md        # /nct-health -- 9-step diagnostic
+│       │   └── nct-observability.md # /nct-observability -- JSONL event logs
+│       ├── hooks/
+│       │   ├── hooks.json   # 27 hooks across 12 event types
+│       │   └── scripts/     # Hook implementations (sh, py)
+│       ├── skills/          # 5 workflow + 7 knowledge skills
+│       │   ├── README.md
+│       │   ├── navigate/    # Session entry, warm resume, intent routing
+│       │   ├── verify/      # Verify, debug failures, run tests
+│       │   ├── build/       # Scaffold, add layers, propagate changes
+│       │   ├── review/      # Audit quality, coverage, RFC compliance
+│       │   ├── triage/      # Toolchain health, MCP/LSP diagnostics
+│       │   ├── methodology-reference/   # NCT/NACT/NSCT reference
+│       │   ├── specification-patterns/  # 14-layer template + pattern library
+│       │   ├── ivy-writing-guide/       # Ivy language reference
+│       │   ├── ivy-toolkit/             # LSP + MCP tool catalog
+│       │   ├── counterexample-guide/    # Z3 counterexample interpretation
+│       │   ├── propagation-patterns/    # Change propagation across layers
+│       │   └── claim-discussion/        # Claim/argument analysis
+│       ├── scripts/         # Server startup scripts
+│       └── tests/           # Plugin test suite
 └── README.md                # This file
 ```
 
