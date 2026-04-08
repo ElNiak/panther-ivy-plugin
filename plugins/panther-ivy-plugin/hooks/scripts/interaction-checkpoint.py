@@ -10,9 +10,17 @@ Non-blocking — always exits 0. Only injects reminders, never blocks tool use.
 
 import json
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from workflow_state import find_protocol_dir, get_active_workflow
 
 
 def main():
+    protocol_dir = find_protocol_dir()
+    if protocol_dir and get_active_workflow(protocol_dir) is not None:
+        sys.exit(0)
+
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, EOFError):
