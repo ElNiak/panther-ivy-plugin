@@ -60,7 +60,7 @@ def _resolve_session_id(raw_session_id: str) -> str:
       session file > raw_session_id > "unknown"
     """
     if _canonical_resolve is not None:
-        return _canonical_resolve()
+        return _canonical_resolve({"session_id": raw_session_id} if raw_session_id else None)
     # Inline fallback matching ivy-lsp priority
     for var in ("IVY_SESSION_ID", "CLAUDE_SESSION_ID", "CLAUDE_CODE_SESSION_ID"):
         from_env = os.environ.get(var, "").strip()
