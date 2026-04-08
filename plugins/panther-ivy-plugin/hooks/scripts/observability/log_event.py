@@ -182,5 +182,5 @@ def read_stdin() -> dict[str, Any]:
     try:
         data = json.load(sys.stdin)
         return data if isinstance(data, dict) else {}
-    except (OSError, ValueError, TypeError):
+    except (OSError, EOFError, ValueError, TypeError):
         return {}
