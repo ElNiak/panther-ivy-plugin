@@ -16,6 +16,41 @@ This document is your self-contained operating guide. Skills provide supplementa
 
 Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation, analysis), agents, and skills.
 
+## Workflow Routing
+
+When a user expresses intent, activate the matching workflow skill. If ambiguous, activate navigate.
+
+| User Intent | Workflow | Examples |
+|---|---|---|
+| Verify, test, debug failure | verify | "check my spec", "why did it fail", "run tests on handshake" |
+| Create model, add layers, propagate changes | build | "model QUIC connection", "add frame variants", "I changed a type" |
+| Audit quality, check coverage, review | review | "RFC coverage?", "review my model", "quality issues?" |
+| Toolchain broken, health check | triage | "MCP won't connect", "nothing works", "health check" |
+| Unclear intent, session resume, what's next | navigate | "where was I?", "what should I do?", "I'm new here" |
+
+### Routing Rules
+1. If a workflow is already active (check `<protocol-directory>/.panther-ivy/active-workflow`), stay in it unless the user explicitly asks to switch.
+2. Direct tool requests ("call ivy_verify on X") use shortcut commands, not workflows.
+3. Learning questions ("how does NCT work?") are answered using loaded knowledge skills, no workflow activation.
+4. Every workflow returns to navigate on completion.
+
+## State Management
+
+Read `.panther-ivy/active-workflow` on every turn to know your current workflow phase.
+
+**Active-workflow flag** (`<protocol-dir>/.panther-ivy/active-workflow`):
+```yaml
+workflow: verify
+phase: compile
+invocation_depth: 0
+started: "2026-04-07T14:30:00Z"
+caller: null
+```
+
+**Build-state file** (`<protocol-dir>/.panther-ivy/build-state.yaml`): Multi-session build progress. Written by the build workflow at Phase 2. Read by navigate for warm session resume.
+
+**Sub-workflow protocol:** When a workflow invokes another (e.g., build→verify), `invocation_depth` increments and `caller` records the invoker. On completion, decrement and return to caller — not to navigate.
+
 ## Tool Rules — CRITICAL
 
 **CLI commands with MCP equivalents** — a PreToolUse hook warns when these are used directly. Prefer MCP tools for structured output:
@@ -95,16 +130,23 @@ The `ivy_coverage` tool (all modes: stats, gaps, matrix) accepts different scopi
 
 Example: `ivy_coverage(mode="stats", test_file="quic/quic_tests/client_tests/quic_client_test.ivy")` returns coverage scoped to the client endpoint mirror's include closure only.
 
-### Available Skills
+### Available Workflows
 
-`counterexample-guide`, `healthcheck`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-protocol-model-builder`, `ivy-toolkit`, `ivy-workflow-orchestrator`, `ivy-writing-guide`, `lsp-patterns`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `propagation-patterns`, `specification-patterns`, `workspace-management`, `workflow-reference`
+**User-facing entry points** (activated by routing or natural language):
+`navigate`, `verify`, `build`, `review`, `triage`
 
-**Interaction skills** (shared patterns for interactive agent workflows):
-`interaction-patterns` (checkpoint types, question formats), `claim-discussion` (verification/RFC/coverage claim resolution), `adaptive-interview` (Navigator agent interview logic)
+### Shortcut Commands
 
-### Available Agents
+**Direct tool access** (bypass workflows):
+`/nct-check` (ivy_verify), `/nct-compile` (ivy_compile), `/nct-model-info` (ivy_model_info), `/nct-observability` (JSONL logs)
 
-`navigator` (adaptive entry point — detects goals and routes to specialist agents), `methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`
+### Internal Components
+
+**Agents** (dispatched by workflows, not user-facing):
+`spec-analyst`, `model-reviewer`, `traceability-agent`
+
+**Knowledge skills** (loaded by workflows, not user-facing):
+`counterexample-guide`, `specification-patterns`, `propagation-patterns`, `ivy-writing-guide`, `ivy-toolkit`, `claim-discussion`, `methodology-reference`
 
 ## Workspace Awareness
 
@@ -410,8 +452,7 @@ When `<new-diagnostics>` contains `[ivy-lsp] indexing in progress`, the LSP is s
 
 ## Quick Reference
 
-**Commands**: `/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-scaffold`, `/nct-add-pattern`, `/nct-health`, `/nct-validate`, `/nct-observability`, `/nct-review`, `/nct-serena-health`, `/nct-propagate`
-
-**Skills for deep dives**: `counterexample-guide`, `healthcheck`, `incremental-spec-dev`, `ivy-lsp-walkthrough`, `ivy-protocol-model-builder`, `ivy-toolkit`, `ivy-workflow-orchestrator`, `ivy-writing-guide`, `lsp-patterns`, `methodology-reference`, `nact-methodology`, `nct-methodology`, `nsct-methodology`, `propagation-patterns`, `specification-patterns`, `workspace-management`, `workflow-reference`
-
-**Agents**: `navigator`, `methodology-guide`, `spec-analyst`, `model-reviewer`, `traceability-agent`
+**Workflows**: navigate, verify, build, review, triage
+**Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-observability
+**Internal agents**: spec-analyst, model-reviewer, traceability-agent
+**Internal knowledge**: counterexample-guide, specification-patterns, propagation-patterns, ivy-writing-guide, ivy-toolkit, claim-discussion, methodology-reference
