@@ -20,9 +20,9 @@ import sys
 import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from hook_utils import get_mcp_health_state_path, emit_hook_output
+from hook_utils import get_mcp_health_state_path, emit_hook_output, MAX_CONSECUTIVE_MCP_FAILURES
 
-_MAX_CONSECUTIVE_FAILURES = 3
+_MAX_CONSECUTIVE_FAILURES = MAX_CONSECUTIVE_MCP_FAILURES
 _STATE_TTL = 300  # Reset state after 5 minutes of no activity
 _STALE_PORT_AGE = 120  # Port file older than 2 min with no TCP → stale
 _PID_DIR = "/tmp/ivy-lsp-pids"

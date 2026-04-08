@@ -26,6 +26,12 @@ _KNOWN_EVENTS = {
 }
 
 
+def _parse_mcp_tool_name(tool_name: str) -> tuple[str, str]:
+    """Extract (server, tool) from an MCP tool name like 'mcp__server__tool'."""
+    parts = tool_name.split("__", 3)
+    return (parts[1] if len(parts) > 1 else "", parts[-1] if len(parts) > 2 else tool_name)
+
+
 def _summarize_tool_input(tool_name: str, tool_input: dict) -> dict:
     """Produce a privacy-safe summary of tool input."""
     if tool_name == "Bash":
@@ -38,11 +44,8 @@ def _summarize_tool_input(tool_name: str, tool_input: dict) -> dict:
     if tool_name == "Read":
         return {"file_path": tool_input.get("file_path", "")}
     if tool_name.startswith("mcp__"):
-        parts = tool_name.split("__", 3)
-        return {
-            "mcp_server": parts[1] if len(parts) > 1 else "",
-            "mcp_tool": parts[-1] if len(parts) > 2 else tool_name,
-        }
+        server, tool = _parse_mcp_tool_name(tool_name)
+        return {"mcp_server": server, "mcp_tool": tool}
     return {"keys": list(tool_input.keys())[:10]}
 
 
@@ -74,9 +77,9 @@ def _build_payload(event_type: str, data: dict) -> dict | None:
             "is_mcp_tool": is_mcp,
         }
         if is_mcp:
-            parts = tool_name.split("__", 3)
-            payload["mcp_server"] = parts[1] if len(parts) > 1 else ""
-            payload["mcp_tool_name"] = parts[-1] if len(parts) > 2 else tool_name
+            server, tool = _parse_mcp_tool_name(tool_name)
+            payload["mcp_server"] = server
+            payload["mcp_tool_name"] = tool
         return payload
 
     if event_type == "SessionStart":
@@ -185,16 +188,15 @@ def main():
     parser.add_argument("--event", required=True)
     args = parser.parse_args()
 
-    try:
-        data = json.load(sys.stdin)
-        if not isinstance(data, dict):
-            data = {}
-    except (json.JSONDecodeError, EOFError, ValueError):
-        data = {}
+    if os.environ.get("IVY_OBSERVABILITY_ENABLED", "1") == "0":
+        return
 
     if args.event not in _KNOWN_EVENTS:
         print(f"[ivy-obs] unknown event type: {args.event}", file=sys.stderr)
 
+    from log_event import read_stdin, log_event
+
+    data = read_stdin()
     session_id = data.get("session_id", "")
     payload = _build_payload(args.event, data)
 
@@ -202,7 +204,6 @@ def main():
         return
 
     try:
-        from log_event import log_event
         log_event(args.event, session_id, payload)
     except Exception:
         pass

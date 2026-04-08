@@ -89,7 +89,7 @@ def check_for_interaction(tool_name: str, output: str) -> str | None:
     # ivy_quality gate failure → quality discussion
     if "ivy_quality" in tool_name:
         if any(kw in output.lower() for kw in [
-            "fail", "below", "not met", "gate_result.*fail",
+            "fail", "below", "not met",
         ]):
             return (
                 "[INTERACTION CHECKPOINT] Quality gate check completed with issues. "

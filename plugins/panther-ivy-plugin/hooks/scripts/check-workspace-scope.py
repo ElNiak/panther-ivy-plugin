@@ -20,20 +20,20 @@ def main():
     file_path = tool_input.get("file_path", "")
 
     if not file_path:
-        return  # No file path — allow
+        return
 
-    # Only check .ivy files
     if not file_path.endswith(".ivy"):
-        return  # Non-ivy files are unconstrained
+        return
 
-    # Check if stdlib
     if os.sep + os.path.join("ivy", "include") in file_path:
-        return  # Stdlib always allowed
+        return
 
-    # Load workspace state
     workspace_root = os.environ.get("IVY_WORKSPACE_ROOT", "")
     if not workspace_root:
-        return  # No workspace detected — allow
+        return
+
+    # Parse .ivyworkspace once for all helpers
+    ivyworkspace_config = _load_ivyworkspace(workspace_root)
 
     state_file = os.path.join(workspace_root, ".ivy-workspace-state.json")
 
@@ -41,9 +41,7 @@ def main():
         with open(state_file) as f:
             state = json.load(f)
     except (OSError, json.JSONDecodeError):
-        # Missing or corrupt state file — allow (fail open)
-        # But do progressive narrowing
-        _progressive_narrowing(file_path, workspace_root)
+        _progressive_narrowing(file_path, workspace_root, ivyworkspace_config)
         return
 
     active_group = state.get("active_group")
@@ -51,15 +49,12 @@ def main():
     set_by = state.get("set_by", "unknown")
 
     if not active_layers:
-        # No active workspace — do progressive narrowing
-        _progressive_narrowing(file_path, workspace_root)
+        _progressive_narrowing(file_path, workspace_root, ivyworkspace_config)
         return
 
-    # Determine file's layer from .ivyworkspace
-    file_layer = _get_file_layer(file_path, workspace_root)
+    file_layer = _get_file_layer(file_path, workspace_root, ivyworkspace_config)
 
     if file_layer is None:
-        # File not in any layer — warn but allow
         emit_hook_output(
             "PreToolUse",
             additional_context=(
@@ -71,11 +66,9 @@ def main():
         return
 
     if file_layer in active_layers:
-        return  # In scope — allow
+        return
 
-    # BLOCKED — file is outside active workspace
-    # Find which group this file belongs to for the suggestion
-    file_group = _find_group_for_layer(file_layer, workspace_root)
+    file_group = _find_group_for_layer(file_layer, ivyworkspace_config)
 
     emit_hook_output(
         "PreToolUse",
@@ -88,23 +81,26 @@ def main():
     )
 
 
-def _get_file_layer(file_path, workspace_root):
-    """Determine which workspace layer a file belongs to by checking .ivyworkspace."""
-    ivyworkspace_path = os.path.join(workspace_root, ".ivyworkspace")
+def _load_ivyworkspace(workspace_root):
+    """Load and parse .ivyworkspace config. Returns dict or empty dict."""
     try:
-        with open(ivyworkspace_path) as f:
-            config = json.load(f)
+        with open(os.path.join(workspace_root, ".ivyworkspace")) as f:
+            return json.load(f)
     except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _get_file_layer(file_path, workspace_root, config):
+    """Determine which workspace layer a file belongs to."""
+    if not config:
         return None
 
-    # Normalize file path relative to workspace root
     abs_path = os.path.realpath(file_path)
     try:
         rel_path = os.path.relpath(abs_path, workspace_root)
     except ValueError:
         return None
 
-    # Check each layer's include_paths
     for layer in config.get("workspace_layers", []):
         for include_path in layer.get("include_paths", []):
             if rel_path.startswith(include_path):
@@ -113,13 +109,9 @@ def _get_file_layer(file_path, workspace_root):
     return None
 
 
-def _find_group_for_layer(layer_id, workspace_root):
+def _find_group_for_layer(layer_id, config):
     """Find which workspace_group contains a layer."""
-    ivyworkspace_path = os.path.join(workspace_root, ".ivyworkspace")
-    try:
-        with open(ivyworkspace_path) as f:
-            config = json.load(f)
-    except (OSError, json.JSONDecodeError):
+    if not config:
         return None
 
     for group_name, group_layers in config.get("workspace_groups", {}).items():
@@ -128,15 +120,14 @@ def _find_group_for_layer(layer_id, workspace_root):
     return None
 
 
-def _progressive_narrowing(file_path, workspace_root):
+def _progressive_narrowing(file_path, workspace_root, ivyworkspace_config):
     """Track inferred protocol from edits; suggest /set-workspace on cross-protocol."""
     session_id = resolve_session_id()
-    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
-    state_dir = os.path.join(ws_root, ".observability", "sessions", session_id)
+    state_dir = os.path.join(workspace_root, ".observability", "sessions", session_id)
     os.makedirs(state_dir, exist_ok=True)
     state_path = os.path.join(state_dir, "inferred-protocol.json")
 
-    current_layer = _get_file_layer(file_path, workspace_root)
+    current_layer = _get_file_layer(file_path, workspace_root, ivyworkspace_config)
     if not current_layer:
         return
 
@@ -162,7 +153,7 @@ def _progressive_narrowing(file_path, workspace_root):
         )
     elif not previous_layer:
         # First edit — suggest
-        group = _find_group_for_layer(current_layer, workspace_root)
+        group = _find_group_for_layer(current_layer, ivyworkspace_config)
         if group:
             emit_hook_output(
                 "PreToolUse",

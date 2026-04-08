@@ -66,12 +66,15 @@ def get_mcp_health_state_path() -> str:
     return os.path.join(state_dir, "mcp-health-state.json")
 
 
+MAX_CONSECUTIVE_MCP_FAILURES = 3
+
+
 def read_stdin() -> dict:
     """Read and parse JSON from stdin. Returns empty dict on failure."""
     try:
         data = json.load(sys.stdin)
         return data if isinstance(data, dict) else {}
-    except (OSError, ValueError, TypeError):
+    except (OSError, EOFError, ValueError, TypeError):
         return {}
 
 
