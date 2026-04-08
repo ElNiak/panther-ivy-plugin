@@ -1,7 +1,6 @@
 ---
 name: nact-methodology
-description: "Use when working with NACT (Network-Attack Compositional Testing), security testing, APT lifecycle modeling, or attack entity configuration. Covers APT 6-stage lifecycle, attack entities, protocol-specific bindings."
-loads: [nct-methodology, ivy-toolkit]
+description: "DEPRECATED — absorbed into methodology-reference. Will be removed in a future version."
 ---
 
 <HARD-GATE>

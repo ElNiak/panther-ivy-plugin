@@ -1,9 +1,8 @@
 ---
 name: ivy-writing-guide
-description: "Use when editing .ivy files, creating test specifications, or adding RFC bracket-tag annotations. Covers Ivy syntax, declaration types, module system, test spec patterns, and annotated specification writing."
+description: "Internal knowledge skill — Ivy syntax, declarations, module system, RFC annotation. Do not invoke directly; loaded by build (Phase 3) and verify (test design)."
 context: fork
 paths: "**/*.ivy"
-loads: [specification-patterns, ivy-toolkit]
 ---
 
 # Ivy Writing Guide

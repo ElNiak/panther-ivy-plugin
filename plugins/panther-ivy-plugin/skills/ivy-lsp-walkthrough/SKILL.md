@@ -1,7 +1,6 @@
 ---
 name: ivy-lsp-walkthrough
-description: Use when you need a concrete end-to-end example of LSP + MCP coordination on a real protocol specification
-loads: [lsp-patterns, ivy-writing-guide]
+description: "DEPRECATED — absorbed into ivy-toolkit. Will be removed in a future version."
 ---
 
 > **LSP Scoped Access:** This skill is one of the approved contexts for direct LSP calls. See the `lsp-patterns` skill for invocation reference.

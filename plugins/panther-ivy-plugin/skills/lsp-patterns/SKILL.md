@@ -1,6 +1,6 @@
 ---
 name: lsp-patterns
-description: "LSP invocation patterns for Ivy formal models. Use only in scoped contexts: validation/health commands (nct-validate, nct-health) and the ivy-lsp-walkthrough skill. NOT for everyday navigation — use Read/Grep/Glob and MCP tools instead."
+description: "DEPRECATED — absorbed into ivy-toolkit. Will be removed in a future version."
 ---
 
 # LSP Invocation Patterns (Scoped Access)

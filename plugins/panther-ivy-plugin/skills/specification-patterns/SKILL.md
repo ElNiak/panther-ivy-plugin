@@ -1,6 +1,6 @@
 ---
 name: specification-patterns
-description: "Use when structuring a new formal protocol specification into modular Ivy layers, choosing which layers to scaffold first, or selecting formal model patterns (variants, serdes, shims, monitors, entities, modules)."
+description: "Internal knowledge skill — layer selection, pattern scaffolding templates. Do not invoke directly; loaded by build (Phase 2 blueprint)."
 allowed-tools: "Read Grep Glob ToolSearch"
 ---
 

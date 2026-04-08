@@ -1,6 +1,6 @@
 ---
 name: interaction-patterns
-description: "Use when any agent needs to interact with the user during a workflow — defines checkpoint types, question formats, and follow-up strategies for consistent interaction across all agents."
+description: "DEPRECATED — checkpoint definitions inlined into workflow skills. Will be removed in a future version."
 ---
 
 # Interaction Patterns

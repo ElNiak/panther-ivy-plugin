@@ -1,6 +1,6 @@
 ---
 name: propagation-patterns
-description: "Pattern knowledge for propagating Ivy type changes to ser/deser state machines. Covers struct field addition and frame variant addition with encoding tables, concrete examples, asymmetry warnings, and hardcoded constant detection."
+description: "Internal knowledge skill — type change impact analysis patterns. Do not invoke directly; loaded by build (Phase 3 propagation)."
 ---
 
 # Propagation Patterns

@@ -1,6 +1,6 @@
 ---
 name: healthcheck
-description: "Fast triage of Ivy MCP sidecar and LSP stack health. Use when MCP tools fail, sidecar seems unresponsive, before starting a work session, or to quickly assess stack health. Checks process liveness, port files, workspace env vars, MCP tool responses, indexer readiness, and runs pytest."
+description: "DEPRECATED — absorbed into triage workflow. Will be removed in a future version."
 ---
 
 # Ivy Stack Healthcheck

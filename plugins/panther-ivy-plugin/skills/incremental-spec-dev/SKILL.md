@@ -1,7 +1,6 @@
 ---
 name: incremental-spec-dev
-description: Use when adding requirements to an Ivy specification one at a time with verification between each addition. Guides the add-verify-iterate loop for incremental formal specification development.
-loads: [counterexample-guide, ivy-writing-guide, ivy-toolkit, specification-patterns]
+description: "DEPRECATED — absorbed into build workflow Phase 3. Will be removed in a future version."
 ---
 
 <HARD-GATE>

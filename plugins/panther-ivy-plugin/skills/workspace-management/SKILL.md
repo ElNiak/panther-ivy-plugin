@@ -1,7 +1,6 @@
 ---
 name: workspace-management
-description: "Manage Ivy workspace scoping — set, clear, or check the active protocol workspace. Use when the user mentions a specific protocol, opens .ivy files, begins formal specification work without an active workspace, or asks to scope/restrict their editing context."
-loads: [ivy-toolkit]
+description: "DEPRECATED — workspace management stays as hooks only. Will be removed in a future version."
 ---
 
 # Workspace Management

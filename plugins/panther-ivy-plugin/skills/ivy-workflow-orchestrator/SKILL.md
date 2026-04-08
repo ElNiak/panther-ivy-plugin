@@ -1,10 +1,6 @@
 ---
 name: ivy-workflow-orchestrator
-description: This skill should be used when the user wants to "create a protocol spec",
-  "scaffold a new protocol", "write test specifications", "full NCT/NACT/NSCT workflow",
-  or any task that involves creating or significantly modifying Ivy formal specifications.
-  Do NOT use for read-only operations (check, model-info, lint).
-loads: [ivy-toolkit, specification-patterns, workflow-reference, ivy-writing-guide, incremental-spec-dev]
+description: "DEPRECATED — phase logic absorbed into workflow skills. Will be removed in a future version."
 ---
 
 # Ivy Workflow Orchestrator
