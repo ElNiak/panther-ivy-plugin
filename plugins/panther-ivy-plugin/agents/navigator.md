@@ -10,6 +10,8 @@ skills:
   - interaction-patterns
 ---
 
+> **NOTE:** The `navigate` workflow skill is now the preferred entry point for session routing. This agent is retained during the transition period.
+
 <example>
 Context: User is unsure where to start with Ivy protocol testing.
 user: "What should I do next?"
