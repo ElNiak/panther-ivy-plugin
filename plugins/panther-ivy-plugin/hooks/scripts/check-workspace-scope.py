@@ -103,7 +103,7 @@ def _get_file_layer(file_path, workspace_root):
         return None
 
     # Normalize file path relative to workspace root
-    abs_path = os.path.abspath(file_path)
+    abs_path = os.path.realpath(file_path)
     try:
         rel_path = os.path.relpath(abs_path, workspace_root)
     except ValueError:
