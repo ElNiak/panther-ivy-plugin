@@ -1,6 +1,6 @@
 ---
 name: navigator
-description: "Adaptive navigator agent for Ivy protocol testing. Detects user expertise, goals, and context to guide them through NCT/NACT/NSCT workflows with continuous interaction. Use when the user needs guidance on what to do next, wants to start a new testing workflow, or needs help choosing between approaches."
+description: "DEPRECATED: Use the navigate workflow skill instead."
 model: sonnet
 color: green
 tools: ["Read", "Grep", "Glob", "Bash", "ToolSearch"]

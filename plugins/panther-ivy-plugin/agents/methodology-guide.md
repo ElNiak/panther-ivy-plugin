@@ -1,6 +1,6 @@
 ---
 name: methodology-guide
-description: "Use this agent when the user is working with NCT (compositional protocol testing), NACT (attack testing, security testing, APT lifecycle), or NSCT (simulation, Shadow NS, large-scale testing) methodology. Covers all three PANTHER formal testing methodologies."
+description: "DEPRECATED: Content moved to methodology-reference knowledge skill."
 model: sonnet
 color: cyan
 tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit", "ToolSearch"]

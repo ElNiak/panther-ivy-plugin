@@ -1,6 +1,6 @@
 ---
 name: spec-analyst
-description: "Use this agent when the user wants to understand, explore, navigate, verify, diagnose, or debug Ivy protocol specifications. Handles both specification exploration (structure, dependencies, coverage) and verification (formal checking, compilation, error diagnosis)."
+description: "Internal agent — dispatched by verify, build, and review workflows for specification navigation and verification diagnostics. Not user-facing."
 model: sonnet
 color: blue
 tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit", "ToolSearch"]

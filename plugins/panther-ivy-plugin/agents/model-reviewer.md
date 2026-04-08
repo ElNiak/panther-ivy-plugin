@@ -1,6 +1,6 @@
 ---
 name: model-reviewer
-description: "Use when the user asks to review an Ivy specification for correctness, check model quality, or verify a spec after writing it. Dispatched by the orchestrator during Phase 4 (Verify). Reviews model structure, coverage gaps, and quality gate compliance."
+description: "Internal agent — dispatched by build and review workflows for adversarial model quality audits. Not user-facing."
 model: opus
 color: magenta
 tools: ["Read", "Grep", "Glob", "ToolSearch"]

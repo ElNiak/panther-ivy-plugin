@@ -1,6 +1,6 @@
 ---
 name: traceability-agent
-description: "Use this agent when the user wants to extract RFC requirements, create or update requirement manifests, review RFC coverage, analyze traceability gaps, or audit the mapping between RFC requirements and Ivy assertions. **This agent should be invoked proactively** after adding RFC bracket-tag annotations (`# [rfcNNNN:X.Y]`) to Ivy files, or after extracting new requirements from RFC text."
+description: "Internal agent — dispatched by build and review workflows for RFC requirement extraction and coverage auditing. Not user-facing."
 model: sonnet
 color: orange
 tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "ToolSearch"]
