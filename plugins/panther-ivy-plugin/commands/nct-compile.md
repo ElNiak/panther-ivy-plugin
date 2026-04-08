@@ -72,4 +72,4 @@ The executable can be found in the build/ directory.
 
 **IMPORTANT**: Do NOT run `ivyc` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile`.
 
-See the `workflow-reference` skill for compilation troubleshooting.
+See the `methodology-reference` knowledge skill for compilation troubleshooting.

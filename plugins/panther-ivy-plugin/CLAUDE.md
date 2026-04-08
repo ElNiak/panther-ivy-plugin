@@ -69,7 +69,7 @@ caller: null
 `ivy_coverage` (mode="stats" for coverage stats, mode="gaps" for unguarded state/uncovered reqs, mode="matrix" for requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text; output="manifest" to produce YAML manifest)
 
 **Semantic query**:
-**LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted in two contexts only: (1) validation/health commands (`/nct-validate`, `/nct-health`) and (2) the `ivy-lsp-walkthrough` skill. For LSP invocation patterns, see the `lsp-patterns` skill.
+**LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted when dispatched by workflow skills (e.g., the triage workflow for health checks, or the verify workflow for diagnostics). For LSP invocation patterns, see the `ivy-toolkit` knowledge skill.
 
 **Visualization MCP tools** (model views):
 `ivy_visualize` (view="dependencies" for action dependency graph, view="state_machine" for state-machine perspective, view="layers" for layered overview by file/module), `ivy_model_summary` (detail="summary" for per-action summary, detail="requirements" for per-action requirements)
@@ -264,7 +264,7 @@ Provides deterministic execution (seed-controlled), scale testing (many nodes), 
 
 **Minimum viable set** (7 layers): Types, Frame, Packet, Connection, Entity Defs, Entity Behavior, Shims.
 
-Use `/nct-scaffold type=protocol` to scaffold. Reference `protocol-testing/quic/` as the complete example (200+ files).
+Use the `build` workflow to scaffold a new protocol model. Reference `protocol-testing/quic/` as the complete example (200+ files).
 
 ## Ivy Language Patterns (from QUIC Reference Model)
 
@@ -419,7 +419,7 @@ protocol-testing/{prot}/
 
 ## Debugging & Troubleshooting
 
-**Health check**: Run `/nct-health` to verify LSP + MCP are working correctly.
+**Health check**: Run the `triage` workflow or call `ivy_health_check` to verify LSP + MCP are working correctly.
 
 **Log files**:
 - `/tmp/ivy-lsp-latest.log` — symlink to whichever server started last (backward compat)

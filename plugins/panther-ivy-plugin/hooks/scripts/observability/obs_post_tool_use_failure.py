@@ -63,7 +63,7 @@ def main():
                 additional_context=(
                     f"[ivy-health] WARNING: {state['consecutive_failures']} "
                     "consecutive MCP tool failures. The MCP server may be "
-                    "crashed. Consider running /nct-health or stopping MCP "
+                    "crashed. Consider running the triage workflow or stopping MCP "
                     "tool calls until resolved."
                 ),
             )

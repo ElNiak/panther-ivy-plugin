@@ -119,7 +119,7 @@ HH:03  ██  (2 events)
 
 ### Step 4: Interactive Exploration
 
-After presenting the analysis for any mode, engage the user. Reference the `interaction-patterns` skill for checkpoint format details.
+After presenting the analysis for any mode, engage the user.
 
 **After presenting summary/events/timeline → Collaborative**:
 - Ask: "Here's the {mode} analysis. Want to drill into any specific area? (e.g., a specific tool, time range, or error pattern)"

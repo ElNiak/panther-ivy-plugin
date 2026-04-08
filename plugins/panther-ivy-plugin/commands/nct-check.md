@@ -12,7 +12,7 @@ arguments:
 > **Shortcut command** — directly calls `ivy_verify`. For guided verification with failure diagnosis, use the `verify` workflow.
 
 <!-- MODE: FAST — Single-file verification, no orchestrator required -->
-<!-- For full methodology workflow, use /nct-scaffold instead -->
+<!-- For full methodology workflow, use the build workflow instead -->
 
 Run formal verification on the specified Ivy file using ivy-tools.
 
@@ -61,7 +61,7 @@ All formal properties verified successfully.
 
 ### Step 5: Interactive Claim Discussion
 
-After presenting the result, engage the user before suggesting next steps. Reference the `interaction-patterns`, `claim-discussion`, and `counterexample-guide` skills.
+After presenting the result, engage the user before suggesting next steps. Reference the `claim-discussion` and `counterexample-guide` skills.
 
 **If FAIL → Gate checkpoint (Verification Claim Discussion)**:
 1. State the violated property clearly: "Property X in isolate Y failed."
@@ -70,11 +70,11 @@ After presenting the result, engage the user before suggesting next steps. Refer
 4. Do NOT suggest next steps until the user has responded. Use the `counterexample-guide` skill to help interpret traces.
 
 **If PASS → Inform-and-Continue**:
-- State: "All properties verified successfully. Run `/nct-review` for deeper analysis or `/nct-compile` to build the test binary?"
+- State: "All properties verified successfully. Run the `review` workflow for deeper analysis or `/nct-compile` to build the test binary?"
 - No gate needed — proceed with whatever the user says next.
 
 ---
 
 **IMPORTANT**: Do NOT run `ivy_check` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify`.
 
-See the `workflow-reference` skill for verification debugging strategies.
+See the `methodology-reference` knowledge skill for verification debugging strategies.

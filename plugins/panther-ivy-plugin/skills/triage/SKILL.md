@@ -161,7 +161,7 @@ Recovery failed. Full diagnostics:
 Suggested manual steps:
 1. Check if uvx is on PATH
 2. Try: kill $(cat /tmp/ivy-lsp-*.pid) then retry
-3. Run /nct-health for deep 9-step diagnostics
+3. Re-run the full triage diagnostic cycle (Phases 2-3)
 ```
 
 ---
@@ -188,7 +188,6 @@ When invoked as preflight (`invocation_depth > 0`):
 
 - **Called by:** `navigate` (preflight), `build`/`verify`/`review` (preflight), user directly ("things are broken")
 - **Replaces:** `healthcheck` skill (deprecated — triage is the successor)
-- **Related:** `/nct-health` command provides deeper 9-step diagnostics after fast triage
 - **Log files:** `/tmp/ivy-lsp-lsp-latest.log`, `/tmp/ivy-mcp-latest.log`
 - **PID files:** `/tmp/ivy-lsp-*.pid`, `/tmp/ivy-mcp-*.pid`
 - **Port files:** `/tmp/ivy-mcp-*.port`

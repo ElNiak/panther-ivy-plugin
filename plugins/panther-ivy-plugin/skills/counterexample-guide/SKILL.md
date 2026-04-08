@@ -17,7 +17,7 @@ Use this skill when `ivy_verify` output contains either of these fields:
 - **`counterexample`**: Structured dict with `assertion`, `assertion_line`, and `steps` (parsed from raw ivy_check output)
 - **`counterexample_trace`**: Human-readable formatted trace with step-by-step state changes
 
-If the verification fails but no counterexample is present, the failure is likely a type error, unresolved symbol, or Z3 timeout -- use the `workflow-reference` skill instead for those cases.
+If the verification fails but no counterexample is present, the failure is likely a type error, unresolved symbol, or Z3 timeout -- use the `methodology-reference` skill instead for those cases.
 
 ---
 
@@ -307,7 +307,7 @@ After applying the fix, re-run `ivy_verify` to confirm the counterexample is res
 **Prerequisite:** `ivy-writing-guide` -- Understanding Ivy syntax for before/after monitors, invariants, and state variables.
 
 **Related skills:**
-- **workflow-reference** -- General verification debugging cycle and error taxonomy
+- **methodology-reference** -- General verification debugging cycle and error taxonomy
 - **ivy-toolkit** -- MCP tool documentation (see references/tool-catalog.md)
 - **ivy-writing-guide** -- Ivy syntax for before/after monitors, invariants, state variables
 
@@ -323,4 +323,4 @@ After applying the fix, re-run `ivy_verify` to confirm the counterexample is res
 ## Related Skills
 
 - **`claim-discussion`** — Structured decision trees for verification claims, RFC interpretations, and coverage gaps. Use after diagnosing a counterexample to decide whether it reveals a spec bug or IUT non-compliance.
-- **`workflow-reference`** — The full verify-fix cycle (check → diagnose → fix → re-check). Provides quality gates and RFC-to-Ivy mapping context.
+- **`methodology-reference`** — The full verify-fix cycle (check → diagnose → fix → re-check). Provides quality gates and RFC-to-Ivy mapping context.

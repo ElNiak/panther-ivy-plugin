@@ -59,7 +59,7 @@ Three complementary tool systems:
 - ivy_verify, ivy_compile, ivy_model_info, ivy_diagnostics(mode="structural"), ivy_capabilities,
   ivy_visualize, ivy_model_summary, ivy_patterns, ivy_pattern_scaffold
 
-**DEEP mode tools** -- used during orchestrated workflows (ivy-workflow-orchestrator):
+**DEEP mode tools** -- used during orchestrated workflows (build, verify, review):
 - ivy_diagnostics (full analysis), ivy_include_graph (Phase 1),
   ivy_coverage (Phase 1+5), ivy_extract_requirements (Phase 2),
   ivy_quality (Phase 4)
@@ -149,7 +149,7 @@ The `ivy_coverage` tool accepts different scoping parameters:
 
 ## LSP Invocation Patterns
 
-> **Policy:** Direct LSP calls are permitted only in validation/health-check commands and the `ivy-lsp-walkthrough` skill. All other workflows should use MCP tools + Read/Grep/Glob.
+> **Policy:** Direct LSP calls are permitted when dispatched by workflow skills (e.g., triage for health checks, verify for diagnostics). All other workflows should use MCP tools + Read/Grep/Glob.
 
 ### Supported Operations
 
@@ -258,5 +258,5 @@ PostToolUse hook runs `ivy_diagnostics(mode="structural")` automatically. Also r
 
 ## Integration
 
-- **LOADED BY:** ivy-workflow-orchestrator (all phases), all methodology skills
-- **SUPERSEDES:** Duplicated tool sections in methodology-reference, nct-methodology, workflow-reference, incremental-spec-dev (merged from tooling-reference)
+- **LOADED BY:** All workflow skills and agents
+- **SUPERSEDES:** Duplicated tool sections previously in methodology-reference and other deleted skills (merged from tooling-reference)

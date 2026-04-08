@@ -193,7 +193,7 @@ def _emit_result(state: dict) -> None:
             "PreToolUse",
             deny_reason=(
                 f"MCP server appears crashed ({failures} "
-                "consecutive failures). Run /nct-health to diagnose, or restart "
+                "consecutive failures). Run the triage workflow to diagnose, or restart "
                 "the session to recover."
             ),
         )

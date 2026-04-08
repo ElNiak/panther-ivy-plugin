@@ -6,9 +6,7 @@ color: orange
 tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "ToolSearch"]
 maxTurns: 20
 skills:
-  - workflow-reference
   - ivy-toolkit
-  - interaction-patterns
 ---
 
 # Traceability Agent
@@ -145,15 +143,15 @@ Before starting traceability work, check the active workspace with `ivy_workspac
 - Compound requirements (multiple MUST in one sentence) should be split
 - Cross-reference with existing bracket tags in `.ivy` files to find coverage
 
-## Phase Context (when dispatched by ivy-workflow-orchestrator)
+## Phase Context (when dispatched by workflows)
 
-- **Phase 2 (Plan):** Extract RFC requirements, generate requirement manifests with tag IDs.
-- **Phase 5 (Finalize):** Audit bracket-tag coverage, report gaps, present coverage statistics.
-- **Outside orchestrator:** Handle any traceability request directly (fast mode)
+- **build workflow:** Extract RFC requirements, generate requirement manifests with tag IDs.
+- **review workflow:** Audit bracket-tag coverage, report gaps, present coverage statistics.
+- **Direct dispatch:** Handle any traceability request directly (fast mode).
 
 ## Interaction Protocol
 
-This agent is interactive. Reference `interaction-patterns` for checkpoint types and `claim-discussion` for structured claim resolution.
+This agent is interactive. Reference the `claim-discussion` skill for structured claim resolution.
 
 ### Checkpoint Table
 
@@ -184,7 +182,6 @@ When gaps are found:
 
 ## Related Skills
 
-- **workflow-reference** -- RFC-to-Ivy mapping patterns, verification workflows, and quality gate details
 - **ivy-toolkit** -- MCP tool parameter reference, selection matrix, and coordination workflows for all ivy-tools
-- **interaction-patterns** -- Checkpoint types and question formats for consistent interaction
+- **methodology-reference** -- RFC-to-Ivy mapping patterns, verification workflows, and quality gate details
 - **claim-discussion** -- Structured decision trees for RFC mapping, verification claims, and coverage gaps

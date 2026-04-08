@@ -337,11 +337,11 @@ requirements:
 
 ## Integration
 
-- **LOADED BY:** ivy-workflow-orchestrator Phase 3 (Write)
+- **LOADED BY:** build workflow (write phase)
 
 **Related skills:**
 - **specification-patterns** -- Where to place each declaration type (14-layer template)
-- **workflow-reference** -- Verification after editing, RFC-to-Ivy mapping
+- **methodology-reference** -- Verification after editing, RFC-to-Ivy mapping
 - **ivy-toolkit** -- MCP tool documentation
 
 **Related agents:**

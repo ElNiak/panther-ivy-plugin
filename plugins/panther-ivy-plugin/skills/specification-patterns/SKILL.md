@@ -105,7 +105,7 @@ For a basic protocol model, start with these 7 layers:
 7. Shims (12) -- Implementation bridge
 
 #### Template Directory
-Reference `protocol-testing/new_prot/` for the empty template structure. Use `/nct-scaffold type=protocol` to interactively scaffold.
+Reference `protocol-testing/new_prot/` for the empty template structure. Use the `build` workflow to interactively scaffold.
 
 ### Decision Matrix for Template Selection
 
@@ -196,7 +196,7 @@ module (no deps)
 
 ### Using the Pattern Library
 
-Add patterns: `/nct-add-pattern {protocol} all`
+Add patterns using `ivy_pattern_scaffold` MCP tool or the `build` workflow.
 
 Analyze patterns with `ivy_patterns` MCP tool (`mode="analyze"`, `"validate"`, `"compare"`). Template files in `protocol-testing/patterns/` with registry `pattern_catalog.yaml`.
 
@@ -206,7 +206,7 @@ Analyze patterns with `ivy_patterns` MCP tool (`mode="analyze"`, `"validate"`, `
 
 ## Integration
 
-- **LOADED BY:** ivy-workflow-orchestrator Phase 2 (Plan)
+- **LOADED BY:** build workflow (plan phase)
 
 **Related skills:**
 - **methodology-reference** -- Layer decomposition in NCT/NACT/NSCT workflows
@@ -214,9 +214,7 @@ Analyze patterns with `ivy_patterns` MCP tool (`mode="analyze"`, `"validate"`, `
 - **ivy-toolkit** -- MCP tool parameters for pattern analysis
 
 **Related agents:**
-- **methodology-guide** -- Interactive workflow using these patterns
 - **spec-analyst** -- Specification navigation across layers
 
-**Related commands:**
-- `/nct-scaffold type=protocol` -- Scaffolds from the 14-layer template
-- `/nct-add-pattern` -- Add a pattern to an existing specification
+**Related workflows:**
+- **build** -- Scaffolds from the 14-layer template and adds patterns interactively
