@@ -1,6 +1,7 @@
 ---
 name: ivy-toolkit
 description: "Single source of truth for all 22 ivy-tools MCP tools — catalog, parameters, modes, selection matrix, and coordination workflows. Use when choosing which tool to use, looking up tool parameters, or understanding tool interactions."
+allowed-tools: "Read Grep Glob ToolSearch"
 loads: [lsp-patterns]
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: counterexample-guide
 description: Use when ivy_verify fails with a counterexample to understand the failure, trace the violated property, and identify the fix. Guides interpretation of structured counterexample traces.
+context: fork
 loads: [ivy-writing-guide, workflow-reference]
 prerequisites:
   - ivy-writing-guide

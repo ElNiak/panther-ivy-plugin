@@ -1,6 +1,7 @@
 ---
 name: workflow-reference
 description: "Use when translating RFC normative language into Ivy constructs, running verification and debugging failures, or understanding the quality evaluation pipeline."
+allowed-tools: "Read Grep Glob ToolSearch"
 loads: [counterexample-guide, claim-discussion, ivy-toolkit, ivy-writing-guide]
 ---
 

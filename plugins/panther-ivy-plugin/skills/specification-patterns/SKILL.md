@@ -1,6 +1,7 @@
 ---
 name: specification-patterns
 description: "Use when structuring a new formal protocol specification into modular Ivy layers, choosing which layers to scaffold first, or selecting formal model patterns (variants, serdes, shims, monitors, entities, modules)."
+allowed-tools: "Read Grep Glob ToolSearch"
 ---
 
 # Specification Patterns: 14-Layer Template and Formal Model Patterns

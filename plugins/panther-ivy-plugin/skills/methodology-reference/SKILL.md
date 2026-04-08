@@ -1,6 +1,7 @@
 ---
 name: methodology-reference
 description: "Hub for NCT, NACT, and NSCT formal testing methodologies. Use when the user asks about testing methodology, wants to choose between methodologies, or mentions formal protocol testing without specifying which methodology."
+allowed-tools: "Read Grep Glob ToolSearch"
 loads: [nct-methodology, nact-methodology, nsct-methodology, ivy-toolkit]
 ---
 
