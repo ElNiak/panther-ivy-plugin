@@ -3,6 +3,13 @@ name: build
 description: "Multi-session protocol model construction — the heaviest workflow. Guides specification creation from RFC to formal Ivy model using 14-layer template and NCT/NACT/NSCT methodology."
 ---
 
+## Output Style
+
+This workflow's output formatting is managed by the style system.
+Follow the style directives injected via `additionalContext` -- they contain
+your active workflow overlay and phase modifier. Do not invent your own
+formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
+
 # Build Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.

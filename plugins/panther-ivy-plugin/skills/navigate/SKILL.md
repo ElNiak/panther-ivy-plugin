@@ -3,6 +3,13 @@ name: navigate
 description: "Central hub workflow — detects context, presents options, and routes to the appropriate workflow. Activated when the user's intent is unclear, when resuming a session, or when another workflow completes."
 ---
 
+## Output Style
+
+This workflow's output formatting is managed by the style system.
+Follow the style directives injected via `additionalContext` -- they contain
+your active workflow overlay and phase modifier. Do not invent your own
+formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
+
 # Navigate Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase before proceeding. If the file says you are in a phase, resume that phase directly.

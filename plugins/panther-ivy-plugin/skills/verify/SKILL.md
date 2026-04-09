@@ -3,6 +3,13 @@ name: verify
 description: "Test-compile-execute cycle with failure diagnosis — the primary verification workflow. Activated when users want to check, test, debug, or verify Ivy specifications."
 ---
 
+## Output Style
+
+This workflow's output formatting is managed by the style system.
+Follow the style directives injected via `additionalContext` -- they contain
+your active workflow overlay and phase modifier. Do not invent your own
+formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
+
 # Verify Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.

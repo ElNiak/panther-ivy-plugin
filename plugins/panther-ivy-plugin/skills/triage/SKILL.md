@@ -3,6 +3,13 @@ name: triage
 description: "Stack health diagnostics and recovery — checks MCP, LSP, and Serena servers. Activated when tools are broken, on 'not working' complaints, or as a preflight before other workflows."
 ---
 
+## Output Style
+
+This workflow's output formatting is managed by the style system.
+Follow the style directives injected via `additionalContext` -- they contain
+your active workflow overlay and phase modifier. Do not invent your own
+formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
+
 # Triage Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase before proceeding.

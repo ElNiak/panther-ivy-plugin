@@ -3,6 +3,13 @@ name: review
 description: "Quality and coverage auditing — detects review type from user intent and dispatches appropriate analysis agents. Activated for coverage checks, quality audits, and model reviews."
 ---
 
+## Output Style
+
+This workflow's output formatting is managed by the style system.
+Follow the style directives injected via `additionalContext` -- they contain
+your active workflow overlay and phase modifier. Do not invent your own
+formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
+
 # Review Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.
