@@ -86,40 +86,6 @@ def _highlight_active_phase(overlay: str, phase: str) -> str:
     return pattern.sub(rf"\1 [ACTIVE PHASE]", overlay)
 
 
-def load_tool_renderer(
-    plugin_root: str,
-    tool_name: str,
-    workflow: str | None,
-) -> str | None:
-    """Load the appropriate tool renderer section for the active workflow.
-
-    Looks for a ``## {workflow}`` section in the renderer file. Falls back
-    to ``## Default`` if the workflow section is not found. Returns None
-    if the renderer file does not exist.
-    """
-    content = load_style_file(plugin_root, f"tool-renderers/{tool_name}.md")
-    if content is None:
-        return None
-
-    if workflow:
-        section = find_section(content, workflow)
-        if section:
-            return section
-
-    default = find_section(content, "Default") or find_section(content, "Default (no workflow active)")
-    return default
-
-
-def load_summary_template(plugin_root: str, workflow: str | None) -> str | None:
-    """Load the session summary template for the active workflow.
-
-    Returns None if no template exists for the given workflow.
-    """
-    if not workflow:
-        return None
-    return load_style_file(plugin_root, f"summaries/{workflow}.md")
-
-
 def resolve_plugin_root() -> str:
     """Resolve the plugin root directory.
 

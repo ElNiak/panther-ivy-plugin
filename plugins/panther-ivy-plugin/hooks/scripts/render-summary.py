@@ -116,7 +116,7 @@ def gather_tool_metrics() -> str:
                 try:
                     event = json.loads(line)
                     etype = event.get("event_type", "")
-                    if etype in ("PreToolUse", "PostToolUse"):
+                    if etype == "PostToolUse":
                         tool = event.get("payload", {}).get("tool_name", "unknown")
                         tool_counts[tool] += 1
                     if etype == "PostToolUseFailure":
@@ -200,6 +200,9 @@ def build_summary(
 
     elif workflow == "review":
         parts.append("[REVIEW] Review workflow session.")
+
+    elif workflow == "navigate":
+        parts.append("[WORKFLOW] Navigate workflow session.")
 
     # Claims section
     if claim_total > 0:

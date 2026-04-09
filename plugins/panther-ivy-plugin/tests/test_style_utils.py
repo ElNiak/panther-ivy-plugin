@@ -108,27 +108,3 @@ class TestComposeStyle:
         assert "base rules" in result
 
 
-class TestLoadToolRenderer:
-    def test_loads_workflow_section(self, tmp_path):
-        mod = _import()
-        renderers_dir = tmp_path / "styles" / "tool-renderers"
-        renderers_dir.mkdir(parents=True)
-        (renderers_dir / "ivy_verify.md").write_text(
-            "# ivy_verify\n\n## Default\ndefault fmt\n\n## verify\nverify fmt\n"
-        )
-        result = mod.load_tool_renderer(str(tmp_path), "ivy_verify", "verify")
-        assert "verify fmt" in result
-
-    def test_falls_back_to_default(self, tmp_path):
-        mod = _import()
-        renderers_dir = tmp_path / "styles" / "tool-renderers"
-        renderers_dir.mkdir(parents=True)
-        (renderers_dir / "ivy_verify.md").write_text(
-            "# ivy_verify\n\n## Default\ndefault fmt\n\n## verify\nverify fmt\n"
-        )
-        result = mod.load_tool_renderer(str(tmp_path), "ivy_verify", "build")
-        assert "default fmt" in result
-
-    def test_returns_none_for_missing_tool(self, tmp_path):
-        mod = _import()
-        assert mod.load_tool_renderer(str(tmp_path), "nonexistent", "verify") is None

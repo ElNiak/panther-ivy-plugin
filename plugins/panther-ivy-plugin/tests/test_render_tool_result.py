@@ -127,3 +127,139 @@ class TestErrorInToolOutput:
         )
         # Should either pass through or exit silently, not crash
         assert True
+
+
+class TestIvyCoverageFormatting:
+    def test_coverage_stats_default(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_coverage",
+            json.dumps({"percentage": 85, "covered": 17, "total": 20}),
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "85" in ctx
+        assert "17" in ctx
+        assert "20" in ctx
+
+    def test_coverage_triage(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_coverage",
+            json.dumps({"percentage": 85, "covered": 17, "total": 20}),
+            workflow="triage",
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "Coverage: 85%" in ctx
+
+    def test_coverage_verify(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_coverage",
+            json.dumps({"percentage": 85, "covered": 17, "total": 20}),
+            workflow="verify",
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "85%" in ctx
+        assert "(17/20)" in ctx
+
+
+class TestIvyDiagnosticsFormatting:
+    def test_diagnostics_triage(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_diagnostics",
+            json.dumps({"issues": [
+                {"severity": "error", "file": "a.ivy", "line": 10, "message": "bad"},
+                {"severity": "warning", "file": "b.ivy", "line": 20, "message": "warn"},
+            ]}),
+            workflow="triage",
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "1 errors" in ctx
+        assert "1 warnings" in ctx
+
+    def test_diagnostics_default(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_diagnostics",
+            json.dumps({"issues": [
+                {"severity": "error", "file": "a.ivy", "line": 10, "message": "bad type"},
+            ]}),
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "ERROR" in ctx
+        assert "a.ivy" in ctx
+        assert "10" in ctx
+
+
+class TestIvyCompileFormatting:
+    def test_compile_success_default(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_compile",
+            json.dumps({"status": "success", "output_binary": "test_bin", "duration_s": 2.5}),
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "test_bin" in ctx
+        assert "2.5" in ctx
+
+    def test_compile_failure_build(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_compile",
+            json.dumps({"status": "failure", "error_message": "undefined symbol"}),
+            workflow="build",
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "Layer compilation failed" in ctx
+
+    def test_compile_triage(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_compile",
+            json.dumps({"status": "success", "output_binary": "x"}),
+            workflow="triage",
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "ivy_compile: OK" in ctx
+
+
+class TestIvyQualityFormatting:
+    def test_quality_gate_pass(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_quality",
+            json.dumps({"passed": True, "gate_level": "basic"}),
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "PASS" in ctx
+        assert "basic" in ctx
+
+    def test_quality_gate_fail_triage(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_quality",
+            json.dumps({"passed": False, "gate_level": "basic", "failures": [{"criterion": "coverage", "details": "below 50%"}]}),
+            workflow="triage",
+            tmp_path=tmp_path,
+        )
+        assert output is not None
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "FAIL" in ctx
+
+    def test_quality_suggestions_suppressed_in_verify(self, tmp_path):
+        output = run_hook(
+            "mcp__panther-ivy-plugin__ivy_quality",
+            json.dumps({"suggestions": [{"category": "style", "message": "rename", "severity": "minor"}]}),
+            workflow="verify",
+            tmp_path=tmp_path,
+        )
+        assert output is None, "Suggestions should be suppressed in verify workflow"
