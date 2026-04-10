@@ -1,5 +1,8 @@
 # Base Output Style
 
+> **Note**: This file is superseded by the output styles in `output-styles/`.
+> It is retained as documentation. The compose-style hook no longer injects this file.
+
 ## Formatting Conventions
 - Cite RFC sections as `[rfcNNNN:X.Y]` inline, never as footnotes.
 - Format errors as: `ERROR: {file}:{line} -- {message}`.

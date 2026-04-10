@@ -42,15 +42,12 @@ def run_hook(
 
 
 class TestNoWorkflowActive:
-    def test_injects_base_style_only(self, tmp_path):
-        """When no workflow is active, only base style is injected."""
+    def test_exits_silently_when_no_workflow(self, tmp_path):
+        """When no workflow is active, hook produces no output."""
         proto_dir = tmp_path / "protocol-testing"
         proto_dir.mkdir()
         output = run_hook(env_overrides={"IVY_WORKSPACE_ROOT": str(tmp_path)})
-        if output is None:
-            pytest.skip("No styles dir in plugin root yet")
-        ctx = output["hookSpecificOutput"]["additionalContext"]
-        assert "Base Output Style" in ctx
+        assert output is None
 
 
 class TestWithActiveWorkflow:
@@ -67,7 +64,6 @@ class TestWithActiveWorkflow:
         if output is None:
             pytest.skip("No styles dir in plugin root yet")
         ctx = output["hookSpecificOutput"]["additionalContext"]
-        assert "Base Output Style" in ctx
         assert "Verify Workflow" in ctx
 
     def test_highlights_active_phase(self, tmp_path):

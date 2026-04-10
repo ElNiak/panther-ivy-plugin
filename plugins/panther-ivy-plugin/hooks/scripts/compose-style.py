@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""UserPromptSubmit hook: inject workflow-aware output style as additionalContext.
+"""UserPromptSubmit hook: inject workflow overlay as additionalContext.
 
-Reads the active workflow state, composes base style + workflow overlay
-(with active phase highlighted), and outputs as additionalContext JSON.
+Reads the active workflow state and injects the workflow overlay
+(with active phase highlighted) as additionalContext JSON. Base
+formatting conventions are handled by output styles at session level.
 
 Non-blocking -- always exits 0.
 """

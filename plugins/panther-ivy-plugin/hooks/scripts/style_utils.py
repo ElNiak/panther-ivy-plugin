@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Shared utilities for the workflow-aware output style system.
 
-Loads style files (base, overlays, tool renderers, summaries) from the
-``styles/`` directory under the plugin root, extracts markdown sections,
-and composes the effective style document for injection via hooks.
+Loads workflow overlay files from the ``styles/`` directory under the
+plugin root, extracts markdown sections, and composes the overlay
+document for injection via hooks. Base formatting conventions are
+handled by output styles at the session level.
 """
 
 import os
@@ -51,7 +52,11 @@ def compose_style(
     workflow: str | None,
     phase: str | None,
 ) -> str:
-    """Compose the effective style document from base + overlay + phase modifier.
+    """Compose the workflow overlay with active phase highlighted.
+
+    Base formatting conventions are handled by output styles at the session
+    level. This function only returns the workflow overlay when a workflow
+    is active.
 
     Args:
         plugin_root: Path to the plugin root directory.
@@ -59,22 +64,19 @@ def compose_style(
         phase: Active phase within the workflow (e.g., "compile"), or None.
 
     Returns:
-        Composed markdown style document ready for injection.
+        Workflow overlay markdown, or empty string if no workflow active.
     """
-    parts: list[str] = []
+    if not workflow:
+        return ""
 
-    base = load_style_file(plugin_root, "base.md")
-    if base:
-        parts.append(base)
+    overlay = load_style_file(plugin_root, f"overlays/{workflow}.md")
+    if not overlay:
+        return ""
 
-    if workflow:
-        overlay = load_style_file(plugin_root, f"overlays/{workflow}.md")
-        if overlay and phase:
-            overlay = _highlight_active_phase(overlay, phase)
-        if overlay:
-            parts.append(overlay)
+    if phase:
+        overlay = _highlight_active_phase(overlay, phase)
 
-    return "\n\n---\n\n".join(parts) if parts else ""
+    return overlay
 
 
 def _highlight_active_phase(overlay: str, phase: str) -> str:

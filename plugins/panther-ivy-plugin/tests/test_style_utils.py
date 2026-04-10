@@ -65,15 +65,15 @@ class TestLoadStyleFile:
 
 
 class TestComposeStyle:
-    def test_base_only_when_no_workflow(self, tmp_path):
+    def test_empty_when_no_workflow(self, tmp_path):
         mod = _import()
         styles_dir = tmp_path / "styles"
         styles_dir.mkdir()
         (styles_dir / "base.md").write_text("# Base\nbase rules\n")
         result = mod.compose_style(str(tmp_path), workflow=None, phase=None)
-        assert "base rules" in result
+        assert result == ""
 
-    def test_base_plus_overlay(self, tmp_path):
+    def test_overlay_only_when_workflow_active(self, tmp_path):
         mod = _import()
         styles_dir = tmp_path / "styles"
         (styles_dir / "overlays").mkdir(parents=True)
@@ -83,7 +83,7 @@ class TestComposeStyle:
             "### compile\ncompile stuff\n\n### diagnose\ndiagnose stuff\n"
         )
         result = mod.compose_style(str(tmp_path), workflow="verify", phase="compile")
-        assert "base rules" in result
+        assert "base rules" not in result
         assert "verify rules" in result
         assert "[ACTIVE PHASE]" in result
         assert "compile stuff" in result
@@ -95,16 +95,15 @@ class TestComposeStyle:
         (styles_dir / "base.md").write_text("# Base\nbase rules\n")
         (styles_dir / "overlays" / "verify.md").write_text("# Verify\nverify rules\n")
         result = mod.compose_style(str(tmp_path), workflow="verify", phase="unknown")
-        assert "base rules" in result
         assert "verify rules" in result
         assert "[ACTIVE PHASE]" not in result
 
-    def test_missing_overlay_falls_back_to_base(self, tmp_path):
+    def test_missing_overlay_returns_empty(self, tmp_path):
         mod = _import()
         styles_dir = tmp_path / "styles"
         styles_dir.mkdir()
         (styles_dir / "base.md").write_text("# Base\nbase rules\n")
         result = mod.compose_style(str(tmp_path), workflow="nonexistent", phase=None)
-        assert "base rules" in result
+        assert result == ""
 
 
