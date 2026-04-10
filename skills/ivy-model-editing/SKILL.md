@@ -35,6 +35,8 @@ type message_type = {request, response, error}
 
 ### Relations
 
+> **Before writing a new relation**, grep `protocol-testing/` for similar declarations to see the canonical pattern for your protocol family: `Grep(pattern="^relation ", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
+
 Relations declare state predicates over typed arguments.
 
 ```ivy
@@ -47,6 +49,8 @@ Relations are boolean-valued. They represent the state of the protocol model.
 
 ### Functions and Individuals
 
+> **Before writing a new function**, grep `protocol-testing/` for similar declarations: `Grep(pattern="^function ", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
+
 ```ivy
 # A function from one sort to another
 function packet_dest(P: packet_id) : node_id
@@ -56,6 +60,8 @@ individual my_id : node_id
 ```
 
 ### Actions
+
+> **Before writing a new action**, grep `protocol-testing/` for similar patterns: `Grep(pattern="action.*=", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
 
 Actions model state transitions. They have preconditions (`require`), effects (assignments),
 and postconditions (`ensure`).
@@ -363,5 +369,75 @@ protocol_model/
    arbitrary initial values.
 
 7. **Minimize axioms**: Every axiom is an unverified assumption. Prefer provable invariants.
+
+## Common Syntax Traps
+
+These patterns produce misleading error messages. See `ivy-error-patterns` skill for the full catalog.
+
+### Trap 1: Parameter Name Collision
+
+```ivy
+# WRONG — 'src' not found (Ivy resolves parameter names as symbol references)
+relation update_processed(src:bgp_id, dst:bgp_id)
+
+# RIGHT — single uppercase letter parameter names are unambiguous fresh binders
+relation update_processed(S:bgp_id, D:bgp_id)
+```
+
+Ivy resolves the token before `:` in a parameter list as a symbol. Use single uppercase letters (C, S, P, N, D) as parameter names. See `ivy-error-patterns` entry #1.
+
+### Trap 2: Missing `after init` with Misleading Invariant Failure
+
+```ivy
+# Invariant fails on initial state — but the invariant is correct!
+relation conn_seen(C:cid)
+invariant conn_seen(C) -> connected(C)
+# Error: invariant failed (because conn_seen starts as arbitrary, not false)
+
+# FIX — initialize the relation
+after init {
+    conn_seen(C) := false;
+}
+```
+
+See `ivy-error-patterns` entry #12.
+
+### Trap 3: `assume` vs `require` Confusion
+
+```ivy
+# WRONG — weakens the model; the assumption is never verified
+action handle(p:packet) = {
+    assume valid(p);
+    # ...
+}
+
+# RIGHT — precondition that callers must satisfy, verified by ivy_check
+action handle(p:packet) = {
+    require valid(p);
+    # ...
+}
+```
+
+### Trap 4: Ungrounded Variable in Invariant
+
+```ivy
+# WRONG — "for all P and N, sent(P,N) is true" (probably not intended)
+invariant sent(P, N)
+
+# RIGHT — constrained relationship
+invariant sent(P, N) -> connected(source(P), N)
+```
+
+See `ivy-error-patterns` entry #2.
+
+### Trap 5: Overly Strong Invariant
+
+```ivy
+# WRONG — fails immediately because conn_seen starts false for some C
+invariant connected(C)
+
+# RIGHT — conditional invariant
+invariant connected(C) -> conn_seen(C)
+```
 
 **IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash. Use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify`, `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile`, and `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` instead.
