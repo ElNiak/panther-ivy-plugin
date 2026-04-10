@@ -75,19 +75,13 @@ Common failure patterns:
 
 ## Debugging Workflow
 
-Follow this cycle when verification fails:
+**When verification fails, you MUST follow the `ivy-debugging-methodology` skill.** Do NOT attempt fixes without completing the pre-fix checklist (parse error → interpret diagnostics → consult skills → run linter → search examples → formulate theory → fix → verify).
 
-1. **Check**: Run verification via `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify`.
-2. **Read the error**: Note the line number, error type, and any counterexample trace.
-3. **Locate the issue**: Use Claude's `Grep` tool or native LSP go-to-definition to navigate to the failing symbol.
-4. **Diagnose**: Determine if the issue is:
-   - A missing invariant (the model under-specifies expected behavior)
-   - A bug in the action logic (the model is incorrect)
-   - A missing precondition (the action is called in unexpected contexts)
-5. **Fix**: Apply the minimal fix using Claude's `Edit` tool. Prefer adding invariants over weakening specifications.
-6. **Re-check**: Run verification again. Repeat until all checks pass.
+For quick error lookups, consult the `ivy-error-patterns` skill which maps cryptic error messages to root causes, correct patterns, and working examples from `protocol-testing/`.
 
 ## Common Ivy Verification Errors and Fixes
+
+> For the full error pattern catalog with working examples, see the `ivy-error-patterns` skill. The entries below are a quick reference subset.
 
 ### "failed to verify" on an action body
 The action's postcondition or an invariant is not maintained. Check:
