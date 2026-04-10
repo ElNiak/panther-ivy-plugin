@@ -101,6 +101,9 @@ When asked to review an Ivy model:
 - Flag relations with no invariants constraining them.
 - Flag deeply nested quantifiers in invariants (may cause solver timeouts).
 - Flag large isolates that combine many unrelated concerns.
+- Flag relation/function declarations using multi-character lowercase parameter names (e.g., `src`, `dst`, `conn`) — prefer single uppercase letters (S, D, C) to avoid symbol collision. See `ivy-error-patterns` entry #1.
+- Flag mutable relations or functions without a corresponding `after init` block — uninitialized state causes invariant failures on the initial state. See `ivy-error-patterns` entry #12.
+- Cross-reference the `ivy-error-patterns` skill for known syntax traps when reviewing declarations.
 
 ## Severity Levels
 
