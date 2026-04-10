@@ -106,6 +106,15 @@ fi
 # --- Resolve ivy-lsp source ---
 resolve_ivy_lsp_source
 
+# --- Dev mode: add local panther_ivy to PYTHONPATH ---
+# When running in a PANTHER workspace, prepend the panther_ivy directory so
+# ivyc subprocesses load ivy/ivy_to_cpp.py from the local source tree
+# (including local Z3 auto-detection and other dev changes).
+if [ -n "${panther_ivy_dir:-}" ] && [ -d "$panther_ivy_dir/ivy" ]; then
+    export PYTHONPATH="${panther_ivy_dir}:${PYTHONPATH:-}"
+    log "Dev mode: added $panther_ivy_dir to PYTHONPATH"
+fi
+
 REINSTALL_FLAG=""
 [ "${IVY_LSP_FORCE_REINSTALL:-}" = "1" ] && REINSTALL_FLAG="--reinstall"
 
