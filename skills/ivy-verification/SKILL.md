@@ -1,167 +1,116 @@
 ---
-name: ivy-verification
-description: "Ivy verification reference — running ivy_verify and ivy_lint, interpreting results, diagnosing failures. Use when verifying an Ivy spec, interpreting a verification failure, or deciding which tool to run. Triggers on 'verify', 'ivy_check failed', 'invariant failed', 'safety property violated', 'verification error', 'check my spec', 'run verification'."
-context: fork
+name: Ivy Verification
+description: This skill should be used when the user asks about "running formal verification", "ivy_check workflow", "verifying protocol specifications", "debugging verification failures", "interpreting ivy_check output", "invariant violations", "type safety errors", "verification debugging", or mentions checking Ivy models for correctness in the PANTHER Ivy framework.
 ---
 
-# Ivy Verification Reference
+# Ivy Verification Workflow
 
-This skill covers the verification workflow: which tools to run, in what order, and how to interpret results.
+## Overview
 
----
+Ivy is a formal specification language used for modeling and verifying protocol implementations.
+The primary verification tool is `ivy_check`, which statically checks Ivy models for type safety,
+invariant preservation, and protocol correctness.
 
-## Tool Selection
+## Running Verification
 
-| Goal | Tool | Notes |
-|------|------|-------|
-| Fast structural check (milliseconds) | `ivy_lint` | Catches missing headers, braces, includes, parameter collisions |
-| Formal property verification | `ivy_verify` | Checks isolates, invariants, safety properties |
-| Compile to test binary | `ivy_compile` | `target=test` |
-| Model introspection | `ivy_model_info` | Lists types, relations, actions, isolates |
+### Using ivy-tools MCP tools (required)
 
-**Always run `ivy_lint` before `ivy_verify`.** Structural issues produce misleading verification errors.
+Always use the ivy-tools MCP tools for verification. Never run `ivy_check` directly via Bash.
 
----
+**Full model check:**
+Use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` with `relative_path` pointing to the `.ivy` file.
+
+**Specific isolate check** (faster, targets one component):
+Use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` with `relative_path` and `isolate` parameters.
+
+**Model structure inspection:**
+Use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` to understand model structure before verification.
+
+### Verification via Plugin Commands
+
+- `/nct-check <file>` — Run formal verification on an .ivy file
+- `/nct-check <file> --isolate <name>` — Check a specific isolate
+
+## Interpreting Results
+
+### Successful Verification
+
+A successful check produces output containing `OK` or lists each checked isolate with `OK` status. This means all proof obligations were discharged.
+
+### Verification Failures
+
+Failures include:
+- **Line numbers** pointing to the failing assertion or action
+- **Counterexample traces** showing a sequence of actions leading to the failure
+- **Error type** indicating what went wrong
+
+Common failure patterns:
+
+1. **Invariant not preserved** — an action modifies state in a way that violates a declared invariant.
+   ```
+   error: failed to verify invariant preservation in action client.send
+   ```
+   Fix: strengthen the invariant, add preconditions to the action, or fix the action logic.
+
+2. **Type safety error** — a value is used with an incompatible type.
+   ```
+   error: type mismatch at line 42: expected packet_type, got nat
+   ```
+   Fix: ensure all variables and expressions have consistent types.
+
+3. **Ungrounded relation** — a relation is used in a way that leaves variables unbound.
+   ```
+   error: ungrounded variable X in relation recv(X,Y)
+   ```
+   Fix: ensure all variables in relation expressions are bound by quantifiers or appear in the head.
+
+4. **Safety property violation** — an exported action can reach an unsafe state.
+   ```
+   error: safety property violated at line 85
+   ```
+   Fix: add missing invariants, strengthen preconditions, or fix the protocol logic.
+
+5. **Liveness/progress failure** — the model cannot guarantee progress.
+   Fix: check for deadlock scenarios and add fairness assumptions if appropriate.
 
 ## Debugging Workflow
 
-**When verification fails, you MUST follow the `ivy-debugging-methodology` skill.** Do NOT attempt fixes without completing the pre-fix checklist (parse error → interpret diagnostics → consult skills → run linter → search examples → formulate theory → fix → verify).
+Follow this cycle when verification fails:
 
-For quick error lookups, consult the `ivy-error-patterns` skill which maps cryptic error messages to root causes, correct patterns, and working examples from `protocol-testing/`.
-
----
+1. **Check**: Run verification via `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify`.
+2. **Read the error**: Note the line number, error type, and any counterexample trace.
+3. **Locate the issue**: Use Claude's `Grep` tool or native LSP go-to-definition to navigate to the failing symbol.
+4. **Diagnose**: Determine if the issue is:
+   - A missing invariant (the model under-specifies expected behavior)
+   - A bug in the action logic (the model is incorrect)
+   - A missing precondition (the action is called in unexpected contexts)
+5. **Fix**: Apply the minimal fix using Claude's `Edit` tool. Prefer adding invariants over weakening specifications.
+6. **Re-check**: Run verification again. Repeat until all checks pass.
 
 ## Common Ivy Verification Errors and Fixes
 
-> For the full error pattern catalog with working examples, see the `ivy-error-patterns` skill. The entries below are a quick reference subset.
-
 ### "failed to verify" on an action body
+The action's postcondition or an invariant is not maintained. Check:
+- Are all modified relations updated consistently?
+- Does the action's `ensure` clause match what the body actually does?
 
-Ivy could not prove a `require` or `ensure` clause in an action body.
+### "cannot find isolate X"
+The isolate name is misspelled or not declared. Check:
+- Spelling of the isolate name in the command and in the `.ivy` file.
+- That the isolate is declared with `isolate X = { ... }` or `object X = { ... }` with `specification` or `implementation` keywords.
 
-**Steps:**
-1. Identify the failing action and clause from the error output
-2. Check if a precondition is missing (add `require` guards)
-3. Check if an invariant needs strengthening
-4. Search `protocol-testing/` for similar actions: `Grep(pattern="action <name>", glob="*.ivy")`
+### "circular dependency"
+Two or more modules or objects depend on each other. Fix:
+- Refactor to break the cycle, typically by introducing an abstract interface.
 
-**Related:** `ivy-error-patterns` entry #3
+### "uninterpreted sort has no instances"
+A type was declared but never given concrete values. Fix:
+- Add at least one constructor or axiom that provides instances of the sort.
 
----
+### Z3 timeout or "unknown" result
+The SMT solver could not decide within the time limit. Fix:
+- Simplify the proof obligation by breaking it into smaller lemmas.
+- Add ghost state or auxiliary invariants to guide the prover.
+- Use `isolate` boundaries to limit what the solver must reason about.
 
-### "invariant ... failed" / "failed to verify invariant preservation"
-
-An action modifies state in a way that violates a declared invariant.
-
-**Steps:**
-1. Identify which action violates the invariant (the counterexample trace shows this)
-2. Check that all state updates in the action are consistent with the invariant
-3. Add `require` guards to restrict the action to states where the invariant can be maintained
-4. Verify `after init` initializes state compatibly with the invariant
-
-**Related:** `ivy-error-patterns` entry #3, entry #12
-
----
-
-### "assumption failed" (isolate assumption violation)
-
-An isolate's assumptions about another isolate's behavior are not satisfied.
-
-**Steps:**
-1. Run `ivy_model_info` to list isolates and their assumptions
-2. Strengthen the assumed isolate's specification, or weaken the assumption
-
-**Related:** `ivy-error-patterns` entry #4
-
----
-
-### "type error" / "type mismatch"
-
-Incompatible types in an expression.
-
-**Steps:**
-1. Identify the expression with the mismatch from the error line
-2. Read type declarations with `Read` or `ivy_model_info`
-3. Ensure all usages match the declared type
-
-**Related:** `ivy-error-patterns` entry #5
-
----
-
-### "'<name>' not found" on declaration
-
-A parameter name is being resolved as a symbol reference and failing.
-
-**Immediate fix**: Rename all multi-character lowercase parameter names to single uppercase letters (C, S, P, N, D).
-
-**Related:** `ivy-error-patterns` entry #1
-
----
-
-### Z3 timeout / "unknown"
-
-The SMT solver cannot decide within resource limits.
-
-**Steps:**
-1. Break the isolate into smaller pieces
-2. Add auxiliary invariants (lemmas) to guide the prover
-3. Reduce quantifier nesting depth
-4. Use `isolate` boundaries to limit solver scope
-
-**Related:** `ivy-error-patterns` entry #9
-
----
-
-## Verification Result Interpretation
-
-### Reading the `diagnostics` Array
-
-When `ivy_verify` or `ivy_lint` returns a failure, read the full `diagnostics` array, not just `error_summary`. Each diagnostic has:
-
-| Field | Meaning |
-|-------|---------|
-| `source` | Layer: `"ivy"` (parser), `"z3"` (solver), `"ivy-lsp"` (structural) |
-| `severity` | `"error"`, `"warning"`, `"info"` |
-| `line` | Source line number |
-| `message` | The error text — look this up in `ivy-error-patterns` |
-
-### Return Codes
-
-| Return Code | Meaning |
-|-------------|---------|
-| 0 | All checks pass |
-| Non-zero | Failures detected — read diagnostics |
-
----
-
-## Verification Checklist (Self-Evaluation)
-
-After writing or modifying an Ivy specification, run in this order:
-
-1. **`ivy_lint`** — fast structural check (milliseconds). Fix: missing `#lang`, unresolved includes, unmatched braces, parameter name collisions.
-2. **`ivy_verify`** — formal property verification. If FAIL: read error line → locate with Grep/LSP go-to-definition → look up in `ivy-error-patterns` → diagnose → fix → re-verify.
-3. **`ivy_coverage`** (mode="stats") — check MUST requirement coverage. Add missing `before`/`after` monitors with bracket tags if low.
-4. **Anti-pattern checklist** — before declaring complete:
-   - Missing `after init` → relations start with arbitrary values
-   - Ungrounded variables in invariants → `invariant sent(P, N)` means "for ALL P and N"
-   - `assume` instead of `require` → weakens the model
-   - Missing `require` in `before` clauses → actions callable in any state
-   - Multi-character lowercase parameter names → symbol resolution errors
-   - Circular include dependencies → DAG required
-
----
-
-## Integration
-
-**Related skills:**
-- **ivy-debugging-methodology** — mandatory pre-fix checklist (MUST follow before any fix)
-- **ivy-error-patterns** — full error catalog with working examples
-- **ivy-model-editing** — language reference for writing/editing declarations
-- **counterexample-guide** — trace interpretation for invariant failures
-- **ivy-toolkit** — MCP tool documentation and invocation patterns
-
-**Related agents:**
-- **spec-analyst** — verification diagnosis and structured result presentation
-- **model-reviewer** — model quality review
-
-**IMPORTANT**: Always use ivy-tools MCP tools for verification and compilation — never invoke `ivy_check`, `ivyc`, `ivy_show`, or `ivy_to_cpp` via Bash. See `ivy-toolkit` skill for tool selection.
+**IMPORTANT**: Always use ivy-tools MCP tools for Ivy verification operations. Never run ivy_check, ivyc, ivy_show, or ivy_to_cpp directly via Bash. Use `/nct-check`, `/nct-compile`, or `/nct-model-info` commands.
