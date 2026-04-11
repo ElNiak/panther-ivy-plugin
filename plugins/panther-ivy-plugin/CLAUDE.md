@@ -65,6 +65,9 @@ caller: null
 **Analysis MCP tools** (read-only, no CLI equivalent):
 `ivy_diagnostics` (mode="structural" for fast structural check, mode="full" for 5-layer diagnostics), `ivy_include_graph`, `ivy_capabilities`
 
+**IUT testing**:
+`ivy_iut_test` (run compiled Ivy test against a real IUT via PANTHER experiment pipeline; returns verdict, iut_logs, experiment_summary, output_dir)
+
 **Coverage & traceability**:
 `ivy_coverage` (mode="stats" for coverage stats, mode="gaps" for unguarded state/uncovered reqs, mode="matrix" for requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text; output="manifest" to produce YAML manifest)
 
@@ -89,7 +92,7 @@ caller: null
 ### Shortcut Commands
 
 **Direct tool access** (bypass workflows):
-`/nct-check` (ivy_verify), `/nct-compile` (ivy_compile), `/nct-model-info` (ivy_model_info), `/nct-health` (9-step diagnostic), `/nct-observability` (JSONL logs)
+`/nct-check` (ivy_verify), `/nct-compile` (ivy_compile), `/nct-model-info` (ivy_model_info), `/nct-iut-test` (ivy_iut_test), `/nct-health` (9-step diagnostic), `/nct-observability` (JSONL logs)
 
 ### Internal Components
 
@@ -138,6 +141,6 @@ The plugin supports active workspace scoping to prevent cross-protocol collision
 ## Quick Reference
 
 **Workflows**: navigate, verify, build, review, triage
-**Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-health, /nct-observability
+**Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-iut-test, /nct-health, /nct-observability
 **Internal agents**: spec-analyst, model-reviewer, traceability-agent
 **Internal knowledge**: counterexample-guide, specification-patterns, propagation-patterns, ivy-writing-guide, ivy-toolkit, claim-discussion, methodology-reference
