@@ -123,11 +123,71 @@ ivy_verify(relative_path=<test_file>)
 
 ### On FAIL
 
-Move to Phase 5. Update phase to `"executed"` via `update_workflow_phase()`.
+Move to Phase 6. Update phase to `"executed"` via `update_workflow_phase()`.
 
 ---
 
-## Phase 5 — Diagnose
+## Phase 5 — IUT Testing (optional)
+
+Only entered after Phase 4 succeeds (formal verification passes). Skipped when `invocation_depth > 0` (verify called as sub-workflow from build).
+
+### Step 1: Offer IUT testing
+
+Present the user with the option:
+
+> "Formal verification passed. Want to run this test against a real implementation?"
+
+If the user declines, proceed directly to completion (On Completion section).
+
+### Step 2: Select IUT
+
+Scan `panther/plugins/services/iut/{protocol}/` for available IUT plugin directories. Present as numbered options:
+
+```
+Available IUTs for {protocol}:
+1. frr_bgp
+2. (other IUT if multiple exist)
+```
+
+If only one IUT exists, suggest it directly and ask for confirmation.
+
+### Step 3: Execute
+
+Call the MCP tool:
+
+```
+ivy_iut_test(protocol=<detected>, test_name=<from Phase 2>, iut_name=<selected>)
+```
+
+### On PASS
+
+1. Report: "IUT test passed. `<test_name>` succeeded against `<iut_name>` in {duration_seconds}s."
+2. Show `output_dir` for reference.
+3. Offer follow-ups: "Run another test? Check coverage? Review model quality?"
+4. Update phase to `"iut-pass"`, then proceed to completion.
+
+### On FAIL
+
+1. Present the `iut_logs` content from the tool result.
+2. Present key details from `experiment_summary` (test status, error message if any).
+3. Show `output_dir`: "Full experiment output at `{output_dir}` — use Read to inspect further."
+4. Offer: "Want me to investigate the failure? Or fix it yourself?"
+5. If user wants investigation, move to Phase 6 (Diagnose) with the IUT failure context.
+6. Update phase to `"iut-fail"`.
+
+### On ERROR or TIMEOUT
+
+1. Present the error details from `test_stderr`.
+2. Suggest: "Check Docker status (`docker ps`), verify IUT plugin configuration, and ensure the test binary compiled successfully."
+3. Update phase to `"iut-error"`.
+
+### Step 4: Update state
+
+Update active-workflow phase via `update_workflow_phase()`.
+
+---
+
+## Phase 6 — Diagnose
 
 ### Step 1: Load failure interpretation guidance
 
@@ -163,9 +223,9 @@ Update phase to `"diagnosed"` via `update_workflow_phase()`.
 
 ---
 
-## Phase 6 — Fix (optional)
+## Phase 7 — Fix (optional)
 
-Only entered if the user accepts the auto-fix offer from Phase 5.
+Only entered if the user accepts the auto-fix offer from Phase 6.
 
 ### Step 1: Apply the fix
 
@@ -173,7 +233,7 @@ Apply the fix suggested by the spec-analyst. If editing `.ivy` files, invoke the
 
 ### Step 2: Re-verify
 
-Loop back to Phase 3 (recompile). The cycle is: Phase 3 (compile) -> Phase 4 (execute) -> Phase 5 (diagnose) -> Phase 6 (fix) -> Phase 3 again.
+Loop back to Phase 3 (recompile). The cycle is: Phase 3 (compile) → Phase 4 (execute) → Phase 6 (diagnose) → Phase 7 (fix) → Phase 3 again.
 
 This loop continues until verification passes or the user decides to stop.
 
@@ -194,6 +254,6 @@ Update phase to `"stopped"` and proceed to completion.
 
 - **Called by:** `navigate` (dispatch), `build` (post-build verification), user directly ("verify this", "run tests")
 - **Calls:** `triage` (preflight), `spec-analyst` agent (diagnosis), `model-reviewer` agent (structural audit), `review` workflow (follow-up coverage)
-- **Knowledge skills loaded:** `counterexample-guide` (Phase 5), `ivy-writing-guide` (Phase 2 option 3, Phase 6), `specification-patterns` (Phase 2 option 3)
-- **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`
+- **Knowledge skills loaded:** `counterexample-guide` (Phase 6), `ivy-writing-guide` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3)
+- **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_iut_test`
 - **State files:** `.panther-ivy/active-workflow`
