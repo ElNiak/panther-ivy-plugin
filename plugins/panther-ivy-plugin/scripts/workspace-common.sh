@@ -134,10 +134,20 @@ resolve_session_id() {
     [ -n "${CLAUDE_SESSION_ID:-}" ] && { echo "$CLAUDE_SESSION_ID"; return 0; }
     [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && { echo "$CLAUDE_CODE_SESSION_ID"; return 0; }
     [ -n "${IVY_SESSION_ID:-}" ] && { echo "$IVY_SESSION_ID"; return 0; }
-    local ws_hash
+    # Try session file keyed to the workspace root hash.  The SessionStart
+    # hook writes files for both the project root and the panther_ivy
+    # submodule path, so at least one should match.
+    local ws_hash session_file
     ws_hash="$(printf '%s' "$ws_root" | shasum -a 256 | cut -c1-12)"
-    local session_file="/tmp/ivy-session-${ws_hash}.id"
+    session_file="/tmp/ivy-session-${ws_hash}.id"
     [ -s "$session_file" ] && { head -n 1 "$session_file" | tr -d '\r\n'; return 0; }
+
+    # Fallback: try any session file written in the last 60 seconds
+    # (handles hash mismatches between project root and submodule paths).
+    local newest
+    newest="$(find /tmp -maxdepth 1 -name 'ivy-session-*.id' -newer /tmp -mmin -1 2>/dev/null | head -1)" || true
+    [ -s "$newest" ] && { head -n 1 "$newest" | tr -d '\r\n'; return 0; }
+
     # Wait briefly for SessionStart hook to write the session file
     local retries=0
     while [ $retries -lt 3 ] && [ ! -s "$session_file" ]; do

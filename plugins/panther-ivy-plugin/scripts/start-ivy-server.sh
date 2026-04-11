@@ -120,26 +120,34 @@ REINSTALL_FLAG=""
 
 # --- PID tracking for cleanup ---
 PID_DIR="/tmp/ivy-lsp-pids"
+SESSION_DIR="/tmp/ivy-lsp-sessions"
 mkdir -p "$PID_DIR"
 
-# Workspace-scoped session ID: only kill servers for the SAME workspace,
-# allowing concurrent Claude sessions on different worktrees.
+# Workspace-scoped hash: differentiates servers for different worktrees.
 _WS_HASH="$(printf '%s' "$DETECTED_ROOT" | shasum -a 256 | cut -c1-12)"
-_PID_PREFIX="${MODE}-${_WS_HASH}"
 
-# Kill stale servers of the same mode AND workspace from previous sessions
+# Session-scoped PID prefix: each Claude Code session gets its own PID
+# namespace.  This prevents a second session on the same worktree from
+# killing the first session's server (the root cause of MCP disconnects
+# when multiple Claude Code instances share a worktree).
+_SESSION_TAG="${IVY_SESSION_ID:-unknown}"
+_PID_PREFIX="${MODE}-${_WS_HASH}-${_SESSION_TAG}"
+
+# Kill stale servers from THIS session only (e.g., a restart within the
+# same Claude Code session).  Other sessions' servers are left alone.
 for pidfile in "$PID_DIR"/${_PID_PREFIX}-*.pid; do
     [ -f "$pidfile" ] || continue
     old_pid="$(cat "$pidfile" 2>/dev/null)" || continue
     [ "$old_pid" = "$$" ] && continue
     if ps -p "$old_pid" > /dev/null 2>&1; then
-        log "Killing stale ${MODE} server for this workspace (PID=$old_pid)"
+        log "Killing stale ${MODE} server for this session (PID=$old_pid)"
         kill -TERM "$old_pid" 2>/dev/null || true
     fi
     rm -f "$pidfile" 2>/dev/null || true
 done
 
-# Also clean up dead PID files from ANY workspace (stale leftovers)
+# Clean up dead PID files from ANY workspace/session (stale leftovers
+# from crashed or orphaned processes).
 for pidfile in "$PID_DIR"/${MODE}-*.pid; do
     [ -f "$pidfile" ] || continue
     old_pid="$(cat "$pidfile" 2>/dev/null)" || continue
@@ -148,12 +156,30 @@ for pidfile in "$PID_DIR"/${MODE}-*.pid; do
     fi
 done
 
+# --- Session heartbeat registration ---
+# Each active session registers a heartbeat file so other tooling can
+# discover how many sessions share this workspace.  The watchdog and
+# future singleton logic can use this to decide when to shut down.
+# Skip heartbeat for "unknown" sessions: multiple unresolved sessions
+# would share one file, making the count unreliable.
+_SESSION_HEARTBEAT_DIR="${SESSION_DIR}/${_WS_HASH}"
+mkdir -p "$_SESSION_HEARTBEAT_DIR"
+if [ "$_SESSION_TAG" != "unknown" ]; then
+    touch "$_SESSION_HEARTBEAT_DIR/${_SESSION_TAG}.heartbeat"
+    log "Session registered: ${_SESSION_TAG} (workspace=${_WS_HASH})"
+else
+    log "Session tag is 'unknown'; skipping heartbeat registration"
+fi
+
 # Use exec to replace this process with uvx, preserving stdin/stdout pipes.
 # Background (&) would redirect stdin from /dev/null in non-interactive shells,
 # breaking MCP/LSP stdio transport.
 echo $$ > "$PID_DIR/${_PID_PREFIX}-$$.pid"
 export IVY_PID_FILE="$PID_DIR/${_PID_PREFIX}-$$.pid"
-trap 'rm -f "$IVY_PID_FILE" 2>/dev/null' EXIT TERM INT
+# Note: this trap is defensive. Because every code path below ends with
+# `exec`, the bash process is replaced and this trap never fires.  The
+# real cleanup happens in the Python atexit handler (__main__.py).
+trap 'rm -f "$IVY_PID_FILE" "$_SESSION_HEARTBEAT_DIR/${_SESSION_TAG}.heartbeat" 2>/dev/null' EXIT TERM INT
 
 # --- Launch ---
 if [ "$MODE" = "lsp" ]; then

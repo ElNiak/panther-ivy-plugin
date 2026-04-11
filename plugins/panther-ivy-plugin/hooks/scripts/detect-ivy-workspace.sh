@@ -64,9 +64,19 @@ fi
 
 # Persist session id per workspace so launchers can recover it even if
 # CLAUDE_ENV_FILE variables are not present in spawned server environments.
+# Write session files for BOTH the detected root AND the panther_ivy
+# submodule path (if different), because the MCP server launcher hashes
+# the panther_ivy path while this hook hashes the project root.
 if [ -n "$RESOLVED_SESSION_ID" ]; then
     WS_HASH="$(printf '%s' "$DETECTED_ROOT" | shasum -a 256 | cut -c1-12)"
     printf '%s\n' "$RESOLVED_SESSION_ID" > "/tmp/ivy-session-${WS_HASH}.id" 2>/dev/null || true
+
+    # Also write for the panther_ivy submodule path (MCP server's workspace root)
+    _piv_dir="$(find_panther_ivy "$PWD" 2>/dev/null)" || true
+    if [ -n "$_piv_dir" ] && [ "$_piv_dir" != "$DETECTED_ROOT" ]; then
+        PIV_HASH="$(printf '%s' "$_piv_dir" | shasum -a 256 | cut -c1-12)"
+        printf '%s\n' "$RESOLVED_SESSION_ID" > "/tmp/ivy-session-${PIV_HASH}.id" 2>/dev/null || true
+    fi
 fi
 
 # Prune sessions older than 7 days
