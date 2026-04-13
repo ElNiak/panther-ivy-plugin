@@ -19,6 +19,13 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+try:
+    from hook_utils import get_mcp_health_state_path, emit_hook_output, MAX_CONSECUTIVE_MCP_FAILURES
+    _HAS_HOOK_UTILS = True
+except ImportError:
+    _HAS_HOOK_UTILS = False
 
 _SKIP_TOOLS = {"Read", "Grep", "Glob", "LS"}
 _KNOWN_EVENTS = {
@@ -199,10 +206,7 @@ def _handle_mcp_health_circuit_breaker(tool_name: str) -> None:
     if "ivy" not in tool_name.lower():
         return
 
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    try:
-        from hook_utils import get_mcp_health_state_path, emit_hook_output, MAX_CONSECUTIVE_MCP_FAILURES
-    except ImportError:
+    if not _HAS_HOOK_UTILS:
         return
 
     try:
