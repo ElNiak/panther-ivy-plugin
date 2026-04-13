@@ -15,7 +15,7 @@
       "IVY_MCP_PORT": "19847",
       "IVY_LSP_DEBUG_LOG": "1",
       "IVY_LSP_DEBOUNCE_DELAY": "0.15",
-      "IVY_LSP_FORCE_REINSTALL": "1",
+      "IVY_LSP_FORCE_REINSTALL": "${IVY_LSP_FORCE_REINSTALL:-0}",
       "IVY_LSP_WORKSPACE_HINT": "${PWD}/panther/plugins/services/testers/panther_ivy"
     }
   }
