@@ -1,7 +1,7 @@
 # Base Output Style
 
-> **Note**: This file is superseded by the output styles in `output-styles/`.
-> It is retained as documentation. The compose-style hook no longer injects this file.
+> **Note**: This file is retained as documentation only. The compose-style hook
+> injects workflow-specific overlays from `styles/overlays/` instead of this base file.
 
 ## Formatting Conventions
 - Cite RFC sections as `[rfcNNNN:X.Y]` inline, never as footnotes.
