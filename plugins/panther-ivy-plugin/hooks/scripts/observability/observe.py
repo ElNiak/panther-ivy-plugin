@@ -11,18 +11,20 @@ Usage:
 
 import argparse
 import collections
+import fcntl
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 _SKIP_TOOLS = {"Read", "Grep", "Glob", "LS"}
 _KNOWN_EVENTS = {
-    "PreToolUse", "PostToolUse", "SessionStart", "SessionEnd", "Stop",
-    "SubagentStart", "SubagentStop", "UserPromptSubmit", "Notification",
-    "PermissionRequest", "PreCompact",
+    "PreToolUse", "PostToolUse", "PostToolUseFailure", "SessionStart",
+    "SessionEnd", "Stop", "SubagentStart", "SubagentStop",
+    "UserPromptSubmit", "Notification", "PermissionRequest", "PreCompact",
 }
 
 
@@ -81,6 +83,15 @@ def _build_payload(event_type: str, data: dict) -> dict | None:
             payload["mcp_server"] = server
             payload["mcp_tool_name"] = tool
         return payload
+
+    if event_type == "PostToolUseFailure":
+        error = data.get("error", "")
+        return {
+            "tool_name": tool_name,
+            "tool_use_id": data.get("tool_use_id", ""),
+            "error": str(error)[:500],
+            "is_interrupt": data.get("is_interrupt", False),
+        }
 
     if event_type == "SessionStart":
         return {
@@ -183,6 +194,50 @@ def _session_end_tool_summary(session_id: str) -> dict:
     return {}
 
 
+def _handle_mcp_health_circuit_breaker(tool_name: str) -> None:
+    """Increment the MCP health failure counter for ivy tools and warn when threshold is reached."""
+    if "ivy" not in tool_name.lower():
+        return
+
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    try:
+        from hook_utils import get_mcp_health_state_path, emit_hook_output, MAX_CONSECUTIVE_MCP_FAILURES
+    except ImportError:
+        return
+
+    try:
+        state_path = get_mcp_health_state_path()
+        state: dict = {"consecutive_failures": 0, "last_update": time.time()}
+        if os.path.exists(state_path):
+            with open(state_path) as f:
+                fcntl.flock(f, fcntl.LOCK_SH)
+                try:
+                    state = json.load(f)
+                finally:
+                    fcntl.flock(f, fcntl.LOCK_UN)
+        state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
+        state["last_update"] = time.time()
+        with open(state_path, "w") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                json.dump(state, f)
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
+
+        if state["consecutive_failures"] >= MAX_CONSECUTIVE_MCP_FAILURES:
+            emit_hook_output(
+                "PostToolUseFailure",
+                additional_context=(
+                    f"[ivy-health] WARNING: {state['consecutive_failures']} "
+                    "consecutive MCP tool failures. The MCP server may be "
+                    "crashed. Consider running the triage workflow or stopping MCP "
+                    "tool calls until resolved."
+                ),
+            )
+    except Exception:
+        pass
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True)
@@ -207,6 +262,9 @@ def main():
         log_event(args.event, session_id, payload)
     except Exception:
         pass
+
+    if args.event == "PostToolUseFailure":
+        _handle_mcp_health_circuit_breaker(data.get("tool_name", ""))
 
 
 if __name__ == "__main__":
