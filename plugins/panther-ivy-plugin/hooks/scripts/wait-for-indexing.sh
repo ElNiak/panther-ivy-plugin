@@ -5,9 +5,18 @@
 # registration completes. Surfaces status as additionalContext for Claude.
 set -euo pipefail
 
+# Emit partial status if killed by hook timeout
+trap '_emit_timeout_msg' TERM INT
+_emit_timeout_msg() {
+    cat <<'EOFT'
+{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"[ivy-indexing] Readiness check timed out. MCP tools may still be starting — retry after 10 seconds if a tool call fails."}}
+EOFT
+    exit 0
+}
+
 MCP_LOG="${IVY_MCP_LOG_PATH:-/tmp/ivy-mcp-latest.log}"
 LSP_LOG="${IVY_LSP_LOG_PATH:-/tmp/ivy-lsp-lsp-latest.log}"
-MAX_WAIT="${IVY_LSP_INDEX_TIMEOUT:-30}"
+MAX_WAIT="${IVY_LSP_INDEX_TIMEOUT:-12}"
 
 # --- Guard: skip polling if MCP log is unavailable ---
 # If IVY_MCP_LOG_PATH was not explicitly set AND the fallback file doesn't exist,
@@ -60,7 +69,7 @@ done
 LSP_STATUS=""
 LSP_INDEXED=0
 if [ "$MCP_READY" = "1" ] && [ -f "$LSP_LOG" ]; then
-    for _j in $(seq 1 10); do
+    for _j in $(seq 1 5); do
         if grep -q "Indexed .* files" "$LSP_LOG" 2>/dev/null; then
             LSP_INDEXED=1
             LSP_STATUS=$(grep "Indexed .* files" "$LSP_LOG" | tail -1)
