@@ -52,4 +52,7 @@ for pid in $(ps -eo pid,args 2>/dev/null | grep "[i]vy_lsp" | grep "$DETECTED_RO
     kill -TERM "$pid" 2>/dev/null || true
 done
 
+# Clean indexing denial counter
+rm -f /tmp/ivy-lsp-pids/indexing-deny-count
+
 exit 0

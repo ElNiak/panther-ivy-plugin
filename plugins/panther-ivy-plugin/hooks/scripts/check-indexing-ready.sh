@@ -4,20 +4,36 @@
 # Uses permissionDecision:"deny" to actually prevent the tool call.
 # Claude sees the denial reason and can retry on the next turn.
 #
-# Readiness signals (any one is sufficient):
-#   1. LSP log contains "Indexed N files" (Phase 1 complete)
-#   2. Offline .ivy-index/ exists for at least one protocol (pre-built)
-#   3. MCP log contains "Pre-populated from offline index" (prepopulation done)
+# Readiness protocol (consistent with wait-for-indexing.sh):
+#   Signal 1: LSP log "Indexed N files"      — Phase 1 indexing complete
+#   Signal 2: Offline .ivy-index/ exists      — pre-built offline index
+#   Signal 3: MCP log "Pre-populated..."      — MCP prepopulation done
+#   Signal 4: MCP log "[MCP-READY]"           — MCP startup complete
+#   Any ONE signal is sufficient to allow tool calls.
 set -euo pipefail
 
 MCP_LOG="${IVY_MCP_LOG_PATH:-/tmp/ivy-mcp-latest.log}"
 LSP_LOG="${IVY_LSP_LOG_PATH:-/tmp/ivy-lsp-lsp-latest.log}"
 WORKSPACE_ROOT="${IVY_WORKSPACE_ROOT:-}"
 
+# Circuit breaker: after 6 denials (~60s), degrade to warning
+DENY_STATE="/tmp/ivy-lsp-pids/indexing-deny-count"
+_increment_deny() {
+    local count=0
+    [ -f "$DENY_STATE" ] && count=$(cat "$DENY_STATE" 2>/dev/null || echo 0)
+    count=$((count + 1))
+    echo "$count" > "$DENY_STATE"
+    echo "$count"
+}
+_reset_deny() {
+    rm -f "$DENY_STATE"
+}
+
 # --- Check readiness signals ---
 
 # Signal 1: LSP finished Phase 1 indexing
 if [ -f "$LSP_LOG" ] && grep -q "Indexed .* files" "$LSP_LOG" 2>/dev/null; then
+    _reset_deny
     exit 0  # Ready — allow tool call
 fi
 
@@ -25,6 +41,7 @@ fi
 if [ -n "$WORKSPACE_ROOT" ]; then
     for idx_dir in "$WORKSPACE_ROOT"/protocol-testing/*/.ivy-index; do
         if [ -d "$idx_dir" ] && [ -f "$idx_dir/manifest.json" ]; then
+            _reset_deny
             exit 0  # Offline index available — allow tool call
         fi
     done
@@ -32,7 +49,14 @@ fi
 
 # Signal 3: MCP prepopulated from offline index
 if [ -f "$MCP_LOG" ] && grep -q "Pre-populated from offline index\|pre-warmed\|PREWARM-DONE" "$MCP_LOG" 2>/dev/null; then
+    _reset_deny
     exit 0  # MCP model ready — allow tool call
+fi
+
+# Signal 4: MCP server declared ready (consistent with wait-for-indexing.sh)
+if [ -f "$MCP_LOG" ] && grep -q "\[MCP-READY\]" "$MCP_LOG" 2>/dev/null; then
+    _reset_deny
+    exit 0  # MCP ready sentinel — allow tool call
 fi
 
 # --- Not ready: check if server is starting/indexing ---
@@ -44,8 +68,15 @@ if [ -f "$MCP_LOG" ] && grep -q "Starting ivy-lsp MCP server" "$MCP_LOG" 2>/dev/
         NOW=$(date +%s)
         AGE=$(( NOW - LOG_MTIME ))
         if [ "$AGE" -lt 120 ]; then
+            DENY_COUNT=$(_increment_deny)
+            if [ "$DENY_COUNT" -gt 6 ]; then
+                cat <<ENDJSON
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"[ivy-indexing] LSP indexing appears stuck (${AGE}s, ${DENY_COUNT} denied calls). Allowing tool call — results may be incomplete. Consider running /nct-health."}}
+ENDJSON
+                exit 0
+            fi
             cat <<ENDJSON
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"[ivy-indexing] LSP is still indexing the workspace (${AGE}s elapsed). Wait 10 seconds and retry.","additionalContext":"The LSP workspace index is not yet complete. Retry this tool call after a short wait."}}
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"[ivy-indexing] LSP is still indexing the workspace (${AGE}s elapsed, attempt ${DENY_COUNT}/6). Wait 10 seconds and retry.","additionalContext":"The LSP workspace index is not yet complete. Retry this tool call after a short wait."}}
 ENDJSON
             exit 0
         fi
