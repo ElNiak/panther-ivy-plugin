@@ -132,6 +132,8 @@ Guide fixes inline using the relevant agent's recommendations. After applying fi
 
 **If the user wants verification:**
 
+**Depth limit:** If `invocation_depth >= 3`, do not invoke sub-workflows. Instead, return to the caller (decrement depth, restore caller's workflow) or return to navigate with a summary of what was attempted and what remains.
+
 Dispatch to `verify` as a sub-workflow:
 
 1. Set the active-workflow flag:

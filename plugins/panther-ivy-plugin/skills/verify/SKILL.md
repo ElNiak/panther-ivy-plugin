@@ -117,6 +117,7 @@ ivy_verify(relative_path=<test_file>)
 1. Report: "Verification passed for `<test_file>`."
 2. Offer follow-ups: "Run another test? Check coverage? Review model quality?"
 3. If the user picks coverage or review, dispatch to the `review` workflow as a sub-workflow:
+   - **Depth limit:** If `invocation_depth >= 3`, do not invoke sub-workflows. Instead, return to the caller (decrement depth, restore caller's workflow) or return to navigate with a summary of what was attempted and what remains.
    - Set `invocation_depth` += 1, `caller = "verify"` on the active-workflow flag
    - Invoke: `Skill(skill="review")`
 4. Update phase to `"pass"`, then proceed to completion.
