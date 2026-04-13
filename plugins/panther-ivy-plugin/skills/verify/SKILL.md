@@ -1,6 +1,6 @@
 ---
 name: verify
-description: "Test-compile-execute cycle with failure diagnosis — the primary verification workflow. Activated when users want to check, test, debug, or verify Ivy specifications."
+description: "Test-compile-execute cycle with failure diagnosis. Use when the user wants to check, test, debug, or verify Ivy specifications."
 ---
 
 ## Output Style

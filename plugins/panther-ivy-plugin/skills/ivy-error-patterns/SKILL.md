@@ -1,6 +1,7 @@
 ---
 name: ivy-error-patterns
-description: Use when encountering any Ivy error message to look up the root cause and correct fix. Lookup table mapping cryptic Ivy errors to causes, correct patterns, and working examples. Triggers on any Ivy error message including "not found", "ungrounded", "invariant failed", "assumption failed", "type mismatch", "type error", "circular dependency", "not well-founded", "no instances", "timeout", "unknown", "multiple definitions", "cannot find isolate".
+description: "Error-to-fix lookup table for cryptic Ivy messages. Use when encountering \"not found\", \"ungrounded\", \"invariant failed\", \"type mismatch\", or any Ivy error."
+user-invocable: false
 ---
 
 # Ivy Error Patterns Reference
@@ -39,7 +40,7 @@ relation update_processed(S:bgp_id, D:bgp_id)
 - `protocol-testing/quic/quic_stack/quic_packet.ivy:229` — `relation conn_seen(C:cid)`
 - `protocol-testing/bgp/bgp_shims/bgp_shim.ivy:41` — `relation isup(A:ip.addr)`
 
-**Related:** `ivy-model-editing` skill > Relations section
+**Related:** `ivy-writing-guide` skill > Relations section
 
 ---
 
@@ -63,7 +64,7 @@ require exists S. req(other, S, self);
 **Working Examples:**
 - `protocol-testing/bgp/bgp_utils/bgp_network.ivy:56` — `require exists S. req(other,S,self);`
 
-**Related:** `ivy-model-editing` skill > Invariants section
+**Related:** `ivy-writing-guide` skill > Invariants section
 
 ---
 
@@ -85,7 +86,7 @@ require exists S. req(other, S, self);
 - `protocol-testing/quic/quic_stack/quic_packet.ivy:300` — `after init` block initializing all relations
 - `protocol-testing/bgp/bgp_utils/bgp_network.ivy:56-70` — `require` guards on actions
 
-**Related:** `ivy-model-editing` skill > Invariants, Actions sections
+**Related:** `ivy-writing-guide` skill > Invariants, Actions sections
 
 ---
 
@@ -102,7 +103,7 @@ require exists S. req(other, S, self);
 
 **Working Examples:** Search for `object` and `specification` blocks in the protocol family.
 
-**Related:** `ivy-model-editing` skill > Isolates section
+**Related:** `ivy-writing-guide` skill > Isolates section
 
 ---
 
@@ -117,7 +118,7 @@ require exists S. req(other, S, self);
 **Working Examples:**
 - `protocol-testing/quic/quic_stack/quic_transport_parameters.ivy:226` — `function initial_max_stream_data_uni_server_0rtt : stream_pos`
 
-**Related:** `ivy-model-editing` skill > Type Declarations section
+**Related:** `ivy-writing-guide` skill > Type Declarations section
 
 ---
 
@@ -133,31 +134,70 @@ require exists S. req(other, S, self);
 - `protocol-testing/quic/quic_stack/quic_transport_parameters.ivy:3-5` — linear include chain: `include quic_types`, `include quic_transport_error_code`, `include quic_stream`
 - `protocol-testing/bgp/bgp_utils/random_value.ivy:3` — single include: `include bgp_type`
 
-**Related:** `ivy-model-editing` skill > Include Directives section
+**Related:** `ivy-writing-guide` skill > Include Directives section
 
 ---
 
 ## 7. `not well-founded`
 
-**Trigger:** A recursive definition does not terminate.
+**Trigger:** `definition ... not well-founded` during verification.
 
-**Root Cause:** Ivy requires well-founded recursion for soundness.
+**Root Cause:** Ivy requires every recursive definition to be well-founded — the recursive call must be on a structurally smaller argument so termination can be proven. A definition that calls itself without a decreasing measure violates this requirement.
 
-**Correct Pattern:** Add a termination measure or restructure to avoid recursion.
+```ivy
+# WRONG — count recurses on S without a decreasing measure
+definition count(S:set) = ite(empty(S), 0, 1 + count(S))
+# Error: definition count not well-founded
+```
 
-**Related:** `ivy-model-editing` skill > Definitions section
+**Correct Pattern:** Either eliminate recursion by using Ivy's built-in aggregate operators, or provide an explicit termination measure using a `decreases` clause:
+
+```ivy
+# RIGHT — no recursion; express using relations and quantifiers
+function count(S:set) : nat
+axiom forall S. count(S) = card(S)
+
+# RIGHT — recursion with explicit decreasing measure
+definition count(S:set) decreases size(S) =
+    ite(empty(S), 0, 1 + count(remove_min(S)))
+```
+
+**Related:** `ivy-writing-guide` skill > Definitions section
 
 ---
 
 ## 8. `uninterpreted sort has no instances`
 
-**Trigger:** A type was declared but never given concrete values.
+**Trigger:** `uninterpreted sort <T> has no instances` during verification or model extraction.
 
-**Root Cause:** The type is abstract with no constructors or axioms.
+**Root Cause:** A sort declared with `type T` is fully abstract — Ivy's model extractor requires at least one concrete member. Without axioms or an `individual` providing an element, Z3 cannot construct a finite model.
 
-**Correct Pattern:** Add at least one constructor or axiom providing instances of the sort.
+```ivy
+# WRONG — abstract sort with no inhabitants
+type connection_id
+# Error: uninterpreted sort connection_id has no instances
+```
 
-**Related:** `ivy-model-editing` skill > Type Declarations section
+**Correct Pattern:** Either enumerate values with `interpret`, declare at least one individual, or add an axiom asserting the sort is inhabited:
+
+```ivy
+# RIGHT — enumerate concrete values (preferred for small finite types)
+type connection_id = {cid_a, cid_b, cid_c}
+
+# RIGHT — declare a canonical individual so the sort is non-empty
+type connection_id
+individual default_cid : connection_id
+
+# RIGHT — axiom asserting the sort is inhabited
+type connection_id
+axiom exists C:connection_id. true
+```
+
+**Working Examples:**
+- `protocol-testing/quic/quic_stack/quic_types.ivy` — `type cid` defined with `interpret cid -> bv[8]`
+- `protocol-testing/bgp/bgp_types/bgp_type.ivy` — `type bgp_id` with concrete enumeration
+
+**Related:** `ivy-writing-guide` skill > Type Declarations section
 
 ---
 
@@ -173,21 +213,50 @@ require exists S. req(other, S, self);
 3. Use `isolate` boundaries to limit what the solver must reason about
 4. Reduce quantifier nesting depth
 
-**Related:** `ivy-verification` skill > Z3 timeout section
-
 ---
 
 ## 10. `multiple definitions`
 
-**Trigger:** Same symbol declared in multiple included files.
+**Trigger:** `<name> multiply defined` or `multiple definitions of <name>` during compilation or verification.
 
-**Root Cause:** Include graph brings in conflicting declarations.
+**Root Cause:** Two files in the include graph declare the same symbol (type, relation, function, or action) at the top level. Ivy does not allow redeclaration — even if both declarations are identical.
+
+```ivy
+# file_a.ivy
+include bgp_type
+type connection_state = {idle, active, established}
+
+# file_b.ivy
+include bgp_type
+type connection_state = {idle, active, established}   # duplicate
+
+# test.ivy
+include file_a
+include file_b
+# Error: connection_state multiply defined
+```
 
 **Correct Pattern:**
-1. Run `ivy_include_graph` to trace the duplicate
-2. Remove one declaration or namespace it inside an `object`
+1. Run `ivy_include_graph` to identify which two files both declare the symbol.
+2. Move the shared declaration to a single common file and `include` that file from both.
+3. If the two declarations differ in intent, namespace one inside an `object` to avoid collision.
 
-**Related:** `ivy-model-editing` skill > Module System section
+```ivy
+# RIGHT — declare once in a shared file (e.g., bgp_connection_state.ivy)
+type connection_state = {idle, active, established}
+
+# file_a.ivy — include the shared file
+include bgp_connection_state
+
+# file_b.ivy — include the same shared file (no redeclaration)
+include bgp_connection_state
+```
+
+**Working Examples:**
+- `protocol-testing/bgp/bgp_types/bgp_type.ivy` — canonical shared type declarations included by all BGP stack files
+- `protocol-testing/quic/quic_stack/quic_types.ivy` — single source of truth for QUIC type definitions
+
+**Related:** `ivy-writing-guide` skill > Module System section
 
 ---
 
@@ -201,7 +270,7 @@ require exists S. req(other, S, self);
 1. Check spelling of the isolate name
 2. Run `ivy_model_info` to list declared isolates
 
-**Related:** `ivy-model-editing` skill > Isolates section
+**Related:** `ivy-writing-guide` skill > Isolates section
 
 ---
 
@@ -225,10 +294,5 @@ after init {
 - `protocol-testing/quic/quic_stack/quic_packet.ivy:300` — `after init { conn_seen(C) := false; ... }`
 - `protocol-testing/bgp/bgp_tests/speaker_tests/bgp_speaker_test_accept.ivy:10` — `after init {`
 
-**Related:** `ivy-model-editing` skill > Common Pitfalls > Forgetting `after init` blocks
+**Related:** `ivy-writing-guide` skill > Common Pitfalls > Forgetting `after init` blocks
 
----
-
-## Protocol-Specific Patterns
-
-This section will grow as new protocol-specific errors are encountered. Add entries here when an error pattern is specific to a protocol family (BGP, QUIC, CoAP, etc.) rather than being a general Ivy language issue.

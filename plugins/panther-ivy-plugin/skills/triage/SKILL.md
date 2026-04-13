@@ -1,6 +1,6 @@
 ---
 name: triage
-description: "Stack health diagnostics and recovery — checks MCP, LSP, and Serena servers. Activated when tools are broken, on 'not working' complaints, or as a preflight before other workflows."
+description: "Stack health diagnostics and recovery for MCP, LSP, and Serena. Use when tools are broken, \"not working\" complaints, or as preflight before other workflows."
 ---
 
 ## Output Style

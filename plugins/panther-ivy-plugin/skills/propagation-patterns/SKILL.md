@@ -1,6 +1,7 @@
 ---
 name: propagation-patterns
-description: "Internal knowledge skill — type change impact analysis patterns. Do not invoke directly; loaded by build (Phase 3 propagation)."
+description: "Type change impact analysis patterns and encoding tables. Use when propagating field or variant changes across Ivy spec layers."
+user-invocable: false
 ---
 
 # Propagation Patterns

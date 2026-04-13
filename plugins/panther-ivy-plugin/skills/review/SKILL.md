@@ -1,6 +1,6 @@
 ---
 name: review
-description: "Quality and coverage auditing — detects review type from user intent and dispatches appropriate analysis agents. Activated for coverage checks, quality audits, and model reviews."
+description: "Quality and coverage auditing for Ivy models. Use when the user asks for coverage checks, quality audits, or model reviews."
 ---
 
 ## Output Style

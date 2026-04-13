@@ -1,6 +1,6 @@
 ---
 name: build
-description: "Multi-session protocol model construction — the heaviest workflow. Guides specification creation from RFC to formal Ivy model using 14-layer template and NCT/NACT/NSCT methodology."
+description: "Multi-session protocol model construction from RFC to formal Ivy model. Use when starting a new protocol spec, scaffolding layers, or continuing a build session."
 ---
 
 ## Output Style
@@ -54,8 +54,8 @@ Load the `specification-patterns` knowledge skill via the Skill tool.
 
 Look in `protocol-testing/{protocol}/` for what already exists:
 
-```bash
-find protocol-testing/{protocol}/ -name '*.ivy' | head -50
+```
+Glob(pattern="*.ivy", path="protocol-testing/{protocol}/")
 ```
 
 Check for existing `build-state.yaml`:
@@ -66,7 +66,7 @@ get_build_state(protocol_dir)
 
 ### Step 3: Propose layer structure
 
-Using the 14-layer template from CLAUDE.md, propose which layers apply to the target protocol and aspect:
+Using the 14-layer template from the `specification-patterns` skill, propose which layers apply to the target protocol and aspect:
 
 - Which of the 14 layers are needed
 - Dependency order for construction

@@ -1,6 +1,7 @@
 ---
 name: ivy-debugging-methodology
-description: Use when debugging Ivy verification or compilation errors. Enforces a mandatory pre-fix research workflow. Must be followed before proposing any fix to an Ivy spec. Triggers on "debugging ivy", "fix ivy error", "verification failed", "compilation error", "ivy_check failed", "diagnose ivy", or any attempt to fix a failing Ivy specification.
+description: "Mandatory pre-fix research workflow for Ivy errors. Use when debugging Ivy compilation or verification failures, \"ivy_check failed\", or \"verification failed\"."
+user-invocable: false
 ---
 
 # Ivy Debugging Methodology
@@ -43,7 +44,7 @@ When a diagnostic points to a specific line, read 5 lines above and below before
 
 Load and check these skills for the failing construct:
 - `ivy-error-patterns` — look up the specific error message substring
-- `ivy-model-editing` — check syntax rules for the construct type (relation, function, action, invariant, etc.)
+- `ivy-writing-guide` — check syntax rules for the construct type (relation, function, action, invariant, etc.)
 
 ### Step 4: Run Linter
 

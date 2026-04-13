@@ -1,6 +1,6 @@
 ---
 name: navigate
-description: "Central hub workflow — detects context, presents options, and routes to the appropriate workflow. Activated when the user's intent is unclear, when resuming a session, or when another workflow completes."
+description: "Context-aware routing hub. Use when the user's intent is unclear, when resuming a session, or when another workflow completes."
 ---
 
 ## Output Style

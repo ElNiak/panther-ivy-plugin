@@ -1,6 +1,7 @@
 ---
 name: claim-discussion
-description: "Internal knowledge skill — structured decision trees for verification/coverage claims. Do not invoke directly; loaded by review (Phase 3 findings)."
+description: "Decision tree templates for verification and coverage claims. Use when reviewing findings about invariants, RFC mapping, or coverage gaps."
+user-invocable: false
 context: fork
 ---
 

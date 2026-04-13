@@ -1,6 +1,7 @@
 ---
 name: specification-patterns
-description: "Internal knowledge skill — layer selection, pattern scaffolding templates. Do not invoke directly; loaded by build (Phase 2 blueprint)."
+description: "14-layer template reference and pattern scaffolding guide. Use when designing layer structure or scaffolding a new protocol model."
+user-invocable: false
 allowed-tools: "Read Grep Glob ToolSearch"
 ---
 
@@ -187,18 +188,7 @@ module (no deps)
 
 **Scaffolding order**: variants -> entity -> module -> serdes -> monitors -> shim
 
-### Composition Rules
-
-1. **Every protocol needs**: variants + entity + shim + serdes (minimum viable model)
-2. **Monitors are optional** but recommended for testing
-3. **Modules are optional** -- only needed for reusable parameterized components
-4. **Include chains** must be consistent -- no circular dependencies
-
-### Using the Pattern Library
-
-Add patterns using `ivy_pattern_scaffold` MCP tool or the `build` workflow.
-
-Analyze patterns with `ivy_patterns` MCP tool (`mode="analyze"`, `"validate"`, `"compare"`). Template files in `protocol-testing/patterns/` with registry `pattern_catalog.yaml`.
+See [pattern-library-detail.md](references/pattern-library-detail.md) for composition rules and detailed patterns.
 
 ## Reference Files
 

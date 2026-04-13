@@ -1,6 +1,7 @@
 ---
 name: counterexample-guide
-description: "Internal knowledge skill — trace interpretation on verification failure. Do not invoke directly; loaded by verify (Phase 5) and build (Phase 3 errors)."
+description: "Trace interpretation and fix strategies for verification failures. Use when counterexample or counterexample_trace appears in ivy_verify output."
+user-invocable: false
 context: fork
 ---
 
@@ -194,109 +195,28 @@ Step 2: connection.handshake_complete
 
 ## Fix Strategies
 
-### Add or Strengthen Guard Conditions
+| Pattern | Fix |
+|---------|-----|
+| Action fires in invalid state | Add `require` guards to `before` block; use `ivy_coverage(mode="gaps")` for related gaps |
+| Unexpected initial value | Add `after init` block initializing all relations/functions used by the assertion |
+| Monitor on wrong action | Move/duplicate constraint to the action that actually fires in the trace |
+| Invariant catches transient state | Weaken to exclude transition phase, or move check to `_finalize` |
 
-When the counterexample shows an action firing in an invalid state, add `require` statements to the `before` block:
-
-```ivy
-before action_name(...) {
-    require precondition_1;
-    require precondition_2;
-    if _generating {
-        require additional_test_generation_constraint;
-    }
-}
-```
-
-Use `ivy_coverage(mode="gaps")` to find other state variables that may also need guards.
-
-### Add State Initialization
-
-When the counterexample shows an unexpected initial value, add `after init` blocks. Check **all** state variables used in the failing assertion:
-
-```ivy
-after init {
-    relation_name(X) := false;
-    function_name(X) := default_value;
-}
-```
-
-### Split Monitors into Finer-Grained Boundaries
-
-When a single monitor tries to handle too many cases, split it into per-action monitors:
-
-```ivy
-# Instead of one broad monitor on packet_event:
-before frame.stream.handle(f, scid, dcid, e) { ... }
-before frame.ack.handle(f, scid, dcid, e) { ... }
-before frame.rst_stream.handle(f, scid, dcid, e) { ... }
-```
-
-### Move Checks to Appropriate Lifecycle Points
+### Lifecycle Placement
 
 | Check Type | Where to Place |
 |---|---|
-| Preconditions (must hold before action) | `before` block with `require` |
-| State updates (record what happened) | `after` block with assignment |
-| Compliance checks (verify response) | `after` block with `require` |
-| End-state properties (hold at test end) | `_finalize` action |
+| Preconditions | `before` block with `require` |
+| State updates | `after` block with assignment |
+| Compliance checks | `after` block with `require` |
+| End-state properties | `_finalize` action |
 | Always-true properties | `invariant` (use sparingly) |
 
 ---
 
-## Example: Reading a Counterexample and Identifying the Fix
+## Example
 
-### Scenario
-
-`ivy_verify` fails on `quic_server_test_stream.ivy` with this `counterexample_trace`:
-
-```
-Violated assertion (Line 87):
-  require stream_data_sent(S)
-
-Execution trace (3 steps):
---------------------------------------------------
-
-  Step 1: quic_connection.open
-    conn_seen = true
-    cid = 0xABCD
-    connected = true
-
-  Step 2: frame.stream.handle
-    stream_id = 4
-    stream_state = idle  (was: idle)
-    bytes_sent = 0
-
-  Step 3: _finalize
-    stream_data_sent = false
-```
-
-### Diagnosis
-
-1. **Violated assertion**: `require stream_data_sent(S)` at line 87, inside `_finalize`
-2. **Step 2 observation**: `stream_state` stays `idle` -- it was never transitioned to `open` or `sending`. The `bytes_sent = 0` confirms no data was actually sent.
-3. **Root cause**: `frame.stream.handle` fires but does not update `stream_data_sent` or `stream_state`. The `after` block for `frame.stream.handle` is missing the state update, or the `before` block does not require `f.length > 0` to ensure meaningful data.
-
-### Investigation
-
-Use LSP `hover` on the `stream_data_sent` symbol to get its type info, then `findReferences` to see where it is set.
-
-This reveals `stream_data_sent` is set in `after frame.stream.handle` only when `f.length > 0`, but no `before` guard requires `f.length > 0` during test generation.
-
-### Fix
-
-Add a generation guard to ensure the test mirror only generates meaningful stream frames:
-
-```ivy
-before frame.stream.handle(f:frame.stream, scid:cid, dcid:cid, e:quic_packet_type) {
-    if _generating {
-        require f.length > 0;                 # Ensure non-empty stream data
-        require stream_state(f.id) = open;    # Ensure stream is open
-    }
-}
-```
-
-After applying the fix, re-run `ivy_verify` to confirm the counterexample is resolved.
+See [references/trace-example.md](references/trace-example.md) for a complete end-to-end trace interpretation example.
 
 ---
 
@@ -319,8 +239,3 @@ After applying the fix, re-run `ivy_verify` to confirm the counterexample is res
 - LSP `hover` / `findReferences` / `goToDefinition` -- Look up symbol definitions and usages
 - `ivy_visualize` (view="state_machine") -- View state transitions
 - `ivy_coverage` (mode="gaps") -- Find related unguarded state
-
-## Related Skills
-
-- **`claim-discussion`** — Structured decision trees for verification claims, RFC interpretations, and coverage gaps. Use after diagnosing a counterexample to decide whether it reveals a spec bug or IUT non-compliance.
-- **`methodology-reference`** — The full verify-fix cycle (check → diagnose → fix → re-check). Provides quality gates and RFC-to-Ivy mapping context.
