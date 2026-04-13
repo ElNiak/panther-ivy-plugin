@@ -259,12 +259,7 @@ _OBSERVE_SPECS = {
         },
         ["tool_name", "suggestion_count"],
     ),
-}
-
-# obs_post_tool_use_failure.py is still a standalone script (has circuit breaker logic)
-_STANDALONE_SPECS = {
-    "obs_post_tool_use_failure.py": (
-        "PostToolUseFailure",
+    "PostToolUseFailure": (
         {
             "session_id": "int-test",
             "tool_name": "Bash",
@@ -310,28 +305,6 @@ class TestObsHooksHappyPath:
                 f"Missing payload key '{key}' in {event_type} output"
             )
 
-    @pytest.fixture(params=list(_STANDALONE_SPECS.keys()))
-    def standalone_spec(self, request):
-        return request.param, _STANDALONE_SPECS[request.param]
-
-    def test_happy_path_standalone(self, obs_scripts_dir, tmp_path, has_python3, standalone_spec):
-        if not has_python3:
-            pytest.skip("python3 required")
-
-        script_name, (event_type, sample_input, expected_keys) = standalone_spec
-        script = obs_scripts_dir / script_name
-        result = _run_python_hook(
-            script,
-            sample_input,
-            env_extra={"IVY_OBSERVABILITY_DIR": str(tmp_path)},
-        )
-        assert result.returncode == 0
-
-        events_file = tmp_path / "sessions" / "int-test" / "events.jsonl"
-        assert events_file.exists(), f"events.jsonl not created by {script_name}"
-
-        event = _read_last_event(events_file)
-        assert event["event_type"] == event_type
 
 
 class TestObsHooksGracefulFailure:
