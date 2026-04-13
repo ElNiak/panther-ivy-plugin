@@ -3,7 +3,7 @@ name: traceability-agent
 description: "Internal agent — dispatched by build and review workflows for RFC requirement extraction and coverage auditing. Not user-facing."
 model: sonnet
 color: orange
-tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "ToolSearch"]
+tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "ToolSearch", "mcp__plugin_panther-ivy-plugin_ivy-tools__*"]
 maxTurns: 20
 skills:
   - ivy-toolkit

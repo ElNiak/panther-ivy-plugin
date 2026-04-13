@@ -2,8 +2,8 @@
 name: model-reviewer
 description: "Internal agent — dispatched by build and review workflows for adversarial model quality audits. Not user-facing."
 model: opus
-color: magenta
-tools: ["Read", "Grep", "Glob", "ToolSearch"]
+color: purple
+tools: ["Read", "Grep", "Glob", "ToolSearch", "mcp__plugin_panther-ivy-plugin_ivy-tools__*"]
 maxTurns: 15
 skills:
   - claim-discussion
