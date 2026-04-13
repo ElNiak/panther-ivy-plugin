@@ -1,8 +1,8 @@
 {
   "workflows": {
     "verify": {
-      "keywords": ["verify", "test", "pass", "fail", "debug", "counterexample", "invariant violation"],
-      "intentPatterns": ["(does|did|will).*pass", "(why|what).*fail", "run.*test", "check.*(spec|model|invariant|isolate)"],
+      "keywords": ["verify", "check", "test", "pass", "fail", "debug", "counterexample", "invariant violation"],
+      "intentPatterns": ["(does|did|will).*pass", "(why|what).*fail", "run.*test"],
       "fileTriggers": ["*.ivy"],
       "priority": "high"
     },
@@ -14,12 +14,12 @@
     },
     "review": {
       "keywords": ["review", "audit", "coverage", "RFC gaps", "quality", "traceability"],
-      "intentPatterns": ["(how much|what).*cover", "(check|audit).*quality", "check.*coverage"],
+      "intentPatterns": ["(how much|what).*cover", "(check|audit).*quality"],
       "fileTriggers": [],
       "priority": "medium"
     },
     "triage": {
-      "keywords": ["health", "broken", "error", "connection error", "MCP", "LSP", "server down", "not working"],
+      "keywords": ["health", "broken", "tool error", "connection error", "MCP", "LSP", "server down", "not working"],
       "intentPatterns": ["(why|what).*(broken|error|crash|down)"],
       "fileTriggers": [],
       "priority": "critical"
