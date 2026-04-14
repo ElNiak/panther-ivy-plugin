@@ -72,15 +72,11 @@ Offer the user three choices:
 
 If the user picks option 3, invoke the `ivy-writing-guide` skill and the `specification-patterns` skill to load authoring guidance. Guide the user through creating the test spec, then continue to Phase 3.
 
-### Gate checkpoint
+### Situation Briefing — Test Selection Confirmation
 
-Wait for the user to confirm which test(s) to run or create. Do not proceed until you have explicit confirmation.
+Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)** as the gate checkpoint (do not proceed without explicit confirmation):
 
-### Situation Briefing — Test Selection Summary
-
-After the user confirms, load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
-
-- **What happened:** Summarize which test(s) were selected and what they test (protocol feature, role, RFC section).
+- **What happened:** Summarize which test(s) were found/selected and what they test (protocol feature, role, RFC section).
 - **Options:** "Compile and run all selected tests" / "Narrow selection" / "Design a new test instead"
 
 ### Step 3: Update state

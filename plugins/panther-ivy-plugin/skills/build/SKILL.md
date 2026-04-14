@@ -85,13 +85,9 @@ Using the 14-layer template from the `specification-patterns` skill, propose whi
 - Minimum viable set (typically 7 layers: Types, Frame, Packet, Connection, Entity Defs, Entity Behavior, Shims)
 - Which layers already exist and can be reused
 
-### Gate checkpoint
+### Situation Briefing — Blueprint Approval
 
-Present the blueprint to the user. Wait for explicit approval before proceeding.
-
-### Situation Briefing — Blueprint Confirmation
-
-Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
+Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)** as the gate checkpoint (do not proceed without explicit approval):
 
 - **What happened:** Summarize the blueprint: how many layers proposed, which are new vs. reusable, estimated build order.
 - **What it means:** Compare with the MPE recommendations from Phase 1 — which agent's approach was followed and why.
