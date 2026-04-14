@@ -1,0 +1,119 @@
+---
+name: reflection-patterns
+description: "Reusable interaction patterns for workflow skills: Reflection Gate, Multi-Perspective Exploration, Situation Briefing. Use when a workflow skill reaches a designated interaction point."
+user-invocable: false
+context: fork
+---
+
+# Interaction Patterns
+
+Three reusable patterns for structured user interaction during workflows. Each workflow skill references a specific pattern at designated points.
+
+---
+
+## Pattern A: Reflection Gate (RG)
+
+A structured pause to re-evaluate whether the current workflow still matches the user's intent.
+
+**When invoked, do these steps in order:**
+
+1. **Skip check**: If `invocation_depth > 0` (this workflow was called as a sub-workflow), skip this Reflection Gate entirely. Sub-workflows must not interrupt their parent's flow.
+
+2. **Summarize** the current state in 2-3 sentences: what phase you are in, what was found so far, what is pending.
+
+3. **Re-evaluate** workflow fit by checking three signals:
+   - Has the user's recent language shifted toward a different workflow's domain? (e.g., asking about coverage during a verify workflow suggests switching to review)
+   - Did findings suggest a different workflow would be more appropriate? (e.g., structural issues during verify suggest switching to build)
+   - Are you in a dead-end loop? (same error encountered twice with no progress)
+
+4. **Present options** via `AskUserQuestion` with 2-3 choices:
+   - **(a)** Continue the current path — explain what happens next
+   - **(b)** Switch to [named alternative workflow] — explain why it might be better, based on the signals above
+   - **(c)** Pause and explain more — provide deeper context before the user decides
+
+5. **Act on choice**:
+   - If (a): proceed with the next phase of the current workflow
+   - If (b): update the `active-workflow` state file to the new workflow and invoke it via `Skill(skill="{workflow_name}")`
+   - If (c): provide the expanded explanation, then re-present the choice
+
+---
+
+## Pattern B: Multi-Perspective Exploration (MPE)
+
+Dispatch 2-3 parallel agents with divergent perspectives to explore a decision point before committing.
+
+**When invoked, do these steps in order:**
+
+1. **Define the exploration question**: State clearly what decision needs to be made (e.g., "Which architectural approach for this protocol model?" or "What is the root cause of this verification failure?").
+
+2. **Dispatch agents in parallel** using multiple Agent tool calls in a single message. Use 2-3 of these perspective agents:
+
+   | Agent | Role | Method | Focus Question | subagent_type |
+   |-------|------|--------|---------------|---------------|
+   | **Conservative Architect** | Safety-first formal methods expert | Top-down: decompose from spec requirements down to implementation constraints | "What could go wrong? What's missing?" | `Explore` |
+   | **Pragmatic Engineer** | Velocity-focused builder | Bottom-up: start from working code and existing patterns, build abstractions only when needed | "What's the fastest path to a working result?" | `Explore` |
+   | **Adversarial Auditor** | Red-team antagonist | Stress-test: actively try to break the current approach, find edge cases, question assumptions | "Where does this break? What assumptions are wrong?" | `Explore` |
+
+   When an MPE slot maps to an existing agent definition whose specialization matches (e.g., `spec-analyst` for verification analysis, `model-reviewer` for structural audit), use that agent's `subagent_type` instead.
+
+   Each agent prompt must follow this template:
+
+   ```
+   You are the {ROLE_NAME} reviewing {CONTEXT}.
+
+   **Your role**: {ROLE_DESCRIPTION}
+   **Your method**: {METHOD_DESCRIPTION}
+   **Your focus question**: {FOCUS_QUESTION}
+
+   Context:
+   - Current workflow: {workflow}
+   - Current phase: {phase}
+   - Protocol: {protocol}
+   - Key findings so far: {findings_summary}
+   - Files involved: {file_list}
+
+   Produce a short analysis (under 300 words) with:
+   1. **Assessment**: What do you see in the current state?
+   2. **Recommendation**: What should we do next and why?
+   3. **Risks**: What could go wrong with your recommendation?
+   4. **Dissent**: Where might the other reviewers disagree with you?
+   ```
+
+3. **Synthesize** after all agents return:
+   - Identify agreement points (where 2+ agents converge)
+   - Highlight disagreements (where agents diverge, with each perspective's reasoning)
+   - Note unique insights (observations only one agent raised)
+
+4. **Present to user** via `AskUserQuestion` with options derived from agent recommendations:
+   - Option per distinct recommendation (max 4)
+   - Include which agent(s) support each option and why
+
+5. **Proceed** with the user's chosen direction.
+
+---
+
+## Pattern C: Situation Briefing (SB)
+
+Explain the current situation and confirm the next step before proceeding.
+
+**When invoked, do these steps in order:**
+
+1. **Explain** the current situation in plain language:
+   - What happened in the previous phase (1-2 sentences)
+   - What was found: key results, metrics, or issues (be specific — numbers, file names, pass/fail)
+   - What it means for the user's goal (so what?)
+
+2. **Present options** for the next step via `AskUserQuestion` with 2-4 choices. Each option must include:
+   - What it involves (concrete action)
+   - Expected outcome (what you'll have after)
+   - Trade-off (time, coverage, risk — one sentence)
+
+3. **Proceed** with the user's chosen option.
+
+---
+
+## Integration Notes
+
+- Workflow skills load this knowledge skill via `Skill(skill="reflection-patterns")` when they reach a designated interaction point.
+- The calling workflow specifies which pattern (RG, MPE, or SB) and provides the workflow-specific context (phase, findings, protocol, files).
+- This skill is loaded into a fork context — it does not persist across turns.
