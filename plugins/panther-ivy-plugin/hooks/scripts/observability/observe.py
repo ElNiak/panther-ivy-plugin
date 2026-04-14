@@ -253,7 +253,8 @@ def main():
     if args.event not in _KNOWN_EVENTS:
         print(f"[ivy-obs] unknown event type: {args.event}", file=sys.stderr)
 
-    from log_event import read_stdin, log_event
+    from log_event import log_event
+    from hook_utils import read_stdin
 
     data = read_stdin()
     session_id = data.get("session_id", "")

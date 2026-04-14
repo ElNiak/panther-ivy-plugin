@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, read_stdin, resolve_log_dir
+from hook_utils import emit_hook_output, read_stdin, resolve_sessions_dir
 from workflow_state import find_protocol_dir, get_active_workflow, get_build_state
 
 CLAIM_PATTERNS = {
@@ -86,7 +86,7 @@ def count_claims(filepath: str) -> dict[str, int]:
 
 def gather_tool_metrics() -> str:
     """Read observability JSONL and aggregate tool call metrics."""
-    events_dir = os.path.dirname(resolve_log_dir("_"))
+    events_dir = resolve_sessions_dir()
 
     if not os.path.isdir(events_dir):
         return ""

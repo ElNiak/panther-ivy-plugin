@@ -64,7 +64,9 @@ def _read_last_event(events_file: Path) -> dict:
 import sys
 
 sys.path.insert(0, str(_OBS_DIR))
-from log_event import _resolve_log_dir, log_event
+sys.path.insert(0, str(_OBS_DIR.parent))
+from hook_utils import resolve_log_dir
+from log_event import log_event
 
 
 class TestLogEvent:
@@ -144,20 +146,20 @@ class TestLogEvent:
 
     def test_resolve_log_dir_explicit(self, monkeypatch, tmp_path):
         monkeypatch.setenv("IVY_OBSERVABILITY_DIR", str(tmp_path / "obs"))
-        path = _resolve_log_dir("sess-1")
-        assert path == tmp_path / "obs" / "sessions" / "sess-1"
+        path = resolve_log_dir("sess-1")
+        assert path == str(tmp_path / "obs" / "sessions" / "sess-1")
 
     def test_resolve_log_dir_workspace(self, monkeypatch, tmp_path):
         monkeypatch.delenv("IVY_OBSERVABILITY_DIR", raising=False)
         monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path / "ws"))
-        path = _resolve_log_dir("sess-2")
-        assert path == tmp_path / "ws" / ".observability" / "sessions" / "sess-2"
+        path = resolve_log_dir("sess-2")
+        assert path == str(tmp_path / "ws" / ".observability" / "sessions" / "sess-2")
 
     def test_resolve_log_dir_fallback(self, monkeypatch):
         monkeypatch.delenv("IVY_OBSERVABILITY_DIR", raising=False)
         monkeypatch.delenv("IVY_WORKSPACE_ROOT", raising=False)
-        path = _resolve_log_dir("sess-3")
-        assert path == Path("/tmp/ivy-observability") / "sessions" / "sess-3"
+        path = resolve_log_dir("sess-3")
+        assert path == str(Path("/tmp/ivy-observability") / "sessions" / "sess-3")
 
 
 # ---------------------------------------------------------------------------

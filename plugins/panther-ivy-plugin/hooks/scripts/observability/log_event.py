@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from hook_utils import read_stdin, resolve_log_dir, resolve_session_id
+from hook_utils import resolve_log_dir, resolve_session_id
 
 
 def _maybe_rotate(
@@ -118,5 +118,3 @@ def log_event(
         print(f"[ivy-obs] log_event: {type(exc).__name__}: {exc}", file=sys.stderr)
         return None
 
-
-  # read_stdin re-exported from hook_utils for observe.py

@@ -118,3 +118,11 @@ def resolve_log_dir(session_id: str) -> str:
         return os.path.join(workspace, ".observability", "sessions", session_id)
 
     return os.path.join("/tmp/ivy-observability", "sessions", session_id)
+
+
+def resolve_sessions_dir() -> str:
+    """Return the sessions directory (parent of per-session log dirs).
+
+    Uses the same 3-level fallback as ``resolve_log_dir``.
+    """
+    return os.path.dirname(resolve_log_dir("_"))

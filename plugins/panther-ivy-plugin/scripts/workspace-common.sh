@@ -4,13 +4,15 @@
 
 set -euo pipefail
 
+# Resolved once; used by find_panther_ivy and resolve_session_id.
+_HOOK_SCRIPTS_DIR="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/hooks/scripts"
+
 # Find panther_ivy directory by walking up from a starting directory.
 # Usage: find_panther_ivy "$PWD"
 # Returns: path to panther_ivy directory (with protocol-testing/ inside)
 find_panther_ivy() {
     local dir="$1"
     # Delegate to canonical Python implementation in hook_utils.
-    local scripts_dir="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/hooks/scripts"
     local result
     result=$(cd "$dir" && python3 -c \
         "import sys; sys.path.insert(0, '$scripts_dir'); from hook_utils import get_workspace_root; print(get_workspace_root())" \
@@ -119,7 +121,7 @@ resolve_ivy_lsp_source() {
 resolve_session_id() {
     local ws_root="${1:-${IVY_WORKSPACE_ROOT:-$PWD}}"
     # Delegate to canonical Python implementation in hook_utils.
-    local scripts_dir="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/hooks/scripts"
+    local scripts_dir="$_HOOK_SCRIPTS_DIR"
     local result
     result=$(python3 -c \
         "import sys; sys.path.insert(0, '$scripts_dir'); from hook_utils import resolve_session_id; print(resolve_session_id())" \

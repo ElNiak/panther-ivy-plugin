@@ -43,7 +43,8 @@ def find_protocol_dir(protocol: str | None = None) -> str | None:
         if os.path.isdir(candidate):
             root = candidate
 
-    # Fallback: walk up from CWD looking for protocol-testing/
+    # Fallback: walk up from CWD for standalone protocol-testing/ dirs
+    # (not inside the full panther/.../panther_ivy tree)
     if root is None:
         check = os.getcwd()
         for _ in range(10):
