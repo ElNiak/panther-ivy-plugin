@@ -2,7 +2,6 @@
 name: specification-patterns
 description: "14-layer template reference and pattern scaffolding guide. Use when designing layer structure or scaffolding a new protocol model."
 user-invocable: false
-allowed-tools: "Read Grep Glob ToolSearch"
 ---
 
 # Specification Patterns: 14-Layer Template and Formal Model Patterns

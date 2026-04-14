@@ -10,6 +10,57 @@ Follow the style directives injected via `additionalContext` -- they contain
 your active workflow overlay and phase modifier. Do not invent your own
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
+## Iron Law
+
+```
+NO FIX PROPOSALS WITHOUT COMPLETING COMPILE + VERIFY PHASES FIRST.
+If ivy_verify has not run in this turn, you cannot suggest code changes.
+```
+
+## Staleness Rule
+
+Any `ivy_verify` or `ivy_compile` result older than the most recent `.ivy` file edit is STALE. Do not cite stale results as evidence of correctness. Re-run before claiming PASS or transitioning phases.
+
+## Step Tracking
+
+At the start of each phase, create tasks for each step using `TaskCreate`. Mark each `in_progress` before executing and `completed` after.
+
+Phase 2 tasks:
+```
+TaskCreate(subject="Run ivy_diagnostics(mode='structural')", activeForm="Running structural check")
+TaskCreate(subject="Fix structural errors if any", activeForm="Fixing structural errors")
+TaskCreate(subject="Run ivy_verify on target", activeForm="Running formal verification")
+TaskCreate(subject="Interpret results", activeForm="Interpreting verification results")
+```
+
+On failure (Phase 4+):
+```
+TaskCreate(subject="Diagnose verification failure", activeForm="Diagnosing failure")
+TaskCreate(subject="Apply fix and re-verify", activeForm="Applying fix")
+TaskCreate(subject="Run Completion Verification Gate", activeForm="Running completion gate")
+```
+
+Do not skip marking tasks as `completed` — incomplete tasks are visible to the user and signal unfinished work.
+
+## Process Flow
+
+```dot
+digraph verify_flow {
+  "Read active-workflow" -> "Triage preflight?";
+  "Triage preflight?" -> "Invoke triage" [label="tools broken"];
+  "Triage preflight?" -> "Structural check" [label="tools ok"];
+  "Invoke triage" -> "Structural check" [label="repaired"];
+  "Structural check" -> "Fix structural" [label="FAIL"];
+  "Fix structural" -> "Structural check";
+  "Structural check" -> "ivy_verify" [label="PASS"];
+  "ivy_verify" -> "Diagnose failure" [label="FAIL"];
+  "Diagnose failure" -> "Fix + re-verify";
+  "Fix + re-verify" -> "ivy_verify";
+  "ivy_verify" -> "Completion Verification Gate" [label="PASS"];
+  "Completion Verification Gate" -> "Return to navigate";
+}
+```
+
 # Verify Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.
@@ -211,91 +262,21 @@ Update active-workflow phase via `update_workflow_phase()`.
 
 ---
 
-## Phase 6 — Diagnose
+## Phase 6 — Diagnose & Phase 7 — Fix
 
-### Step 1: Load failure interpretation guidance
+For the full diagnosis and fix procedures, see `references/failure-diagnosis.md`. Summary:
 
-Invoke the `counterexample-guide` skill to load trace interpretation guidance.
-
-### Step 2: Multi-Perspective Diagnosis
-
-Load the `reflection-patterns` skill. Apply **Pattern B (Multi-Perspective Exploration)**:
-
-- **Exploration question:** "What is the root cause of this verification failure and what is the best fix strategy?"
-- **Agents (dispatch all 3 in parallel):**
-  - **spec-analyst** (use `subagent_type: "panther-ivy-plugin:spec-analyst"`): Analyze the failure trace with counterexample interpretation. Focus on which invariant/action is violated and why.
-  - **Conservative Architect** (use `subagent_type: "Explore"`): Top-down analysis — check whether the failure indicates a design flaw in the layer structure, missing abstractions, or incorrect assume-guarantee contracts.
-  - **Adversarial Auditor** (use `subagent_type: "Explore"`): Stress-test the current spec — are there other inputs that would trigger the same failure? Is this a symptom of a deeper problem?
-
-Present the synthesized diagnosis before proceeding to classification.
-
-### Step 3: Classify the failure
-
-Classify into one of three categories:
-
-- **Invariant violation** — a property that should hold does not. The counterexample trace shows a reachable state where an invariant or `require` is falsified.
-- **Type error** — type mismatch, missing type interpretation, or unresolved type in the model.
-- **Structural issue** — include path problems, missing modules, circular dependencies, unresolved symbols.
-
-On structural issues, also dispatch the `model-reviewer` agent for a deeper audit of the model's include graph and layer structure.
-
-### Step 4: Present diagnosis
-
-Report to the user with the failure classification and the spec-analyst's diagnosis.
-
-### Gate checkpoint
-
-Ask the user: "Fix it yourself, or want me to attempt the fix?"
-
-Wait for explicit confirmation before proceeding.
-
-### Step 5: Update state
-
-Update phase to `"diagnosed"` via `update_workflow_phase()`.
-
----
-
-## Phase 7 — Fix (optional)
-
-Only entered if the user accepts the auto-fix offer from Phase 6.
-
-### Situation Briefing — Fix Strategy
-
-Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
-
-- **What happened:** Summarize the diagnosis: failure classification, root cause hypothesis, and which agents agreed/disagreed.
-- **Options:**
-  - "Apply the [recommended fix] from the diagnosis" (describe the specific fix)
-  - "Try a different fix approach" (if agents disagreed, present the alternative)
-  - "Fix it manually — I'll handle this"
-  - "Abandon this test and move on"
-
-### Step 1: Apply the fix
-
-Apply the fix suggested by the spec-analyst. If editing `.ivy` files, invoke the `ivy-writing-guide` skill to load language reference guidance before making changes.
-
-### Step 2: Re-verify
-
-Loop back to Phase 3 (recompile). The cycle is: Phase 3 (compile) → Phase 4 (execute) → Phase 6 (diagnose) → Phase 7 (fix) → Phase 3 again.
-
-This loop continues until verification passes or the user decides to stop.
-
-### On user stopping
-
-Update phase to `"stopped"` and proceed to completion.
-
-### Knowledge Gate: Post-Fix
-
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
-- Reflect on the bug that was diagnosed and fixed — what was non-obvious?
-- Capture the error-to-fix pattern for future sessions
-- Save session log (observability events + digest)
-- If candidates found, classify and present for user confirmation
-- Resume workflow after gate completes
+1. Load `counterexample-guide` for trace interpretation
+2. Multi-Perspective Diagnosis (dispatch spec-analyst + 2 Explore agents)
+3. Classify failure: invariant violation, type error, or structural issue
+4. Present diagnosis and ask user: fix or manual?
+5. If fix accepted: apply, re-verify (loop back to Phase 3), knowledge gate on completion
 
 ---
 
 ## On Completion
+
+Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill.
 
 - If `invocation_depth > 0`: Decrement depth. Restore `caller` as the active workflow in the active-workflow file. The caller resumes.
 - If `invocation_depth == 0`: Clear the active-workflow flag via `clear_active_workflow()`. Navigate re-activates on the next user turn.

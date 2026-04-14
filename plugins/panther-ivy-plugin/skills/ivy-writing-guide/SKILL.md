@@ -244,48 +244,15 @@ object packet = {
 
 ## Common Syntax Traps
 
-These patterns produce misleading error messages. See `ivy-error-patterns` skill for the full catalog.
+See the `ivy-error-patterns` skill for the full error-to-fix lookup table with code examples. Key traps:
 
-### Trap 1: Parameter Name Collision
-```ivy
-# WRONG — 'src' not found (Ivy resolves parameter names as symbol references)
-relation update_processed(src:bgp_id, dst:bgp_id)
-# RIGHT — single uppercase letter parameter names are unambiguous
-relation update_processed(S:bgp_id, D:bgp_id)
-```
+- **Parameter name collision** — use single uppercase letter params (`S:type`), not descriptive names that collide with existing symbols
+- **Missing `after init`** — relations start arbitrary; invariants fail on initial state
+- **`assume` vs `require`** — `assume` weakens the model unsoundly; use `require` for preconditions
+- **Ungrounded variables** — `invariant sent(P,N)` means "for all P,N"; bind variables explicitly
+- **Overly strong invariants** — `invariant connected(C)` fails immediately; use conditional form
 
-### Trap 2: Missing `after init` with Misleading Invariant Failure
-```ivy
-# Invariant fails — but the invariant is correct! Relations start arbitrary.
-relation conn_seen(C:cid)
-invariant conn_seen(C) -> connected(C)  # fails without init
-# FIX:
-after init { conn_seen(C) := false }
-```
-
-### Trap 3: `assume` vs `require` Confusion
-```ivy
-# WRONG — weakens the model; assumption is never verified
-action handle(p:packet) = { assume valid(p); }
-# RIGHT — precondition verified by ivy_check
-action handle(p:packet) = { require valid(p); }
-```
-
-### Trap 4: Ungrounded Variable in Invariant
-```ivy
-# WRONG — "for all P and N, sent(P,N) is true"
-invariant sent(P, N)
-# RIGHT — constrained relationship
-invariant sent(P, N) -> connected(source(P), N)
-```
-
-### Trap 5: Overly Strong Invariant
-```ivy
-# WRONG — fails immediately
-invariant connected(C)
-# RIGHT — conditional
-invariant connected(C) -> conn_seen(C)
-```
+For detailed code examples of each trap, see `references/syntax-examples.md`.
 
 ## Integration
 

@@ -1,6 +1,6 @@
 ---
 name: reflection-patterns
-description: "Reusable interaction patterns for workflow skills: Reflection Gate, Multi-Perspective Exploration, Situation Briefing. Use when a workflow skill reaches a designated interaction point."
+description: "Structured interaction templates (Reflection Gate, Multi-Perspective, Briefing). Use when a workflow skill calls this skill at a phase boundary for user input."
 user-invocable: false
 context: fork
 ---
@@ -109,6 +109,30 @@ Explain the current situation and confirm the next step before proceeding.
    - Trade-off (time, coverage, risk — one sentence)
 
 3. **Proceed** with the user's chosen option.
+
+---
+
+---
+
+## Pattern D: Completion Verification Gate (CVG)
+
+A mandatory gate before any workflow transitions to complete or returns to navigate.
+
+**When invoked, do these steps in order:**
+
+1. **Re-run verification** — `ivy_diagnostics(mode="structural")` + `ivy_verify` on all files modified during this workflow session. Results must be from THIS turn, not cached from earlier.
+
+2. **Anti-pattern checklist** — verify each item:
+   - `after init` present for all mutable relations
+   - No ungrounded variables in invariants
+   - `require` used instead of `assume` (unless user-justified)
+   - `require` present in all `before` clauses
+   - No circular include dependencies
+   - `export _finalize` present if end-state checks needed
+
+3. **Coverage delta** — If the workflow added monitors or assertions, run `ivy_coverage(mode="stats")` and confirm coverage did not regress.
+
+4. **Gate**: Only transition to complete if all three pass. If any fails, stay in current phase and report the failure to the user.
 
 ---
 

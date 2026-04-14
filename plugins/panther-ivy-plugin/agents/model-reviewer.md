@@ -9,6 +9,15 @@ skills:
   - claim-discussion
 ---
 
+## Dispatch Context
+
+When spawning this agent, the dispatching workflow MUST provide in the prompt:
+- `target_files`: List of .ivy files to review (e.g., "Review all files in bgp_stack/")
+- `workspace`: Active workspace name from `ivy_workspace(action="get")` (e.g., "Workspace: bgp")
+- `phase_context`: Which workflow phase triggered this dispatch (e.g., "Dispatched from build Phase 3 — post-layer review")
+- `review_scope`: Full audit or targeted layer review (e.g., "Targeted review of layer 7 (connection)")
+- `prior_findings` (optional): Any relevant findings from earlier phases
+
 <example>
 Context: User wants a quality review of their Ivy model.
 user: "Review my QUIC frame specification for any issues"

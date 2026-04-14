@@ -10,6 +10,65 @@ Follow the style directives injected via `additionalContext` -- they contain
 your active workflow overlay and phase modifier. Do not invent your own
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
+## Iron Law
+
+```
+NO LAYER IMPLEMENTATION WITHOUT COMPLETING SCAFFOLD + STRUCTURAL CHECK FIRST.
+If ivy_diagnostics(mode="structural") has not passed, do not write the next layer.
+```
+
+## Staleness Rule
+
+Any `ivy_verify` or `ivy_compile` result older than the most recent `.ivy` file edit is STALE. Do not cite stale results as evidence of correctness. Re-run before claiming PASS or transitioning phases.
+
+## Step Tracking
+
+At the start of each phase, create tasks for each step using `TaskCreate`. Mark each `in_progress` before executing and `completed` after.
+
+Phase 1 (Scope):
+```
+TaskCreate(subject="Detect methodology context", activeForm="Detecting methodology")
+TaskCreate(subject="Identify target protocol and RFC", activeForm="Identifying target")
+TaskCreate(subject="Confirm scope with user", activeForm="Confirming scope")
+```
+
+Phase 3 (Implement) — per layer:
+```
+TaskCreate(subject="Scaffold layer N: {layer_name}", activeForm="Scaffolding layer N")
+TaskCreate(subject="Structural check on layer N", activeForm="Checking layer N structure")
+TaskCreate(subject="Verify layer N with ivy_verify", activeForm="Verifying layer N")
+```
+
+Agent dispatch with dependencies (Phase 5):
+```
+TaskCreate(subject="Quality audit (model-reviewer)")        → task A
+TaskCreate(subject="Coverage audit (traceability-agent)")   → task B
+TaskUpdate(taskId=B, addBlockedBy=[A])
+```
+
+Do not skip marking tasks as `completed` — incomplete tasks are visible to the user and signal unfinished work.
+
+## Process Flow
+
+```dot
+digraph build_flow {
+  "Read active-workflow" -> "Phase 1: Scope";
+  "Phase 1: Scope" -> "Phase 2: Blueprint";
+  "Phase 2: Blueprint" -> "Phase 3: Implement layer N";
+  "Phase 3: Implement layer N" -> "Structural check" [label="layer written"];
+  "Structural check" -> "Fix + recheck" [label="FAIL"];
+  "Fix + recheck" -> "Structural check";
+  "Structural check" -> "ivy_verify" [label="PASS"];
+  "ivy_verify" -> "Fix + re-verify" [label="FAIL"];
+  "Fix + re-verify" -> "ivy_verify";
+  "ivy_verify" -> "More layers?" [label="PASS"];
+  "More layers?" -> "Phase 3: Implement layer N" [label="yes"];
+  "More layers?" -> "Phase 5: Quality gate" [label="no"];
+  "Phase 5: Quality gate" -> "Phase 6: Completion Verification Gate";
+  "Phase 6: Completion Verification Gate" -> "Return to navigate";
+}
+```
+
 # Build Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.
@@ -117,83 +176,21 @@ Update phase to `"blueprint-done"` via `update_workflow_phase()`.
 
 ## Phase 3 — Write
 
-### Step 1: Load writing guidance
+For the full per-layer scaffolding procedure, see `references/layer-scaffolding.md`. Summary:
 
-Load the `ivy-writing-guide` knowledge skill via the Skill tool.
-
-### Step 2: Generate specs incrementally
-
-Write spec files ONE layer at a time, in dependency order (Types first, then Frame, Packet, etc.).
-
-After writing EACH layer:
-
-1. Run `ivy_compile` for a compile check on the new file.
-2. **On compile error:**
-   - Dispatch the `spec-analyst` agent with the full error output.
-   - If the error involves counterexample interpretation, load the `counterexample-guide` skill.
-   - Fix inline (no workflow switch). Loop compile-fix until the layer compiles cleanly.
-3. **On compile success:**
-   - Update the layer's status in `build-state.yaml` to `"complete"` via `set_build_state()`.
-
-### Inform-and-continue checkpoint between layers
-
-After each layer compiles successfully, give a brief status update: "[N/M] layers complete. Moving to [next layer]." Continue unless the user stops you.
-
-### Reflection Gate — Every 3 Layers
-
-After every 3rd completed layer, load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)**:
-
-- **Current state:** "[N/M] layers complete. Layers built so far: [list]. Remaining: [list]."
-- **Re-evaluate:** Is the approach working? Did compile errors in the last 3 layers suggest a pattern problem? Has the user's understanding changed?
-- **Alternative workflows:**
-  - `verify`: "Run verification on what we have so far before continuing"
-  - Stay in `build`: "Continue writing the next 3 layers"
-  - `review`: "Check coverage of the layers built so far"
-
-### Step 3: Handle type propagation
-
-If the user mentions a type change that affects other layers, load the `propagation-patterns` skill for impact analysis before making changes.
-
-### Step 4: Update state
-
-After all layers are written and compile, update phase to `"written"` via `update_workflow_phase()`.
-
-### Knowledge Gate: Post-Write
-
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
-- Reflect on Ivy patterns discovered while writing layers
-- Capture any non-obvious constructs, anti-patterns, or verification feedback
-- Save session log (observability events + digest)
-- If candidates found, classify and present for user confirmation
-- Resume workflow after gate completes
+1. Load `ivy-writing-guide` skill
+2. Write ONE layer at a time in dependency order; run `ivy_compile` after each
+3. On compile error: dispatch `spec-analyst`, fix inline, loop until clean
+4. On compile success: update `build-state.yaml` layer status
+5. Reflection Gate every 3 layers
+6. Handle type propagation via `propagation-patterns` skill if needed
+7. Knowledge Gate on completion of all layers
 
 ---
 
 ## Phase 4 — Verify
 
-Invoke the `verify` workflow as a sub-workflow.
-
-### Step 1: Set sub-workflow state
-
-Before invoking, update the active-workflow flag:
-
-- `workflow = "verify"`
-- `phase = "init"`
-- `invocation_depth` = current depth + 1
-- `caller = "build"`
-
-### Step 2: Invoke verify
-
-Invoke: `Skill(skill="verify")`
-
-Verify runs its full cycle (test selection, compile, execute, diagnose). On completion, verify returns here because `caller = "build"` and `invocation_depth > 0`.
-
-### Step 3: Restore state
-
-After verify returns, restore the active-workflow flag:
-
-- `workflow = "build"`
-- `phase = "verified"`
+Invoke `verify` as a sub-workflow: set `invocation_depth += 1`, `caller = "build"`, then `Skill(skill="verify")`. Verify runs its full cycle and returns here (caller-based return). Restore `workflow = "build"`, `phase = "verified"`.
 
 ---
 
@@ -252,6 +249,8 @@ Update phase to `"quality-passed"` via `update_workflow_phase()`.
 ---
 
 ## Phase 6 — Wrap-up
+
+Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill.
 
 ### Step 1: Summarize
 

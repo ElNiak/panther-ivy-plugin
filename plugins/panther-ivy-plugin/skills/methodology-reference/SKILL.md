@@ -2,7 +2,6 @@
 name: methodology-reference
 description: "NCT/NACT/NSCT methodology selection and workflow guidance. Use when starting model construction or choosing a verification approach."
 user-invocable: false
-allowed-tools: "Read Grep Glob ToolSearch"
 ---
 
 # Formal Testing Methodologies
@@ -89,25 +88,12 @@ protocol-testing/{prot}/
 
 ### Common NCT Mistakes
 
-**Missing `after init`**
-- **Problem:** Relations/functions start with arbitrary values, not defaults
-- **Fix:** Always include `after init` block setting initial state for all relations
-
-**Correct role assignment**
-- **Convention:** Server test files = Ivy plays client (opposite of what is tested)
-- **Rule:** File name indicates WHAT IS TESTED.
-
-**Missing bracket tags on assertions**
-- **Problem:** Assertions lack `[rfcNNNN:X.Y]` comments, breaking traceability
-- **Fix:** Tag every `require`/`ensure`/`assert` with its RFC section reference
-
-**Ungrounded variables in invariants**
-- **Problem:** `invariant sent(P, N)` means "for ALL P and N, sent is true"
-- **Fix:** Quantify explicitly or bind variables to specific values
-
-**Forgetting to export `_finalize`**
-- **Problem:** End-state checks never execute
-- **Fix:** Always include `export action _finalize` in test specifications
+See the `ivy-error-patterns` skill for the full error-to-fix lookup table. The most frequent NCT-specific mistakes:
+- Missing `after init` (error pattern #12) — relations start with arbitrary values
+- Ungrounded variables (error pattern #2) — `invariant sent(P,N)` means "for ALL P,N"
+- Missing bracket tags — tag every assertion with `# [rfcNNNN:X.Y]`
+- Missing `export _finalize` — end-state checks never execute
+- Wrong role assignment — file name indicates WHAT IS TESTED (server test = Ivy plays client)
 
 ---
 
@@ -154,17 +140,9 @@ Entity definitions reside in `apt_entities/` with behavioral constraints in `apt
 
 ### Common NACT Mistakes
 
-**Missing attack entity definitions**
-- **Problem:** Attack spec uses generic entities instead of defining attacker-specific ones
-- **Fix:** Define entities in `apt_entities/` with attack-specific state and capabilities
-
-**Confusing NCT and NACT monitors**
-- **Problem:** Using `require` (compliance check) instead of attack-specific constraints
-- **Fix:** NACT monitors model what the attacker CAN do, not what the protocol SHOULD do
-
-**Skipping threat model**
-- **Problem:** Writing attack specs without first identifying applicable APT stages
-- **Fix:** Complete Phase 2 threat modeling before any spec work
+- Missing attack entity definitions — define entities in `apt_entities/` with attack-specific state
+- Confusing NCT and NACT monitors — NACT models what the attacker CAN do, not compliance
+- Skipping threat model — complete threat modeling before spec work
 
 ---
 

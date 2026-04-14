@@ -2,7 +2,6 @@
 name: ivy-toolkit
 description: "22-tool MCP catalog with parameter matrix and selection guide. Use when choosing or invoking MCP tools for Ivy operations."
 user-invocable: false
-allowed-tools: "Read Grep Glob ToolSearch"
 ---
 
 # Ivy Toolkit

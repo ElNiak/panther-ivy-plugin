@@ -10,6 +10,40 @@ Follow the style directives injected via `additionalContext` -- they contain
 your active workflow overlay and phase modifier. Do not invent your own
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
+## Iron Law
+
+```
+NO QUALITY JUDGMENTS WITHOUT RUNNING ivy_coverage AND ivy_quality FIRST.
+Impressionistic assessments ("looks good") are forbidden — cite tool output.
+```
+
+## Step Tracking
+
+At the start of each phase, create tasks for each step using `TaskCreate`.
+
+Phase 1 (Triage):
+```
+TaskCreate(subject="Classify review type", activeForm="Classifying review type")
+TaskCreate(subject="Detect target protocol", activeForm="Detecting protocol")
+TaskCreate(subject="Run triage preflight", activeForm="Running triage preflight")
+```
+
+Phase 2 (Dispatch) with dependencies:
+```
+TaskCreate(subject="Quality audit (model-reviewer)")        → task A
+TaskCreate(subject="Coverage audit (traceability-agent)")   → task B
+TaskUpdate(taskId=B, addBlockedBy=[A])
+```
+
+Phase 3 (Resolution):
+```
+TaskCreate(subject="Present findings to user", activeForm="Presenting findings")
+TaskCreate(subject="Resolve contested findings", activeForm="Resolving findings")
+TaskCreate(subject="Run Completion Verification Gate", activeForm="Running completion gate")
+```
+
+Do not skip marking tasks as `completed`.
+
 # Review Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.
@@ -200,6 +234,8 @@ Proceed to completion.
 ---
 
 ## On Completion
+
+Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill.
 
 - If `invocation_depth > 0`: Decrement depth. Restore `caller` as the active workflow in the active-workflow file. The caller resumes.
 - If `invocation_depth == 0`: Clear the active-workflow flag via `clear_active_workflow()`. Navigate re-activates on the next user turn.

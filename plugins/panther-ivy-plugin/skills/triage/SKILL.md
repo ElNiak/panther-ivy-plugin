@@ -10,6 +10,15 @@ Follow the style directives injected via `additionalContext` -- they contain
 your active workflow overlay and phase modifier. Do not invent your own
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
+## Step Tracking
+
+Create a single task per triage diagnostic step. Mark complete as each check passes:
+```
+TaskCreate(subject="Check LSP server health", activeForm="Checking LSP")
+TaskCreate(subject="Check MCP server health", activeForm="Checking MCP")
+TaskCreate(subject="Check workspace indexing", activeForm="Checking indexing")
+```
+
 # Triage Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase before proceeding.
@@ -220,6 +229,8 @@ When invoked as preflight (`invocation_depth > 0`):
 ---
 
 ## On Completion
+
+Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill. For triage, only the structural check (step 1) is required — skip the anti-pattern checklist and coverage delta.
 
 - If `invocation_depth > 0`: Decrement depth. Restore `caller` as the active workflow in the active-workflow file. The caller resumes.
 - If `invocation_depth == 0`: Clear the active-workflow flag via `clear_active_workflow()`. Navigate re-activates on the next turn.

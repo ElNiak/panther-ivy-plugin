@@ -10,6 +10,43 @@ Follow the style directives injected via `additionalContext` -- they contain
 your active workflow overlay and phase modifier. Do not invent your own
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
+## Anti-Rationalization
+
+| Thought | Reality |
+|---------|---------|
+| "I already know what to do" | Route to the correct workflow. Don't freelance. |
+| "This is a quick fix" | Quick fixes in formal specs create unsound models. Route to verify. |
+| "Let me just edit this one file" | Edits without verification break assume-guarantee contracts. Route to build or verify. |
+| "The user just wants me to do it" | The user wants correct results. Workflows exist to ensure correctness. |
+
+## Step Tracking
+
+Create tasks for the navigate dispatch cycle:
+```
+TaskCreate(subject="Context scan (silent)", activeForm="Scanning context")
+TaskCreate(subject="Classify user intent", activeForm="Classifying intent")
+TaskCreate(subject="Dispatch to workflow", activeForm="Dispatching workflow")
+```
+
+## Process Flow
+
+```dot
+digraph navigate_flow {
+  "Session start / workflow complete" -> "Phase 1: Silent context scan";
+  "Phase 1: Silent context scan" -> "Phase 2: Classify intent";
+  "Phase 2: Classify intent" -> "Warm resume?" [label="build-state exists"];
+  "Warm resume?" -> "Dispatch build (resume)" [label="yes"];
+  "Warm resume?" -> "Route by intent" [label="no"];
+  "Phase 2: Classify intent" -> "Route by intent" [label="no build-state"];
+  "Route by intent" -> "Dispatch verify" [label="verify/debug"];
+  "Route by intent" -> "Dispatch build" [label="build/scaffold"];
+  "Route by intent" -> "Dispatch review" [label="coverage/quality"];
+  "Route by intent" -> "Dispatch triage" [label="tools broken"];
+  "Route by intent" -> "Ask clarifying question" [label="ambiguous"];
+  "Ask clarifying question" -> "Route by intent";
+}
+```
+
 # Navigate Workflow
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase before proceeding. If the file says you are in a phase, resume that phase directly.

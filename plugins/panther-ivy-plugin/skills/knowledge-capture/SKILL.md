@@ -1,17 +1,9 @@
 ---
 name: knowledge-capture
-description: "Session knowledge extraction and persistence to plugin rules. Use when a knowledge gate fires at workflow phase boundaries or when manually triggered via /nct-learn."
+description: "Extract reusable lessons from the current session into plugin rules. Use when completing a workflow phase, after /nct-learn, or when a surprising fix or pattern emerges."
 user-invocable: false
 context: fork
-allowed-tools:
-  - Read
-  - Grep
-  - Glob
-  - Write
-  - Edit
-  - Agent
-  - AskUserQuestion
-  - Bash(ls *)
+allowed-tools: "Read Grep Glob Write Edit Agent AskUserQuestion Bash(ls *)"
 ---
 
 # Knowledge Capture
