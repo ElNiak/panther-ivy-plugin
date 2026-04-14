@@ -193,8 +193,9 @@ def _emit_result(state: dict) -> None:
             "PreToolUse",
             deny_reason=(
                 f"MCP server appears crashed ({failures} "
-                "consecutive failures). Run the triage workflow to diagnose, or restart "
-                "the session to recover."
+                "consecutive failures). Ask the user to run /mcp to "
+                "reconnect the server. If that fails, run the triage "
+                "workflow to diagnose."
             ),
         )
     else:
@@ -203,7 +204,8 @@ def _emit_result(state: dict) -> None:
             additional_context=(
                 f"[ivy-health] MCP health check failed "
                 f"({failures}/{MAX_CONSECUTIVE_MCP_FAILURES}). "
-                "Tool may fail."
+                "Tool may fail. If this persists, ask the user to run "
+                "/mcp to reconnect the Ivy MCP server."
             ),
         )
 

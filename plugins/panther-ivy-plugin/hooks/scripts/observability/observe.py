@@ -234,8 +234,8 @@ def _handle_mcp_health_circuit_breaker(tool_name: str) -> None:
                 additional_context=(
                     f"[ivy-health] WARNING: {state['consecutive_failures']} "
                     "consecutive MCP tool failures. The MCP server may be "
-                    "crashed. Consider running the triage workflow or stopping MCP "
-                    "tool calls until resolved."
+                    "crashed. Ask the user to run /mcp to reconnect. "
+                    "If that fails, run the triage workflow to diagnose."
                 ),
             )
     except Exception:
