@@ -54,6 +54,18 @@ Invoke the `triage` workflow as a sub-workflow to confirm stack health before pr
    - `workflow = "navigate"`
    - `phase = "context-scan"`
 
+### Situation Briefing — Context Scan Results
+
+Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)** with this context:
+
+- **What happened:** Summarize the context scan results — whether a build-state was found, whether recent Ivy changes exist, whether the stack health check passed or required intervention.
+- **Options to present:**
+  - If build-state found: "Resume your in-progress [protocol] build" / "Start something new"
+  - If recent changes found: "Verify recent changes" / "Review coverage" / "Do something else"
+  - If cold start: "Build a new model" / "Verify existing specs" / "Review quality" / "Learn about methodology"
+
+The user's choice determines which Phase 2 branch to take.
+
 ---
 
 ## Phase 2 — Branch by Context
@@ -96,6 +108,19 @@ Based on the context gathered in Phase 1, choose exactly ONE of the three branch
 
 **Condition:** Neither build state nor recent Ivy changes found.
 
+#### Multi-Perspective Exploration — Ambiguous Goals
+
+If the user's goal is ambiguous (no clear workflow match), load the `reflection-patterns` skill and apply **Pattern B (Multi-Perspective Exploration)** before interviewing:
+
+- **Exploration question:** "What workflow best serves this user's needs?"
+- **Agent perspectives:** Use these 3 roles instead of the defaults:
+  - **Methodology Expert** (Explore): "Given the protocol and user's background, which NCT/NACT/NSCT approach fits best?"
+  - **Tool Expert** (Explore): "Which tools and workflows are most relevant to what the user described?"
+  - **Testing Expert** (Explore): "What kind of testing should be prioritized based on the protocol's maturity?"
+- Present the synthesized recommendation to the user, then proceed with the interview.
+
+If the user's goal is clear, skip the MPE and proceed directly to the interview.
+
 Interview the user with 1-3 focused questions. Ask one question at a time.
 
 1. **What protocol?** "Which protocol are you working with?" (Skip if the workspace is already set or there's only one protocol directory.)
@@ -112,6 +137,16 @@ Dispatch based on answers.
 ---
 
 ## Dispatch
+
+### Reflection Gate — Pre-Dispatch Check
+
+Load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)** with this context:
+
+- **Current state:** Summarize the branch taken in Phase 2 and the workflow about to be dispatched.
+- **Alternative workflows:** Name 1-2 alternatives and why they might be relevant.
+- **Example:** If dispatching to `build` but the user mentioned "test" or "verify" in their last message, offer `verify` as an alternative.
+
+After the user confirms, proceed with dispatch.
 
 When dispatching to a workflow:
 
@@ -147,5 +182,6 @@ When a workflow is invoked by another workflow (not by navigate directly):
 
 - **Called by:** Session start (routing hook), other workflows on completion
 - **Calls:** `triage` (preflight), then dispatches to `build`, `verify`, `review`, or skills/agents
+- **Knowledge skills loaded:** `reflection-patterns` (SB after Phase 1, RG before dispatch, MPE on cold start)
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`
 - **Infrastructure:** `hooks/scripts/workflow_state.py` provides all state read/write functions
