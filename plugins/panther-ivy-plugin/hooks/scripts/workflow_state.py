@@ -43,6 +43,19 @@ def find_protocol_dir(protocol: str | None = None) -> str | None:
         if os.path.isdir(candidate):
             root = candidate
 
+    # Fallback: walk up from CWD looking for protocol-testing/
+    if root is None:
+        check = os.getcwd()
+        for _ in range(10):
+            candidate = os.path.join(check, "protocol-testing")
+            if os.path.isdir(candidate):
+                root = candidate
+                break
+            parent = os.path.dirname(check)
+            if parent == check:
+                break
+            check = parent
+
     if root is None:
         return None
 

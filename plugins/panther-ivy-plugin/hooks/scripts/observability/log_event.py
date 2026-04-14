@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from hook_utils import resolve_log_dir, resolve_session_id
+from hook_utils import read_stdin, resolve_log_dir, resolve_session_id
 
 
 def _maybe_rotate(
@@ -119,10 +119,4 @@ def log_event(
         return None
 
 
-def read_stdin() -> dict[str, Any]:
-    """Read and parse JSON from stdin. Returns empty dict on failure."""
-    try:
-        data = json.load(sys.stdin)
-        return data if isinstance(data, dict) else {}
-    except (OSError, EOFError, ValueError, TypeError):
-        return {}
+  # read_stdin re-exported from hook_utils for observe.py
