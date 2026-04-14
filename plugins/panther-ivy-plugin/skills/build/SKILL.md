@@ -158,7 +158,7 @@ If the user mentions a type change that affects other layers, load the `propagat
 
 After all layers are written and compile, update phase to `"written"` via `update_workflow_phase()`.
 
-### Knowledge Gate: Post-Write (every 3 layers)
+### Knowledge Gate: Post-Write
 
 **KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
 - Reflect on Ivy patterns discovered while writing layers
