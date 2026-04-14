@@ -38,6 +38,18 @@ Confirm understanding before proceeding: "I'll build a [methodology] model for [
 
 Wait for explicit confirmation.
 
+### Multi-Perspective Exploration — Architectural Approach
+
+After the user confirms the scope, load the `reflection-patterns` skill. Apply **Pattern B (Multi-Perspective Exploration)**:
+
+- **Exploration question:** "What architectural approach should we use for this [protocol] model?"
+- **Agents:**
+  - **Conservative Architect** (Explore): Propose a comprehensive model covering all RFC MUST requirements with full invariant coverage. Prioritize correctness over speed.
+  - **Pragmatic Engineer** (Explore): Propose a minimal viable model — only the layers needed for the first end-to-end test. Build incrementally.
+  - **Adversarial Auditor** (Explore): Propose a security-focused model prioritizing attack surface coverage (NACT-relevant layers, edge cases, error paths).
+
+The user's choice shapes the blueprint in Phase 2.
+
 ### Step 3: Update state
 
 Update phase to `"scoped"` via `update_workflow_phase()`.
@@ -76,6 +88,14 @@ Using the 14-layer template from the `specification-patterns` skill, propose whi
 ### Gate checkpoint
 
 Present the blueprint to the user. Wait for explicit approval before proceeding.
+
+### Situation Briefing — Blueprint Confirmation
+
+Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
+
+- **What happened:** Summarize the blueprint: how many layers proposed, which are new vs. reusable, estimated build order.
+- **What it means:** Compare with the MPE recommendations from Phase 1 — which agent's approach was followed and why.
+- **Options:** "Approve this blueprint and start writing" / "Adjust layer selection" / "Switch to a different architectural approach"
 
 ### Step 4: Write build state
 
@@ -122,6 +142,17 @@ After writing EACH layer:
 ### Inform-and-continue checkpoint between layers
 
 After each layer compiles successfully, give a brief status update: "[N/M] layers complete. Moving to [next layer]." Continue unless the user stops you.
+
+### Reflection Gate — Every 3 Layers
+
+After every 3rd completed layer, load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)**:
+
+- **Current state:** "[N/M] layers complete. Layers built so far: [list]. Remaining: [list]."
+- **Re-evaluate:** Is the approach working? Did compile errors in the last 3 layers suggest a pattern problem? Has the user's understanding changed?
+- **Alternative workflows:**
+  - `verify`: "Run verification on what we have so far before continuing"
+  - Stay in `build`: "Continue writing the next 3 layers"
+  - `review`: "Check coverage of the layers built so far"
 
 ### Step 3: Handle type propagation
 
@@ -188,6 +219,18 @@ If the user wants fixes:
 - For verification issues (failed properties, counterexamples): loop back to Phase 4 to re-verify.
 - For coverage gaps: add missing monitors inline, then re-run the traceability check.
 
+### Situation Briefing — Quality Gate Results
+
+Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
+
+- **What happened:** Summarize the quality gate results: how many findings by severity (critical/important/suggestion), which agents found what, overall model health.
+- **What it means:** Are critical issues blocking? Is coverage sufficient for the target methodology?
+- **Options:**
+  - "Fix critical issues now" (if any exist)
+  - "Proceed to wrap-up — accept current quality level"
+  - "Run full verification before wrapping up"
+  - "Review coverage gaps in detail"
+
 ### Step 4: Update state
 
 Update phase to `"quality-passed"` via `update_workflow_phase()`.
@@ -231,6 +274,6 @@ On session resume, actual progress is inferred from the file system: which `.ivy
 
 - **Called by:** `navigate` (dispatch), user directly ("build a model", "scaffold a protocol")
 - **Calls:** `verify` (post-build verification), `spec-analyst` agent (compile error diagnosis), `model-reviewer` agent (quality gate), `traceability-agent` agent (coverage gate)
-- **Knowledge skills loaded:** `methodology-reference` (Phase 1), `specification-patterns` (Phase 2), `ivy-writing-guide` (Phase 3), `counterexample-guide` (Phase 3 on error), `propagation-patterns` (Phase 3 on type change)
+- **Knowledge skills loaded:** `reflection-patterns` (MPE Phase 1, SB Phase 2, RG Phase 3, SB Phase 5), `methodology-reference` (Phase 1), `specification-patterns` (Phase 2), `ivy-writing-guide` (Phase 3), `counterexample-guide` (Phase 3 on error), `propagation-patterns` (Phase 3 on type change)
 - **MCP tools used:** `ivy_compile`, `ivy_workspace`
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`
