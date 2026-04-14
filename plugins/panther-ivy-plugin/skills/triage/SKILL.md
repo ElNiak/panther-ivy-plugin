@@ -78,6 +78,19 @@ fi
 
 Only reached when Phase 1 found at least one dead component.
 
+### Situation Briefing — Unhealthy Stack
+
+Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
+
+- **What happened:** "Phase 1 quick check found [N] dead component(s): [list with component names]."
+- **What it means:** Explain the impact — which workflows are blocked, which tools won't work.
+- **Options:**
+  - "Diagnose and attempt automatic repair"
+  - "Show me the logs first — I want to understand before fixing"
+  - "Skip diagnostics — I know what's wrong and will fix manually"
+
+If the user picks option 2, show the relevant log excerpts (from the log files listed below) before proceeding. If option 3, clear the active-workflow flag and return.
+
 ### Identify failures
 
 For each dead component, check logs for the crash reason:
@@ -155,6 +168,19 @@ Re-run Phase 1 checks to confirm the stack is back up.
 
 **If recovered:** Report success and proceed to completion.
 
+### Reflection Gate — Recovery Failed
+
+If recovery failed, load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)**:
+
+- **Current state:** "Attempted automatic recovery for [component(s)]. Recovery failed — [component] is still unresponsive."
+- **Re-evaluate:** Is this a deeper infrastructure problem beyond automatic repair?
+- **Alternative options:**
+  - "Retry with more aggressive cleanup (kill processes, remove all state files)"
+  - "Escalate — show full diagnostic dump and manual recovery steps"
+  - "Abandon triage — work without the broken component"
+
+If the user picks "Retry", loop back to Phase 3 Step 1 with more aggressive cleanup. If "Escalate", proceed to the diagnostic dump below. If "Abandon", clear the active-workflow flag and return.
+
 **If still broken:** Escalate with a full diagnostic dump:
 
 ```
@@ -195,6 +221,7 @@ When invoked as preflight (`invocation_depth > 0`):
 
 - **Called by:** `navigate` (preflight), `build`/`verify`/`review` (preflight), user directly ("things are broken")
 - **Replaces:** `healthcheck` skill (deprecated — triage is the successor)
+- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 3)
 - **Log files:** `/tmp/ivy-lsp-lsp-latest.log`, `/tmp/ivy-mcp-latest.log`
 - **PID files:** `/tmp/ivy-lsp-*.pid`, `/tmp/ivy-mcp-*.pid`
 - **Port files:** `/tmp/ivy-mcp-*.port`
