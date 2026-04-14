@@ -53,6 +53,14 @@ Invoke `triage` as a sub-workflow to confirm MCP/LSP health before dispatching a
    - `workflow = "review"`
    - `phase = "triaged"`
 
+### Situation Briefing — Review Type Confirmation
+
+Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
+
+- **What happened:** "Detected review type: [Coverage / Quality / Both]. Protocol: [protocol]. Stack health: [passed / required intervention]."
+- **What it means:** Explain what this review type will check and approximately how long it takes.
+- **Options:** "Proceed with [detected type] review" / "Switch to [other type]" / "Run both coverage and quality"
+
 ### Step 4: Update state
 
 Update phase to `"triaged"` via `update_workflow_phase()`.
@@ -77,7 +85,19 @@ Dispatch the `traceability-agent` agent:
 
 ### Quality Path
 
-Dispatch `model-reviewer` and `spec-analyst` agents IN PARALLEL (two Agent tool calls in one message):
+#### Multi-Perspective Exploration — Quality Analysis
+
+Load the `reflection-patterns` skill. Apply **Pattern B (Multi-Perspective Exploration)** with 3 agents:
+
+- **Exploration question:** "What are the quality issues in this protocol model?"
+- **Agents (dispatch all 3 in parallel):**
+  - **model-reviewer** (use existing agent definition): 6-category structural audit (structural, type safety, invariants, actions, initialization, organization)
+  - **spec-analyst** (use existing agent definition): Verification readiness, include trace, layer coherence
+  - **Adversarial Auditor** (Explore): Red-team the model — find edge cases the structured audits miss, question assumptions in the spec, identify states that could be reached but aren't tested
+
+Synthesize findings from all 3 agents before presenting.
+
+Dispatch `model-reviewer`, `spec-analyst`, and adversarial auditor agents IN PARALLEL (three Agent tool calls in one message):
 
 **model-reviewer** runs a 6-category structural audit:
 
@@ -124,6 +144,17 @@ If critical issues were found: "These critical issues were found: [list]. Fix th
 
 Wait for explicit confirmation.
 
+### Reflection Gate — Post-Findings Direction
+
+Load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)**:
+
+- **Current state:** "[N] critical, [N] important, [N] suggestion findings across [coverage/quality/both] analysis."
+- **Re-evaluate:** Do the findings suggest a different workflow is needed?
+  - Many structural issues -> `build` workflow to fix the model architecture
+  - Verification failures -> `verify` workflow to diagnose specific failures
+  - Coverage gaps only -> stay in `review` to address gaps
+- **Alternative workflows:** `build` (structural fixes), `verify` (targeted verification), stay in `review` (address findings inline)
+
 ### Step 2: Handle user response
 
 **If the user wants fixes:**
@@ -163,6 +194,6 @@ Proceed to completion.
 
 - **Called by:** `navigate` (dispatch), `build` (quality gate — though build dispatches agents directly), `verify` (follow-up coverage), user directly ("review my model", "check coverage")
 - **Calls:** `triage` (preflight), `traceability-agent` agent (coverage), `model-reviewer` agent (quality), `spec-analyst` agent (quality), `verify` workflow (optional follow-up)
-- **Knowledge skills loaded:** `claim-discussion` (Phase 3 for contested findings)
+- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 1, MPE Phase 2, RG Phase 3), `claim-discussion` (Phase 3 for contested findings)
 - **MCP tools used:** `ivy_workspace` (protocol detection)
 - **State files:** `.panther-ivy/active-workflow`
