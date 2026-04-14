@@ -137,6 +137,14 @@ After Phase 4 completes (pass or fail), load the `reflection-patterns` skill. Ap
   - `build`: "The failure may indicate structural issues — switch to build to fix the model"
   - Stay in `verify`: "Continue to diagnosis (Phase 6)"
 
+### Knowledge Gate: Post-Execution
+
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+- Reflect on verification outcome — what patterns led to pass or fail?
+- Save session log (observability events + digest)
+- If candidates found, classify and present for user confirmation
+- Resume workflow after gate completes
+
 ### On FAIL
 
 Move to Phase 6. Update phase to `"executed"` via `update_workflow_phase()`.
@@ -276,6 +284,15 @@ This loop continues until verification passes or the user decides to stop.
 
 Update phase to `"stopped"` and proceed to completion.
 
+### Knowledge Gate: Post-Fix
+
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+- Reflect on the bug that was diagnosed and fixed — what was non-obvious?
+- Capture the error-to-fix pattern for future sessions
+- Save session log (observability events + digest)
+- If candidates found, classify and present for user confirmation
+- Resume workflow after gate completes
+
 ---
 
 ## On Completion
@@ -289,6 +306,6 @@ Update phase to `"stopped"` and proceed to completion.
 
 - **Called by:** `navigate` (dispatch), `build` (post-build verification), user directly ("verify this", "run tests")
 - **Calls:** `triage` (preflight), `spec-analyst` agent (diagnosis), `model-reviewer` agent (structural audit), `review` workflow (follow-up coverage)
-- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 4, MPE Phase 6, SB Phase 7), `counterexample-guide` (Phase 6), `ivy-writing-guide` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3)
+- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 4, MPE Phase 6, SB Phase 7), `counterexample-guide` (Phase 6), `ivy-writing-guide` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3), `knowledge-capture` (KG Phase 4, KG Phase 7)
 - **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_iut_test`
 - **State files:** `.panther-ivy/active-workflow`

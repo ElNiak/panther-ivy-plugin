@@ -158,6 +158,15 @@ If the user mentions a type change that affects other layers, load the `propagat
 
 After all layers are written and compile, update phase to `"written"` via `update_workflow_phase()`.
 
+### Knowledge Gate: Post-Write (every 3 layers)
+
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+- Reflect on Ivy patterns discovered while writing layers
+- Capture any non-obvious constructs, anti-patterns, or verification feedback
+- Save session log (observability events + digest)
+- If candidates found, classify and present for user confirmation
+- Resume workflow after gate completes
+
 ---
 
 ## Phase 4 — Verify
@@ -231,6 +240,15 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
 
 Update phase to `"quality-passed"` via `update_workflow_phase()`.
 
+### Knowledge Gate: Post-Quality-Gate
+
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+- Reflect on architecture decisions solidified during quality review
+- Capture model-reviewer and traceability-agent findings worth remembering
+- Save session log (observability events + digest)
+- If candidates found, classify and present for user confirmation
+- Resume workflow after gate completes
+
 ---
 
 ## Phase 6 — Wrap-up
@@ -270,6 +288,6 @@ On session resume, actual progress is inferred from the file system: which `.ivy
 
 - **Called by:** `navigate` (dispatch), user directly ("build a model", "scaffold a protocol")
 - **Calls:** `verify` (post-build verification), `spec-analyst` agent (compile error diagnosis), `model-reviewer` agent (quality gate), `traceability-agent` agent (coverage gate)
-- **Knowledge skills loaded:** `reflection-patterns` (MPE Phase 1, SB Phase 2, RG Phase 3, SB Phase 5), `methodology-reference` (Phase 1), `specification-patterns` (Phase 2), `ivy-writing-guide` (Phase 3), `counterexample-guide` (Phase 3 on error), `propagation-patterns` (Phase 3 on type change)
+- **Knowledge skills loaded:** `reflection-patterns` (MPE Phase 1, SB Phase 2, RG Phase 3, SB Phase 5), `methodology-reference` (Phase 1), `specification-patterns` (Phase 2), `ivy-writing-guide` (Phase 3), `counterexample-guide` (Phase 3 on error), `propagation-patterns` (Phase 3 on type change), `knowledge-capture` (KG Phase 3, KG Phase 5)
 - **MCP tools used:** `ivy_compile`, `ivy_workspace`
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`

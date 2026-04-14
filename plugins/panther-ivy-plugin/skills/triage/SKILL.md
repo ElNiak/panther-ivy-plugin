@@ -197,6 +197,15 @@ Suggested manual steps:
 3. Re-run the full triage diagnostic cycle (Phases 2-3)
 ```
 
+### Knowledge Gate: Post-Fix
+
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+- Reflect on debugging patterns from infrastructure troubleshooting
+- Capture the diagnosis-to-fix sequence for future triage sessions
+- Save session log (observability events + digest)
+- If candidates found, classify and present for user confirmation
+- Resume workflow after gate completes
+
 ---
 
 ## Preflight Export
@@ -221,7 +230,7 @@ When invoked as preflight (`invocation_depth > 0`):
 
 - **Called by:** `navigate` (preflight), `build`/`verify`/`review` (preflight), user directly ("things are broken")
 - **Replaces:** `healthcheck` skill (deprecated — triage is the successor)
-- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 3)
+- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 3), `knowledge-capture` (KG Phase 3)
 - **Log files:** `/tmp/ivy-lsp-lsp-latest.log`, `/tmp/ivy-mcp-latest.log`
 - **PID files:** `/tmp/ivy-lsp-*.pid`, `/tmp/ivy-mcp-*.pid`
 - **Port files:** `/tmp/ivy-mcp-*.port`

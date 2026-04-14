@@ -100,7 +100,7 @@ caller: null
 `spec-analyst`, `model-reviewer`, `traceability-agent`
 
 **Knowledge skills** (loaded by workflows, not user-facing):
-`counterexample-guide`, `specification-patterns`, `propagation-patterns`, `ivy-writing-guide`, `ivy-toolkit`, `claim-discussion`, `methodology-reference`, `ivy-debugging-methodology`, `ivy-error-patterns`, `reflection-patterns`
+`counterexample-guide`, `specification-patterns`, `propagation-patterns`, `ivy-writing-guide`, `ivy-toolkit`, `claim-discussion`, `methodology-reference`, `ivy-debugging-methodology`, `ivy-error-patterns`, `reflection-patterns`, `knowledge-capture`
 
 ## Workspace Awareness
 
@@ -141,6 +141,6 @@ The plugin supports active workspace scoping to prevent cross-protocol collision
 ## Quick Reference
 
 **Workflows**: navigate, verify, build, review, triage
-**Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-iut-test, /nct-health, /nct-observability
+**Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-iut-test, /nct-health, /nct-observability, /nct-learn
 **Internal agents**: spec-analyst, model-reviewer, traceability-agent
-**Internal knowledge**: counterexample-guide, specification-patterns, propagation-patterns, ivy-writing-guide, ivy-toolkit, claim-discussion, methodology-reference, ivy-debugging-methodology, ivy-error-patterns, reflection-patterns
+**Internal knowledge**: counterexample-guide, specification-patterns, propagation-patterns, ivy-writing-guide, ivy-toolkit, claim-discussion, methodology-reference, ivy-debugging-methodology, ivy-error-patterns, reflection-patterns, knowledge-capture

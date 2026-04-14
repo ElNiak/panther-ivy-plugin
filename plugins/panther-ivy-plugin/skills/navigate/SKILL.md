@@ -66,6 +66,15 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)** w
 
 The user's choice determines which Phase 2 branch to take.
 
+### Knowledge Gate: Session Resume Check
+
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+- Check if the most recent session digest has deferred candidates to re-present
+- On warm resume: review the previous session's learnings that were deferred
+- Save session log (observability events + digest)
+- If deferred candidates found, present for user confirmation before routing
+- Resume workflow after gate completes
+
 ---
 
 ## Phase 2 — Branch by Context
@@ -182,6 +191,6 @@ When a workflow is invoked by another workflow (not by navigate directly):
 
 - **Called by:** Session start (routing hook), other workflows on completion
 - **Calls:** `triage` (preflight), then dispatches to `build`, `verify`, `review`, or skills/agents
-- **Knowledge skills loaded:** `reflection-patterns` (SB after Phase 1, RG before dispatch, MPE on cold start)
+- **Knowledge skills loaded:** `reflection-patterns` (SB after Phase 1, RG before dispatch, MPE on cold start), `knowledge-capture` (KG after Phase 1)
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`
 - **Infrastructure:** `hooks/scripts/workflow_state.py` provides all state read/write functions

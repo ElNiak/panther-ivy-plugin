@@ -16,7 +16,7 @@ User-facing entry points activated by the routing system or natural language.
 | [review](review/) | Audit quality, check RFC coverage, run multi-agent review |
 | [triage](triage/) | Diagnose toolchain issues, health check LSP + MCP stack |
 
-## Knowledge Skills (7)
+## Knowledge Skills (9)
 
 Reference material loaded by workflows and agents on demand.
 
@@ -29,3 +29,5 @@ Reference material loaded by workflows and agents on demand.
 | [ivy-toolkit](ivy-toolkit/) | Single source of truth for all MCP tool documentation and tool selection guidance |
 | [claim-discussion](claim-discussion/) | Structured decision trees for verification claim resolution and coverage gap prioritization |
 | [methodology-reference](methodology-reference/) | Comprehensive reference for NCT, NACT, NSCT methodologies |
+| [reflection-patterns](reflection-patterns/) | Reusable reflection gate, multi-perspective exploration, and situation briefing patterns for workflows |
+| [knowledge-capture](knowledge-capture/) | Session knowledge extraction and persistence to plugin rules at workflow phase boundaries |

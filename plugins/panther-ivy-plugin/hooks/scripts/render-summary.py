@@ -224,6 +224,14 @@ def build_summary(
     if metrics:
         parts.append(f"[TOOL METRICS] {metrics}")
 
+    # Knowledge gate prompt
+    parts.append(
+        "[KNOWLEDGE GATE] Before ending this session, invoke "
+        'Skill(skill="panther-ivy-plugin:knowledge-capture") to capture '
+        "any learnings from this session. If no learnable patterns are "
+        "found, the skill exits silently."
+    )
+
     return "\n".join(parts)
 
 

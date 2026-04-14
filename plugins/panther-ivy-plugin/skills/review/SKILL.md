@@ -122,6 +122,15 @@ Run coverage and quality paths in parallel. Aggregate all findings into a unifie
 
 Update phase to `"executed"` via `update_workflow_phase()`.
 
+### Knowledge Gate: Post-Agent-Execution
+
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+- Reflect on cross-model patterns identified by model-reviewer and traceability-agent
+- Capture any recurring quality findings worth remembering
+- Save session log (observability events + digest)
+- If candidates found, classify and present for user confirmation
+- Resume workflow after gate completes
+
 ---
 
 ## Phase 3 — Findings
@@ -179,6 +188,15 @@ Dispatch to `verify` as a sub-workflow:
 
 Proceed to completion.
 
+### Knowledge Gate: Post-Findings-Resolution
+
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+- Reflect on workflow refinements from the resolution process
+- Capture fix strategies that worked or didn't work
+- Save session log (observability events + digest)
+- If candidates found, classify and present for user confirmation
+- Resume workflow after gate completes
+
 ---
 
 ## On Completion
@@ -192,6 +210,6 @@ Proceed to completion.
 
 - **Called by:** `navigate` (dispatch), `build` (quality gate — though build dispatches agents directly), `verify` (follow-up coverage), user directly ("review my model", "check coverage")
 - **Calls:** `triage` (preflight), `traceability-agent` agent (coverage), `model-reviewer` agent (quality), `spec-analyst` agent (quality), `verify` workflow (optional follow-up)
-- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 1, MPE Phase 2, RG Phase 3), `claim-discussion` (Phase 3 for contested findings)
+- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 1, MPE Phase 2, RG Phase 3), `claim-discussion` (Phase 3 for contested findings), `knowledge-capture` (KG Phase 2, KG Phase 3)
 - **MCP tools used:** `ivy_workspace` (protocol detection)
 - **State files:** `.panther-ivy/active-workflow`
