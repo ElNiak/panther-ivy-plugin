@@ -2,7 +2,7 @@
 """Observability event logger for panther-ivy-plugin hooks.
 
 Writes structured JSON events to per-session JSONL log files.
-Zero external dependencies — stdlib only.
+Zero external dependencies — stdlib only (plus hook_utils).
 """
 
 # Event schema v1 — aligned with ivy_lsp.observability.session.SessionEventLogger
@@ -16,66 +16,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-try:
-    from ivy_lsp.infra.observability.session import resolve_session_id as _canonical_resolve
-    from ivy_lsp.infra.observability.session import workspace_hash
-except ImportError:
-    # Fallback if ivy-lsp not importable
-    import hashlib
-
-    def workspace_hash(workspace_root: str) -> str:
-        return hashlib.sha256(workspace_root.encode()).hexdigest()[:12]
-
-    _canonical_resolve = None
-
-
-def _resolve_log_dir(session_id: str) -> Path:
-    """Determine the log directory for a session.
-
-    Priority:
-      1. $IVY_OBSERVABILITY_DIR/sessions/<session_id>/
-      2. $IVY_WORKSPACE_ROOT/.observability/sessions/<session_id>/
-      3. /tmp/ivy-observability/sessions/<session_id>/
-    """
-    explicit = os.environ.get("IVY_OBSERVABILITY_DIR", "").strip()
-    if explicit:
-        return Path(explicit) / "sessions" / session_id
-
-    workspace = os.environ.get("IVY_WORKSPACE_ROOT", "").strip()
-    if workspace:
-        return Path(workspace) / ".observability" / "sessions" / session_id
-
-    return Path("/tmp/ivy-observability") / "sessions" / session_id
-
-
-def _resolve_session_id(raw_session_id: str) -> str:
-    """Resolve session ID — delegates to ivy-lsp canonical resolver with fallback.
-
-    When ivy-lsp is importable the full priority chain is used:
-      hook_payload > CLAUDE_SESSION_ID > CLAUDE_CODE_SESSION_ID >
-      IVY_SESSION_ID > session file > "unknown"
-
-    Fallback (ivy-lsp unavailable):
-      IVY_SESSION_ID > CLAUDE_SESSION_ID > CLAUDE_CODE_SESSION_ID >
-      session file > raw_session_id > "unknown"
-    """
-    if _canonical_resolve is not None:
-        return _canonical_resolve({"session_id": raw_session_id} if raw_session_id else None)
-    # Inline fallback matching ivy-lsp priority
-    for var in ("IVY_SESSION_ID", "CLAUDE_SESSION_ID", "CLAUDE_CODE_SESSION_ID"):
-        from_env = os.environ.get(var, "").strip()
-        if from_env:
-            return from_env
-    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip() or os.getcwd()
-    ws_hash = workspace_hash(ws_root)
-    session_file = Path("/tmp") / f"ivy-session-{ws_hash}.id"
-    try:
-        value = session_file.read_text().strip()
-        if value:
-            return value
-    except OSError:
-        pass
-    return (raw_session_id or "unknown").strip() or "unknown"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from hook_utils import resolve_log_dir, resolve_session_id
 
 
 def _maybe_rotate(
@@ -144,8 +86,8 @@ def log_event(
         if os.environ.get("IVY_OBSERVABILITY_ENABLED", "1") == "0":
             return None
 
-        safe_session_id = _resolve_session_id(session_id)
-        log_dir = log_dir_override or _resolve_log_dir(safe_session_id)
+        safe_session_id = resolve_session_id({"session_id": session_id} if session_id else None)
+        log_dir = log_dir_override or Path(resolve_log_dir(safe_session_id))
         log_dir.mkdir(parents=True, exist_ok=True)
 
         event: dict[str, Any] = {

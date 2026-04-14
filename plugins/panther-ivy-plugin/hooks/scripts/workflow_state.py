@@ -11,33 +11,46 @@ from pathlib import Path
 
 import yaml
 
+from hook_utils import get_workspace_root
+
 _STATE_DIR_NAME = ".panther-ivy"
 _ACTIVE_WORKFLOW_FILE = "active-workflow"
 _BUILD_STATE_FILE = "build-state.yaml"
 
 
-def find_protocol_dir() -> str | None:
+def find_protocol_dir(protocol: str | None = None) -> str | None:
     """Find protocol directory from env var or by scanning cwd parents.
+
+    Args:
+        protocol: Optional protocol name (e.g. ``"bgp"``, ``"quic"``).
+            When provided, the returned path is narrowed to
+            ``protocol-testing/<protocol>/`` and validated to exist.
 
     Returns:
         Absolute path to the protocol directory, or None if not found.
     """
+    root: str | None = None
+
     ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip()
     if ws_root:
         candidate = os.path.join(ws_root, "protocol-testing")
         if os.path.isdir(candidate):
-            return candidate
+            root = candidate
 
-    check = os.getcwd()
-    for _ in range(10):
-        candidate = os.path.join(check, "protocol-testing")
+    if root is None:
+        ws = get_workspace_root()
+        candidate = os.path.join(ws, "protocol-testing")
         if os.path.isdir(candidate):
-            return candidate
-        parent = os.path.dirname(check)
-        if parent == check:
-            break
-        check = parent
-    return None
+            root = candidate
+
+    if root is None:
+        return None
+
+    if protocol is not None:
+        specific = os.path.join(root, protocol)
+        return specific if os.path.isdir(specific) else None
+
+    return root
 
 
 def _state_dir(protocol_dir: str) -> Path:

@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, read_stdin
+from hook_utils import emit_hook_output, read_stdin, resolve_log_dir
 from workflow_state import find_protocol_dir, get_active_workflow, get_build_state
 
 CLAIM_PATTERNS = {
@@ -86,13 +86,7 @@ def count_claims(filepath: str) -> dict[str, int]:
 
 def gather_tool_metrics() -> str:
     """Read observability JSONL and aggregate tool call metrics."""
-    events_dir = os.environ.get("IVY_OBSERVABILITY_DIR", "").strip()
-    if not events_dir:
-        ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip()
-        if ws_root:
-            events_dir = os.path.join(ws_root, ".observability", "sessions")
-        else:
-            events_dir = "/tmp/ivy-observability/sessions"
+    events_dir = os.path.dirname(resolve_log_dir("_"))
 
     if not os.path.isdir(events_dir):
         return ""

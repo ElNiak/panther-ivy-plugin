@@ -9,24 +9,23 @@ set -euo pipefail
 # Returns: path to panther_ivy directory (with protocol-testing/ inside)
 find_panther_ivy() {
     local dir="$1"
-    # Direct match: standard PANTHER project structure
-    local candidate="$dir/panther/plugins/services/testers/panther_ivy"
-    if [ -d "$candidate/protocol-testing" ]; then
-        echo "$candidate"
+    # Delegate to canonical Python implementation in hook_utils.
+    local scripts_dir="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/hooks/scripts"
+    local result
+    result=$(cd "$dir" && python3 -c \
+        "import sys; sys.path.insert(0, '$scripts_dir'); from hook_utils import get_workspace_root; print(get_workspace_root())" \
+        2>/dev/null) || true
+    if [ -n "$result" ] && [ -d "$result/protocol-testing" ]; then
+        echo "$result"
         return 0
     fi
-    # Walk up to find it (handles worktree paths, subdirectory CWDs)
+    # Bash fallback (mirrors hook_utils.get_workspace_root algorithm)
     local check="$dir"
     local depth=0
     while [ "$check" != "/" ] && [ $depth -lt 10 ]; do
-        candidate="$check/panther/plugins/services/testers/panther_ivy"
+        local candidate="$check/panther/plugins/services/testers/panther_ivy"
         if [ -d "$candidate/protocol-testing" ]; then
             echo "$candidate"
-            return 0
-        fi
-        # Maybe CWD is inside panther_ivy itself
-        if [ -d "$check/protocol-testing" ] && [ -f "$check/panther_ivy.py" ]; then
-            echo "$check"
             return 0
         fi
         check="$(dirname "$check")"
@@ -119,41 +118,19 @@ resolve_ivy_lsp_source() {
 # Usage: resolve_session_id [workspace_root]
 resolve_session_id() {
     local ws_root="${1:-${IVY_WORKSPACE_ROOT:-$PWD}}"
-    # Delegate to Python canonical implementation
-    if [ -n "${IVY_LSP_SRC:-}" ]; then
-        local result
-        result=$(PYTHONPATH="$IVY_LSP_SRC" python3 -c \
-            "from ivy_lsp.infra.observability.session import resolve_session_id; print(resolve_session_id())" \
-            2>/dev/null) || true
-        if [ -n "$result" ] && [ "$result" != "unknown" ]; then
-            echo "$result"
-            return 0
-        fi
+    # Delegate to canonical Python implementation in hook_utils.
+    local scripts_dir="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/hooks/scripts"
+    local result
+    result=$(python3 -c \
+        "import sys; sys.path.insert(0, '$scripts_dir'); from hook_utils import resolve_session_id; print(resolve_session_id())" \
+        2>/dev/null) || true
+    if [ -n "$result" ] && [ "$result" != "unknown" ]; then
+        echo "$result"
+        return 0
     fi
-    # Bash fallback (same priority chain minus hook_payload: 2→3→4→5)
+    # Bash fallback for when Python is unavailable
     [ -n "${CLAUDE_SESSION_ID:-}" ] && { echo "$CLAUDE_SESSION_ID"; return 0; }
     [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && { echo "$CLAUDE_CODE_SESSION_ID"; return 0; }
     [ -n "${IVY_SESSION_ID:-}" ] && { echo "$IVY_SESSION_ID"; return 0; }
-    # Try session file keyed to the workspace root hash.  The SessionStart
-    # hook writes files for both the project root and the panther_ivy
-    # submodule path, so at least one should match.
-    local ws_hash session_file
-    ws_hash="$(printf '%s' "$ws_root" | shasum -a 256 | cut -c1-12)"
-    session_file="/tmp/ivy-session-${ws_hash}.id"
-    [ -s "$session_file" ] && { head -n 1 "$session_file" | tr -d '\r\n'; return 0; }
-
-    # Fallback: try any session file written in the last 60 seconds
-    # (handles hash mismatches between project root and submodule paths).
-    local newest
-    newest="$(find /tmp -maxdepth 1 -name 'ivy-session-*.id' -newer /tmp -mmin -1 2>/dev/null | head -1)" || true
-    [ -s "$newest" ] && { head -n 1 "$newest" | tr -d '\r\n'; return 0; }
-
-    # Wait briefly for SessionStart hook to write the session file
-    local retries=0
-    while [ $retries -lt 3 ] && [ ! -s "$session_file" ]; do
-        sleep 1
-        retries=$((retries + 1))
-    done
-    [ -s "$session_file" ] && { head -n 1 "$session_file" | tr -d '\r\n'; return 0; }
     echo "unknown"
 }

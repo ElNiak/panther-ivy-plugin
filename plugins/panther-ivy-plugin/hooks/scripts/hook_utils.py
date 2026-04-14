@@ -96,3 +96,25 @@ def emit_hook_output(
     if system_message:
         output["systemMessage"] = system_message
     print(json.dumps(output))
+
+
+def resolve_log_dir(session_id: str) -> str:
+    """Determine the log directory for a session.
+
+    Priority:
+      1. $IVY_OBSERVABILITY_DIR/sessions/<session_id>/
+      2. $IVY_WORKSPACE_ROOT/.observability/sessions/<session_id>/
+      3. /tmp/ivy-observability/sessions/<session_id>/
+
+    Returns:
+        Absolute path string to the session log directory.
+    """
+    explicit = os.environ.get("IVY_OBSERVABILITY_DIR", "").strip()
+    if explicit:
+        return os.path.join(explicit, "sessions", session_id)
+
+    workspace = os.environ.get("IVY_WORKSPACE_ROOT", "").strip()
+    if workspace:
+        return os.path.join(workspace, ".observability", "sessions", session_id)
+
+    return os.path.join("/tmp/ivy-observability", "sessions", session_id)
