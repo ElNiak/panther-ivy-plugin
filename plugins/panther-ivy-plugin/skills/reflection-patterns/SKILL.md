@@ -112,8 +112,6 @@ Explain the current situation and confirm the next step before proceeding.
 
 ---
 
----
-
 ## Pattern D: Completion Verification Gate (CVG)
 
 A mandatory gate before any workflow transitions to complete or returns to navigate.

@@ -252,7 +252,7 @@ See the `ivy-error-patterns` skill for the full error-to-fix lookup table with c
 - **Ungrounded variables** — `invariant sent(P,N)` means "for all P,N"; bind variables explicitly
 - **Overly strong invariants** — `invariant connected(C)` fails immediately; use conditional form
 
-For detailed code examples of each trap, see `references/syntax-examples.md`.
+For detailed code examples of each trap, see the `ivy-error-patterns` skill (`references/error-table.md`).
 
 ## Integration
 
