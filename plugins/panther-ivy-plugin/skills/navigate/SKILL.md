@@ -61,11 +61,13 @@ Do not produce user-facing output during this phase. Gather context silently.
 
 ### Step 1: Locate the protocol directory
 
-Use `find_protocol_dir()` from `hooks/scripts/workflow_state.py` to resolve the protocol directory. If not found, fall through to the cold-start branch in Phase 2.
+Resolve the protocol directory by calling `ivy_workflow_state(action="get", protocol="<protocol>")`. The `protocol_dir` field in the response gives the resolved path. If not found, fall through to the cold-start branch in Phase 2.
+
+**Note:** The PostToolUse hook on Skill automatically sets the active-workflow to `navigate/init` when this skill is invoked. Explicit `set` calls are only needed when dispatching to other workflows or updating phase.
 
 ### Step 2: Check for active build
 
-Read `.panther-ivy/build-state.yaml` via `get_build_state(protocol_dir)`. Record whether a build is in progress, its protocol, methodology, and layer completion status.
+Read build state via `ivy_workflow_state(action="get_build", protocol="<protocol>")`. Record whether a build is in progress, its protocol, methodology, and layer completion status.
 
 ### Step 3: Check recent Ivy changes
 
@@ -133,7 +135,7 @@ Based on the context gathered in Phase 1, choose exactly ONE of the three branch
    Pick up where you left off? Or do something else?
    ```
 4. Wait for user response:
-   - **Pick up:** Dispatch to the appropriate workflow (usually `build`), setting the active-workflow flag via `set_active_workflow(protocol_dir, workflow_name, phase="resume")`
+   - **Pick up:** Dispatch to the appropriate workflow (usually `build`), setting the active-workflow flag via `ivy_workflow_state(action="set", workflow="<workflow_name>", phase="resume", protocol="<protocol>")`
    - **Something else:** Proceed to the user interview below, then dispatch based on their answer
 
 ### Branch B: Activity Summary
@@ -196,7 +198,7 @@ After the user confirms, proceed with dispatch.
 
 When dispatching to a workflow:
 
-1. Call `set_active_workflow(protocol_dir, workflow_name, phase="init")` to write the active-workflow flag.
+1. Call `ivy_workflow_state(action="set", workflow="<workflow_name>", phase="init", protocol="<protocol>")` to write the active-workflow flag.
 2. Invoke the workflow: `Skill(skill="{workflow_name}")`
 
 ### Routing Table
@@ -230,4 +232,4 @@ When a workflow is invoked by another workflow (not by navigate directly):
 - **Calls:** `triage` (preflight), then dispatches to `build`, `verify`, `review`, or skills/agents
 - **Knowledge skills loaded:** `reflection-patterns` (SB after Phase 1, RG before dispatch, MPE on cold start), `knowledge-capture` (KG after Phase 1)
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`
-- **Infrastructure:** `hooks/scripts/workflow_state.py` provides all state read/write functions
+- **Infrastructure:** `ivy_workflow_state` MCP tool for state reads/writes; `track-workflow-skill.py` PostToolUse hook for automatic state on skill activation

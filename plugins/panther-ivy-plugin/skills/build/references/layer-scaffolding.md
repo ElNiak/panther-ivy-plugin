@@ -22,7 +22,7 @@ After writing EACH layer:
    - If the error involves counterexample interpretation, load the `counterexample-guide` skill.
    - Fix inline (no workflow switch). Loop compile-fix until the layer compiles cleanly.
 3. **On compile success:**
-   - Update the layer's status in `build-state.yaml` to `"complete"` via `set_build_state()`.
+   - Update the layer's status in `build-state.yaml` to `"complete"` via `ivy_workflow_state(action="set_build", protocol="<protocol>", state="<JSON>")`.
 
 ### Inform-and-continue checkpoint between layers
 
@@ -45,7 +45,7 @@ If the user mentions a type change that affects other layers, load the `propagat
 
 ### Step 4: Update state
 
-After all layers are written and compile, update phase to `"written"` via `update_workflow_phase()`.
+After all layers are written and compile, update phase to `"written"` via `ivy_workflow_state(action="set", workflow="build", phase="written", protocol="<protocol>")`.
 
 ### Knowledge Gate: Post-Write
 

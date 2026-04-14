@@ -111,7 +111,7 @@ The user's choice shapes the blueprint in Phase 2.
 
 ### Step 3: Update state
 
-Update phase to `"scoped"` via `update_workflow_phase()`.
+Update phase to `"scoped"` via `ivy_workflow_state(action="set", workflow="build", phase="scoped", protocol="<protocol>")`.
 
 ---
 
@@ -131,8 +131,8 @@ Glob(pattern="*.ivy", path="protocol-testing/{protocol}/")
 
 Check for existing `build-state.yaml`:
 
-```python
-get_build_state(protocol_dir)
+```
+ivy_workflow_state(action="get_build", protocol="<protocol>")
 ```
 
 ### Step 3: Propose layer structure
@@ -154,7 +154,7 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)** a
 
 ### Step 4: Write build state
 
-Write `build-state.yaml` to `<protocol_dir>/.panther-ivy/build-state.yaml` via `set_build_state()`:
+Write `build-state.yaml` via `ivy_workflow_state(action="set_build", protocol="<protocol>", state="<JSON>")`:
 
 ```yaml
 workflow: build
@@ -170,7 +170,7 @@ decisions:
 
 ### Step 5: Update state
 
-Update phase to `"blueprint-done"` via `update_workflow_phase()`.
+Update phase to `"blueprint-done"` via `ivy_workflow_state(action="set", workflow="build", phase="blueprint-done", protocol="<protocol>")`.
 
 ---
 
@@ -235,7 +235,7 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
 
 ### Step 4: Update state
 
-Update phase to `"quality-passed"` via `update_workflow_phase()`.
+Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="build", phase="quality-passed", protocol="<protocol>")`.
 
 ### Knowledge Gate: Post-Quality-Gate
 
@@ -263,7 +263,7 @@ Present a summary of what was built:
 
 ### Step 2: Clear state
 
-Clear the active-workflow flag via `clear_active_workflow()`.
+Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`.
 
 ### Step 3: Return to navigate
 

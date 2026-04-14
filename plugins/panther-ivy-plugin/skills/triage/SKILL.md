@@ -79,7 +79,7 @@ fi
 - If `invocation_depth > 0` (preflight mode): Return silently to caller. Do not produce any user-facing output. Decrement `invocation_depth` and restore the caller's workflow in the active-workflow file.
 - If `invocation_depth == 0` (direct invocation): Report "Stack is healthy. MCP, LSP [, and Serena] all responding." Then clear the active-workflow flag and return to navigate.
 
-**If something is dead:** Update phase to `"diagnose"` via `update_workflow_phase()` and proceed to Phase 2.
+**If something is dead:** Update phase to `"diagnose"` via `ivy_workflow_state(action="set", workflow="triage", phase="diagnose", protocol="<protocol>")` and proceed to Phase 2.
 
 ---
 
@@ -132,7 +132,7 @@ Reason: [extracted from log — last error line or traceback summary]
 Want me to restart it?
 ```
 
-Wait for user confirmation before proceeding to Phase 3. Update phase to `"fix"` via `update_workflow_phase()`.
+Wait for user confirmation before proceeding to Phase 3. Update phase to `"fix"` via `ivy_workflow_state(action="set", workflow="triage", phase="fix", protocol="<protocol>")`.
 
 ---
 
@@ -233,7 +233,7 @@ When invoked as preflight (`invocation_depth > 0`):
 Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill. For triage, only the structural check (step 1) is required — skip the anti-pattern checklist and coverage delta.
 
 - If `invocation_depth > 0`: Decrement depth. Restore `caller` as the active workflow in the active-workflow file. The caller resumes.
-- If `invocation_depth == 0`: Clear the active-workflow flag via `clear_active_workflow()`. Navigate re-activates on the next turn.
+- If `invocation_depth == 0`: Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate re-activates on the next turn.
 
 ---
 

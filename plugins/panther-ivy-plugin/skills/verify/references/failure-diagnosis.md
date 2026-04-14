@@ -44,7 +44,7 @@ Wait for explicit confirmation before proceeding.
 
 ### Step 5: Update state
 
-Update phase to `"diagnosed"` via `update_workflow_phase()`.
+Update phase to `"diagnosed"` via `ivy_workflow_state(action="set", workflow="verify", phase="diagnosed", protocol="<protocol>")`.
 
 ---
 

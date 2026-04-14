@@ -36,6 +36,11 @@ paths: ["**/*.ivy", "**/*.spec", "**/*.py"]
 | `ivy_find_variants` | -- | type_name |
 | `ivy_serdes_correlation` | -- | type_name |
 | `ivy_change_impact` | -- | type_name, change_type |
+| `ivy_workflow_state` | action="set" | workflow, phase, protocol, caller, invocation_depth |
+| `ivy_workflow_state` | action="get" | protocol |
+| `ivy_workflow_state` | action="clear" | protocol |
+| `ivy_workflow_state` | action="get_build" | protocol |
+| `ivy_workflow_state` | action="set_build" | protocol, state (JSON) |
 
 ### Coverage Tool Scoping Parameters
 

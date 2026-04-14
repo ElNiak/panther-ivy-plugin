@@ -99,7 +99,7 @@ If the protocol is still ambiguous, ask the user: "Which protocol are you workin
 
 ### Step 3: Update state
 
-Update the active-workflow phase to `"preflight-done"` via `update_workflow_phase()`.
+Update the active-workflow phase to `"preflight-done"` via `ivy_workflow_state(action="set", workflow="verify", phase="preflight-done", protocol="<protocol>")`.
 
 ---
 
@@ -132,7 +132,7 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)** a
 
 ### Step 3: Update state
 
-Update phase to `"test-selected"` via `update_workflow_phase()`.
+Update phase to `"test-selected"` via `ivy_workflow_state(action="set", workflow="verify", phase="test-selected", protocol="<protocol>")`.
 
 ---
 
@@ -146,7 +146,7 @@ ivy_compile(relative_path=<test_file>, target="test")
 
 ### On SUCCESS
 
-Move to Phase 4. Update phase to `"compiled"` via `update_workflow_phase()`.
+Move to Phase 4. Update phase to `"compiled"` via `ivy_workflow_state(action="set", workflow="verify", phase="compiled", protocol="<protocol>")`.
 
 ### On compile ERROR
 
@@ -198,7 +198,7 @@ After Phase 4 completes (pass or fail), load the `reflection-patterns` skill. Ap
 
 ### On FAIL
 
-Move to Phase 6. Update phase to `"executed"` via `update_workflow_phase()`.
+Move to Phase 6. Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="verify", phase="executed", protocol="<protocol>")`.
 
 ---
 
@@ -258,7 +258,7 @@ ivy_iut_test(protocol=<detected>, test_name=<from Phase 2>, iut_name=<selected>)
 
 ### Step 4: Update state
 
-Update active-workflow phase via `update_workflow_phase()`.
+Update active-workflow phase to match the outcome: `ivy_workflow_state(action="set", workflow="verify", phase="iut-pass"`, `phase="iut-fail"`, or `phase="iut-error"`, `protocol="<protocol>")`.
 
 ---
 
@@ -279,7 +279,7 @@ For the full diagnosis and fix procedures, see `references/failure-diagnosis.md`
 Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill.
 
 - If `invocation_depth > 0`: Decrement depth. Restore `caller` as the active workflow in the active-workflow file. The caller resumes.
-- If `invocation_depth == 0`: Clear the active-workflow flag via `clear_active_workflow()`. Navigate re-activates on the next user turn.
+- If `invocation_depth == 0`: Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate re-activates on the next user turn.
 
 ---
 

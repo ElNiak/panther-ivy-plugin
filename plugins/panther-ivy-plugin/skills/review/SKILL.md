@@ -97,7 +97,7 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
 
 ### Step 4: Update state
 
-Update phase to `"triaged"` via `update_workflow_phase()`.
+Update phase to `"triaged"` via `ivy_workflow_state(action="set", workflow="review", phase="triaged", protocol="<protocol>")`.
 
 ---
 
@@ -154,7 +154,7 @@ Run coverage and quality paths in parallel. Aggregate all findings into a unifie
 
 ### Update state
 
-Update phase to `"executed"` via `update_workflow_phase()`.
+Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="review", phase="executed", protocol="<protocol>")`.
 
 ### Knowledge Gate: Post-Agent-Execution
 
@@ -238,7 +238,7 @@ Proceed to completion.
 Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill.
 
 - If `invocation_depth > 0`: Decrement depth. Restore `caller` as the active workflow in the active-workflow file. The caller resumes.
-- If `invocation_depth == 0`: Clear the active-workflow flag via `clear_active_workflow()`. Navigate re-activates on the next user turn.
+- If `invocation_depth == 0`: Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate re-activates on the next user turn.
 
 ---
 

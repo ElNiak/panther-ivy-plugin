@@ -65,6 +65,9 @@ caller: null
 **Analysis MCP tools** (read-only, no CLI equivalent):
 `ivy_diagnostics` (mode="structural" for fast structural check, mode="full" for 5-layer diagnostics), `ivy_include_graph`, `ivy_capabilities`
 
+**Workflow state**:
+`ivy_workflow_state` (action="set"/"get"/"clear"/"get_build"/"set_build" — manage active-workflow flag and build-state persistence; automatically written by PostToolUse hook on workflow skill activation, call explicitly for phase updates)
+
 **IUT testing**:
 `ivy_iut_test` (run compiled Ivy test against a real IUT via PANTHER experiment pipeline; returns verdict, iut_logs, experiment_summary, output_dir)
 
