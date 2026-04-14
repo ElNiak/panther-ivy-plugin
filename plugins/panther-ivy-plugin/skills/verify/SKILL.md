@@ -76,6 +76,13 @@ If the user picks option 3, invoke the `ivy-writing-guide` skill and the `specif
 
 Wait for the user to confirm which test(s) to run or create. Do not proceed until you have explicit confirmation.
 
+### Situation Briefing — Test Selection Summary
+
+After the user confirms, load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
+
+- **What happened:** Summarize which test(s) were selected and what they test (protocol feature, role, RFC section).
+- **Options:** "Compile and run all selected tests" / "Narrow selection" / "Design a new test instead"
+
 ### Step 3: Update state
 
 Update phase to `"test-selected"` via `update_workflow_phase()`.
@@ -121,6 +128,18 @@ ivy_verify(relative_path=<test_file>)
    - Set `invocation_depth` += 1, `caller = "verify"` on the active-workflow flag
    - Invoke: `Skill(skill="review")`
 4. Update phase to `"pass"`, then proceed to completion.
+
+### Reflection Gate — Post-Execution Direction
+
+After Phase 4 completes (pass or fail), load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)**:
+
+- **Current state:** "Verification [passed/failed] for [test_file]. [Brief result summary]."
+- **On pass — alternative workflows:**
+  - `review`: "Check coverage and quality of the verified model"
+  - `build`: "Continue building additional layers or tests"
+- **On fail — alternative workflows:**
+  - `build`: "The failure may indicate structural issues — switch to build to fix the model"
+  - Stay in `verify`: "Continue to diagnosis (Phase 6)"
 
 ### On FAIL
 
@@ -194,9 +213,17 @@ Update active-workflow phase via `update_workflow_phase()`.
 
 Invoke the `counterexample-guide` skill to load trace interpretation guidance.
 
-### Step 2: Dispatch spec-analyst
+### Step 2: Multi-Perspective Diagnosis
 
-Dispatch the `spec-analyst` agent with the full failure trace output.
+Load the `reflection-patterns` skill. Apply **Pattern B (Multi-Perspective Exploration)**:
+
+- **Exploration question:** "What is the root cause of this verification failure and what is the best fix strategy?"
+- **Agents (dispatch all 3 in parallel):**
+  - **spec-analyst** (use `subagent_type: "panther-ivy-plugin:spec-analyst"`): Analyze the failure trace with counterexample interpretation. Focus on which invariant/action is violated and why.
+  - **Conservative Architect** (use `subagent_type: "Explore"`): Top-down analysis — check whether the failure indicates a design flaw in the layer structure, missing abstractions, or incorrect assume-guarantee contracts.
+  - **Adversarial Auditor** (use `subagent_type: "Explore"`): Stress-test the current spec — are there other inputs that would trigger the same failure? Is this a symptom of a deeper problem?
+
+Present the synthesized diagnosis before proceeding to classification.
 
 ### Step 3: Classify the failure
 
@@ -228,6 +255,17 @@ Update phase to `"diagnosed"` via `update_workflow_phase()`.
 
 Only entered if the user accepts the auto-fix offer from Phase 6.
 
+### Situation Briefing — Fix Strategy
+
+Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
+
+- **What happened:** Summarize the diagnosis: failure classification, root cause hypothesis, and which agents agreed/disagreed.
+- **Options:**
+  - "Apply the [recommended fix] from the diagnosis" (describe the specific fix)
+  - "Try a different fix approach" (if agents disagreed, present the alternative)
+  - "Fix it manually — I'll handle this"
+  - "Abandon this test and move on"
+
 ### Step 1: Apply the fix
 
 Apply the fix suggested by the spec-analyst. If editing `.ivy` files, invoke the `ivy-writing-guide` skill to load language reference guidance before making changes.
@@ -255,6 +293,6 @@ Update phase to `"stopped"` and proceed to completion.
 
 - **Called by:** `navigate` (dispatch), `build` (post-build verification), user directly ("verify this", "run tests")
 - **Calls:** `triage` (preflight), `spec-analyst` agent (diagnosis), `model-reviewer` agent (structural audit), `review` workflow (follow-up coverage)
-- **Knowledge skills loaded:** `counterexample-guide` (Phase 6), `ivy-writing-guide` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3)
+- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 4, MPE Phase 6, SB Phase 7), `counterexample-guide` (Phase 6), `ivy-writing-guide` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3)
 - **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_iut_test`
 - **State files:** `.panther-ivy/active-workflow`
