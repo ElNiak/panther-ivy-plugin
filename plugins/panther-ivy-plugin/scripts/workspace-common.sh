@@ -15,7 +15,7 @@ find_panther_ivy() {
     # Delegate to canonical Python implementation in hook_utils.
     local result
     result=$(cd "$dir" && python3 -c \
-        "import sys; sys.path.insert(0, '$scripts_dir'); from hook_utils import get_workspace_root; print(get_workspace_root())" \
+        "import sys; sys.path.insert(0, '$_HOOK_SCRIPTS_DIR'); from hook_utils import get_workspace_root; print(get_workspace_root())" \
         2>/dev/null) || true
     if [ -n "$result" ] && [ -d "$result/protocol-testing" ]; then
         echo "$result"

@@ -12,18 +12,26 @@
   "homepage": "https://github.com/ElNiak/panther-ivy-plugin",
   "userConfig": {
     "log_level": {
+      "title": "Log Level",
+      "type": "string",
       "description": "Ivy LSP/MCP log verbosity (DEBUG, INFO, WARN, ERROR)",
       "sensitive": false
     },
     "enable_serena": {
+      "title": "Enable Serena",
+      "type": "boolean",
       "description": "Enable the Serena MCP server for semantic code intelligence (requires panther-serena submodule)",
       "sensitive": false
     },
     "force_reinstall": {
+      "title": "Force Reinstall",
+      "type": "boolean",
       "description": "Force uvx to reinstall ivy-lsp on every server start (use when modifying local ivy-lsp source)",
       "sensitive": false
     },
     "observability_enabled": {
+      "title": "Enable Observability",
+      "type": "boolean",
       "description": "Enable observability event logging to JSONL files (true/false)",
       "sensitive": false
     }

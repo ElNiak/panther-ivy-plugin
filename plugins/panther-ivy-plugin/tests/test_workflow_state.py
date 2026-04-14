@@ -141,3 +141,27 @@ class TestFindProtocolDir:
         monkeypatch.chdir(nested)
         mod = _import_module()
         assert mod.find_protocol_dir() == str(proto_dir)
+
+    def test_protocol_narrows_to_subdir(self, monkeypatch, tmp_path):
+        proto_dir = tmp_path / "protocol-testing"
+        bgp_dir = proto_dir / "bgp"
+        bgp_dir.mkdir(parents=True)
+        monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path))
+        mod = _import_module()
+        assert mod.find_protocol_dir("bgp") == str(bgp_dir)
+
+    def test_protocol_missing_subdir_returns_none(self, monkeypatch, tmp_path):
+        proto_dir = tmp_path / "protocol-testing"
+        proto_dir.mkdir()
+        monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path))
+        mod = _import_module()
+        assert mod.find_protocol_dir("nonexistent") is None
+
+    def test_protocol_with_cwd_fallback(self, monkeypatch, tmp_path):
+        monkeypatch.delenv("IVY_WORKSPACE_ROOT", raising=False)
+        proto_dir = tmp_path / "protocol-testing"
+        quic_dir = proto_dir / "quic"
+        quic_dir.mkdir(parents=True)
+        monkeypatch.chdir(tmp_path)
+        mod = _import_module()
+        assert mod.find_protocol_dir("quic") == str(quic_dir)

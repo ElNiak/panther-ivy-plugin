@@ -16,6 +16,15 @@ Run a comprehensive health check of the Ivy LSP and MCP integration stack, repor
 2. **Content validation**: Each step cross-validates tool output against ground truth using native tools (Read/Grep/Glob). A tool returning data without errors is necessary but NOT sufficient — the data must be semantically correct.
 3. **Phase review**: After each phase, a reviewer agent audits the collected results for consistency, false positives, and missed failures.
 
+## Agent Dispatch
+
+When this command says "Dispatch a `spec-analyst` agent," use the Agent tool with:
+
+1. **Identity**: Include in the prompt: "You are a specification analyst for Ivy protocol models. You have access to Read, Grep, Glob, and Bash. You MUST use these tools to independently verify the data you are given."
+2. **Raw data only**: Pass the FULL raw tool outputs (JSON, command output). Do NOT include your own PASS/FAIL/WARN assessments or analysis summaries. The reviewer must reach its own conclusions from the raw data.
+3. **No length constraints**: Do not ask for short responses. The reviewer needs room to report its verification steps and evidence.
+4. **Override authority**: If the reviewer's per-step verdicts differ from yours, replace your verdicts with the reviewer's for the affected steps.
+
 ## Instructions
 
 **Workspace Status**: Before running checks, call `ivy_workspace(action="get")` to confirm the active workspace.
@@ -71,20 +80,34 @@ Use `LSP(operation="documentSymbol", filePath="<path_to_ivy_file>", line=1, char
 
 ### Phase 1 Review
 
-Dispatch a `spec-analyst` agent with the following prompt:
+Dispatch a `spec-analyst` agent with the following prompt. Follow the Agent Dispatch rules above — pass raw data only, no pre-analysis.
 
-> "Review the Phase 1 health check results for the Ivy LSP + MCP stack. You are given:
-> - Step 1 result: [paste MCP capabilities result + inline validation outcome]
-> - Step 2 result: [paste LSP documentSymbol result + inline validation outcome]
+> "You are a specification analyst for Ivy protocol models. You have access to Read, Grep, Glob, and Bash. You MUST use these tools to independently verify the data below.
 >
-> Check for:
-> 1. **False positives**: Did any step report PASS but the data looks wrong? (e.g., tool count is 0 but marked PASS, symbol list is suspiciously empty)
-> 2. **Consistency**: Do Step 1 and Step 2 results agree? (e.g., if MCP reports 19 tools but LSP fails, something is split-brain)
-> 3. **Missing signals**: Is there anything in the raw output that suggests a problem neither step caught?
+> Review the Phase 1 health check results for the Ivy LSP + MCP stack.
 >
-> Report: CONFIRMED (results are trustworthy) or SUSPICIOUS (explain what looks wrong)."
+> Raw data (orchestrator's assessments intentionally omitted):
+> - Step 1 raw JSON: [paste the FULL JSON returned by ivy_capabilities]
+> - Step 1 CLI check output: [paste the raw output of `which ivy_check ivyc ivy_show 2>/dev/null | wc -l`]
+> - Step 2 raw LSP output: [paste the FULL documentSymbol output]
+> - Step 2 file path: [the .ivy file used for documentSymbol]
+>
+> Independent verification (REQUIRED — use tools for each):
+> 1. Run via Bash: `which ivy_check ivyc ivy_show 2>/dev/null | wc -l` — compare the count against the `cli_tools` field in the Step 1 JSON.
+> 2. Read the .ivy file at the Step 2 path. Count lines starting with `type `, `relation `, `function `, `action `, `object `, `module `, `instance `, `individual `. Compare your count against the LSP symbol count.
+> 3. Verify `mcp_tool_count` in the Step 1 JSON is >= 10.
+>
+> Analysis (after independent verification):
+> 1. **False positives**: Does any data look wrong? (e.g., tool count is 0, symbol list is suspiciously empty)
+> 2. **Consistency**: Do Step 1 and Step 2 results agree? (e.g., MCP alive but LSP dead = split-brain)
+> 3. **Missing signals**: Anything in the raw output that suggests a problem?
+>
+> Report per-step verdicts:
+> - Step 1: your verdict (PASS/WARN/FAIL) + evidence from your verification
+> - Step 2: your verdict (PASS/WARN/FAIL) + evidence from your verification
+> - Overall: CONFIRMED (results are trustworthy) or OVERRIDE (list steps where your verdict differs from what the data supports, with evidence)."
 
-If the reviewer reports SUSPICIOUS, add a **WARN** annotation to the affected steps and note the concern in the results table.
+If the reviewer reports OVERRIDE, **replace** your step verdicts with the reviewer's for the affected steps. If CONFIRMED, keep your original assessments.
 
 ---
 
@@ -172,22 +195,39 @@ Classification:
 
 ### Phase 2 Review
 
-Dispatch a `spec-analyst` agent with the following prompt:
+Dispatch a `spec-analyst` agent with the following prompt. Follow the Agent Dispatch rules above — pass raw data only, no pre-analysis.
 
-> "Review the Phase 2 infrastructure validation results for the Ivy LSP + MCP stack. You are given:
-> - Step 3 result: [PID check + inline validation]
-> - Step 4 result: [log health + inline validation]
-> - Step 5 result: [staging health + inline validation]
-> - Phase 1 context: [Step 1-2 results for cross-reference]
+> "You are a specification analyst for Ivy protocol models. You have access to Read, Grep, Glob, and Bash. You MUST use these tools to independently verify the data below.
 >
-> Check for:
-> 1. **False positives**: Does a PASS step have suspicious data? (e.g., PID alive but log shows crash, staging reports 0 files mapped)
-> 2. **Cross-phase consistency**: Do Phase 2 infrastructure results match Phase 1 functional results? (e.g., if Phase 1 LSP responded but Phase 2 finds no live PID, something is wrong)
-> 3. **Staleness**: Are any results from a previous session rather than the current one? (check timestamps, PIDs, log freshness)
+> Review the Phase 2 infrastructure validation results for the Ivy LSP + MCP stack.
 >
-> Report: CONFIRMED or SUSPICIOUS (explain what looks wrong)."
+> Raw data (orchestrator's assessments intentionally omitted):
+> - Step 3 raw output: [paste the FULL PID check command output]
+> - Step 3 process validation: [paste the `ps -p <pid> -o command=` output for each ALIVE PID]
+> - Step 4 log age output: [paste the raw age_seconds output]
+> - Step 4 critical error count: [paste the raw grep count]
+> - Step 4 resolver error count: [paste the raw grep count]
+> - Step 5 capabilities JSON: [paste the staging_health portion of ivy_capabilities, or note if absent]
+> - Step 5 .ivyworkspace path: [the path to the workspace config file]
+> - Phase 1 summary: [Step 1 tool count and Step 2 symbol count — numbers only, no verdicts]
+>
+> Independent verification (REQUIRED — use tools for each):
+> 1. Run via Bash: `for f in /tmp/ivy-lsp-pids/*.pid; do [ -f "$f" ] || continue; pid=$(cat "$f"); ps -p "$pid" -o pid=,command= 2>/dev/null && echo "ALIVE $f" || echo "STALE $f"; done` — verify PID liveness yourself.
+> 2. Use Grep to search `/tmp/ivy-lsp-latest.log` for `Indexed.*files.*symbols` — verify the indexing milestone exists.
+> 3. Read the .ivyworkspace file at the Step 5 path. Count layers and compare against the workspace active layers.
+>
+> Analysis (after independent verification):
+> 1. **False positives**: Does a step's data look wrong despite appearing healthy?
+> 2. **Cross-phase consistency**: Do Phase 2 infrastructure results match Phase 1 functional results?
+> 3. **Staleness**: Are any results from a previous session? (check timestamps, PIDs, log freshness)
+>
+> Report per-step verdicts:
+> - Step 3: your verdict (PASS/WARN/FAIL) + evidence
+> - Step 4: your verdict (PASS/WARN/FAIL) + evidence
+> - Step 5: your verdict (PASS/WARN/FAIL) + evidence
+> - Overall: CONFIRMED or OVERRIDE (with evidence for differing verdicts)."
 
-If the reviewer reports SUSPICIOUS, add **WARN** annotations and note concerns.
+If the reviewer reports OVERRIDE, **replace** your step verdicts with the reviewer's for the affected steps.
 
 ---
 
@@ -248,24 +288,43 @@ Use LSP `goToDefinition` on a symbol that requires cross-directory include resol
 
 ### Phase 3 Review
 
-Dispatch a `spec-analyst` agent with the following prompt:
+Dispatch a `spec-analyst` agent with the following prompt. Follow the Agent Dispatch rules above — pass raw data only, no pre-analysis.
 
-> "Review the Phase 3 deep functional check results for the Ivy LSP + MCP stack. You are given:
-> - Step 6 result: [workspace diagnostics + inline validation]
-> - Step 7 result: [coverage stats + inline validation]
-> - Step 8 result: [cross-file resolution + inline validation]
-> - Step 9 result: [cross-layer resolution + inline validation]
-> - Phase 1-2 context: [previous step results for cross-reference]
+> "You are a specification analyst for Ivy protocol models. You have access to Read, Grep, Glob, and Bash. You MUST use these tools to independently verify the data below.
 >
-> Check for:
-> 1. **False positives**: Did any deep check pass but the inline validation data suggests it shouldn't? (e.g., goToDefinition returned a location but the symbol isn't actually there)
-> 2. **Coverage completeness**: Do the coverage stats make sense for the workspace? (e.g., 0% coverage with 97 requirements tracked — is that expected or suspicious?)
-> 3. **Resolution quality**: For Steps 8-9, did the resolution actually demonstrate cross-file/cross-layer capability, or did it resolve within the same file/directory?
-> 4. **Overall coherence**: Do all 9 steps tell a consistent story? (e.g., if coverage pipeline works but diagnostics fail, something is inconsistent)
+> Review the Phase 3 deep functional check results for the Ivy LSP + MCP stack.
 >
-> Report: CONFIRMED or SUSPICIOUS (explain what looks wrong)."
+> Raw data (orchestrator's assessments intentionally omitted):
+> - Step 6 raw JSON: [paste the FULL ivy_diagnostics JSON result]
+> - Step 6 file path: [the .ivy file used]
+> - Step 7 raw JSON: [paste the FULL ivy_coverage JSON result]
+> - Step 7 manifest path: [the path to the requirements YAML manifest]
+> - Step 8 raw LSP output: [paste the FULL goToDefinition result]
+> - Step 8 source file and line: [the file:line where goToDefinition was invoked]
+> - Step 9 raw LSP output: [paste the FULL goToDefinition result]
+> - Step 9 source file and line: [the file:line where goToDefinition was invoked]
+> - Phase 1-2 summary: [Step 1 tool count, Step 2 symbol count, Step 3/4/5 key numbers — no verdicts]
+>
+> Independent verification (REQUIRED — use tools for each):
+> 1. Read the Step 6 .ivy file. Verify it starts with `#lang ivy1.7`. Count `include ` lines — if the file has 5+ includes and diagnostics reported 0 issues, note that as validated.
+> 2. Read the requirements manifest at the Step 7 path. Count total requirement entries. Compare against the `total` field in the Step 7 JSON. Check if the `by_level` breakdown sums correctly.
+> 3. For Step 8: Read the target file at the resolved line number. Verify the line contains the expected symbol declaration.
+> 4. For Step 9: Extract the directory paths of both source and target files. Verify they are in different directories (cross-layer, not same-directory).
+>
+> Analysis (after independent verification):
+> 1. **False positives**: Did any check's raw data suggest failure that was missed?
+> 2. **Coverage completeness**: Does the coverage percentage make sense? (0% can be valid if no bracket-tag annotations exist yet)
+> 3. **Resolution quality**: Did Steps 8-9 genuinely demonstrate cross-file/cross-layer capability?
+> 4. **Overall coherence**: Do all 9 steps tell a consistent story?
+>
+> Report per-step verdicts:
+> - Step 6: your verdict (PASS/WARN/FAIL) + evidence
+> - Step 7: your verdict (PASS/WARN/FAIL) + evidence
+> - Step 8: your verdict (PASS/WARN/FAIL) + evidence
+> - Step 9: your verdict (PASS/WARN/FAIL) + evidence
+> - Overall: CONFIRMED or OVERRIDE (with evidence for differing verdicts)."
 
-If the reviewer reports SUSPICIOUS, add **WARN** annotations and note concerns.
+If the reviewer reports OVERRIDE, **replace** your step verdicts with the reviewer's for the affected steps.
 
 ---
 
@@ -309,8 +368,8 @@ After presenting the result table, engage the user.
 **If WARNings present (but no FAILs)**:
 - State: "Health check passed with {N} warning(s): {list}. Any concern, or good to proceed?"
 
-**If any phase review reports SUSPICIOUS**:
-- State: "Phase N review flagged suspicious results: {details}. Investigate before proceeding?"
+**If any phase review reports OVERRIDE**:
+- State: "Phase N review overrode {N} step verdict(s): {details}. The table above reflects the reviewer's verdicts."
 
 If any checks fail, add a `### Suggested Actions` section at the end:
 

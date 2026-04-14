@@ -49,14 +49,35 @@ def main():
     sys.exit(0)
 
 
+def _parse_success_field(output: str) -> bool | None:
+    """Try to extract the ``success`` field from a JSON tool result.
+
+    Returns True/False when the field is present, None when the output
+    is not valid JSON or lacks a ``success`` key.
+    """
+    try:
+        parsed = json.loads(output)
+        if isinstance(parsed, dict) and "success" in parsed:
+            return bool(parsed["success"])
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return None
+
+
 def check_for_interaction(tool_name: str, output: str) -> str | None:
     """Check if the tool result warrants an interaction checkpoint reminder."""
 
     # ivy_verify failure → verification claim discussion
     if "ivy_verify" in tool_name:
-        if any(kw in output.lower() for kw in [
-            "fail", "error", "violated", "counterexample", "not safe",
-        ]):
+        success = _parse_success_field(output)
+        is_failure = (
+            success is False
+            if success is not None
+            else any(kw in output.lower() for kw in [
+                "violated", "counterexample", "not safe",
+            ])
+        )
+        if is_failure:
             return (
                 "[INTERACTION CHECKPOINT] ivy_verify failure detected. "
                 "Before proceeding, discuss this result with the user using the "

@@ -182,10 +182,18 @@ export IVY_PID_FILE="$PID_DIR/${_PID_PREFIX}-$$.pid"
 trap 'rm -f "$IVY_PID_FILE" "$_SESSION_HEARTBEAT_DIR/${_SESSION_TAG}.heartbeat" 2>/dev/null' EXIT TERM INT
 
 # --- Launch ---
+# Prefer the ivy-lsp .venv when it exists — this picks up editable installs
+# of panther_ms_ivy (and any other local patches).  uvx creates an isolated
+# cache venv that pins its own panther_ms_ivy copy, so local fixes like the
+# trusted-isolate patch in ivy_isolate.py are invisible to it.
+_IVY_LSP_VENV_BIN="${IVY_LSP_SRC:+${IVY_LSP_SRC}/.venv/bin/ivy_lsp}"
+
 if [ "$MODE" = "lsp" ]; then
-    # Include mcp + uvicorn so the MCP HTTP sidecar can start alongside the LSP.
-    if [ -n "$IVY_LSP_SRC" ]; then
-        log "Using LOCAL ivy-lsp: $IVY_LSP_SRC"
+    if [ -n "$_IVY_LSP_VENV_BIN" ] && [ -x "$_IVY_LSP_VENV_BIN" ]; then
+        log "Using LOCAL ivy-lsp venv: $_IVY_LSP_VENV_BIN"
+        exec "$_IVY_LSP_VENV_BIN" 2>>"$LOG_FILE"
+    elif [ -n "$IVY_LSP_SRC" ]; then
+        log "Using LOCAL ivy-lsp via uvx: $IVY_LSP_SRC"
         # shellcheck disable=SC2086
         exec uvx $REINSTALL_FLAG --from "${IVY_LSP_SRC}[mcp]" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
     else
@@ -193,8 +201,11 @@ if [ "$MODE" = "lsp" ]; then
         exec uvx --from "git+https://github.com/ElNiak/ivy-lsp[mcp]" --with z3-solver --with pyyaml ivy_lsp 2>>"$LOG_FILE"
     fi
 else
-    if [ -n "$IVY_LSP_SRC" ]; then
-        log "Using LOCAL ivy-lsp: $IVY_LSP_SRC"
+    if [ -n "$_IVY_LSP_VENV_BIN" ] && [ -x "$_IVY_LSP_VENV_BIN" ]; then
+        log "Using LOCAL ivy-lsp venv: $_IVY_LSP_VENV_BIN"
+        exec "$_IVY_LSP_VENV_BIN" --mcp --workspace "$DETECTED_ROOT" 2>>"$LOG_FILE"
+    elif [ -n "$IVY_LSP_SRC" ]; then
+        log "Using LOCAL ivy-lsp via uvx: $IVY_LSP_SRC"
         # shellcheck disable=SC2086
         exec uvx $REINSTALL_FLAG --from "${IVY_LSP_SRC}[mcp]" ivy_lsp --mcp --workspace "$DETECTED_ROOT" 2>>"$LOG_FILE"
     else
