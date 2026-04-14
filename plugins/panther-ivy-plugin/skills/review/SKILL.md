@@ -91,13 +91,11 @@ Load the `reflection-patterns` skill. Apply **Pattern B (Multi-Perspective Explo
 
 - **Exploration question:** "What are the quality issues in this protocol model?"
 - **Agents (dispatch all 3 in parallel):**
-  - **model-reviewer** (use existing agent definition): 6-category structural audit (structural, type safety, invariants, actions, initialization, organization)
-  - **spec-analyst** (use existing agent definition): Verification readiness, include trace, layer coherence
-  - **Adversarial Auditor** (Explore): Red-team the model — find edge cases the structured audits miss, question assumptions in the spec, identify states that could be reached but aren't tested
+  - **model-reviewer** (use `subagent_type: "panther-ivy-plugin:model-reviewer"`): 6-category structural audit (structural, type safety, invariants, actions, initialization, organization)
+  - **spec-analyst** (use `subagent_type: "panther-ivy-plugin:spec-analyst"`): Verification readiness, include trace, layer coherence
+  - **Adversarial Auditor** (use `subagent_type: "Explore"`): Red-team the model — find edge cases the structured audits miss, question assumptions in the spec, identify states that could be reached but aren't tested
 
-Synthesize findings from all 3 agents before presenting.
-
-Dispatch `model-reviewer`, `spec-analyst`, and adversarial auditor agents IN PARALLEL (three Agent tool calls in one message):
+Synthesize findings from all 3 agents before presenting. Dispatch all three agents IN PARALLEL (three Agent tool calls in one message):
 
 **model-reviewer** runs a 6-category structural audit:
 
@@ -150,9 +148,9 @@ Load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)**:
 
 - **Current state:** "[N] critical, [N] important, [N] suggestion findings across [coverage/quality/both] analysis."
 - **Re-evaluate:** Do the findings suggest a different workflow is needed?
-  - Many structural issues -> `build` workflow to fix the model architecture
-  - Verification failures -> `verify` workflow to diagnose specific failures
-  - Coverage gaps only -> stay in `review` to address gaps
+  - Many structural issues — `build` workflow to fix the model architecture
+  - Verification failures — `verify` workflow to diagnose specific failures
+  - Coverage gaps only — stay in `review` to address gaps
 - **Alternative workflows:** `build` (structural fixes), `verify` (targeted verification), stay in `review` (address findings inline)
 
 ### Step 2: Handle user response
