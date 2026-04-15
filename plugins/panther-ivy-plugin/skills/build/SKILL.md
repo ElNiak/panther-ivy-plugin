@@ -73,6 +73,18 @@ digraph build_flow {
 
 Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.
 
+## Journal Requirements
+
+Throughout this workflow, record state changes to the workflow journal:
+
+- **Decisions**: When you make or confirm a design/implementation choice (e.g., deferring a requirement, choosing layer order, selecting methodology), immediately call:
+  `ivy_workflow_state(action="append_journal", protocol="<protocol>", event_type="decision", state='{"summary": "<what was decided>", "context": "<why>"}')`
+
+- **Progress**: After completing a meaningful sub-step (e.g., "compiled 3/8 layers", "fixed 2 verification failures"), call:
+  `ivy_workflow_state(action="append_journal", protocol="<protocol>", event_type="progress", state='{"detail": "<what completed>"}')`
+
+These journal entries enable warm session resume and decision traceability across sessions.
+
 ---
 
 ## Phase 1 — Scope
@@ -176,7 +188,7 @@ Update phase to `"blueprint-done"` via `ivy_workflow_state(action="set", workflo
 
 ## Phase 3 — Write
 
-For the full per-layer scaffolding procedure, see `references/layer-scaffolding.md`. Summary:
+Load `references/layer-scaffolding.md` for the full per-layer scaffolding procedure. Summary:
 
 1. Load `ivy-writing-guide` skill
 2. Write ONE layer at a time in dependency order; run `ivy_compile` after each

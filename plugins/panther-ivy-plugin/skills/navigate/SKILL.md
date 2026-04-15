@@ -69,6 +69,17 @@ Resolve the protocol directory by calling `ivy_workflow_state(action="get", prot
 
 Read build state via `ivy_workflow_state(action="get_build", protocol="<protocol>")`. Record whether a build is in progress, its protocol, methodology, and layer completion status.
 
+### Step 2b: Check workflow journal
+
+Call `ivy_workflow_state(action="get_journal", protocol="<protocol>", last_n=20)`.
+
+If journal entries exist, compose a session context summary for the situation briefing:
+- Count decisions, errors, progress events
+- Check if last session ended cleanly (look for `session_end` with `clean: true`)
+- If no `session_end` exists after the last `session_start`, the previous session was interrupted
+
+Include this summary in the Situation Briefing: "Last session: [N] decisions, [M] errors, ended [cleanly/interrupted] at phase [phase]."
+
 ### Step 3: Check recent Ivy changes
 
 ```bash
@@ -134,7 +145,9 @@ Based on the context gathered in Phase 1, choose exactly ONE of the three branch
    [N/M] layers complete. Last session ended at [layer/phase context].
    Pick up where you left off? Or do something else?
    ```
-4. Wait for user response:
+4. **Skip redundant questions** — if journal contains `decision` events, present them as confirmed decisions rather than re-asking.
+5. **Flag errors** — if journal contains recent `error` events, present them upfront as potential blockers.
+6. Wait for user response:
    - **Pick up:** Dispatch to the appropriate workflow (usually `build`), setting the active-workflow flag via `ivy_workflow_state(action="set", workflow="<workflow_name>", phase="resume", protocol="<protocol>")`
    - **Something else:** Proceed to the user interview below, then dispatch based on their answer
 
