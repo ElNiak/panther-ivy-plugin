@@ -50,14 +50,9 @@ def find_modified_ivy_files() -> list[str]:
     return sorted(files)
 
 
-def check_lint(filepath: str) -> list[str]:
-    """Check an .ivy file for structural lint issues."""
+def check_lint(content: str) -> list[str]:
+    """Check .ivy file content for structural lint issues."""
     issues: list[str] = []
-    try:
-        content = Path(filepath).read_text()
-    except OSError:
-        return issues
-
     lines = content.splitlines()
     if not lines or "#lang ivy1.7" not in lines[0]:
         issues.append("missing #lang header")
@@ -72,13 +67,9 @@ def check_lint(filepath: str) -> list[str]:
     return issues
 
 
-def count_claims(filepath: str) -> dict[str, int]:
-    """Count claim discussion markers in a file."""
+def count_claims(content: str) -> dict[str, int]:
+    """Count claim discussion markers in file content."""
     counts: dict[str, int] = {k: 0 for k in CLAIM_PATTERNS}
-    try:
-        content = Path(filepath).read_text()
-    except OSError:
-        return counts
     for name, pattern in CLAIM_PATTERNS.items():
         counts[name] = len(pattern.findall(content))
     return counts
@@ -167,17 +158,18 @@ def build_summary(
     """Build the session summary string."""
     file_count = len(ivy_files)
 
-    # Lint check
+    # Read each file once for lint and claim analysis
     lint_issues: list[str] = []
-    for f in ivy_files:
-        issues = check_lint(f)
-        if issues:
-            lint_issues.append(f"  - {f}: {', '.join(issues)}")
-
-    # Claim counts
     total_claims: dict[str, int] = {k: 0 for k in CLAIM_PATTERNS}
     for f in ivy_files:
-        for k, v in count_claims(f).items():
+        try:
+            content = Path(f).read_text()
+        except OSError:
+            continue
+        issues = check_lint(content)
+        if issues:
+            lint_issues.append(f"  - {f}: {', '.join(issues)}")
+        for k, v in count_claims(content).items():
             total_claims[k] += v
     claim_total = sum(total_claims.values())
 

@@ -64,8 +64,10 @@ def main() -> None:
     tool_result = hook_input.get("tool_result", "")
     if isinstance(tool_result, dict):
         tool_result = json.dumps(tool_result)
+    elif not isinstance(tool_result, str):
+        tool_result = str(tool_result)
 
-    error_summary = _extract_error_summary(str(tool_result))
+    error_summary = _extract_error_summary(tool_result)
     if not error_summary:
         return
 
