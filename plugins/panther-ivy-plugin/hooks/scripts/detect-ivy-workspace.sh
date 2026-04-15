@@ -134,6 +134,49 @@ else
     context="$context No active workspace set. Use /set-workspace <protocol> to restrict edits. Available: quic, apt, apt_quic, minip, bgp, coap, scaffolds"
 fi
 
+# --- Workflow suggestion based on workspace state ---
+WORKFLOW_SUGGESTION=""
+if [ "$DETECTED_TYPE" = "panther" ] && [ -d "$DETECTED_ROOT/protocol-testing" ]; then
+    # Check for active build-state across protocol directories
+    BUILD_PROTO=""
+    BUILD_PHASE=""
+    for proto_dir in "$DETECTED_ROOT"/protocol-testing/*/; do
+        bs_file="$proto_dir.panther-ivy/build-state.yaml"
+        if [ -f "$bs_file" ]; then
+            BUILD_PROTO="$(basename "$proto_dir")"
+            BUILD_PHASE=$(python3 -c "
+import sys
+try:
+    import yaml; d = yaml.safe_load(open(sys.argv[1])); print(d.get('phase', 'unknown'))
+except: print('unknown')
+" "$bs_file" 2>/dev/null) || BUILD_PHASE="unknown"
+            break
+        fi
+    done
+
+    # Check for recent .ivy changes (last 4 hours)
+    RECENT_IVY=""
+    if command -v git >/dev/null 2>&1; then
+        RECENT_IVY=$(cd "$DETECTED_ROOT" && git log --oneline -1 --since="4 hours ago" -- '*.ivy' 2>/dev/null) || true
+    fi
+
+    # Build suggestion by priority
+    if [ -n "$BUILD_PROTO" ]; then
+        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] Build-state found for $BUILD_PROTO (phase: $BUILD_PHASE). Resume with Skill(skill=\"panther-ivy-plugin:build\"). Or invoke a different workflow if the user's intent differs."
+    elif [ -n "$RECENT_IVY" ]; then
+        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] Recent .ivy changes detected. Consider Skill(skill=\"panther-ivy-plugin:verify\") to validate changes, or match to the user's stated intent."
+    elif [ "$MCP_STATUS" != "ready" ]; then
+        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] MCP server not ready ($MCP_STATUS). If Ivy tools are needed, invoke Skill(skill=\"panther-ivy-plugin:triage\") first."
+    else
+        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] Ivy workspace active. Available workflow skills: verify (test/debug), build (create/extend model), review (coverage/quality), triage (fix tools), navigate (guided routing). Invoke the one matching the user's intent."
+    fi
+fi
+
+# Append workflow suggestion to context
+if [ -n "$WORKFLOW_SUGGESTION" ]; then
+    context="$context $WORKFLOW_SUGGESTION"
+fi
+
 # Escape context for JSON safety using proper JSON escaping
 context_escaped=$(printf '%s' "$context" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])" 2>/dev/null)
 if [ -z "$context_escaped" ]; then

@@ -96,10 +96,11 @@ def main() -> None:
     prompt_lower = prompt.lower()
 
     protocol_dir = find_protocol_dir()
+    active_workflow_name = None
     if protocol_dir:
         active = get_active_workflow(protocol_dir)
-        if active and not prompt_has_switch_intent(prompt_lower):
-            return
+        if active:
+            active_workflow_name = active.get("workflow")
 
     workflows = rules.get("workflows", {})
     scored: list[tuple[tuple[int, int], str]] = []
@@ -109,6 +110,14 @@ def main() -> None:
             scored.append((score, name))
 
     scored.sort(key=lambda x: x[0])
+
+    # If an active workflow exists and the best match is the same workflow,
+    # suppress routing (user is continuing current work). Only route when
+    # intent diverges or the user explicitly asks to switch.
+    if active_workflow_name and scored and not prompt_has_switch_intent(prompt_lower):
+        best_names = [name for s, name in scored if s == scored[0][0]]
+        if active_workflow_name in best_names:
+            return
 
     learning_skills: list[str] | None = None
     learning_config = rules.get("learning_injection")
@@ -123,6 +132,19 @@ def main() -> None:
         matched_workflows = [name for s, name in scored if s == best_score]
 
     if not matched_workflows and not learning_skills:
+        # Fallback: if we're in an Ivy workspace with no active workflow and
+        # no pattern matched, emit a lightweight reminder of available workflows.
+        if protocol_dir and not active_workflow_name:
+            emit_hook_output(
+                "UserPromptSubmit",
+                additional_context=(
+                    "[ROUTING:AVAILABLE] Ivy workspace detected. "
+                    "Available workflow skills: verify (test/debug), "
+                    "build (create/extend model), review (coverage/quality), "
+                    "triage (fix tools), navigate (guided routing). "
+                    "Invoke the one matching the user's intent, or proceed without a workflow for simple tasks."
+                ),
+            )
         return
 
     parts: list[str] = []

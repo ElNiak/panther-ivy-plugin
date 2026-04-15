@@ -1,39 +1,39 @@
 {
   "workflows": {
     "verify": {
-      "keywords": ["verify", "check", "test", "pass", "fail", "debug", "counterexample", "invariant violation"],
-      "intentPatterns": ["(does|did|will).*pass", "(why|what).*fail", "run.*test"],
+      "keywords": ["verify", "check", "test", "pass", "fail", "debug", "counterexample", "invariant violation", "ivy_check", "ivy_verify", "compile error", "verification", "unsatisfied", "safety property"],
+      "intentPatterns": ["(does|did|will).*pass", "(why|what).*fail", "run.*test", "\\bfix\\b.*\\.(ivy)\\b", "error.*(line|ivy)", "check.*spec"],
       "fileTriggers": ["*.ivy"],
       "priority": "high"
     },
     "build": {
-      "keywords": ["build", "scaffold", "create", "model", "add pattern", "propagate", "new spec", "write spec"],
-      "intentPatterns": ["(create|build|write|design).*?(model|spec|protocol)", "(add|implement).*?(layer|pattern|frame)"],
+      "keywords": ["build", "scaffold", "create", "model", "add pattern", "propagate", "new spec", "write spec", "add layer", "new protocol", "implement", "extend"],
+      "intentPatterns": ["(create|build|write|design|implement|start).*?(model|spec|protocol|layer)", "(add|implement).*?(layer|pattern|frame|type|action)", "RFC\\s*\\d+.*model"],
       "fileTriggers": ["*.ivy"],
       "priority": "medium"
     },
     "review": {
-      "keywords": ["review", "audit", "coverage", "RFC gaps", "quality", "traceability"],
-      "intentPatterns": ["(how much|what).*cover", "(check|audit).*quality"],
+      "keywords": ["review", "audit", "coverage", "RFC gaps", "quality", "traceability", "requirement", "manifest", "how much"],
+      "intentPatterns": ["(how much|what).*cover", "(check|audit|review).*?(quality|coverage|model)", "RFC.*coverage", "requirement.*map"],
       "fileTriggers": [],
       "priority": "medium"
     },
     "triage": {
-      "keywords": ["health", "broken", "tool error", "connection error", "MCP", "LSP", "server down", "not working"],
-      "intentPatterns": ["(why|what).*(broken|error|crash|down)"],
+      "keywords": ["health", "broken", "tool error", "connection error", "MCP", "LSP", "server down", "not working", "not connected", "tool not found", "mcp__"],
+      "intentPatterns": ["(why|what).*(broken|error|crash|down)", "tool.*not found", "server.*not.*ready"],
       "fileTriggers": [],
       "priority": "critical"
     },
     "navigate": {
-      "keywords": ["what next", "where was I", "what should I", "confused", "help me decide"],
-      "intentPatterns": ["(what|where).*(next|start|do)"],
+      "keywords": ["what next", "where was I", "what should I", "confused", "help me decide", "which workflow", "how to start"],
+      "intentPatterns": ["(what|where).*(next|start|do)", "^(bgp|quic|coap|minip)$"],
       "fileTriggers": [],
       "priority": "low"
     }
   },
   "learning_injection": {
-    "keywords": ["teach", "explain", "how does", "what is NCT", "what is NACT", "methodology", "learn"],
-    "intentPatterns": ["(teach|explain|how does).*?(NCT|NACT|NSCT|ivy|formal)"],
+    "keywords": ["teach", "explain", "how does", "what is NCT", "what is NACT", "methodology", "learn", "how do I", "what are"],
+    "intentPatterns": ["(teach|explain|how does|what is).*?(NCT|NACT|NSCT|ivy|formal|protocol testing)", "how.*(write|create).*ivy"],
     "knowledge_skills": ["methodology-reference", "ivy-toolkit", "ivy-writing-guide"]
   }
 }
