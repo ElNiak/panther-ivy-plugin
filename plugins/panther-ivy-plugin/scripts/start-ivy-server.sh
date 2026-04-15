@@ -48,6 +48,19 @@ else
     detect_ivy_workspace
 fi
 
+# --- Prepend PANTHER venv to PATH ---
+# panther_ivy_dir is <PANTHER_ROOT>/panther/plugins/services/testers/panther_ivy.
+# Strip that suffix to get the project root, then prepend its .venv/bin so
+# subprocess calls (e.g., `panther run`) find the editable-installed CLI
+# instead of hitting a pyenv shim or missing binary.
+if [ "$DETECTED_TYPE" = "panther" ] && [ -n "${panther_ivy_dir:-}" ]; then
+    _PANTHER_ROOT="${panther_ivy_dir%/panther/plugins/services/testers/panther_ivy}"
+    if [ -d "${_PANTHER_ROOT}/.venv/bin" ]; then
+        export PATH="${_PANTHER_ROOT}/.venv/bin:${PATH}"
+        log "Prepended PANTHER venv to PATH: ${_PANTHER_ROOT}/.venv/bin"
+    fi
+fi
+
 if [ "$MODE" = "mcp" ]; then
     # MCP needs include/exclude paths for workspace scoping
     if [ "$DETECTED_TYPE" = "panther" ]; then
