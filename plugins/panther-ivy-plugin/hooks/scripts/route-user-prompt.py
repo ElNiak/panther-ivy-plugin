@@ -97,6 +97,7 @@ def main() -> None:
 
     protocol_dir = find_protocol_dir()
     active_workflow_name = None
+    active = None
     if protocol_dir:
         active = get_active_workflow(protocol_dir)
         if active:
@@ -131,7 +132,7 @@ def main() -> None:
                     "reason": f"user intent matched: {best_names[0]}" if best_names else None,
                 },
                 workflow=active_workflow_name,
-                phase=None,
+                phase=active.get("phase") if active else None,
             )
 
     learning_skills: list[str] | None = None

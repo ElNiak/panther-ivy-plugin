@@ -29,7 +29,7 @@ _ERROR_PATTERNS = [
     (re.compile(r"FAIL\b.*isolate", re.IGNORECASE), "Verification failure"),
     (re.compile(r"error:.*\.ivy", re.IGNORECASE), "Ivy file error"),
     (re.compile(r'"success":\s*false', re.IGNORECASE), "MCP tool returned failure"),
-    (re.compile(r"timeout", re.IGNORECASE), "Operation timed out"),
+    (re.compile(r"timed?\s*out|timeout\s+(?:exceeded|expired|killed)", re.IGNORECASE), "Operation timed out"),
 ]
 
 _WATCHED_TOOLS = {
