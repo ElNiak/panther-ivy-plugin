@@ -243,12 +243,21 @@ ivy_iut_test(protocol=<detected>, test_name=<from Phase 2>, iut_name=<selected>)
 
 ### On FAIL
 
-1. Present the `iut_logs` content from the tool result.
-2. Present key details from `experiment_summary` (test status, error message if any).
-3. Show `output_dir`: "Full experiment output at `{output_dir}` — use Read to inspect further."
-4. Offer: "Want me to investigate the failure? Or fix it yourself?"
-5. If user wants investigation, move to Phase 6 (Diagnose) with the IUT failure context.
-6. Update phase to `"iut-fail"`.
+Load `references/iut-output-analysis.md` for the full 9-step IUT failure analysis procedure. Summary:
+
+1. Parse test stdout for `assertion_failed` lines and map to RFC requirements.
+2. Parse stderr for serializer state machine debug output.
+3. Check IUT logs for protocol-level rejection reasons.
+4. Cross-reference with pcap (`tshark -Y "bgp" -V`).
+5. Classify: model bug, serializer bug, IUT bug, or unconstrained field.
+6. Propose fix location and re-run.
+
+Also present:
+- Key details from `experiment_summary` (test status, error message).
+- `output_dir`: "Full experiment output at `{output_dir}` — use Read to inspect further."
+- Offer: "Want me to investigate the failure? Or fix it yourself?"
+- If user wants investigation, move to Phase 6 (Diagnose) with the IUT failure context.
+- Update phase to `"iut-fail"`.
 
 ### On ERROR or TIMEOUT
 
@@ -264,7 +273,7 @@ Update active-workflow phase to match the outcome: `ivy_workflow_state(action="s
 
 ## Phase 6 — Diagnose & Phase 7 — Fix
 
-For the full diagnosis and fix procedures, see `references/failure-diagnosis.md`. Summary:
+Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures. Summary:
 
 1. Load `counterexample-guide` for trace interpretation
 2. Multi-Perspective Diagnosis (dispatch spec-analyst + 2 Explore agents)

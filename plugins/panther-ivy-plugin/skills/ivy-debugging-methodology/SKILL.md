@@ -84,3 +84,8 @@ Run verification to confirm the fix:
 mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify(relative_path="<file>")
 ```
 If the fix introduces new errors, return to Step 1 for the new error.
+
+### Serializer/Deserializer Debugging
+
+For C++ serializer state machine issues (wrong bytes on wire, `deser_err` throws, state machine stuck),
+load the `ivy-writing-guide` skill and read `references/serializer-patterns.md`.

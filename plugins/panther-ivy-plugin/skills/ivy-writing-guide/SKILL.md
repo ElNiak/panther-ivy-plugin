@@ -141,7 +141,7 @@ Includes search the Ivy standard library and the current directory. No `.ivy` ex
 
 ## Test Specification Patterns
 
-See [references/syntax-examples.md](references/syntax-examples.md) for test spec structure, role isolation, weight attributes, and variant patterns.
+Load `references/syntax-examples.md` for test spec structure, role isolation, weight attributes, and variant patterns.
 
 ### Test File Checklist
 
@@ -157,7 +157,7 @@ See [references/syntax-examples.md](references/syntax-examples.md) for test spec
 
 Tag every `require`, `ensure`, `assume`, or `assert` with bracket tags: `# [rfc9000:4.1]`
 
-See [references/syntax-examples.md](references/syntax-examples.md) for annotation workflow, tag conventions, and requirement manifests.
+Load `references/syntax-examples.md` for annotation workflow, tag conventions, and requirement manifests.
 
 ## Common Pitfalls and Best Practices
 
@@ -190,6 +190,8 @@ See [references/syntax-examples.md](references/syntax-examples.md) for annotatio
 7. **Minimize axioms**: Every axiom is an unverified assumption.
 
 ## Protocol Modeling Patterns
+
+Load `references/generator-mechanics.md` for Z3 test generation mechanics, solver scope rules, and common generator pitfalls.
 
 ### Client/Server Roles
 
@@ -252,9 +254,21 @@ See the `ivy-error-patterns` skill for the full error-to-fix lookup table with c
 - **Ungrounded variables** — `invariant sent(P,N)` means "for all P,N"; bind variables explicitly
 - **Overly strong invariants** — `invariant connected(C)` fails immediately; use conditional form
 
-For detailed code examples of each trap, see the `ivy-error-patterns` skill (`references/error-table.md`).
+For detailed code examples of each trap, see the `ivy-error-patterns` skill.
 
 ## Integration
+
+## C++ Serializer/Deserializer Patterns
+
+Custom serializers extend `ivy_binary_ser_128` in `<<< impl` blocks. They are state machines that convert between Ivy struct/variant values and wire-format bytes.
+
+Load `references/serializer-patterns.md` for:
+- Base class method signatures and override rules (the base writes 16 bytes per `set`/`open_list`/`open_tag` — custom serializers MUST override these)
+- Serialization vs deserialization callback sequences
+- State machine design patterns
+- Common pitfalls (signature mismatch, garbage injection, uninitialized locals)
+
+---
 
 - **LOADED BY:** build workflow (write phase)
 
