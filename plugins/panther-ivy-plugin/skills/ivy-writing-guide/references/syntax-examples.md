@@ -50,6 +50,13 @@ Opens network sockets, sets TLS identifiers, creates transport parameter extensi
 #### Exported Actions
 `export` declarations tell the test mirror which actions to generate randomly. Z3/SMT ensures generated actions satisfy all `before` clause constraints.
 
+#### Export Design Decisions
+
+- **Handle actions for composite messages**: Export sub-element builder actions (e.g., `frame.path_attribute.handle`) when the protocol requires composite messages built from multiple parts. Guard these with `if _generating { ... }` in their `before` clause. See `generator-mechanics.md` for the frame-queuing pattern.
+- **Auto-send pattern for message events**: Prefer single-action message events that construct and send in one step. Two-step patterns (create then send) cause generator starvation because random selection rarely picks both in sequence. See `generator-mechanics.md`.
+- **Do not export timer events**: Exporting timer actions (e.g., `timeout_event`, `keepalive_timer`) lets the generator spend iterations on non-message actions, starving protocol traffic. Handle timers internally via shim callbacks or `after init` instead.
+- **Empty array constraints**: Use `.end = 0` instead of `= arr.empty` when constraining arrays to be empty in `before` guards. The `.end = 0` form is more reliable for Z3 solving.
+
 #### _finalize() (End-State Verification)
 Called when the test completes. Performs heuristic end-state checks:
 ```ivy

@@ -85,3 +85,69 @@ Update phase to `"stopped"` and proceed to completion.
 - Save session log (observability events + digest)
 - If candidates found, classify and present for user confirmation
 - Resume workflow after gate completes
+
+---
+
+## Post-IUT Wire Validation
+
+After an IUT test completes (regardless of verdict), cross-validate the Ivy event log against the pcap capture to detect cases where the model passed but the test did not effectively exercise the IUT.
+
+### When to run
+
+Run wire validation after every `ivy_iut_test` invocation that returns a PASS verdict. A PASS with insufficient wire traffic is a false positive: the model's safety properties held vacuously because the generator never produced meaningful protocol messages.
+
+### Step 1: Extract pcap message counts per direction
+
+Use tshark to count protocol messages sent by the Ivy tester and by the IUT:
+
+```bash
+# Messages sent by Ivy (tester -> IUT)
+tshark -r <pcap> -Y "bgp && ip.src==<ivy_ip>" -T fields -e bgp.type | sort | uniq -c
+
+# Messages sent by IUT (IUT -> tester)
+tshark -r <pcap> -Y "bgp && ip.dst==<ivy_ip>" -T fields -e bgp.type | sort | uniq -c
+```
+
+Replace `bgp` with the appropriate protocol filter (e.g., `quic` for QUIC tests). Replace `<ivy_ip>` with the Ivy tester's IP address from the experiment config.
+
+### Step 2: Compare pcap counts against iteration count
+
+The test's `iterations_per_test` parameter sets how many random actions the generator attempts. A healthy test produces protocol messages proportional to the iteration count:
+
+- **Expected**: At least 1 protocol message per 10-50 iterations (varies by protocol complexity)
+- **Warning threshold**: Fewer than 1 message per 100 iterations
+- **Failure threshold**: Fewer than 5 total protocol messages across all iterations
+
+If message counts fall below the warning threshold, the generator is likely starved (see `generator-mechanics.md` for root causes).
+
+### Step 3: Compare pcap message types against Ivy log event types
+
+Extract the set of message types from the Ivy event log and from the pcap. They should be consistent:
+
+- Every message type logged in Ivy events should appear in the pcap (serialization succeeded)
+- Every protocol message in the pcap should correspond to an Ivy event (no unmodeled traffic)
+- Message counts per type should roughly match (accounting for retransmissions)
+
+### Step 4: Flag discrepancies
+
+Report as **wire validation failure** if any of the following hold:
+
+1. Pcap contains fewer than 5 protocol messages despite a high iteration count
+2. Ivy log shows message events that do not appear in the pcap (serialization or shim failure)
+3. Pcap contains message types not present in the Ivy event log (unmodeled IUT behavior)
+4. IUT hold timer expires or connection drops before the test completes (insufficient keepalive generation)
+
+A wire validation failure does not invalidate the formal verification result but indicates the IUT was not effectively tested. The test should be re-run after fixing the generator (see `ivy-error-patterns` skill, generator starvation entry).
+
+### Step 5: Record in test report
+
+Include wire validation results in the test report alongside the formal verdict:
+
+```
+Verdict: PASS
+Wire validation: WARN (3 BGP messages in 1000 iterations)
+  - OPEN: 1 sent, 1 received
+  - KEEPALIVE: 2 sent, 0 received
+  - UPDATE: 0 sent, 0 received
+Recommendation: Generator starvation detected. Review exported actions and timer competition.
+```

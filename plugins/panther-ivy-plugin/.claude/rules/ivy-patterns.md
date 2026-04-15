@@ -118,3 +118,33 @@ export action _finalize = {                # End-state verification
 ```
 
 **Variants** extend the base: `include {prot}_server_test` then add exports and weight attributes.
+
+## Generator Patterns (Test Traffic Generation)
+
+### Auto-send pattern
+
+Merge message construction and sending into one exported action so every generator selection produces a wire message:
+
+```ivy
+after msg_event(src:ip.endpoint, dst:ip.endpoint, msg:protocol_message) {
+    if _generating {
+        call net.send(endpoint_to_pid(src), endpoint_to_socket(src), dst, msg_serdes.to_bytes(msg));
+    }
+}
+```
+
+### Handle action `_generating` guard
+
+Export handle actions for composite message sub-elements with a generating guard:
+
+```ivy
+export frame.path_attribute.handle
+before frame.path_attribute.handle(f:frame.path_attribute, scid:bgp_id) {
+    if _generating { require connected(the_cid); require scid = the_cid; }
+}
+```
+
+### Anti-patterns
+
+- **Two-step message events**: Splitting message construction and sending into separate exported actions (e.g., `build_update` + `send_update`). The generator must pick both in sequence by chance, causing starvation. Merge into a single action.
+- **Timer event exports**: Exporting `timeout_event` or `keepalive_timer` lets the generator waste iterations on non-message actions. Remove timer exports from test files; handle timers internally via shim callbacks or `after init`.
