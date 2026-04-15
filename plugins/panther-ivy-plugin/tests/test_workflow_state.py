@@ -165,3 +165,104 @@ class TestFindProtocolDir:
         monkeypatch.chdir(tmp_path)
         mod = _import_module()
         assert mod.find_protocol_dir("quic") == str(quic_dir)
+
+
+class TestAppendJournalEvent:
+    """Tests for append_journal_event()."""
+
+    def test_creates_journal_file_on_first_append(self, tmp_path):
+        mod = _import_module()
+        mod.append_journal_event(
+            str(tmp_path),
+            event_type="session_start",
+            payload={"resumed_from": None},
+            workflow="build",
+            phase="init",
+        )
+        journal_path = tmp_path / ".panther-ivy" / "workflow-journal.yaml"
+        assert journal_path.exists()
+        entries = yaml.safe_load(journal_path.read_text())
+        assert len(entries) == 1
+        assert entries[0]["type"] == "session_start"
+        assert entries[0]["workflow"] == "build"
+        assert entries[0]["phase"] == "init"
+        assert entries[0]["payload"] == {"resumed_from": None}
+        assert "ts" in entries[0]
+
+    def test_appends_to_existing_journal(self, tmp_path):
+        mod = _import_module()
+        mod.append_journal_event(str(tmp_path), "session_start", {"resumed_from": None}, "build", "init")
+        mod.append_journal_event(str(tmp_path), "decision", {"summary": "defer group D", "context": "needs 3-speaker"}, "build", "scoped")
+
+        journal_path = tmp_path / ".panther-ivy" / "workflow-journal.yaml"
+        entries = yaml.safe_load(journal_path.read_text())
+        assert len(entries) == 2
+        assert entries[1]["type"] == "decision"
+        assert entries[1]["payload"]["summary"] == "defer group D"
+
+    def test_rejects_invalid_event_type(self, tmp_path):
+        mod = _import_module()
+        result = mod.append_journal_event(str(tmp_path), "invalid_type", {}, "build", "init")
+        assert result is False
+
+    def test_allows_append_without_active_workflow(self, tmp_path):
+        mod = _import_module()
+        result = mod.append_journal_event(str(tmp_path), "session_start", {"resumed_from": None}, None, None)
+        assert result is True
+        journal_path = tmp_path / ".panther-ivy" / "workflow-journal.yaml"
+        entries = yaml.safe_load(journal_path.read_text())
+        assert entries[0]["workflow"] is None
+
+
+class TestGetJournalEntries:
+    """Tests for get_journal_entries()."""
+
+    def test_returns_empty_list_when_no_journal(self, tmp_path):
+        mod = _import_module()
+        entries = mod.get_journal_entries(str(tmp_path))
+        assert entries == []
+
+    def test_returns_last_n_entries(self, tmp_path):
+        mod = _import_module()
+        for i in range(10):
+            mod.append_journal_event(str(tmp_path), "progress", {"detail": f"step {i}"}, "build", "init")
+
+        entries = mod.get_journal_entries(str(tmp_path), last_n=3)
+        assert len(entries) == 3
+        assert entries[0]["payload"]["detail"] == "step 7"
+        assert entries[2]["payload"]["detail"] == "step 9"
+
+    def test_returns_all_when_fewer_than_last_n(self, tmp_path):
+        mod = _import_module()
+        mod.append_journal_event(str(tmp_path), "session_start", {"resumed_from": None}, "build", "init")
+        entries = mod.get_journal_entries(str(tmp_path), last_n=20)
+        assert len(entries) == 1
+
+
+class TestRotateJournal:
+    """Tests for rotate_journal()."""
+
+    def test_rotates_when_exceeding_max_entries(self, tmp_path):
+        mod = _import_module()
+        for i in range(210):
+            mod.append_journal_event(str(tmp_path), "progress", {"detail": f"step {i}"}, "build", "init")
+
+        mod.rotate_journal(str(tmp_path), max_entries=200)
+
+        entries = mod.get_journal_entries(str(tmp_path), last_n=999)
+        assert len(entries) == 105  # kept the newest half (210 // 2 = 105)
+
+        archive_dir = tmp_path / ".panther-ivy" / "journal-archive"
+        assert archive_dir.is_dir()
+        archive_files = list(archive_dir.iterdir())
+        assert len(archive_files) == 1
+
+    def test_no_rotation_when_under_max(self, tmp_path):
+        mod = _import_module()
+        for i in range(50):
+            mod.append_journal_event(str(tmp_path), "progress", {"detail": f"step {i}"}, "build", "init")
+
+        mod.rotate_journal(str(tmp_path), max_entries=200)
+
+        archive_dir = tmp_path / ".panther-ivy" / "journal-archive"
+        assert not archive_dir.exists()
