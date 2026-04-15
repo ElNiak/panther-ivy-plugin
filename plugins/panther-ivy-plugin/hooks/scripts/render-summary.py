@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, read_stdin, resolve_sessions_dir
-from workflow_state import find_protocol_dir, get_active_workflow, get_build_state
+from workflow_state import find_protocol_dir, get_active_workflow, get_build_state, get_journal_entries
 
 CLAIM_PATTERNS = {
     "resolved": re.compile(r"RESOLVED\("),
@@ -127,6 +127,37 @@ def gather_tool_metrics() -> str:
     return f"Tool calls: {sum(tool_counts.values())} ({top}). Errors: {errors}"
 
 
+def audit_journal(protocol_dir: str, workflow: str | None) -> list[str]:
+    """Check for gaps in journal entries during this session.
+
+    Returns:
+        List of warning strings (empty if no issues found).
+    """
+    if not workflow:
+        return []
+
+    entries = get_journal_entries(protocol_dir, last_n=50)
+    if not entries:
+        return ["No journal entries for this session. Workflow state tracking may be incomplete."]
+
+    warnings: list[str] = []
+
+    session_starts = [e for e in entries if e.get("type") == "session_start"]
+    if not session_starts:
+        warnings.append("No session_start event found. SessionStart hook may not have fired.")
+
+    decisions = [e for e in entries if e.get("type") == "decision"]
+
+    if workflow == "build" and not decisions:
+        build_state = get_build_state(protocol_dir)
+        if build_state and build_state.get("decisions"):
+            warnings.append(
+                "Build state has decisions but no decision events were journaled this session."
+            )
+
+    return warnings
+
+
 def build_summary(
     ivy_files: list[str],
     workflow: str | None,
@@ -217,6 +248,13 @@ def build_summary(
     # Metrics
     if metrics:
         parts.append(f"[TOOL METRICS] {metrics}")
+
+    # Journal audit
+    if protocol_dir and workflow:
+        audit_warnings = audit_journal(protocol_dir, workflow)
+        if audit_warnings:
+            warning_lines = ["[JOURNAL AUDIT]"] + [f"  - {w}" for w in audit_warnings]
+            parts.append("\n".join(warning_lines))
 
     # Knowledge gate prompt
     parts.append(

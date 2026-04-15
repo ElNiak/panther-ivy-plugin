@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, read_stdin
-from workflow_state import find_protocol_dir, get_active_workflow
+from workflow_state import append_journal_event, find_protocol_dir, get_active_workflow
 
 PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 SWITCH_KEYWORDS = ("switch to", "cancel", "stop this", "something else")
@@ -118,6 +118,21 @@ def main() -> None:
         best_names = [name for s, name in scored if s == scored[0][0]]
         if active_workflow_name in best_names:
             return
+
+    # Record context switch when active workflow doesn't match best intent
+    if active_workflow_name and scored and protocol_dir:
+        best_names = [name for s, name in scored if s == scored[0][0]]
+        if active_workflow_name not in best_names:
+            append_journal_event(
+                protocol_dir,
+                event_type="context_switch",
+                payload={
+                    "away_from": active_workflow_name,
+                    "reason": f"user intent matched: {best_names[0]}" if best_names else None,
+                },
+                workflow=active_workflow_name,
+                phase=None,
+            )
 
     learning_skills: list[str] | None = None
     learning_config = rules.get("learning_injection")

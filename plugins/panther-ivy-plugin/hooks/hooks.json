@@ -127,6 +127,16 @@
         ]
       },
       {
+        "matcher": "ivy_verify|ivy_compile|ivy_diagnostics|ivy_coverage|ivy_iut_test|ivy_quality",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record-workflow-error.py",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "mcp__|Bash|Write|Edit|Agent",
         "hooks": [
           {
@@ -217,6 +227,15 @@
       }
     ],
     "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record-session-end.py",
+            "timeout": 5
+          }
+        ]
+      },
       {
         "hooks": [
           {

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """SessionStart hook: clear stale active-workflow flags from interrupted sessions."""
 
-import json
 import os
 import sys
 
@@ -11,7 +10,9 @@ sys.path.insert(
         os.environ.get("CLAUDE_PLUGIN_ROOT", "."), "hooks", "scripts"
     ),
 )
+from hook_utils import emit_hook_output
 from workflow_state import (
+    append_journal_event,
     clear_active_workflow,
     find_protocol_dir,
     get_active_workflow,
@@ -26,22 +27,46 @@ def main() -> None:
 
     active = get_active_workflow(protocol_dir)
     if not active:
+        append_journal_event(
+            protocol_dir,
+            event_type="session_start",
+            payload={"resumed_from": None},
+            workflow=None,
+            phase=None,
+        )
         return
 
-    output: dict = {"hookSpecificOutput": {}}
     if is_workflow_stale(protocol_dir):
+        append_journal_event(
+            protocol_dir,
+            event_type="session_start",
+            payload={"resumed_from": active.get("phase"), "stale_cleared": True},
+            workflow=active.get("workflow"),
+            phase=active.get("phase"),
+        )
         clear_active_workflow(protocol_dir)
-        output["hookSpecificOutput"]["additionalContext"] = (
-            f"Cleared stale workflow '{active.get('workflow', '?')}' "
-            f"(phase: {active.get('phase', '?')}) from a previous session."
+        emit_hook_output(
+            "SessionStart",
+            additional_context=(
+                f"Cleared stale workflow '{active.get('workflow', '?')}' "
+                f"(phase: {active.get('phase', '?')}) from a previous session."
+            ),
         )
     else:
-        output["hookSpecificOutput"]["additionalContext"] = (
-            f"Active workflow: {active.get('workflow', '?')} "
-            f"(phase: {active.get('phase', '?')})"
+        append_journal_event(
+            protocol_dir,
+            event_type="session_start",
+            payload={"resumed_from": active.get("phase")},
+            workflow=active.get("workflow"),
+            phase=active.get("phase"),
         )
-
-    print(json.dumps(output))
+        emit_hook_output(
+            "SessionStart",
+            additional_context=(
+                f"Active workflow: {active.get('workflow', '?')} "
+                f"(phase: {active.get('phase', '?')})"
+            ),
+        )
 
 
 if __name__ == "__main__":
