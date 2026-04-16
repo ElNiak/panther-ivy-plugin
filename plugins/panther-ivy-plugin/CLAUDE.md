@@ -141,6 +141,33 @@ The plugin supports active workspace scoping to prevent cross-protocol collision
 | `list` | — | Show available workspace groups |
 | `clear` | — | Remove workspace restrictions |
 
+## Style System
+
+Output formatting is a 3-layer stack. Each layer overrides the one below it:
+
+1. **Shared rules** (`.claude/rules/ivy-formatting.md`) -- citation format, error format,
+   self-review. Always loaded. Also loaded by subagents via CLAUDE.md inheritance.
+2. **Output style** (`output-styles/`) -- dimension defaults (verbosity, tone, structure).
+   User-selected at session level. NOT inherited by subagents.
+3. **Workflow overlay** (`styles/overlays/`) -- per-workflow and per-phase dimension
+   overrides. Injected by `compose-style.py` hook on each user prompt.
+
+Tool result formatting is handled programmatically by `render-tool-result.py`
+(PostToolUse hook). Do not duplicate tool formatting rules in output styles or overlays.
+
+### Style Precedence Rules
+
+- Workflow overlays override output style dimensions for the active phase.
+- Skills that define fixed output formats (claim-discussion resolution comments,
+  counterexample-guide trace format, finding IDs) override the output style's
+  structure dimension for those specific artifacts. The style applies to
+  surrounding prose, not to structured artifacts with fixed schemas.
+- Memory and persistence artifacts (build-state.yaml, session logs, workflow
+  journal, knowledge-capture entries) are never styled. They use the shared
+  rules citation format but not style dimensions.
+- Agents do not inherit output styles. They inherit shared rules via CLAUDE.md
+  and carry their own output format sections.
+
 ## Quick Reference
 
 **Workflows**: navigate, verify, build, review, triage
