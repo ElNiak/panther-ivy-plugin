@@ -42,6 +42,134 @@ LSP(operation="findReferences", filePath="file.ivy", line=<line>, character=<col
 LSP(operation="hover", filePath="file.ivy", line=<line>, character=<col>)
 ```
 
+## LSP Operation Reference
+
+### hover
+Get type information and documentation at a cursor position.
+
+| Field | Value |
+|-------|-------|
+| Parameters | filePath (str), line (int, 1-based), character (int, 1-based) |
+| Returns | Markdown string with type signature and documentation |
+| Tier | instant |
+| Rendering | raw |
+
+**Errors:**
+- Empty result → symbol not indexed yet or cursor not on a symbol; use `documentSymbol` to discover valid positions
+- Server not responding → check `ivy_health_check`
+
+**When to use:** Validating type signatures during spec review. Prefer `ivy_model_info` for general exploration.
+
+---
+
+### goToDefinition
+Navigate to the definition of a symbol.
+
+| Field | Value |
+|-------|-------|
+| Parameters | filePath (str), line (int, 1-based), character (int, 1-based) |
+| Returns | List of `{ uri, range }` location objects |
+| Tier | instant |
+| Rendering | raw |
+
+**Errors:**
+- Empty list → symbol not in workspace index; check indexing is complete via `ivy_health_check`
+- Resolves to include stdlib → expected behavior for builtin Ivy types
+
+**When to use:** Resolving cross-file definitions during verification failure triage. Prefer `Grep` + `Read` for general navigation outside workflow contexts.
+
+---
+
+### findReferences
+Find all usage sites of a symbol across the workspace.
+
+| Field | Value |
+|-------|-------|
+| Parameters | filePath (str), line (int, 1-based), character (int, 1-based) |
+| Returns | List of `{ uri, range }` location objects |
+| Tier | fast |
+| Rendering | raw |
+
+**Errors:**
+- Empty list → symbol not exported or workspace index incomplete
+- Partial results → indexing still in progress; wait and retry after `ivy_health_check` confirms readiness
+
+**When to use:** Tracing all call sites of an action during refactor or coverage analysis. Prefer `Grep` for simple text-pattern searches.
+
+---
+
+### documentSymbol
+List all symbols defined in a file (types, relations, functions, actions, isolates).
+
+| Field | Value |
+|-------|-------|
+| Parameters | filePath (str), line (int, 1-based, use 1), character (int, 1-based, use 1) |
+| Returns | List of `{ name, kind, range, selectionRange, children }` symbol objects |
+| Tier | instant |
+| Rendering | raw |
+
+**Errors:**
+- Empty list → file not yet indexed; wait for LSP indexing to complete
+- File not found → confirm `filePath` is absolute and within the active workspace
+
+**When to use:** Building a file outline before navigating to specific symbols. Use `line=1, character=1` as the position — position is ignored for this operation.
+
+---
+
+### workspaceSymbol
+Search for symbols by name across the entire workspace.
+
+| Field | Value |
+|-------|-------|
+| Parameters | query (str) |
+| Returns | List of `{ name, kind, location }` symbol objects |
+| Tier | fast |
+| Rendering | raw |
+
+**Errors:**
+- Empty list → no symbol matches the query or workspace not fully indexed
+- Too many results → narrow the query string
+
+**When to use:** Locating a symbol when you know its name but not its file. Prefer `documentSymbol` when exploring a specific file.
+
+---
+
+### prepareCallHierarchy
+Prepare a call hierarchy item at a cursor position as the entry point for `incomingCalls` / `outgoingCalls`.
+
+| Field | Value |
+|-------|-------|
+| Parameters | filePath (str), line (int, 1-based), character (int, 1-based) |
+| Returns | List of call hierarchy items `{ name, kind, uri, range, selectionRange }` |
+| Tier | instant |
+| Rendering | raw |
+
+**Errors:**
+- Empty list → cursor not on a callable symbol; use `documentSymbol` to find valid positions
+- NYI in server → `ivy_health_check` to confirm server version supports call hierarchy
+
+**When to use:** Entry point before calling `incomingCalls` or `outgoingCalls`. Always call this first to obtain the item handle.
+
+---
+
+### incomingCalls / outgoingCalls
+Resolve callers (incomingCalls) or callees (outgoingCalls) for a call hierarchy item.
+
+| Field | Value |
+|-------|-------|
+| Parameters | filePath (str), line (int, 1-based), character (int, 1-based) |
+| Returns | List of `{ from, fromRanges }` (incomingCalls) or `{ to, fromRanges }` (outgoingCalls) |
+| Tier | fast |
+| Rendering | raw |
+
+**Errors:**
+- Empty result → action has no callers/callees in the indexed workspace, or `prepareCallHierarchy` step was skipped
+- NYI → check server capabilities via `ivy_capabilities`
+
+**When to use:** Tracing action propagation chains during `build` workflow impact analysis. Prefer `findReferences` for simpler single-level call-site lookup.
+
+---
+
 ### When to Use LSP vs MCP
 
 | Need | Use |
