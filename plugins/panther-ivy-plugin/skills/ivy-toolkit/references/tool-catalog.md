@@ -235,65 +235,27 @@ Discover, validate, and manage requirement manifest files.
 
 ## 4. RFC Lookup
 
-### ivy_rfc_get
-Fetch an RFC document by number from cache or IETF.
+### ivy_rfc
+Retrieve, search, and analyze RFC documents.
 
 | Field | Value |
 |-------|-------|
-| Parameters | number (str), format (str, "full") |
-| Returns | { status, number, title, format, sections } |
+| Parameters | mode ("get"\|"search"\|"section"), number (str, None), query (str, None), format (str, "full"), section (str, None), analyze (bool, True), limit (int, 10) |
+| Returns (get) | { status, number, title, format, sections? } |
+| Returns (search) | { status, query, count, results: [{ number, title, date, status, abstract }] } |
+| Returns (section) | { status, rfc, section, title, text, normative_statements?, cross_references? } |
 | Timeout | 30s |
 | Tier | fast |
 | Rendering | raw |
-| Concurrency | local_only |
+| Concurrency | local_only; no sidecar delegation |
 
 **Errors:**
-- `"RFC service not initialized"` → MCP server started without RFC service; check server config
-- `"Unknown format '<f>'"` → valid: full, metadata, sections
-- `"Failed to fetch RFC <N>: <exc>"` → network failure; set `IVY_LSP_RFC_OFFLINE=1` to use cache only
+- `"RFC service not initialized."` → server startup failed; check ivy_health_check
+- `"'number' is required for mode='get'."` → missing required parameter
+- `"Failed to fetch RFC <N>"` → network error or invalid RFC number; check IVY_LSP_RFC_OFFLINE
+- `"Section <s> not found in RFC <N>."` → section doesn't exist; use mode="get" with format="sections" to list
 
-**When to use:** Retrieve full RFC text or TOC before writing monitors; resolution order is local cache → disk cache → IETF remote.
-
----
-
-### ivy_rfc_search
-Search for RFCs by keyword via the IETF Datatracker API.
-
-| Field | Value |
-|-------|-------|
-| Parameters | query (str), limit (int, 10) |
-| Returns | { status, query, count, results: [{ number, title, date, status, abstract }] } |
-| Timeout | 15s |
-| Tier | fast |
-| Rendering | raw |
-| Concurrency | local_only |
-
-**Errors:**
-- `"RFC service not initialized"` → server config issue
-- `"Search failed: <exc>"` → Datatracker API unreachable; results cached for 5 minutes
-
-**When to use:** Discover RFC numbers when starting a new protocol model.
-
----
-
-### ivy_rfc_section
-Fetch a specific RFC section with optional normative analysis.
-
-| Field | Value |
-|-------|-------|
-| Parameters | number (str), section (str), analyze (bool, True) |
-| Returns | { status, rfc, section, title, text, normative_statements?, cross_references? } |
-| Timeout | 30s |
-| Tier | fast |
-| Rendering | raw |
-| Concurrency | local_only |
-
-**Errors:**
-- `"RFC service not initialized"` → server config issue
-- `"Failed to fetch RFC <N>: <exc>"` → network failure
-- `"Section <s> not found in RFC <N>"` → section number doesn't exist; use `ivy_rfc_get(format="sections")` to list valid sections
-
-**When to use:** Resolve bracket tags (e.g. `# [rfc4271:6.2]`) to normative text; extract MUST/SHOULD/MAY with tag IDs for new monitors.
+**When to use:** `mode="search"` to find RFCs, `mode="get"` for TOC/full text, `mode="section"` with `analyze=True` for normative MUST/SHOULD/MAY extraction with bracket-tag-compatible IDs.
 
 ---
 

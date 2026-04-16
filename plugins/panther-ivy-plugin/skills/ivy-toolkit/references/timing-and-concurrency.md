@@ -15,7 +15,7 @@ step.
 | Tier | Typical Range | Tools |
 |------|--------------|-------|
 | **instant** | < 1 s | `ivy_capabilities`, `ivy_health_check`, `ivy_workspace`, `ivy_workflow_state` |
-| **fast** | 1 – 30 s | `ivy_model_info`, `ivy_diagnostics`, `ivy_manifest`, `ivy_visualize`, `ivy_model_summary`, `ivy_patterns`, `ivy_pattern_scaffold`, `ivy_scope`, `ivy_find_variants`, `ivy_serdes_correlation`, `ivy_rfc_get`, `ivy_rfc_search`, `ivy_rfc_section` |
+| **fast** | 1 – 30 s | `ivy_model_info`, `ivy_diagnostics`, `ivy_manifest`, `ivy_visualize`, `ivy_model_summary`, `ivy_patterns`, `ivy_pattern_scaffold`, `ivy_scope`, `ivy_find_variants`, `ivy_serdes_correlation`, `ivy_rfc` |
 | **slow** | 30 s – 2 min | `ivy_include_graph`, `ivy_coverage`, `ivy_extract_requirements`, `ivy_quality`, `ivy_verification_dashboard`, `ivy_change_impact` |
 | **blocking** | 2 – 10 min | `ivy_verify`, `ivy_compile`, `ivy_index`, `ivy_iut_test` |
 
@@ -25,8 +25,7 @@ step.
   back to structural analysis immediately without the model.
 - `ivy_coverage` is slow on first call, fast on subsequent calls once
   `ivy_verify` has warmed the model.
-- RFC tools (`ivy_rfc_get`, `ivy_rfc_search`, `ivy_rfc_section`) are fast
-  when the RFC is cached locally; a cold fetch may add a few seconds.
+- `ivy_rfc` is fast when the RFC is cached locally; a cold fetch may add a few seconds.
 
 ---
 
@@ -70,9 +69,7 @@ forever.
 | `ivy_scope` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_SCOPE` |
 | `ivy_find_variants` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_FIND_VARIANTS` |
 | `ivy_serdes_correlation` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_SERDES_CORRELATION` |
-| `ivy_rfc_get` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_RFC_GET` |
-| `ivy_rfc_section` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_RFC_SECTION` |
-| `ivy_rfc_search` | 15 | `IVY_LSP_TOOL_TIMEOUT_IVY_RFC_SEARCH` |
+| `ivy_rfc` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_RFC` |
 | `ivy_capabilities` | 10 | `IVY_LSP_TOOL_TIMEOUT_IVY_CAPABILITIES` |
 | `ivy_health_check` | 10 | `IVY_LSP_TOOL_TIMEOUT_IVY_HEALTH_CHECK` |
 | `ivy_workspace` | 10 | `IVY_LSP_TOOL_TIMEOUT_IVY_WORKSPACE` |
@@ -129,7 +126,7 @@ Model-dependent tools: `ivy_diagnostics`, `ivy_coverage`, `ivy_visualize`,
 Tools with `local_only: True` skip sidecar delegation and execute in the MCP
 server process directly. These are always instant or fast:
 `ivy_capabilities`, `ivy_health_check`, `ivy_workspace`, `ivy_workflow_state`,
-`ivy_rfc_get`, `ivy_rfc_search`, `ivy_rfc_section`.
+`ivy_rfc`.
 
 ### User-supplied timeout extension
 
@@ -161,8 +158,7 @@ callers to extend blocking operations without bypassing the per-tool base.
    Keep at most 1–2 blocking tools in flight at a time to leave capacity for
    diagnostic and workspace tools.
 
-5. **RFC tools are instant when cached.** `ivy_rfc_get`, `ivy_rfc_search`, and
-   `ivy_rfc_section` are `local_only` and skip the sidecar. When the RFC is
+5. **RFC tools are instant when cached.** `ivy_rfc` is `local_only` and skips the sidecar. When the RFC is
    cached (TTL 3600 s, env `IVY_LSP_RFC_CACHE_TTL`), they return in under 1 s.
    A cold fetch adds a network round-trip; set `IVY_LSP_RFC_OFFLINE=1` to
    disable network fetches and rely on the local cache only.

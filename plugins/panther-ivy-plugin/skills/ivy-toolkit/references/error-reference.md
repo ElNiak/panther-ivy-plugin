@@ -59,7 +59,7 @@ or (when target is omitted for action='set'):
 { "success": false, "message": "RFC service not initialized." }
 ```
 
-**Tools:** ivy_rfc_get, ivy_rfc_search, ivy_rfc_section
+**Tools:** ivy_rfc
 
 **Cause:** The RFC service (`ctx.rfc_service`) was not started, which happens when the MCP server is launched without the RFC service dependency or when its initialization failed at startup.
 
@@ -81,7 +81,7 @@ or for search:
 { "success": false, "message": "Search failed: <exception detail>" }
 ```
 
-**Tools:** ivy_rfc_get, ivy_rfc_search, ivy_rfc_section
+**Tools:** ivy_rfc
 
 **Cause:** The HTTP request to `datatracker.ietf.org` (or the IETF RFC index) failed. Common causes: network unavailable, DNS failure, IETF service temporarily down, or firewall blocking outbound HTTP.
 
@@ -210,7 +210,7 @@ or:
 
 **Tools:** All non-`local_only` tools (ivy_verify, ivy_compile, ivy_diagnostics, ivy_coverage, ivy_include_graph, ivy_index, ivy_model_info, ivy_quality, ivy_scope, ivy_visualize, ivy_model_summary, ivy_manifest, ivy_extract_requirements, ivy_patterns, ivy_pattern_scaffold, ivy_find_variants, ivy_serdes_correlation, ivy_change_impact, ivy_iut_test)
 
-**Cause:** The sidecar process is unreachable or returned an error. `call_sidecar_once` returns `None` on any exception (including `TimeoutError`, connection refused, or HTTP error), causing `_try_sidecar_delegation` to fall through to local execution. The tool then runs locally, which is the intended fallback. `local_only` tools (ivy_capabilities, ivy_health_check, ivy_workspace, ivy_workflow_state, ivy_rfc_get, ivy_rfc_search, ivy_rfc_section) never attempt sidecar delegation.
+**Cause:** The sidecar process is unreachable or returned an error. `call_sidecar_once` returns `None` on any exception (including `TimeoutError`, connection refused, or HTTP error), causing `_try_sidecar_delegation` to fall through to local execution. The tool then runs locally, which is the intended fallback. `local_only` tools (ivy_capabilities, ivy_health_check, ivy_workspace, ivy_workflow_state, ivy_rfc) never attempt sidecar delegation.
 
 **Recovery:**
 1. In most cases this requires no action — local fallback produces correct results.

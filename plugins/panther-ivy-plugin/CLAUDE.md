@@ -66,7 +66,7 @@ caller: null
 **Analysis & diagnostics**: ivy_diagnostics (structural/full), ivy_include_graph, ivy_capabilities, ivy_scope
 **Workflow & workspace**: ivy_workspace, ivy_workflow_state, ivy_health_check, ivy_index
 **Coverage & traceability**: ivy_coverage (stats/gaps/matrix), ivy_extract_requirements, ivy_manifest
-**RFC lookup**: ivy_rfc_get, ivy_rfc_search, ivy_rfc_section
+**RFC lookup**: ivy_rfc (mode: get/search/section)
 **Visualization**: ivy_visualize, ivy_model_summary
 **Quality & patterns**: ivy_quality, ivy_patterns, ivy_pattern_scaffold
 **Propagation**: ivy_find_variants, ivy_serdes_correlation, ivy_change_impact

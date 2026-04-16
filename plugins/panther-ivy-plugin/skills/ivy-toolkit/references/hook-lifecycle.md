@@ -86,7 +86,7 @@ The `rendering` field in `_TOOL_METADATA` (`ivy_lsp/mcp/tools/__init__.py`) is t
 | Rendering | Tools |
 |-----------|-------|
 | `hook` | ivy_verify, ivy_compile, ivy_diagnostics, ivy_coverage, ivy_quality |
-| `raw` | All other MCP tools (ivy_model_info, ivy_include_graph, ivy_capabilities, ivy_scope, ivy_extract_requirements, ivy_manifest, ivy_rfc_get, ivy_rfc_search, ivy_rfc_section, ivy_visualize, ivy_model_summary, ivy_patterns, ivy_pattern_scaffold, ivy_find_variants, ivy_serdes_correlation, ivy_change_impact, ivy_workspace, ivy_workflow_state, ivy_health_check, ivy_index, ivy_verification_dashboard, ivy_iut_test) |
+| `raw` | All other MCP tools (ivy_model_info, ivy_include_graph, ivy_capabilities, ivy_scope, ivy_extract_requirements, ivy_manifest, ivy_rfc, ivy_visualize, ivy_model_summary, ivy_patterns, ivy_pattern_scaffold, ivy_find_variants, ivy_serdes_correlation, ivy_change_impact, ivy_workspace, ivy_workflow_state, ivy_health_check, ivy_index, ivy_verification_dashboard, ivy_iut_test) |
 
 ## Stop / SessionEnd Hooks
 
