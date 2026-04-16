@@ -8,6 +8,7 @@
 - Reference Ivy files with relative paths from protocol-testing root.
 - When referencing claims, assertions, or design decisions, quote the source
   verbatim with a bracketed reference.
+- Suppress raw JSON from MCP tool results. Render as formatted prose or tables.
 
 ## Self-Review
 
