@@ -56,6 +56,16 @@ Three complementary tool systems:
 | `ivy_rfc_search` | Search RFCs by title keyword via IETF Datatracker | Finding relevant RFCs for new protocols | FAST |
 | `ivy_rfc_section` | Fetch section text + normative MUST/SHOULD/MAY analysis | Resolving bracket tags, gap analysis | FAST |
 
+## Rendering Awareness
+
+5 tools have PostToolUse hook formatters that reformat raw JSON into workflow-appropriate prose:
+`ivy_verify`, `ivy_compile`, `ivy_diagnostics`, `ivy_coverage`, `ivy_quality`.
+
+**Do NOT reformat** results from these tools — they arrive pre-formatted.
+**DO format** results from all other tools per ivy-formatting.md rules (prose or tables, no raw JSON).
+
+See `references/hook-lifecycle.md` for the full rendering pipeline.
+
 ## Mode Mapping
 
 **FAST mode tools** -- safe for single-operation commands (/nct-check, /nct-model-info):
@@ -155,7 +165,11 @@ Load `references/lsp-patterns.md` for LSP invocation patterns and coordination e
 
 ## Reference Files
 
-Load `references/tool-catalog.md` for full parameter documentation, outputs, and examples for every MCP tool.
+- `references/tool-catalog.md` — per-tool parameters, errors, tiers, rendering
+- `references/error-reference.md` — cross-cutting error patterns and recovery
+- `references/timing-and-concurrency.md` — performance tiers, timeouts, concurrency model
+- `references/hook-lifecycle.md` — tool invocation pipeline and rendering rules
+- `references/lsp-patterns.md` — LSP operations, scoping policy, coordination examples
 
 ## Integration
 

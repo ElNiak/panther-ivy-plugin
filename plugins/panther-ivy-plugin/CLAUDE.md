@@ -62,31 +62,21 @@ caller: null
 | `ivy_show` | `ivy_model_info` | Model introspection (types, relations, actions) |
 | `ivy_to_cpp` | `ivy_compile` | C++ code generation |
 
-**Analysis MCP tools** (read-only, no CLI equivalent):
-`ivy_diagnostics` (mode="structural" for fast structural check, mode="full" for 5-layer diagnostics), `ivy_include_graph`, `ivy_capabilities`
+**Verification & compilation**: ivy_verify, ivy_compile, ivy_model_info
+**Analysis & diagnostics**: ivy_diagnostics (structural/full), ivy_include_graph, ivy_capabilities, ivy_scope
+**Workflow & workspace**: ivy_workspace, ivy_workflow_state, ivy_health_check, ivy_index
+**Coverage & traceability**: ivy_coverage (stats/gaps/matrix), ivy_extract_requirements, ivy_manifest
+**RFC lookup**: ivy_rfc_get, ivy_rfc_search, ivy_rfc_section
+**Visualization**: ivy_visualize, ivy_model_summary
+**Quality & patterns**: ivy_quality, ivy_patterns, ivy_pattern_scaffold
+**Propagation**: ivy_find_variants, ivy_serdes_correlation, ivy_change_impact
+**Testing**: ivy_iut_test, ivy_verification_dashboard
 
-**Workflow state**:
-`ivy_workflow_state` (action="set"/"get"/"clear"/"get_build"/"set_build" — manage active-workflow flag and build-state persistence; automatically written by PostToolUse hook on workflow skill activation, call explicitly for phase updates)
+For parameters, timeouts, error handling, and rendering details, see the **ivy-toolkit** skill.
 
-**IUT testing**:
-`ivy_iut_test` (run compiled Ivy test against a real IUT via PANTHER experiment pipeline; returns verdict, iut_logs, experiment_summary, output_dir)
+**LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted when dispatched by workflow skills. See the `ivy-toolkit` skill for invocation patterns.
 
-**Coverage & traceability**:
-`ivy_coverage` (mode="stats" for coverage stats, mode="gaps" for unguarded state/uncovered reqs, mode="matrix" for requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text; output="manifest" to produce YAML manifest)
-
-**RFC lookup**:
-`ivy_rfc_get` (fetch RFC by number; format="full"/"sections"/"metadata"), `ivy_rfc_search` (search RFCs by title keyword via IETF Datatracker), `ivy_rfc_section` (fetch section text + normative MUST/SHOULD/MAY analysis with bracket-tag-compatible IDs). Use for: resolving bracket tags to normative text, gap analysis follow-up, RFC discovery when starting new protocols.
-
-**Semantic query**:
-**LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted when dispatched by workflow skills (e.g., the triage workflow for health checks, or the verify workflow for diagnostics). For LSP invocation patterns, see the `ivy-toolkit` knowledge skill.
-
-**Visualization MCP tools** (model views):
-`ivy_visualize` (view="dependencies" for action dependency graph, view="state_machine" for state-machine perspective, view="layers" for layered overview by file/module), `ivy_model_summary` (detail="summary" for per-action summary, detail="requirements" for per-action requirements)
-
-**Quality and pattern MCP tools**:
-`ivy_quality` (mode="suggestions" for context-aware suggestions — note: file_path/line/context parameters currently have no effect on output, known issue; mode="gate" to validate against quality gates), `ivy_patterns` (mode="analyze"/"validate"/"compare" for pattern analysis; mode="check" for layer/pattern completeness), `ivy_pattern_scaffold` (generate from template)
-
-**Note**: The LSP server pushes structural diagnostics immediately on file edits. If diagnostics are not visible in `<new-diagnostics>` blocks, the PostToolUse hook fallback runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes. Use the `ivy-toolkit` skill for usage patterns.
+**Note**: The LSP server pushes structural diagnostics on file edits. The PostToolUse hook runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes.
 
 **Claude native tools**: `Read`/`Grep`/`Glob` for navigation, `Edit`/`Write` for modification.
 
