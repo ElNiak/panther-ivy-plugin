@@ -41,6 +41,9 @@ paths: ["**/*.ivy", "**/*.spec", "**/*.py"]
 | `ivy_workflow_state` | action="clear" | protocol |
 | `ivy_workflow_state` | action="get_build" | protocol |
 | `ivy_workflow_state` | action="set_build" | protocol, state (JSON) |
+| `ivy_rfc_get` | format="full"\|"metadata"\|"sections" | number |
+| `ivy_rfc_search` | -- | query, limit |
+| `ivy_rfc_section` | analyze=True\|False | number, section |
 
 ### Coverage Tool Scoping Parameters
 

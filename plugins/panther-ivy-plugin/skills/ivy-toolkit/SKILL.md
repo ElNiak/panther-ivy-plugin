@@ -1,6 +1,6 @@
 ---
 name: ivy-toolkit
-description: "22-tool MCP catalog with parameter matrix and selection guide. Use when choosing or invoking MCP tools for Ivy operations."
+description: "25-tool MCP catalog with parameter matrix and selection guide. Use when choosing or invoking MCP tools for Ivy operations."
 user-invocable: false
 ---
 
@@ -52,12 +52,16 @@ Three complementary tool systems:
 | `ivy_find_variants` | Find all variants of a type | Type analysis | FAST |
 | `ivy_serdes_correlation` | Correlate serializer/deserializer for a type | Ser/des analysis | FAST |
 | `ivy_change_impact` | Assess impact of changing a type | Change analysis | DEEP |
+| `ivy_rfc_get` | Fetch RFC document (full text, TOC, or metadata) | RFC lookup during spec authoring | FAST |
+| `ivy_rfc_search` | Search RFCs by title keyword via IETF Datatracker | Finding relevant RFCs for new protocols | FAST |
+| `ivy_rfc_section` | Fetch section text + normative MUST/SHOULD/MAY analysis | Resolving bracket tags, gap analysis | FAST |
 
 ## Mode Mapping
 
 **FAST mode tools** -- safe for single-operation commands (/nct-check, /nct-model-info):
 - ivy_verify, ivy_compile, ivy_model_info, ivy_diagnostics(mode="structural"), ivy_capabilities,
-  ivy_visualize, ivy_model_summary, ivy_patterns, ivy_pattern_scaffold
+  ivy_visualize, ivy_model_summary, ivy_patterns, ivy_pattern_scaffold,
+  ivy_rfc_get, ivy_rfc_search, ivy_rfc_section
 
 **DEEP mode tools** -- used during orchestrated workflows (build, verify, review):
 - ivy_diagnostics (full analysis), ivy_include_graph (Phase 1),
@@ -147,11 +151,11 @@ The `ivy_coverage` tool accepts different scoping parameters:
 
 ---
 
-See [references/lsp-patterns.md](references/lsp-patterns.md) for LSP invocation patterns and coordination examples.
+Load `references/lsp-patterns.md` for LSP invocation patterns and coordination examples.
 
 ## Reference Files
 
-- **references/tool-catalog.md** -- Full parameter documentation, outputs, and examples for every MCP tool
+Load `references/tool-catalog.md` for full parameter documentation, outputs, and examples for every MCP tool.
 
 ## Integration
 

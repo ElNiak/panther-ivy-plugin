@@ -202,3 +202,45 @@ Parameters:
 
 Returns: { source, pattern, file_suggestion }
 ```
+
+## RFC Lookup and Analysis
+
+### ivy_rfc_get
+Fetch an RFC document by number. Supports full text, table of contents, or metadata.
+```
+Parameters:
+  number: str                  # RFC number (e.g. "4271", "rfc9000") or draft ID
+  format: str = "full"         # "full" (all sections), "sections" (TOC only), "metadata"
+
+Returns: { status, number, title, format, sections? }
+```
+Timeout: 30 seconds. Resolution order: local cache → disk cache → IETF remote.
+
+### ivy_rfc_search
+Search for RFCs by title keyword via the IETF Datatracker API.
+```
+Parameters:
+  query: str                   # Search terms (e.g. "BGP path attributes")
+  limit: int = 10              # Maximum number of results
+
+Returns: { status, query, count, results: [{ number, title, date, status, abstract }] }
+```
+Timeout: 15 seconds. Results cached for 5 minutes.
+
+### ivy_rfc_section
+Fetch a specific RFC section with optional normative statement analysis.
+```
+Parameters:
+  number: str                  # RFC number
+  section: str                 # Section number (e.g. "6.2", "4.1.1")
+  analyze: bool = True         # Include MUST/SHOULD/MAY extraction + cross-references
+
+Returns: { status, rfc, section, title, text, normative_statements?, cross_references? }
+```
+Timeout: 30 seconds. When `analyze=True`, returns structured normative statements
+with tag IDs matching bracket-tag format (e.g. `rfc4271:6.2`) used in Ivy annotations.
+
+**Workflow examples:**
+- Gap resolution: `ivy_coverage(mode="gaps")` → `ivy_rfc_section(number, section)` to see what uncovered requirements say
+- Spec authoring: `ivy_rfc_search("BGP")` → `ivy_rfc_get("4271", format="sections")` → `ivy_rfc_section("4271", "6.2")` → write monitors with bracket tags
+- Tag resolution: See `# [rfc4271:6.2]` in code → `ivy_rfc_section("4271", "6.2")` to understand the normative text

@@ -74,6 +74,9 @@ caller: null
 **Coverage & traceability**:
 `ivy_coverage` (mode="stats" for coverage stats, mode="gaps" for unguarded state/uncovered reqs, mode="matrix" for requirement-to-assertion mapping), `ivy_extract_requirements` (parse RFC text; output="manifest" to produce YAML manifest)
 
+**RFC lookup**:
+`ivy_rfc_get` (fetch RFC by number; format="full"/"sections"/"metadata"), `ivy_rfc_search` (search RFCs by title keyword via IETF Datatracker), `ivy_rfc_section` (fetch section text + normative MUST/SHOULD/MAY analysis with bracket-tag-compatible IDs). Use for: resolving bracket tags to normative text, gap analysis follow-up, RFC discovery when starting new protocols.
+
 **Semantic query**:
 **LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted when dispatched by workflow skills (e.g., the triage workflow for health checks, or the verify workflow for diagnostics). For LSP invocation patterns, see the `ivy-toolkit` knowledge skill.
 

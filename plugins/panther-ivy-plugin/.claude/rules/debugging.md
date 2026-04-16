@@ -53,6 +53,9 @@ protocol-testing/{prot}/
 - `IVY_LSP_FORCE_REINSTALL=1` — force `uvx` to reinstall the package (not set by default; use when modifying local ivy-lsp source)
 - `IVY_LSP_DEV_ROOT=/path/to/local/ivy-lsp` — use local development copy
 - `PANTHER_IVY_ENABLE_SERENA=1` — enable the Serena MCP server (disabled by default; requires panther-serena submodule with pre-built `.venv`)
+- `IVY_LSP_RFC_OFFLINE=1` — disable remote RFC fetching (use local cache only)
+- `IVY_LSP_RFC_CACHE_DIR=/path` — override RFC disk cache location (default: `{workspace}/.ivy-cache/rfc/`)
+- `IVY_LSP_RFC_LOCAL_DIR=/path` — directory of local RFC text files (checked before remote fetch)
 
 **Restart**: Kill the `ivy_lsp` process — Claude Code automatically restarts it on the next LSP or MCP call.
 
