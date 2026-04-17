@@ -145,22 +145,51 @@ def update_section(workspace_root: str, section: str, data: dict) -> None:
         pass
 
 
+def _resolve_workspace_root() -> str:
+    """Resolve the panther_ivy directory without importing hook_utils.
+
+    hook_utils uses PEP 604 (``dict | None``) annotations which fail at
+    module-import time on Python < 3.10. This helper inlines the walk-up
+    logic so statusline cache updates work under any Python that can
+    import the standard library — the plugin's deployed runtime is
+    3.10+, but nothing here should rely on that.
+
+    Returns:
+        Absolute path to the panther_ivy directory containing
+        ``protocol-testing/``, or ``""`` when not found.
+    """
+    ws_env = os.environ.get("IVY_WORKSPACE_ROOT", "").strip()
+    if ws_env and os.path.isdir(os.path.join(ws_env, "protocol-testing")):
+        return ws_env
+
+    check = os.getcwd()
+    for _ in range(10):
+        candidate = os.path.join(
+            check, "panther", "plugins", "services", "testers", "panther_ivy"
+        )
+        if os.path.isdir(os.path.join(candidate, "protocol-testing")):
+            return candidate
+        if os.path.basename(check) == "panther_ivy" and \
+                os.path.isdir(os.path.join(check, "protocol-testing")):
+            return check
+        parent = os.path.dirname(check)
+        if parent == check:
+            break
+        check = parent
+    return ""
+
+
 def update_from_hook(section: str, data: dict) -> None:
     """Convenience wrapper for hooks: resolve workspace root and update cache.
 
-    Uses :func:`hook_utils.get_workspace_root` so every hook agrees on the
-    same panther_ivy directory (the cache key). Silently no-ops when the
-    workspace cannot be resolved or an import fails.
+    Silently no-ops when the workspace cannot be resolved. Hooks that already
+    know their workspace root should prefer :func:`update_section` directly.
 
     Args:
         section: Cache section name (e.g. ``"mcp"``, ``"workflow"``).
         data: Fields to merge into the section.
     """
-    try:
-        from hook_utils import get_workspace_root
-        ws_root = get_workspace_root()
-    except Exception:
-        return
+    ws_root = _resolve_workspace_root()
     if not ws_root:
         return
     update_section(ws_root, section, data)

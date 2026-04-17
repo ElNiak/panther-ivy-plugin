@@ -217,6 +217,101 @@ else
     echo "    got: $output_outside"
 fi
 
+# Global script exits non-zero while outside workspace — must NOT append a
+# fallback token after the global's output (regression test for the ERR trap
+# bug caught in review).
+FAKE_GLOBAL_FAILS="$SCRATCH/fake-global-fails.sh"
+cat > "$FAKE_GLOBAL_FAILS" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+echo "partial global"
+exit 7
+EOF
+chmod +x "$FAKE_GLOBAL_FAILS"
+output_fail="$(
+    NO_COLOR=1 \
+    PANTHER_IVY_GLOBAL_STATUSLINE="$FAKE_GLOBAL_FAILS" \
+    bash "$MAIN" < "$SCRATCH/stdin-outside.json" 2>/dev/null | strip_ansi
+)"
+if [[ "$output_fail" == "partial global" ]]; then
+    PASS=$((PASS + 1))
+    echo "  ok   global non-zero exit does not trigger fallback after output"
+else
+    FAIL=$((FAIL + 1))
+    echo "  FAIL global non-zero exit does not trigger fallback after output"
+    echo "    got: $(printf '%q' "$output_fail")"
+fi
+
+# Global script exits non-zero while inside workspace — output should collapse
+# to ivy-only with the `!` stale marker, not corrupt both halves of the bar.
+FAKE_GLOBAL_SLOW="$SCRATCH/fake-global-slow.sh"
+cat > "$FAKE_GLOBAL_SLOW" <<'EOF'
+#!/usr/bin/env bash
+cat >/dev/null
+sleep 1
+echo "never reached"
+EOF
+chmod +x "$FAKE_GLOBAL_SLOW"
+output_slow="$(
+    NO_COLOR=1 \
+    PANTHER_IVY_STATUSLINE_CACHE_PATH="$SCRATCH/cache-healthy.json" \
+    PANTHER_IVY_GLOBAL_STATUSLINE="$FAKE_GLOBAL_SLOW" \
+    PANTHER_IVY_STATUSLINE_MODE="suppress-overlaps" \
+    bash "$MAIN" < "$SCRATCH/stdin.json" 2>/dev/null | strip_ansi
+)"
+if [[ "$output_slow" != *"never reached"* ]] && [[ "$output_slow" == *"🐍 bgp"* ]]; then
+    PASS=$((PASS + 1))
+    echo "  ok   slow global times out and collapses to ivy-only"
+else
+    FAIL=$((FAIL + 1))
+    echo "  FAIL slow global times out and collapses to ivy-only"
+    echo "    got: $output_slow"
+fi
+
+# NO_COLOR=1 + CLAUDE_STATUSLINE_EMOJIS=false should suppress both escapes
+# and emoji markers.
+output_bare="$(
+    NO_COLOR=1 CLAUDE_STATUSLINE_EMOJIS=false \
+    PANTHER_IVY_STATUSLINE_CACHE_PATH="$SCRATCH/cache-healthy.json" \
+    PANTHER_IVY_GLOBAL_STATUSLINE="$FAKE_GLOBAL" \
+    PANTHER_IVY_STATUSLINE_MODE="ivy-only" \
+    bash "$MAIN" < "$SCRATCH/stdin.json" 2>/dev/null
+)"
+if [[ "$output_bare" != *$'\033'* ]] && [[ "$output_bare" != *"🐍"* ]] && \
+   [[ "$output_bare" == *"bgp"* ]]; then
+    PASS=$((PASS + 1))
+    echo "  ok   NO_COLOR and emoji-off suppress both markers"
+else
+    FAIL=$((FAIL + 1))
+    echo "  FAIL NO_COLOR and emoji-off suppress both markers"
+    echo "    got: $(printf '%q' "$output_bare")"
+fi
+
+# Cache keys must agree between --workspace and --auto-workspace writers.
+CACHE_KEY_WS="$SCRATCH/fake-ws/panther/plugins/services/testers/panther_ivy"
+mkdir -p "$CACHE_KEY_WS/protocol-testing/bgp"
+rm -rf "$SCRATCH/cache-key-home"
+(
+    cd "$CACHE_KEY_WS/protocol-testing/bgp" && \
+    IVY_WORKSPACE_ROOT="$CACHE_KEY_WS" \
+    PANTHER_IVY_STATUSLINE_CACHE_ROOT="$SCRATCH/cache-key-home" \
+    "${TEST_PYTHON:-python3}" "$PLUGIN_ROOT/hooks/scripts/statusline_cache.py" \
+        --auto-workspace --section mcp --data '{"status":"up"}' && \
+    PANTHER_IVY_STATUSLINE_CACHE_ROOT="$SCRATCH/cache-key-home" \
+    "${TEST_PYTHON:-python3}" "$PLUGIN_ROOT/hooks/scripts/statusline_cache.py" \
+        --workspace "$CACHE_KEY_WS" --section lsp --data '{"status":"ready"}'
+) >/dev/null 2>&1
+# Both sections should end up in the same cache file (same key).
+files_in_cache=$(find "$SCRATCH/cache-key-home" -name statusline.json 2>/dev/null | wc -l | tr -d ' ')
+if [ "$files_in_cache" = "1" ]; then
+    PASS=$((PASS + 1))
+    echo "  ok   --auto-workspace and --workspace hash to the same cache key"
+else
+    FAIL=$((FAIL + 1))
+    echo "  FAIL --auto-workspace and --workspace hash to the same cache key"
+    echo "    found $files_in_cache cache files (expected 1)"
+fi
+
 # --- Budget test ---
 echo "# render budget"
 write_cache "$SCRATCH/cache-budget.json"
@@ -228,7 +323,7 @@ PANTHER_IVY_STATUSLINE_MODE="suppress-overlaps" \
 bash "$MAIN" < "$SCRATCH/stdin.json" >/dev/null 2>&1
 end_ns="$("${TEST_PYTHON:-python3}" -c 'import time; print(time.time_ns())')"
 dur_ms=$(( (end_ns - start_ns) / 1000000 ))
-BUDGET_MS="${STATUSLINE_BUDGET_MS:-500}"
+BUDGET_MS="${STATUSLINE_BUDGET_MS:-200}"
 if [ "$dur_ms" -lt "$BUDGET_MS" ]; then
     PASS=$((PASS + 1))
     echo "  ok   render under budget (${dur_ms} ms, cap ${BUDGET_MS} ms)"

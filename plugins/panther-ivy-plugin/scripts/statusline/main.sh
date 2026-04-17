@@ -11,15 +11,20 @@
 #   full-delegate      full global output + Ivy
 #   suppress-overlaps  global minus dir + Ivy    (default)
 #
-# Outside an Ivy workspace this script exec's the user's global statusline
+# Outside an Ivy workspace this script invokes the user's global statusline
 # unchanged. Rendering is cache-driven; hooks maintain the cache at
 # ~/.claude/panther-ivy-plugin/cache/<hash>/statusline.json .
 #
 # Exit code is always 0: a non-zero exit would make Claude Code suppress all
 # statusline output, hiding healthy segments along with the failed ones.
-
-set -u
-trap '_emit_fallback_token' ERR
+#
+# Design notes
+#   - No `set -e` or ERR trap: either one would fire partway through the
+#     pipeline and append fallback text after already-printed output. All
+#     fallible commands are guarded explicitly with `|| true` or captured.
+#   - `set -u` is OFF to keep the single failure mode of an uninitialized
+#     variable from blanking the whole bar. Variables are still initialized
+#     defensively at the top of each function.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GLOBAL_STATUSLINE="${PANTHER_IVY_GLOBAL_STATUSLINE:-$HOME/.claude/statusline-command.sh}"
@@ -47,46 +52,50 @@ _log() {
     local log_dir="$HOME/.claude/panther-ivy-plugin/logs"
     mkdir -p "$log_dir" 2>/dev/null || return 0
     local log_file="$log_dir/statusline.log"
-    printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >> "$log_file" 2>/dev/null || true
-    # Rotate at ~1 MB, keep last 2
+    printf '%s %s\n' "$(date -u +%FT%TZ 2>/dev/null || echo ???)" "$*" \
+        >> "$log_file" 2>/dev/null || true
+    # Rotate at ~1 MB, keep last 2 files.
     if [ -f "$log_file" ]; then
         local size
         size="$(wc -c < "$log_file" 2>/dev/null || echo 0)"
         if [ "$size" -gt 1048576 ]; then
             mv -f "$log_file" "${log_file}.1" 2>/dev/null || true
-            [ -f "${log_file}.1" ] && mv -f "${log_file}.1" "${log_file}.2" 2>/dev/null || true
+            [ -f "${log_file}.1" ] && \
+                mv -f "${log_file}.1" "${log_file}.2" 2>/dev/null || true
         fi
     fi
 }
 
-_emit_fallback_token() {
-    echo "${EMO_PROTOCOL}${C_RED}ivy: error${C_RESET}"
-    exit 0
-}
-
-# Read stdin once so the same JSON can be forwarded to the global script.
+# --- Stdin handling ---------------------------------------------------------
 INPUT_JSON=""
 if [ ! -t 0 ]; then
-    INPUT_JSON="$(cat)"
+    INPUT_JSON="$(cat || true)"
 fi
 
-# Extract cwd from the Claude JSON payload (fallback to $PWD).
-CWD="$PWD"
-if [ -n "$INPUT_JSON" ] && command -v jq >/dev/null 2>&1; then
-    cwd_from_json="$(printf '%s' "$INPUT_JSON" | jq -r '.workspace.current_dir // .cwd // empty' 2>/dev/null || true)"
-    [ -n "$cwd_from_json" ] && CWD="$cwd_from_json"
-fi
+_extract_cwd_from_input() {
+    local cwd="$PWD"
+    if [ -n "$INPUT_JSON" ] && command -v jq >/dev/null 2>&1; then
+        local from_json
+        from_json="$(printf '%s' "$INPUT_JSON" | \
+            jq -r '.workspace.current_dir // .cwd // empty' 2>/dev/null)" || from_json=""
+        [ -n "$from_json" ] && cwd="$from_json"
+    fi
+    printf '%s' "$cwd"
+}
 
-# Workspace gate: outside an Ivy workspace, delegate unchanged.
+CWD="$(_extract_cwd_from_input)"
+
+# --- Workspace gate: outside-workspace delegation --------------------------
+# We never inject an error token here. If the global script exits non-zero,
+# Claude Code will get its partial output, not a synthetic fallback after it.
 if ! detect_statusline_workspace "$CWD"; then
     if [ -x "$GLOBAL_STATUSLINE" ]; then
-        printf '%s' "$INPUT_JSON" | exec "$GLOBAL_STATUSLINE"
+        printf '%s' "$INPUT_JSON" | "$GLOBAL_STATUSLINE" 2>/dev/null || true
     fi
-    # No global script available and no Ivy workspace: emit nothing.
     exit 0
 fi
 
-# Resolve mode.
+# --- Resolve mode -----------------------------------------------------------
 MODE="${PANTHER_IVY_STATUSLINE_MODE:-suppress-overlaps}"
 case "$MODE" in
     ivy-only|minimal|full-delegate|suppress-overlaps) ;;
@@ -95,6 +104,21 @@ case "$MODE" in
         MODE="suppress-overlaps"
         ;;
 esac
+
+# --- Timeout tool detection (safeguards hard render budget) ----------------
+# If neither `timeout` nor `gtimeout` is available we cannot cap the global
+# subprocess. Force ivy-only for this session — a hung global would hang the
+# whole status bar otherwise.
+TIMEOUT_BIN=""
+if command -v timeout >/dev/null 2>&1; then
+    TIMEOUT_BIN="timeout"
+elif command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT_BIN="gtimeout"
+fi
+if [ -z "$TIMEOUT_BIN" ] && [ "$MODE" != "ivy-only" ]; then
+    _log "neither timeout nor gtimeout found; forcing ivy-only"
+    MODE="ivy-only"
+fi
 
 _global_elements_for_mode() {
     case "$1" in
@@ -105,28 +129,18 @@ _global_elements_for_mode() {
     esac
 }
 
-# Invoke the global statusline subprocess and capture stdout. Returns empty
-# string if the global is missing, times out, or errors out.
+# --- Invoke global statusline subprocess ------------------------------------
 _invoke_global() {
     local elements="$1"
     [ -n "$elements" ] || return 0
     [ -x "$GLOBAL_STATUSLINE" ] || return 0
 
-    local output
-    local timed_out=0
-    if command -v timeout >/dev/null 2>&1; then
-        output="$(CLAUDE_STATUSLINE_ELEMENTS="$elements" \
-            timeout 0.2 "$GLOBAL_STATUSLINE" <<< "$INPUT_JSON" 2>/dev/null)" || timed_out=1
-    elif command -v gtimeout >/dev/null 2>&1; then
-        output="$(CLAUDE_STATUSLINE_ELEMENTS="$elements" \
-            gtimeout 0.2 "$GLOBAL_STATUSLINE" <<< "$INPUT_JSON" 2>/dev/null)" || timed_out=1
-    else
-        output="$(CLAUDE_STATUSLINE_ELEMENTS="$elements" \
-            "$GLOBAL_STATUSLINE" <<< "$INPUT_JSON" 2>/dev/null)" || timed_out=1
-    fi
-
-    if [ "$timed_out" -ne 0 ]; then
-        _log "global statusline timed out or errored"
+    local output rc
+    output="$(CLAUDE_STATUSLINE_ELEMENTS="$elements" \
+        "$TIMEOUT_BIN" 0.2 "$GLOBAL_STATUSLINE" <<< "$INPUT_JSON" 2>/dev/null)"
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+        _log "global statusline failed (rc=$rc); falling back to ivy-only"
         export PANTHER_IVY_STATUSLINE_STALE_MARKER="!"
         return 0
     fi
@@ -138,8 +152,7 @@ if [ "$MODE" != "ivy-only" ]; then
     BASE_OUTPUT="$(_invoke_global "$(_global_elements_for_mode "$MODE")")"
 fi
 
-# Cache readiness check. If the cache is missing, collapse Ivy to a single
-# initialization token — hooks will populate the cache on subsequent turns.
+# --- Render Ivy segments ----------------------------------------------------
 CACHE_FILE="$(statusline_cache_path "$STATUSLINE_WORKSPACE_ROOT")"
 IVY_SEGMENTS=""
 if ! command -v jq >/dev/null 2>&1; then
@@ -150,12 +163,14 @@ elif ! jq -e . "$CACHE_FILE" >/dev/null 2>&1; then
     IVY_SEGMENTS="${EMO_PROTOCOL}${C_DIM}[ivy: cache error]${C_RESET}"
     _log "cache JSON invalid at $CACHE_FILE"
 else
+    # One jq pass + one python age call populates STC_* variables; each
+    # segment renderer then runs subprocess-free.
+    statusline_cache_load "$CACHE_FILE" || _log "cache_load returned non-zero"
     parts=()
     for render_fn in render_protocol render_workflow render_lsp render_mcp render_testfile; do
-        out="$("$render_fn" "$CACHE_FILE" 2>/dev/null || true)"
+        out="$("$render_fn" 2>/dev/null || true)"
         [ -n "$out" ] && parts+=("$out")
     done
-    # Join with middle-dot separator.
     if [ "${#parts[@]}" -gt 0 ]; then
         IVY_SEGMENTS="${parts[0]}"
         for ((i = 1; i < ${#parts[@]}; i++)); do
@@ -164,7 +179,7 @@ else
     fi
 fi
 
-# Final assembly.
+# --- Final assembly ---------------------------------------------------------
 if [ -n "$BASE_OUTPUT" ] && [ -n "$IVY_SEGMENTS" ]; then
     printf '%s │ %s\n' "$BASE_OUTPUT" "$IVY_SEGMENTS"
 elif [ -n "$BASE_OUTPUT" ]; then

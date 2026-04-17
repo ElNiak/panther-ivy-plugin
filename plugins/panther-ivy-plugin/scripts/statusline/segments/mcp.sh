@@ -1,16 +1,13 @@
 # shellcheck shell=bash
 # MCP segment: mcp:up 34ms | mcp:degraded | mcp:down ⚠ | mcp:?
-# Staleness rules match the LSP segment.
+# Reads STC_MCP_* populated by statusline_cache_load().
 
 _STATUSLINE_MCP_STALE_SECONDS="${PANTHER_IVY_STATUSLINE_STALE_SECONDS:-60}"
 
 render_mcp() {
-    local cache_file="$1"
-    local status checked_at age latency
-    status="$(statusline_cache_get "$cache_file" '.mcp.status')" || status="unknown"
-    checked_at="$(statusline_cache_get "$cache_file" '.mcp.last_checked_at')" || checked_at=""
-    latency="$(statusline_cache_get "$cache_file" '.mcp.latency_ms')" || latency=""
-    age="$(statusline_age_seconds "$checked_at")"
+    local status="${STC_MCP_STATUS:-unknown}"
+    [ -z "$status" ] && status="unknown"
+    local age="${STC_MCP_AGE:-99999}"
 
     local stale_marker="${PANTHER_IVY_STATUSLINE_STALE_MARKER:-?}"
     local is_stale=0
@@ -22,8 +19,8 @@ render_mcp() {
     case "$status" in
         up)
             color="$C_GREEN"; body="up"
-            if [ -n "$latency" ] && [ "$latency" != "null" ]; then
-                body="up ${latency}ms"
+            if [ -n "${STC_MCP_LATENCY:-}" ]; then
+                body="up ${STC_MCP_LATENCY}ms"
             fi
             ;;
         degraded)

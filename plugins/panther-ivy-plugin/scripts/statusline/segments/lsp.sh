@@ -1,16 +1,13 @@
 # shellcheck shell=bash
 # LSP segment: lsp:ready | lsp:idx 12/40 | lsp:starting | lsp:down | lsp:?
-# Dims to `lsp:<state>?` (or `!` if main.sh set a timeout marker) when the
-# cached `last_checked_at` is older than 60 seconds.
+# Reads STC_LSP_* populated by statusline_cache_load().
 
 _STATUSLINE_LSP_STALE_SECONDS="${PANTHER_IVY_STATUSLINE_STALE_SECONDS:-60}"
 
 render_lsp() {
-    local cache_file="$1"
-    local status checked_at age done_count total
-    status="$(statusline_cache_get "$cache_file" '.lsp.status')" || status="unknown"
-    checked_at="$(statusline_cache_get "$cache_file" '.lsp.last_checked_at')" || checked_at=""
-    age="$(statusline_age_seconds "$checked_at")"
+    local status="${STC_LSP_STATUS:-unknown}"
+    [ -z "$status" ] && status="unknown"
+    local age="${STC_LSP_AGE:-99999}"
 
     local stale_marker="${PANTHER_IVY_STATUSLINE_STALE_MARKER:-?}"
     local is_stale=0
@@ -23,11 +20,9 @@ render_lsp() {
         ready)
             color="$C_GREEN"; body="ready" ;;
         indexing)
-            done_count="$(statusline_cache_get "$cache_file" '.lsp.indexing.done')" || done_count=""
-            total="$(statusline_cache_get "$cache_file" '.lsp.indexing.total')" || total=""
             color="$C_YELLOW"
-            if [ -n "$done_count" ] && [ -n "$total" ]; then
-                body="idx ${done_count}/${total}"
+            if [ -n "${STC_LSP_IDX_DONE:-}" ] && [ -n "${STC_LSP_IDX_TOTAL:-}" ]; then
+                body="idx ${STC_LSP_IDX_DONE}/${STC_LSP_IDX_TOTAL}"
             else
                 body="indexing"
             fi
