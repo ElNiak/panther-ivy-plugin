@@ -9,7 +9,6 @@ render_lsp() {
     [ -z "$status" ] && status="unknown"
     local age="${STC_LSP_AGE:-99999}"
 
-    local stale_marker="${PANTHER_IVY_STATUSLINE_STALE_MARKER:-?}"
     local is_stale=0
     if [ "$status" != "unknown" ] && [ "$age" -gt "$_STATUSLINE_LSP_STALE_SECONDS" ]; then
         is_stale=1
@@ -35,9 +34,5 @@ render_lsp() {
             color="$C_DIM"; body="?" ;;
     esac
 
-    if [ "$is_stale" = "1" ]; then
-        printf '%slsp:%s%s%s' "$C_DIM" "$body" "$stale_marker" "$C_RESET"
-    else
-        printf 'lsp:%s%s%s' "$color" "$body" "$C_RESET"
-    fi
+    statusline_render_segment "lsp" "$color" "$body" "$is_stale"
 }

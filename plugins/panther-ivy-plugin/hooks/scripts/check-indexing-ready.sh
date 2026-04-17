@@ -16,11 +16,8 @@ MCP_LOG="${IVY_MCP_LOG_PATH:-/tmp/ivy-mcp-latest.log}"
 LSP_LOG="${IVY_LSP_LOG_PATH:-/tmp/ivy-lsp-lsp-latest.log}"
 WORKSPACE_ROOT="${IVY_WORKSPACE_ROOT:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-_update_statusline() {
-    python3 "$SCRIPT_DIR/statusline_cache.py" --auto-workspace \
-        --section "$1" --data "$2" 2>/dev/null || true
-}
+# shellcheck source=statusline_update_helper.sh
+source "$SCRIPT_DIR/statusline_update_helper.sh"
 
 # Circuit breaker: after 6 denials (~60s), degrade to warning
 DENY_STATE="/tmp/ivy-lsp-pids/indexing-deny-count"

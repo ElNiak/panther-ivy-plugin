@@ -40,7 +40,6 @@ statusline_cache_load() {
     STC_MCP_STATUS=""; STC_MCP_LATENCY=""; STC_MCP_AGE="99999"
     STC_TESTFILE=""
 
-    [ -f "$cache_file" ] || return 1
     command -v jq >/dev/null 2>&1 || return 2
 
     # Single jq pass extracts every scalar, one field per line. A while-read
@@ -115,11 +114,21 @@ PY
     return 0
 }
 
-# True (exit 0) if the cache file exists and is valid JSON. Kept for
-# main.sh's bootstrap check; renderers use the loaded STC_* vars instead.
-statusline_cache_ready() {
-    local path="$1"
-    [ -f "$path" ] || return 1
-    command -v jq >/dev/null 2>&1 || return 2
-    jq -e . "$path" >/dev/null 2>&1
+# Render a `<prefix>:<body>` segment with stale-aware formatting.
+# Used by the LSP and MCP segments; `$body` and `$color` are the caller's
+# normal output; `$is_stale` switches to dim + the configured stale marker;
+# `$suffix` is appended verbatim after the color reset (e.g. the MCP warn
+# emoji) and is not included in the stale form.
+statusline_render_segment() {
+    local prefix="$1"
+    local color="$2"
+    local body="$3"
+    local is_stale="$4"
+    local suffix="${5:-}"
+    local stale_marker="${STATUSLINE_STALE_MARKER:-?}"
+    if [ "$is_stale" = "1" ]; then
+        printf '%s%s:%s%s%s' "$C_DIM" "$prefix" "$body" "$stale_marker" "$C_RESET"
+    else
+        printf '%s:%s%s%s%s' "$prefix" "$color" "$body" "$C_RESET" "$suffix"
+    fi
 }

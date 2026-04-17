@@ -9,7 +9,6 @@ render_mcp() {
     [ -z "$status" ] && status="unknown"
     local age="${STC_MCP_AGE:-99999}"
 
-    local stale_marker="${PANTHER_IVY_STATUSLINE_STALE_MARKER:-?}"
     local is_stale=0
     if [ "$status" != "unknown" ] && [ "$age" -gt "$_STATUSLINE_MCP_STALE_SECONDS" ]; then
         is_stale=1
@@ -31,9 +30,5 @@ render_mcp() {
             color="$C_DIM"; body="?" ;;
     esac
 
-    if [ "$is_stale" = "1" ]; then
-        printf '%smcp:%s%s%s' "$C_DIM" "$body" "$stale_marker" "$C_RESET"
-    else
-        printf 'mcp:%s%s%s%s' "$color" "$body" "$C_RESET" "$suffix"
-    fi
+    statusline_render_segment "mcp" "$color" "$body" "$is_stale" "$suffix"
 }

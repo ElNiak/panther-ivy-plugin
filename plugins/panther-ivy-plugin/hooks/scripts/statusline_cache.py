@@ -107,6 +107,39 @@ def _atomic_write(path: Path, data: dict) -> None:
             pass
 
 
+def update_sections(workspace_root: str, sections: dict) -> None:
+    """Atomically merge multiple sections into the cache in one write.
+
+    Hooks that touch several sections at once (e.g. setting both ``workflow``
+    and ``workspace.protocol`` when a skill activates) should use this rather
+    than calling :func:`update_section` repeatedly — it avoids re-reading the
+    cache file per section and collapses the work into one lock acquisition.
+
+    Args:
+        workspace_root: Absolute path to the Ivy workspace root.
+        sections: Mapping from section name to the fields to merge into it.
+            Sections in :data:`_SECTIONS_WITH_TIMESTAMP` receive
+            ``last_checked_at`` automatically when not supplied.
+    """
+    if not workspace_root or not sections:
+        return
+    try:
+        path = cache_path_for(workspace_root)
+        cache = _read_cache(path)
+        for section, data in sections.items():
+            if not section or not isinstance(data, dict):
+                continue
+            existing = cache.get(section)
+            merged = {**existing, **data} if isinstance(existing, dict) else dict(data)
+            if section in _SECTIONS_WITH_TIMESTAMP and "last_checked_at" not in merged:
+                merged["last_checked_at"] = _now_iso()
+            cache[section] = merged
+        cache["version"] = CACHE_VERSION
+        _atomic_write(path, cache)
+    except Exception:
+        pass
+
+
 def update_section(workspace_root: str, section: str, data: dict) -> None:
     """Merge ``data`` into ``section`` of the workspace's statusline cache.
 
@@ -183,7 +216,9 @@ def update_from_hook(section: str, data: dict) -> None:
     """Convenience wrapper for hooks: resolve workspace root and update cache.
 
     Silently no-ops when the workspace cannot be resolved. Hooks that already
-    know their workspace root should prefer :func:`update_section` directly.
+    know their workspace root should prefer :func:`update_section` directly;
+    hooks that touch multiple sections should use
+    :func:`update_sections_from_hook` to avoid redundant reads.
 
     Args:
         section: Cache section name (e.g. ``"mcp"``, ``"workflow"``).
@@ -193,6 +228,14 @@ def update_from_hook(section: str, data: dict) -> None:
     if not ws_root:
         return
     update_section(ws_root, section, data)
+
+
+def update_sections_from_hook(sections: dict) -> None:
+    """Batched variant of :func:`update_from_hook` for multi-section writes."""
+    ws_root = _resolve_workspace_root()
+    if not ws_root:
+        return
+    update_sections(ws_root, sections)
 
 
 def clear_cache(workspace_root: str) -> None:
@@ -215,16 +258,39 @@ if __name__ == "__main__":  # pragma: no cover
         action="store_true",
         help="Resolve workspace via hook_utils.get_workspace_root()",
     )
-    parser.add_argument("--section", required=True, help="Section name")
-    parser.add_argument("--data", required=True, help="JSON-encoded data to merge")
+    mode_group = parser.add_mutually_exclusive_group(required=True)
+    mode_group.add_argument(
+        "--section",
+        help="Single-section mode: cache section name (requires --data)",
+    )
+    mode_group.add_argument(
+        "--sections",
+        help="Multi-section mode: JSON object mapping section names to fields",
+    )
+    parser.add_argument(
+        "--data",
+        help="JSON-encoded data to merge (single-section mode only)",
+    )
     args = parser.parse_args()
+
     try:
-        payload = json.loads(args.data)
+        if args.sections is not None:
+            batch = json.loads(args.sections)
+            if not isinstance(batch, dict):
+                raise SystemExit("--sections must be a JSON object")
+            if args.auto_workspace:
+                update_sections_from_hook(batch)
+            else:
+                update_sections(args.workspace, batch)
+        else:
+            if args.data is None:
+                raise SystemExit("--data is required with --section")
+            payload = json.loads(args.data)
+            if not isinstance(payload, dict):
+                raise SystemExit("--data must be a JSON object")
+            if args.auto_workspace:
+                update_from_hook(args.section, payload)
+            else:
+                update_section(args.workspace, args.section, payload)
     except json.JSONDecodeError as exc:
-        raise SystemExit(f"invalid --data JSON: {exc}")
-    if not isinstance(payload, dict):
-        raise SystemExit("--data must be a JSON object")
-    if args.auto_workspace:
-        update_from_hook(args.section, payload)
-    else:
-        update_section(args.workspace, args.section, payload)
+        raise SystemExit(f"invalid JSON: {exc}")

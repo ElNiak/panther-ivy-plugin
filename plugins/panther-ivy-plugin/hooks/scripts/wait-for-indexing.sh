@@ -18,12 +18,8 @@ MCP_LOG="${IVY_MCP_LOG_PATH:-/tmp/ivy-mcp-latest.log}"
 LSP_LOG="${IVY_LSP_LOG_PATH:-/tmp/ivy-lsp-lsp-latest.log}"
 MAX_WAIT="${IVY_LSP_INDEX_TIMEOUT:-12}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-_update_statusline() {
-    # Best-effort statusline cache update; failures are silent.
-    python3 "$SCRIPT_DIR/statusline_cache.py" --auto-workspace \
-        --section "$1" --data "$2" 2>/dev/null || true
-}
+# shellcheck source=statusline_update_helper.sh
+source "$SCRIPT_DIR/statusline_update_helper.sh"
 
 # --- Guard: skip polling if MCP log is unavailable ---
 # If IVY_MCP_LOG_PATH was not explicitly set AND the fallback file doesn't exist,

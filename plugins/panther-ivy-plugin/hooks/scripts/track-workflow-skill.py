@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, get_workspace_root, read_stdin
-from statusline_cache import update_from_hook as _statusline_update
+from statusline_cache import update_sections_from_hook as _statusline_update_sections
 from workflow_state import (
     append_journal_event,
     find_protocol_dir,
@@ -101,15 +101,18 @@ def main() -> None:
             phase="init",
         )
 
-    _statusline_update("workflow", {
-        "name": workflow_name,
-        "phase": "init",
-        "invocation_depth": 0,
-        "caller": None,
-        "started": data["started"],
-    })
+    updates = {
+        "workflow": {
+            "name": workflow_name,
+            "phase": "init",
+            "invocation_depth": 0,
+            "caller": None,
+            "started": data["started"],
+        },
+    }
     if protocol:
-        _statusline_update("workspace", {"protocol": protocol})
+        updates["workspace"] = {"protocol": protocol}
+    _statusline_update_sections(updates)
 
     emit_hook_output(
         "PostToolUse",

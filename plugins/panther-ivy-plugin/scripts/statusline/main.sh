@@ -54,14 +54,16 @@ _log() {
     local log_file="$log_dir/statusline.log"
     printf '%s %s\n' "$(date -u +%FT%TZ 2>/dev/null || echo ???)" "$*" \
         >> "$log_file" 2>/dev/null || true
-    # Rotate at ~1 MB, keep last 2 files.
+    # Rotate at ~1 MB, keep last 2 files. Shift oldest first to avoid the
+    # hazard where a failed mv on the older slot leaves an orphaned .1 that
+    # the next rotation would overwrite again.
     if [ -f "$log_file" ]; then
         local size
         size="$(wc -c < "$log_file" 2>/dev/null || echo 0)"
         if [ "$size" -gt 1048576 ]; then
-            mv -f "$log_file" "${log_file}.1" 2>/dev/null || true
             [ -f "${log_file}.1" ] && \
                 mv -f "${log_file}.1" "${log_file}.2" 2>/dev/null || true
+            mv -f "$log_file" "${log_file}.1" 2>/dev/null || true
         fi
     fi
 }
@@ -141,7 +143,7 @@ _invoke_global() {
     rc=$?
     if [ "$rc" -ne 0 ]; then
         _log "global statusline failed (rc=$rc); falling back to ivy-only"
-        export PANTHER_IVY_STATUSLINE_STALE_MARKER="!"
+        STATUSLINE_STALE_MARKER="!"
         return 0
     fi
     printf '%s' "$output"
