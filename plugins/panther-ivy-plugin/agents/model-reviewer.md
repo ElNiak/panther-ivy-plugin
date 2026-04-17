@@ -60,7 +60,7 @@ Follow the tool rules in CLAUDE.md. Use ivy-tools MCP tools for verification/com
 
 | Your Task | Use This |
 |-----------|----------|
-| Get per-action summary with counts | MCP `ivy_model_summary` (detail="summary") |
+| Get per-action summary with counts | MCP `ivy_visualize` (view="summary") |
 | Find unguarded state vars / uncovered reqs | MCP `ivy_coverage` (mode="gaps") |
 
 See the `ivy-toolkit` skill for full MCP tool reference and coordination workflows.

@@ -11,7 +11,7 @@
 - **Suggested Next Step** -- one recommended action based on state
 
 ## Tool Presentation
-- `ivy_health_check`: prose summary -- "LSP and MCP are healthy. Workspace: quic (client+server)."
+- `ivy_status(mode="health")`: prose summary -- "LSP and MCP are healthy. Workspace: quic (client+server)."
 - `ivy_workspace get`: inline -- "Active workspace: {protocol} ({roles})"
 - Build state (if resuming): layer completion table
 

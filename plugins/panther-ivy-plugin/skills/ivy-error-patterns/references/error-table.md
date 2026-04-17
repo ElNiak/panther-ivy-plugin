@@ -224,7 +224,7 @@ include file_b
 ```
 
 **Correct Pattern:**
-1. Run `ivy_include_graph` to identify which two files both declare the symbol.
+1. Run `ivy_analysis(mode="includes")` to identify which two files both declare the symbol.
 2. Move the shared declaration to a single common file and `include` that file from both.
 3. If the two declarations differ in intent, namespace one inside an `object` to avoid collision.
 

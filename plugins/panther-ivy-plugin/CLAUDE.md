@@ -63,14 +63,14 @@ caller: null
 | `ivy_to_cpp` | `ivy_compile` | C++ code generation |
 
 **Verification & compilation**: ivy_verify, ivy_compile, ivy_model_info
-**Analysis & diagnostics**: ivy_diagnostics (structural/full), ivy_include_graph, ivy_capabilities, ivy_scope
-**Workflow & workspace**: ivy_workspace, ivy_workflow_state, ivy_health_check, ivy_index
+**Analysis & diagnostics**: ivy_diagnostics (modes: structural/full/dashboard), ivy_analysis (modes: includes/scope)
+**Workflow & workspace**: ivy_workspace, ivy_workflow_state, ivy_status (modes: health/capabilities), ivy_index
 **Coverage & traceability**: ivy_coverage (stats/gaps/matrix), ivy_extract_requirements, ivy_manifest
 **RFC lookup**: ivy_rfc (mode: get/search/section)
-**Visualization**: ivy_visualize, ivy_model_summary
-**Quality & patterns**: ivy_quality, ivy_patterns, ivy_pattern_scaffold
-**Propagation**: ivy_find_variants, ivy_serdes_correlation, ivy_change_impact
-**Testing**: ivy_iut_test, ivy_verification_dashboard
+**Visualization**: ivy_visualize (views: dependencies/state_machine/layers/summary/requirements)
+**Quality & patterns**: ivy_quality, ivy_patterns (modes: analyze/validate/compare/check/scaffold)
+**Propagation**: ivy_propagation (modes: variants/serdes/impact)
+**Testing**: ivy_iut_test
 
 For parameters, timeouts, error handling, and rendering details, see the **ivy-toolkit** skill.
 

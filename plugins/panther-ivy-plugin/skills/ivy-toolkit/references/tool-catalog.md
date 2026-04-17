@@ -78,85 +78,76 @@ Display the structure of an Ivy model using `ivy_show`.
 ## 2. Analysis and Diagnostics
 
 ### ivy_diagnostics
-Multi-layer diagnostic analysis of an Ivy file.
+Multi-layer diagnostic analysis of an Ivy file, plus workspace-level verification dashboard.
 
 | Field | Value |
 |-------|-------|
-| Parameters | relative_path (str), mode (str, "full"), layers (list[str], None), min_severity (str, None), scope (str, "") |
-| Returns | { diagnostics, diagnostic_count, by_source, error_count, warning_count } |
+| Parameters (structural/full/collisions) | relative_path (str), mode (str, "full"), layers (list[str], None), min_severity (str, None), scope (str, "") |
+| Parameters (dashboard) | mode="dashboard" |
+| Returns (structural/full/collisions) | { diagnostics, diagnostic_count, by_source, error_count, warning_count } |
+| Returns (dashboard) | { success, total_files, verified, failed, pending, cache_size, cache_max, verified_files, failed_files } |
 | Timeout | 120s |
-| Tier | fast (structural mode), slow (full mode) |
+| Tier | fast (structural mode), slow (full/dashboard modes) |
 | Rendering | hook |
 | Concurrency | needs_model=True; waits for model build before full/semantic layers |
 
 **Errors:**
-- `"Unknown mode '<m>'"` → valid modes: structural, full, collisions
+- `"Unknown mode '<m>'"` → valid modes: structural, full, collisions, dashboard
 - `"Model is still building"` → model not ready; use mode="structural" or retry in 30s
 - `"File not found: <path>"` → path doesn't exist
+- Empty `verified_files` and `failed_files` (dashboard) → cache is cold; no verifications have been run yet
+- `cache_size == 0` (dashboard) after running `ivy_verify` → verify that `use_cache=True` was set on the call
 
-**When to use:** `mode="structural"` after every file edit (instant); `mode="full"` before committing changes; `mode="collisions"` to debug include resolution conflicts.
+**When to use:** `mode="structural"` after every file edit (instant); `mode="full"` before committing changes; `mode="collisions"` to debug include resolution conflicts; `mode="dashboard"` for workspace-level verification overview before a review session.
 
 ---
 
-### ivy_include_graph
-Return the include dependency graph for Ivy files.
+### ivy_analysis
+Consolidated analysis tool: include dependency graph (mode="includes") or endpoint mirror scope (mode="scope").
 
 | Field | Value |
 |-------|-------|
-| Parameters | relative_path (str, None), detail (str, "summary"), limit (int, 30), scope (str, "") |
-| Returns (focused) | { file, includes, included_by, transitive_includes } |
-| Returns (summary) | { total_files, entry_points, entry_point_count, most_included } |
+| Parameters (mode="includes") | relative_path (str, None), detail (str, "summary"), limit (int, 30), scope (str, "") |
+| Parameters (mode="scope") | relative_path (str) |
+| Returns (includes, focused) | { file, includes, included_by, transitive_includes } |
+| Returns (includes, summary) | { total_files, entry_points, entry_point_count, most_included } |
+| Returns (scope) | { file, endpoint_mirrors, endpoint_mirror_count, tester_role?, include_closure?, include_closure_size?, exported_actions?, imported_actions?, partition?, collision_report? } |
 | Timeout | 60s |
-| Tier | slow |
+| Tier | slow (includes) / fast (scope) |
 | Rendering | raw |
-| Concurrency | standard |
+| Concurrency | standard (includes) / needs_model=True (scope) |
 
 **Errors:**
-- `"Skipping unreadable file"` (warning) → OSError reading a file; graph is partial
-- Ambiguous resolution: `includes[].candidates` lists all matching files when basename is not unique
+- `"Skipping unreadable file"` (warning, includes mode) → OSError reading a file; graph is partial
+- Ambiguous resolution (includes mode): `includes[].candidates` lists all matching files when basename is not unique
+- `"File not found: <path>"` (scope mode) → path doesn't exist
+- `"Model is still building"` (scope mode) → retry in 30s
+- Empty `endpoint_mirrors` (scope mode) → file is not a test entry point; check include graph
 
-**When to use:** Understand include chains; find entry points; diagnose unresolved includes.
+**When to use:** `mode="includes"` to understand include chains, find entry points, or diagnose unresolved includes. `mode="scope"` to determine the tester role and include closure for a test file before running coverage or verification.
 
 ---
 
-### ivy_capabilities
-Check which Ivy CLI tools are available and report server state.
+### ivy_status
+Consolidated status tool: CLI tool availability (mode="capabilities") or server health (mode="health").
 
 | Field | Value |
 |-------|-------|
-| Parameters | none |
-| Returns | { success, cli_tools, mcp_tools, mcp_tool_count, workspace_index_loaded, parsing_tiers, staging_health } |
+| Parameters | mode (str: capabilities/health) |
+| Returns (capabilities) | { success, cli_tools, mcp_tools, mcp_tool_count, workspace_index_loaded, parsing_tiers, staging_health } |
+| Returns (health) | { success, server, model_status, verification_cache, tool_metrics, capabilities, workspace_files } |
 | Timeout | 10s |
 | Tier | instant |
 | Rendering | raw |
 | Concurrency | local_only; never delegated to sidecar |
 
 **Errors:**
-- `"parsing_tiers": {"error": "probe timed out"}` → parser tier detection exceeded 3s; non-fatal
-- `"workspace_index_loaded": false` → index not yet built; call `ivy_index` to build
+- `"parsing_tiers": {"error": "probe timed out"}` (capabilities) → parser tier detection exceeded 3s; non-fatal
+- `"workspace_index_loaded": false` (capabilities) → index not yet built; call `ivy_index` to build
+- `"verification_cache": {"error": "<exc>"}` (health) → cache summary failed; non-fatal, server still running
+- `"workspace_files": -1` (health) → find_ivy_files threw; check workspace root path
 
-**When to use:** First step in any triage sequence; confirm MCP connectivity and tool availability.
-
----
-
-### ivy_scope
-Return endpoint mirror scope info for an Ivy file.
-
-| Field | Value |
-|-------|-------|
-| Parameters | relative_path (str) |
-| Returns | { file, endpoint_mirrors, endpoint_mirror_count, tester_role?, include_closure?, include_closure_size?, exported_actions?, imported_actions?, partition?, collision_report? } |
-| Timeout | 30s |
-| Tier | fast |
-| Rendering | raw |
-| Concurrency | needs_model=True |
-
-**Errors:**
-- `"File not found: <path>"` → path doesn't exist
-- `"Model is still building"` → retry in 30s
-- Empty `endpoint_mirrors` → file is not a test entry point; check include graph
-
-**When to use:** Determine the tester role and include closure for a test file before running coverage or verification.
+**When to use:** First step in any triage sequence; `mode="capabilities"` to confirm MCP connectivity and CLI tool availability; `mode="health"` to inspect uptime, cache status, tool metrics, and model status.
 
 ---
 
@@ -250,7 +241,7 @@ Retrieve, search, and analyze RFC documents.
 | Concurrency | local_only; no sidecar delegation |
 
 **Errors:**
-- `"RFC service not initialized."` → server startup failed; check ivy_health_check
+- `"RFC service not initialized."` → server startup failed; check `ivy_status(mode="health")`
 - `"'number' is required for mode='get'."` → missing required parameter
 - `"Failed to fetch RFC <N>"` → network error or invalid RFC number; check IVY_LSP_RFC_OFFLINE
 - `"Section <s> not found in RFC <N>."` → section doesn't exist; use mode="get" with format="sections" to list
@@ -262,34 +253,14 @@ Retrieve, search, and analyze RFC documents.
 ## 5. Visualization
 
 ### ivy_visualize
-Unified model visualization with three views.
+Unified model visualization with five views.
 
 | Field | Value |
 |-------|-------|
-| Parameters | view (str, "dependencies"), test_file (str, None), protocol (str, None), include_state_vars (bool, False), state_var_filter (str, None), group_by (str, "file"), max_items (int, 50) |
+| Parameters | view (str, "dependencies"), test_file (str, None), protocol (str, None), include_state_vars (bool, False), state_var_filter (str, None), group_by (str, "file"), max_items (int, 50), sort_by (str, None), limit (int, None), action_name (str, None), file_path (str, None), offset (int, 0) |
 | Returns (dependencies) | { nodes, edges, total_actions } |
 | Returns (state_machine) | { states, transitions, total_states } |
 | Returns (layers) | { layers, total_files } |
-| Timeout | 60s |
-| Tier | fast |
-| Rendering | raw |
-| Concurrency | needs_model=True |
-
-**Errors:**
-- `"Unknown view '<v>'"` → valid: dependencies, state_machine, layers
-- `"Model is still building"` → retry in 30s
-- Empty nodes/states → model has no actions; check that test_file or protocol resolves correctly
-
-**When to use:** Understand action dependency chains and state variable relationships before modifying behavior layers.
-
----
-
-### ivy_model_summary
-Per-action statistics and requirement inspection.
-
-| Field | Value |
-|-------|-------|
-| Parameters | detail (str, "summary"), test_file (str, None), protocol (str, None), sort_by (str, None), limit (int, None), action_name (str, None), file_path (str, None), offset (int, 0), max_items (int, 50) |
 | Returns (summary) | { rows, total_actions } |
 | Returns (requirements) | { actions, total_actions } |
 | Timeout | 60s |
@@ -298,11 +269,11 @@ Per-action statistics and requirement inspection.
 | Concurrency | needs_model=True |
 
 **Errors:**
-- `"Unknown detail '<d>'"` → valid: summary, requirements
+- `"Unknown view '<v>'"` → valid: dependencies, state_machine, layers, summary, requirements
 - `"Model is still building"` → retry in 30s
-- Empty rows → model index not built; run `ivy_index` first
+- Empty nodes/states/rows → model has no actions or index not built; check that test_file or protocol resolves correctly; run `ivy_index` first if empty
 
-**When to use:** Identify actions with low requirement counts; inspect before/after monitors for a specific action.
+**When to use:** `view="dependencies"`/`"state_machine"`/`"layers"` to understand action chains, state relationships, and architecture before modifying behavior layers. `view="summary"` to list per-action statistics. `view="requirements"` to inspect before/after monitors for a specific action.
 
 ---
 
@@ -331,110 +302,59 @@ Context-aware suggestions and quality gate validation.
 ---
 
 ### ivy_patterns
-Pattern detection, validation, comparison, and scaffold completeness.
+Pattern detection, validation, comparison, scaffold completeness, and template scaffolding.
 
 | Field | Value |
 |-------|-------|
-| Parameters | protocol (str), mode (str, "analyze"), pattern (str, None), reference_protocol (str, None) |
+| Parameters (analyze/validate/compare/check) | protocol (str), mode (str, "analyze"), pattern (str, None), reference_protocol (str, None) |
+| Parameters (scaffold) | protocol (str), mode="scaffold", pattern (str), wire_format (str, "binary"), role_type (str, "asymmetric"), variant_names (list[str], None), roles (list[str], None) |
 | Returns (analyze) | { patterns, total_patterns, mode } |
 | Returns (validate) | { patterns, issues, validation_summary } |
 | Returns (compare) | { protocol_a, protocol_b, comparison } |
 | Returns (check) | { completeness_score, layers_present, layers_missing, suggestions, has_manifest } |
+| Returns (scaffold) | { source, pattern, file_suggestion } |
 | Timeout | 60s |
 | Tier | fast |
 | Rendering | raw |
 | Concurrency | standard |
 
 **Errors:**
-- `"Unknown mode '<m>'"` → valid: analyze, validate, compare, check
+- `"Unknown mode '<m>'"` → valid: analyze, validate, compare, check, scaffold
 - `"Protocol directory not found: protocol-testing/<p>"` → wrong protocol name
 - `"reference_protocol required for compare mode"` → add reference_protocol parameter
+- `"Unknown pattern"` (scaffold mode) → valid patterns: serdes, variants, monitors, shim, module, entity
+- Template substitution failure (scaffold mode) → protocol name contains characters unsupported in Ivy identifiers
 
-**When to use:** `mode="check"` to audit a new protocol scaffold; `mode="compare"` to port patterns from a reference protocol.
-
----
-
-### ivy_pattern_scaffold
-Generate Ivy source code from a pattern template.
-
-| Field | Value |
-|-------|-------|
-| Parameters | protocol (str), pattern (str), wire_format (str, "binary"), role_type (str, "asymmetric"), variant_names (list[str], None), roles (list[str], None) |
-| Returns | { source, pattern, file_suggestion } |
-| Timeout | 30s |
-| Tier | fast |
-| Rendering | raw |
-| Concurrency | standard |
-
-**Errors:**
-- `"Unknown pattern"` → valid patterns: serdes, variants, monitors, shim, module, entity
-- Template substitution failure → protocol name contains characters unsupported in Ivy identifiers
-
-**When to use:** Bootstrap a new layer file when starting a protocol model; produces ready-to-edit Ivy source.
+**When to use:** `mode="check"` to audit a new protocol scaffold; `mode="compare"` to port patterns from a reference protocol; `mode="scaffold"` to bootstrap a new layer file with ready-to-edit Ivy source.
 
 ---
 
 ## 7. Propagation
 
-### ivy_find_variants
-Enumerate the structure of an Ivy type: struct fields or variant members with tags.
+### ivy_propagation
+Consolidated type propagation analysis: variant/struct enumeration (mode="variants"), serializer/deserializer correlation (mode="serdes"), and change impact categorization (mode="impact").
 
 | Field | Value |
 |-------|-------|
-| Parameters | type_name (str), protocol (str, None) |
-| Returns (struct) | { type_name, kind, file, line, fields: [{ name, type, is_array }] } |
-| Returns (variant) | { type_name, kind, file, line, members: [{ name, tag, wire_type, fields }] } |
-| Timeout | 30s |
-| Tier | fast |
-| Rendering | raw |
-| Concurrency | needs_model=True |
-
-**Errors:**
-- `"type '<n>' not found in <dir>"` → wrong type name or protocol; check exact Ivy identifier
-- `"Model is still building"` → retry in 30s
-
-**When to use:** First step in change-impact analysis; inspect type structure before adding a field or variant.
-
----
-
-### ivy_serdes_correlation
-Return the serializer/deserializer files correlated with an Ivy message type.
-
-| Field | Value |
-|-------|-------|
-| Parameters | type_name (str), protocol (str, None) |
-| Returns | { type_name, correlations: [{ serializer, deserializer, instance }] } |
-| Timeout | 30s |
-| Tier | fast |
-| Rendering | raw |
-| Concurrency | needs_model=True |
-
-**Errors:**
-- Empty `correlations` → no SERDES instance found for type; may be a non-message type
-- `"Model is still building"` → retry in 30s
-
-**When to use:** Locate the serializer and deserializer files to update after adding a variant or field.
-
----
-
-### ivy_change_impact
-Categorize protocol files by impact of a type change.
-
-| Field | Value |
-|-------|-------|
-| Parameters | type_name (str), change_type (str), protocol (str, None) |
-| Returns | { type_name, change_type, auto_propagate, manual_review, unaffected } |
+| Parameters (variants) | mode="variants", type_name (str), protocol (str, None) |
+| Parameters (serdes) | mode="serdes", type_name (str), protocol (str, None) |
+| Parameters (impact) | mode="impact", type_name (str), change_type (str), protocol (str, None) |
+| Returns (variants, struct) | { type_name, kind, file, line, fields: [{ name, type, is_array }] } |
+| Returns (variants, variant) | { type_name, kind, file, line, members: [{ name, tag, wire_type, fields }] } |
+| Returns (serdes) | { type_name, correlations: [{ serializer, deserializer, instance }] } |
+| Returns (impact) | { type_name, change_type, auto_propagate, manual_review, unaffected } |
 | Timeout | 60s |
-| Tier | slow |
+| Tier | fast (variants/serdes) / slow (impact) |
 | Rendering | raw |
 | Concurrency | needs_model=True |
 
 **Errors:**
-- `"type '<n>' not found in <dir>"` → wrong type name; verify with `ivy_find_variants` first
+- `"type '<n>' not found in <dir>"` (variants/impact) → wrong type name or protocol; check exact Ivy identifier; verify with `ivy_propagation(mode="variants")` first
 - `"Model is still building"` → retry in 30s
-- Empty `auto_propagate` (except type_def) → SERDES instance not found; check pattern library
+- Empty `correlations` (serdes) → no SERDES instance found for type; may be a non-message type
+- Empty `auto_propagate` (impact, except type_def) → SERDES instance not found; check pattern library
 
-**When to use:** Before any type modification; get the full propagation map so no files are missed.
+**When to use:** `mode="variants"` as the first step in change-impact analysis — inspect type structure before adding a field or variant. `mode="serdes"` to locate serializer/deserializer files to update after adding a variant or field. `mode="impact"` before any type modification — get the full propagation map so no files are missed.
 
 ---
 
@@ -486,26 +406,6 @@ Manage workflow state files for multi-session tracking.
 
 ---
 
-### ivy_health_check
-Server health check: uptime, cache status, tool metrics, model status.
-
-| Field | Value |
-|-------|-------|
-| Parameters | none |
-| Returns | { success, server, model_status, verification_cache, tool_metrics, capabilities, workspace_files } |
-| Timeout | 10s |
-| Tier | instant |
-| Rendering | raw |
-| Concurrency | local_only |
-
-**Errors:**
-- `"verification_cache": {"error": "<exc>"}` → cache summary failed; non-fatal, server still running
-- `"workspace_files": -1` → find_ivy_files threw; check workspace root path
-
-**When to use:** First tool in any triage sequence; run before investigating MCP or LSP issues.
-
----
-
 ### ivy_index
 Build or check the offline `.ivy-index/` for a protocol.
 
@@ -523,27 +423,7 @@ Build or check the offline `.ivy-index/` for a protocol.
 - Protocol not found → check `protocol-testing/<protocol>/` directory exists
 - Stale staging after build → automatic; if tools still see old files, restart the MCP server
 
-**When to use:** After adding or renaming `.ivy` files; required before `ivy_coverage` and `ivy_model_summary` can see new content.
-
----
-
-### ivy_verification_dashboard
-Workspace-level verification status: files verified, failed, pending.
-
-| Field | Value |
-|-------|-------|
-| Parameters | none |
-| Returns | { success, total_files, verified, failed, pending, cache_size, cache_max, verified_files, failed_files } |
-| Timeout | 30s |
-| Tier | slow |
-| Rendering | raw |
-| Concurrency | standard |
-
-**Errors:**
-- Empty `verified_files` and `failed_files` → cache is cold; no verifications have been run yet
-- `cache_size == 0` after running `ivy_verify` → verify that `use_cache=True` was set on the call
-
-**When to use:** Overview before a review session; identify which files still need verification.
+**When to use:** After adding or renaming `.ivy` files; required before `ivy_coverage` and `ivy_visualize(view="summary")` can see new content.
 
 ---
 

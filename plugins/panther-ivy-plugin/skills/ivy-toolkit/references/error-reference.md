@@ -17,15 +17,15 @@ Tool-specific errors are in tool-catalog.md per-tool entries.
 }
 ```
 
-**Tools:** ivy_diagnostics, ivy_coverage, ivy_visualize, ivy_model_summary, ivy_scope, ivy_find_variants, ivy_serdes_correlation, ivy_change_impact, ivy_quality (any tool with `needs_model: true`)
+**Tools:** ivy_diagnostics, ivy_coverage, ivy_visualize, ivy_analysis(mode="scope"), ivy_propagation (all modes), ivy_quality (any tool with `needs_model: true`)
 
 **Cause:** The semantic model (LSP index) is still building after server startup or after `ivy_index` is triggered. Tools that depend on the model (`needs_model: true`) short-circuit immediately rather than blocking.
 
 **Recovery:**
 1. Use `ivy_diagnostics(mode="structural")` for immediate syntax/include diagnostics — it does not require the semantic model.
 2. Wait 30 seconds and retry the original tool.
-3. If the model never becomes ready, call `ivy_health_check` to verify the indexer state and check for errors.
-4. If `ivy_health_check` shows a stuck indexer, restart the MCP server.
+3. If the model never becomes ready, call `ivy_status(mode="health")` to verify the indexer state and check for errors.
+4. If `ivy_status(mode="health")` shows a stuck indexer, restart the MCP server.
 
 ---
 
@@ -40,7 +40,7 @@ or (when target is omitted for action='set'):
 { "success": false, "message": "action='set' requires a 'target' parameter." }
 ```
 
-**Tools:** ivy_workspace (action='set'), and indirectly any tool that narrows scope using `ivy_workspace` state (ivy_coverage, ivy_diagnostics, ivy_scope)
+**Tools:** ivy_workspace (action='set'), and indirectly any tool that narrows scope using `ivy_workspace` state (ivy_coverage, ivy_diagnostics, ivy_analysis(mode="scope"))
 
 **Cause:** The requested workspace group name does not exist in the loaded workspace configuration, or no target was provided for `action='set'`.
 
@@ -169,7 +169,7 @@ or (concurrency slot timeout):
 
 **Recovery:**
 1. For ivy_verify: pass a higher `timeout` parameter (e.g. `timeout=300.0`). The safe_tool decorator uses `max(base_timeout, user_timeout + 30)` to extend the outer wrapper.
-2. For concurrency slot timeouts ("queued too long"): other tools may be blocking slots. Check `ivy_health_check` for in-flight tool counts. Avoid dispatching 4+ blocking tools in parallel.
+2. For concurrency slot timeouts ("queued too long"): other tools may be blocking slots. Check `ivy_status(mode="health")` for in-flight tool counts. Avoid dispatching 4+ blocking tools in parallel.
 3. Override timeouts via environment variables: `IVY_LSP_TOOL_TIMEOUT_<TOOL_NAME_UPPER>=<seconds>` (e.g. `IVY_LSP_TOOL_TIMEOUT_IVY_VERIFY=900`).
 4. Use `IVY_LSP_TOOL_TIMEOUT_SCALE` for a global multiplier (e.g. `IVY_LSP_TOOL_TIMEOUT_SCALE=2.0` doubles all timeouts).
 5. For ivy_verify on complex models: use `isolate=<name>` to verify one isolate at a time rather than the whole model.
@@ -187,7 +187,7 @@ Internally logged as: `[SIDECAR-ERROR] <tool_name> call failed` (warning level i
 **Cause:** The MCP server process crashed, was never started, or the SSE/streamable-HTTP connection was dropped. Common causes: stale PID files, port conflicts, OOM kill, or the server exiting during a long compilation.
 
 **Recovery:**
-1. Run `ivy_health_check` if any tool responds — if this also fails, the server is down.
+1. Run `ivy_status(mode="health")` if any tool responds — if this also fails, the server is down.
 2. Check for stale PID/port files: `/tmp/ivy-mcp-<ws_hash>.pid` and `/tmp/ivy-mcp-<ws_hash>.port`. Delete stale files and restart.
 3. Restart the MCP server. For panther-ivy-plugin: restart via `panther run` or the Claude Code MCP server configuration.
 4. Check server logs (`~/.ivy-lsp/ivy-mcp-server.log` or the path configured in the server startup) for crash tracebacks.
@@ -208,9 +208,9 @@ or:
 [SIDECAR-TIMEOUT] <tool_name> timed out after <N>s
 ```
 
-**Tools:** All non-`local_only` tools (ivy_verify, ivy_compile, ivy_diagnostics, ivy_coverage, ivy_include_graph, ivy_index, ivy_model_info, ivy_quality, ivy_scope, ivy_visualize, ivy_model_summary, ivy_manifest, ivy_extract_requirements, ivy_patterns, ivy_pattern_scaffold, ivy_find_variants, ivy_serdes_correlation, ivy_change_impact, ivy_iut_test)
+**Tools:** All non-`local_only` tools (ivy_verify, ivy_compile, ivy_diagnostics, ivy_coverage, ivy_analysis, ivy_index, ivy_model_info, ivy_quality, ivy_visualize, ivy_manifest, ivy_extract_requirements, ivy_patterns, ivy_propagation, ivy_iut_test)
 
-**Cause:** The sidecar process is unreachable or returned an error. `call_sidecar_once` returns `None` on any exception (including `TimeoutError`, connection refused, or HTTP error), causing `_try_sidecar_delegation` to fall through to local execution. The tool then runs locally, which is the intended fallback. `local_only` tools (ivy_capabilities, ivy_health_check, ivy_workspace, ivy_workflow_state, ivy_rfc) never attempt sidecar delegation.
+**Cause:** The sidecar process is unreachable or returned an error. `call_sidecar_once` returns `None` on any exception (including `TimeoutError`, connection refused, or HTTP error), causing `_try_sidecar_delegation` to fall through to local execution. The tool then runs locally, which is the intended fallback. `local_only` tools (ivy_status (modes: capabilities/health), ivy_workspace, ivy_workflow_state, ivy_rfc) never attempt sidecar delegation.
 
 **Recovery:**
 1. In most cases this requires no action — local fallback produces correct results.

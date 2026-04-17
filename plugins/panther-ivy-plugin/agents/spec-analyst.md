@@ -43,7 +43,7 @@ Follow the tool rules in CLAUDE.md. Use ivy-tools MCP tools for verification/com
 | Your Task | Use This |
 |-----------|----------|
 | Get layered model overview | MCP `ivy_visualize` (view="layers") |
-| Get requirements by action | MCP `ivy_model_summary` (detail="requirements") |
+| Get requirements by action | MCP `ivy_visualize` (view="requirements") |
 | Check requirement coverage | MCP `ivy_coverage` (mode="stats") |
 
 See the `ivy-toolkit` skill for full MCP tool reference and coordination workflows.

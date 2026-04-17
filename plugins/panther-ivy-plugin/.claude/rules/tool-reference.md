@@ -10,8 +10,11 @@ paths: ["**/*.ivy", "**/*.spec", "**/*.py"]
 | `ivy_compile` | -- | relative_path, target, isolate |
 | `ivy_model_info` | -- | relative_path, isolate |
 | `ivy_diagnostics` | mode="structural"\|"full" | relative_path, layers, min_severity |
-| `ivy_include_graph` | -- | relative_path |
-| `ivy_capabilities` | -- | -- |
+| `ivy_diagnostics` | mode="dashboard" | protocol |
+| `ivy_analysis` | mode="includes" | relative_path |
+| `ivy_analysis` | mode="scope" | protocol |
+| `ivy_status` | mode="capabilities" | -- |
+| `ivy_status` | mode="health" | -- |
 | `ivy_coverage` | mode="stats" | relative_path, test_file |
 | `ivy_coverage` | mode="gaps" | test_file, protocol |
 | `ivy_coverage` | mode="matrix" | relative_path, test_file |
@@ -20,22 +23,19 @@ paths: ["**/*.ivy", "**/*.spec", "**/*.py"]
 | `ivy_visualize` | view="dependencies" | test_file |
 | `ivy_visualize` | view="state_machine" | test_file |
 | `ivy_visualize` | view="layers" | test_file |
-| `ivy_model_summary` | detail="summary" | test_file |
-| `ivy_model_summary` | detail="requirements" | action_name, file_path, test_file |
+| `ivy_visualize` | view="summary" | test_file |
+| `ivy_visualize` | view="requirements" | action_name, file_path, test_file |
 | `ivy_quality` | mode="suggestions" | file_path |
 | `ivy_quality` | mode="gate" | protocol, gate_level |
 | `ivy_patterns` | mode="analyze"/"validate"/"compare" | protocol, pattern |
 | `ivy_patterns` | mode="check" | protocol |
-| `ivy_pattern_scaffold` | -- | protocol, pattern |
+| `ivy_patterns` | mode="scaffold" | protocol, pattern |
 | `ivy_workspace` | action="set"\|"get"\|"list"\|"clear" | target (for set), roles (optional) |
-| `ivy_health_check` | -- | -- |
-| `ivy_scope` | -- | protocol |
 | `ivy_index` | -- | protocol |
 | `ivy_manifest` | -- | protocol |
-| `ivy_verification_dashboard` | -- | protocol |
-| `ivy_find_variants` | -- | type_name |
-| `ivy_serdes_correlation` | -- | type_name |
-| `ivy_change_impact` | -- | type_name, change_type |
+| `ivy_propagation` | mode="variants" | type_name |
+| `ivy_propagation` | mode="serdes" | type_name |
+| `ivy_propagation` | mode="impact" | type_name, change_type |
 | `ivy_workflow_state` | action="set" | workflow, phase, protocol, caller, invocation_depth |
 | `ivy_workflow_state` | action="get" | protocol |
 | `ivy_workflow_state` | action="clear" | protocol |

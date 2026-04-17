@@ -56,7 +56,7 @@ Get type information and documentation at a cursor position.
 
 **Errors:**
 - Empty result → symbol not indexed yet or cursor not on a symbol; use `documentSymbol` to discover valid positions
-- Server not responding → check `ivy_health_check`
+- Server not responding → check `ivy_status(mode="health")`
 
 **When to use:** Validating type signatures during spec review. Prefer `ivy_model_info` for general exploration.
 
@@ -73,7 +73,7 @@ Navigate to the definition of a symbol.
 | Rendering | raw |
 
 **Errors:**
-- Empty list → symbol not in workspace index; check indexing is complete via `ivy_health_check`
+- Empty list → symbol not in workspace index; check indexing is complete via `ivy_status(mode="health")`
 - Resolves to include stdlib → expected behavior for builtin Ivy types
 
 **When to use:** Resolving cross-file definitions during verification failure triage. Prefer `Grep` + `Read` for general navigation outside workflow contexts.
@@ -92,7 +92,7 @@ Find all usage sites of a symbol across the workspace.
 
 **Errors:**
 - Empty list → symbol not exported or workspace index incomplete
-- Partial results → indexing still in progress; wait and retry after `ivy_health_check` confirms readiness
+- Partial results → indexing still in progress; wait and retry after `ivy_status(mode="health")` confirms readiness
 
 **When to use:** Tracing all call sites of an action during refactor or coverage analysis. Prefer `Grep` for simple text-pattern searches.
 
@@ -146,7 +146,7 @@ Prepare a call hierarchy item at a cursor position as the entry point for `incom
 
 **Errors:**
 - Empty list → cursor not on a callable symbol; use `documentSymbol` to find valid positions
-- NYI in server → `ivy_health_check` to confirm server version supports call hierarchy
+- NYI in server → `ivy_status(mode="health")` to confirm server version supports call hierarchy
 
 **When to use:** Entry point before calling `incomingCalls` or `outgoingCalls`. Always call this first to obtain the item handle.
 
@@ -164,7 +164,7 @@ Resolve callers (incomingCalls) or callees (outgoingCalls) for a call hierarchy 
 
 **Errors:**
 - Empty result → action has no callers/callees in the indexed workspace, or `prepareCallHierarchy` step was skipped
-- NYI → check server capabilities via `ivy_capabilities`
+- NYI → check server capabilities via `ivy_status(mode="capabilities")`
 
 **When to use:** Tracing action propagation chains during `build` workflow impact analysis. Prefer `findReferences` for simpler single-level call-site lookup.
 
@@ -178,7 +178,7 @@ Resolve callers (incomingCalls) or callees (outgoingCalls) for a call hierarchy 
 | Find definition | `LSP goToDefinition` (in validation) or `Grep` + `Read` (general) |
 | All references | `LSP findReferences` (in validation) or `Grep` (general) |
 | File structure | `LSP documentSymbol` (in validation) or `ivy_model_info` (general) |
-| Model analysis | Always `ivy_diagnostics`, `ivy_model_summary` (MCP tools) |
+| Model analysis | Always `ivy_diagnostics`, `ivy_visualize(view="summary")` (MCP tools) |
 | Coverage | Always `ivy_coverage` (MCP tool) |
 
 ### Diagnostics in Claude Code

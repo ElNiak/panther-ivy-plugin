@@ -14,9 +14,9 @@ step.
 
 | Tier | Typical Range | Tools |
 |------|--------------|-------|
-| **instant** | < 1 s | `ivy_capabilities`, `ivy_health_check`, `ivy_workspace`, `ivy_workflow_state` |
-| **fast** | 1 – 30 s | `ivy_model_info`, `ivy_diagnostics`, `ivy_manifest`, `ivy_visualize`, `ivy_model_summary`, `ivy_patterns`, `ivy_pattern_scaffold`, `ivy_scope`, `ivy_find_variants`, `ivy_serdes_correlation`, `ivy_rfc` |
-| **slow** | 30 s – 2 min | `ivy_include_graph`, `ivy_coverage`, `ivy_extract_requirements`, `ivy_quality`, `ivy_verification_dashboard`, `ivy_change_impact` |
+| **instant** | < 1 s | `ivy_status` (modes: capabilities/health), `ivy_workspace`, `ivy_workflow_state` |
+| **fast** | 1 – 30 s | `ivy_model_info`, `ivy_diagnostics`, `ivy_manifest`, `ivy_visualize` (views: dependencies/state_machine/layers/summary/requirements), `ivy_patterns` (modes: analyze/validate/compare/check/scaffold), `ivy_analysis(mode="scope")`, `ivy_propagation(mode="variants")`, `ivy_propagation(mode="serdes")`, `ivy_rfc` |
+| **slow** | 30 s – 2 min | `ivy_analysis(mode="includes")`, `ivy_coverage`, `ivy_extract_requirements`, `ivy_quality`, `ivy_diagnostics(mode="dashboard")`, `ivy_propagation(mode="impact")` |
 | **blocking** | 2 – 10 min | `ivy_verify`, `ivy_compile`, `ivy_index`, `ivy_iut_test` |
 
 **Notes**
@@ -55,23 +55,16 @@ forever.
 | `ivy_iut_test` | 180 | `IVY_LSP_TOOL_TIMEOUT_IVY_IUT_TEST` |
 | `ivy_diagnostics` | 120 | `IVY_LSP_TOOL_TIMEOUT_IVY_DIAGNOSTICS` |
 | `ivy_coverage` | 120 | `IVY_LSP_TOOL_TIMEOUT_IVY_COVERAGE` |
-| `ivy_change_impact` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_CHANGE_IMPACT` |
+| `ivy_propagation` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_PROPAGATION` |
 | `ivy_model_info` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_MODEL_INFO` |
-| `ivy_include_graph` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_INCLUDE_GRAPH` |
+| `ivy_analysis` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_ANALYSIS` |
 | `ivy_manifest` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_MANIFEST` |
 | `ivy_visualize` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_VISUALIZE` |
-| `ivy_model_summary` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_MODEL_SUMMARY` |
 | `ivy_patterns` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_PATTERNS` |
 | `ivy_quality` | 60 | `IVY_LSP_TOOL_TIMEOUT_IVY_QUALITY` |
-| `ivy_verification_dashboard` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_VERIFICATION_DASHBOARD` |
 | `ivy_extract_requirements` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_EXTRACT_REQUIREMENTS` |
-| `ivy_pattern_scaffold` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_PATTERN_SCAFFOLD` |
-| `ivy_scope` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_SCOPE` |
-| `ivy_find_variants` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_FIND_VARIANTS` |
-| `ivy_serdes_correlation` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_SERDES_CORRELATION` |
 | `ivy_rfc` | 30 | `IVY_LSP_TOOL_TIMEOUT_IVY_RFC` |
-| `ivy_capabilities` | 10 | `IVY_LSP_TOOL_TIMEOUT_IVY_CAPABILITIES` |
-| `ivy_health_check` | 10 | `IVY_LSP_TOOL_TIMEOUT_IVY_HEALTH_CHECK` |
+| `ivy_status` | 10 | `IVY_LSP_TOOL_TIMEOUT_IVY_STATUS` |
 | `ivy_workspace` | 10 | `IVY_LSP_TOOL_TIMEOUT_IVY_WORKSPACE` |
 | `ivy_workflow_state` | 10 | `IVY_LSP_TOOL_TIMEOUT_IVY_WORKFLOW_STATE` |
 
@@ -118,14 +111,13 @@ or `building` state, the tool returns immediately with:
 ```
 
 Model-dependent tools: `ivy_diagnostics`, `ivy_coverage`, `ivy_visualize`,
-`ivy_model_summary`, `ivy_scope`, `ivy_find_variants`, `ivy_serdes_correlation`,
-`ivy_change_impact`, `ivy_quality`.
+`ivy_analysis(mode="scope")`, `ivy_propagation` (all modes), `ivy_quality`.
 
 ### Local-only tools
 
 Tools with `local_only: True` skip sidecar delegation and execute in the MCP
 server process directly. These are always instant or fast:
-`ivy_capabilities`, `ivy_health_check`, `ivy_workspace`, `ivy_workflow_state`,
+`ivy_status` (modes: capabilities/health), `ivy_workspace`, `ivy_workflow_state`,
 `ivy_rfc`.
 
 ### User-supplied timeout extension
@@ -148,9 +140,9 @@ callers to extend blocking operations without bypassing the per-tool base.
    queue-timeout errors on subsequent calls.
 
 3. **Model is warm after `ivy_verify`.** Once `ivy_verify` completes
-   successfully, `ivy_coverage`, `ivy_model_summary`, and `ivy_visualize` will
-   complete in their fast range (seconds) rather than their slow range (30+ s)
-   because the semantic model is already loaded.
+   successfully, `ivy_coverage`, `ivy_visualize` (including view="summary"),
+   and `ivy_analysis` will complete in their fast range (seconds) rather than
+   their slow range (30+ s) because the semantic model is already loaded.
 
 4. **Do not dispatch 4 blocking tools in parallel.** The global semaphore limit
    is 4. Dispatching 4 blocking tools simultaneously occupies every slot for

@@ -44,7 +44,7 @@ Run the following 9 checks in order across 3 phases. For each check, record PASS
 
 ### Step 1: MCP server alive
 
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_capabilities` with no arguments.
+Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_status` with `mode="capabilities"`.
 
 - If the tool returns a JSON result with capabilities listed: **provisional PASS** — report the number of capabilities. **Save the full result for use in Step 5.**
 - If the tool errors or times out: **FAIL** — report the error.
@@ -87,7 +87,7 @@ Dispatch a `spec-analyst` agent with the following prompt. Follow the Agent Disp
 > Review the Phase 1 health check results for the Ivy LSP + MCP stack.
 >
 > Raw data (orchestrator's assessments intentionally omitted):
-> - Step 1 raw JSON: [paste the FULL JSON returned by ivy_capabilities]
+> - Step 1 raw JSON: [paste the FULL JSON returned by ivy_status(mode="capabilities")]
 > - Step 1 CLI check output: [paste the raw output of `which ivy_check ivyc ivy_show 2>/dev/null | wc -l`]
 > - Step 2 raw LSP output: [paste the FULL documentSymbol output]
 > - Step 2 file path: [the .ivy file used for documentSymbol]
@@ -176,7 +176,7 @@ Classification:
 
 ### Step 5: Layer staging active
 
-**Primary: Use MCP capabilities data from Step 1.** Extract `staging_health` from the `ivy_capabilities` result already obtained in Step 1. If Step 1 failed, skip to the fallback.
+**Primary: Use MCP capabilities data from Step 1.** Extract `staging_health` from the `ivy_status(mode="capabilities")` result already obtained in Step 1. If Step 1 failed, skip to the fallback.
 
 Report: `layers_active`, `layer_count`, `total_staged`, `files_mapped_to_layers`.
 
@@ -207,7 +207,7 @@ Dispatch a `spec-analyst` agent with the following prompt. Follow the Agent Disp
 > - Step 4 log age output: [paste the raw age_seconds output]
 > - Step 4 critical error count: [paste the raw grep count]
 > - Step 4 resolver error count: [paste the raw grep count]
-> - Step 5 capabilities JSON: [paste the staging_health portion of ivy_capabilities, or note if absent]
+> - Step 5 capabilities JSON: [paste the staging_health portion of ivy_status(mode="capabilities"), or note if absent]
 > - Step 5 .ivyworkspace path: [the path to the workspace config file]
 > - Phase 1 summary: [Step 1 tool count and Step 2 symbol count — numbers only, no verdicts]
 >

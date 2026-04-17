@@ -339,7 +339,7 @@ Continue with work that does not depend on the verification result:
 - `ivy_coverage` or `ivy_diagnostics` on other files
 - Reading and reviewing Ivy source for structural issues
 - File edits, grep, git operations
-- Other MCP tool calls (`ivy_model_info`, `ivy_include_graph`, `ivy_patterns`)
+- Other MCP tool calls (`ivy_model_info`, `ivy_analysis(mode="includes")`, `ivy_patterns`)
 
 Avoid calling `ivy_verify` or `ivy_compile` in the main conversation while a background verification runs — the MCP semaphore limits concurrent tool execution.
 

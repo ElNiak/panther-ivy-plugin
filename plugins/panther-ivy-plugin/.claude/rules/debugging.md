@@ -34,7 +34,7 @@ protocol-testing/{prot}/
 
 ## Debugging & Troubleshooting
 
-**Health check**: Run the `triage` workflow or call `ivy_health_check` to verify LSP + MCP are working correctly.
+**Health check**: Run the `triage` workflow or call `ivy_status(mode="health")` to verify LSP + MCP are working correctly.
 
 **Log files**:
 - `/tmp/ivy-lsp-latest.log` — symlink to whichever server started last (backward compat)
@@ -46,7 +46,7 @@ protocol-testing/{prot}/
 - LSP not starting: check if `uvx` is on PATH, check `/tmp/ivy-lsp-lsp-latest.log` for startup errors
 - Empty LSP results: workspace indexing may not be complete — check LSP log for "Indexed N files"
 - Z3 import error (ARM/Apple Silicon): use `development-scp-refactor` branch for stability
-- MCP server unresponsive: run `ivy_capabilities` to test connectivity, check `/tmp/ivy-mcp-latest.log`
+- MCP server unresponsive: run `ivy_status(mode="capabilities")` to test connectivity, check `/tmp/ivy-mcp-latest.log`
 
 **Debug environment variables**:
 - `IVY_LSP_LOG_LEVEL=DEBUG` — verbose logging
@@ -64,6 +64,6 @@ protocol-testing/{prot}/
 When `<new-diagnostics>` contains `[ivy-lsp] indexing in progress`, the LSP is still building its workspace index:
 
 1. **STOP** — do NOT call MCP tools (ivy_verify, ivy_coverage, ivy_diagnostics, etc.) until indexing completes
-2. **Wait 10-15 seconds**, then call `ivy_health_check` to confirm readiness
-3. **Indexing is complete** when the diagnostic disappears or `ivy_health_check` shows the server ready
+2. **Wait 10-15 seconds**, then call `ivy_status(mode="health")` to confirm readiness
+3. **Indexing is complete** when the diagnostic disappears or `ivy_status(mode="health")` shows the server ready
 4. The diagnostic is transient (typically 5-30 seconds after server startup)

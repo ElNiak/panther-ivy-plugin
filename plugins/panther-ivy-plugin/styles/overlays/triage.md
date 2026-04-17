@@ -11,7 +11,7 @@
 - **Result** -- "All systems operational" or "N issue(s) remain"
 
 ## Tool Presentation
-- `ivy_health_check`: per-component status line
+- `ivy_status(mode="health")`: per-component status line
 - `ivy_verify`: "ivy_verify: OK" or "ivy_verify: FAIL -- {count} error(s)"
 - `ivy_diagnostics`: error count only, no detail
 

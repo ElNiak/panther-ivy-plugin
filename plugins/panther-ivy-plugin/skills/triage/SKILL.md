@@ -59,7 +59,7 @@ Record which PIDs are alive and which are stale.
 
 ### Check 2: MCP server
 
-Call `ivy_capabilities` with no arguments. This is the fastest MCP round-trip. If it returns a tool list, MCP is alive.
+Call `ivy_status(mode="capabilities")` with no other arguments. This is the fastest MCP round-trip. If it returns a tool list, MCP is alive.
 
 ### Check 3: LSP server
 
@@ -180,7 +180,7 @@ done
 
 Claude Code auto-restarts MCP/LSP servers on the next tool invocation. After cleaning stale files, invoke a lightweight MCP call to trigger the restart:
 
-- For MCP: call `ivy_capabilities` — the sidecar restarts automatically
+- For MCP: call `ivy_status(mode="capabilities")` — the sidecar restarts automatically
 - For LSP: the next LSP-dependent operation triggers restart
 
 ### Step 3: Verify recovery

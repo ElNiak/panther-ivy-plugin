@@ -188,7 +188,7 @@ instance {prot}_serdes : serdes({prot}_packet, stream_data, {prot}_ser, {prot}_d
 
 ### Adding patterns to a new protocol
 ```
-ivy_pattern_scaffold(protocol="{protocol}", pattern="all")
+ivy_patterns(mode="scaffold", protocol="{protocol}", pattern="all")
 ```
 
 ### Analyzing existing patterns

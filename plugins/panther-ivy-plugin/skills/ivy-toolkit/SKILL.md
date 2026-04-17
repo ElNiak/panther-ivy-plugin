@@ -34,24 +34,17 @@ Three complementary tool systems:
 | `ivy_verify` | Formal verification | After writing/modifying specs | FAST + DEEP |
 | `ivy_compile` | Compile to test binary | After verification passes | FAST + DEEP |
 | `ivy_model_info` | Show model structure | Understanding a spec file | FAST |
-| `ivy_diagnostics` | Structural check (mode="structural") or full 5-layer (mode="full") | Before full verification / deep analysis | FAST + DEEP |
-| `ivy_include_graph` | Show include dependencies | Phase 1 exploration | DEEP |
-| `ivy_capabilities` | Check server capabilities | Diagnostics | FAST |
+| `ivy_diagnostics` | Structural check (mode="structural"), full 5-layer (mode="full"), or verification dashboard (mode="dashboard") | Before full verification / deep analysis / Phase 4 reporting | FAST + DEEP |
+| `ivy_analysis` | Include dependencies (mode="includes") or workspace scope (mode="scope") | Phase 1 exploration / workspace management | FAST + DEEP |
+| `ivy_status` | Server capabilities (mode="capabilities") or health status (mode="health") | Pre-flight check / diagnostics | FAST |
 | `ivy_coverage` | Requirement coverage stats | Phase 1 + Phase 5 | DEEP |
 | `ivy_extract_requirements` | Extract RFC requirements | Phase 2 planning | DEEP |
-| `ivy_visualize` | Dependency visualization | Understanding architecture | FAST |
-| `ivy_model_summary` | Summarize model | Quick overview | FAST |
-| `ivy_patterns` | Detect formal patterns | Pattern analysis | FAST |
-| `ivy_pattern_scaffold` | Generate from template | Scaffolding new specs | FAST |
+| `ivy_visualize` | Visualize dependencies / state machine / layers / model summary / requirements (views: dependencies/state_machine/layers/summary/requirements) | Understanding architecture, quick overview | FAST |
+| `ivy_patterns` | Detect formal patterns; mode="scaffold" generates from template | Pattern analysis, scaffolding new specs | FAST |
 | `ivy_quality` | Quality score | Phase 4 verification | DEEP |
-| `ivy_health_check` | Server health status | Pre-flight check before tool use | FAST |
-| `ivy_scope` | Show workspace scope for a protocol | Workspace management | FAST |
 | `ivy_index` | Index protocol files into workspace | Workspace initialization | FAST |
 | `ivy_manifest` | Show/generate protocol manifest | Protocol inventory | FAST |
-| `ivy_verification_dashboard` | Overview of verification state | Phase 4 reporting | DEEP |
-| `ivy_find_variants` | Find all variants of a type | Type analysis | FAST |
-| `ivy_serdes_correlation` | Correlate serializer/deserializer for a type | Ser/des analysis | FAST |
-| `ivy_change_impact` | Assess impact of changing a type | Change analysis | DEEP |
+| `ivy_propagation` | Type propagation analysis — variants (mode="variants"), serdes correlation (mode="serdes"), change impact (mode="impact") | Type analysis, ser/des analysis, change analysis | FAST + DEEP |
 | `ivy_rfc` | RFC lookup, search, and normative analysis (modes: get/search/section) | RFC operations during spec authoring | FAST |
 
 ## Rendering Awareness
@@ -67,12 +60,12 @@ See `references/hook-lifecycle.md` for the full rendering pipeline.
 ## Mode Mapping
 
 **FAST mode tools** -- safe for single-operation commands (/nct-check, /nct-model-info):
-- ivy_verify, ivy_compile, ivy_model_info, ivy_diagnostics(mode="structural"), ivy_capabilities,
-  ivy_visualize, ivy_model_summary, ivy_patterns, ivy_pattern_scaffold,
-  ivy_rfc
+- ivy_verify, ivy_compile, ivy_model_info, ivy_diagnostics(mode="structural"),
+  ivy_status(mode="capabilities"), ivy_status(mode="health"),
+  ivy_visualize, ivy_patterns, ivy_rfc
 
 **DEEP mode tools** -- used during orchestrated workflows (build, verify, review):
-- ivy_diagnostics (full analysis), ivy_include_graph (Phase 1),
+- ivy_diagnostics (full analysis), ivy_analysis(mode="includes") (Phase 1),
   ivy_coverage (Phase 1+5), ivy_extract_requirements (Phase 2),
   ivy_quality (Phase 4)
 - All FAST tools are also available in DEEP mode
