@@ -22,8 +22,8 @@ render_mcp() {
                 body="up ${STC_MCP_LATENCY}ms"
             fi
             ;;
-        degraded)
-            color="$C_YELLOW"; body="degraded" ;;
+        starting|degraded)
+            color="$C_YELLOW"; body="$status" ;;
         down)
             color="$C_RED"; body="down"; suffix=" $EMO_WARN" ;;
         *)

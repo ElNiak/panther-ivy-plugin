@@ -80,9 +80,11 @@ Writers:
 | `track-workflow-skill.py` (PostToolUse Skill) | `workflow`, `workspace.protocol` |
 | `post-write-workflow-aware.py` (PostToolUse Write/Edit) | `test_file` |
 
-All writes go through `hooks/scripts/statusline_cache.py`'s `update_section`,
-which does an atomic tempfile + rename and serializes concurrent writers via
-`fcntl.LOCK_EX`.
+All writes go through `hooks/scripts/statusline_cache.py`. Each write does an
+atomic tempfile + `os.replace`; concurrent writers across hooks serialize
+on a sibling `statusline.json.lock` file held `fcntl.LOCK_EX` for the full
+read-modify-write, so two simultaneous hooks touching different sections
+cannot silently overwrite each other.
 
 ## Debugging
 

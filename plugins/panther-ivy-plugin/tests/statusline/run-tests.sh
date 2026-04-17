@@ -199,6 +199,60 @@ run_case "long test filenames are truncated with ellipsis" \
     "ivy-only" "$SCRATCH/cache-longfile.json" \
     "test:this_is_a_very_long…"
 
+echo "# mcp:starting state renders"
+cat > "$SCRATCH/cache-mcp-starting.json" <<EOF
+{"version":1,
+ "workspace":{"root":"$FAKE_IVY","protocol":"bgp","detected_at":"$NOW_ISO"},
+ "workflow":{"name":"verify","phase":"compile","invocation_depth":0,"caller":null},
+ "mcp":{"status":"starting","last_checked_at":"$NOW_ISO"},
+ "lsp":{"status":"ready","last_checked_at":"$NOW_ISO"}}
+EOF
+run_case "mcp starting renders in yellow body text" \
+    "ivy-only" "$SCRATCH/cache-mcp-starting.json" \
+    "mcp:starting"
+
+echo "# concurrent writers race"
+# Regression test: 10 writers across 5 sections must all survive.
+concurrency_cache="$SCRATCH/concurrency.json"
+rm -f "$concurrency_cache" "${concurrency_cache}.lock"
+concurrency_result="$(
+    PANTHER_IVY_STATUSLINE_CACHE_PATH="$concurrency_cache" \
+    "${TEST_PYTHON:-python3}" - <<'PY'
+import json, os, sys, threading, time, pathlib
+sys.path.insert(0, os.environ.get("STATUSLINE_HOOK_DIR", "hooks/scripts"))
+from statusline_cache import update_section
+import statusline_cache as sc
+_orig = sc._read_cache
+def _slow(p):
+    d = _orig(p); time.sleep(0.02); return d
+sc._read_cache = _slow
+
+threads = [
+    threading.Thread(target=update_section,
+                     args=("/fake/ws",
+                           ["mcp","lsp","workflow","workspace","test_file"][i % 5],
+                           {"status": f"v{i}"}))
+    for i in range(10)
+]
+for t in threads: t.start()
+for t in threads: t.join()
+
+cache = json.loads(pathlib.Path(os.environ["PANTHER_IVY_STATUSLINE_CACHE_PATH"]).read_text())
+sections = sorted(k for k in cache if k != "version")
+print(",".join(sections))
+PY
+    STATUSLINE_HOOK_DIR="$PLUGIN_ROOT/hooks/scripts" \
+)" || concurrency_result=""
+rm -f "$concurrency_cache" "${concurrency_cache}.lock"
+if [ "$concurrency_result" = "lsp,mcp,test_file,workflow,workspace" ]; then
+    PASS=$((PASS + 1))
+    echo "  ok   concurrent writers do not drop sections"
+else
+    FAIL=$((FAIL + 1))
+    echo "  FAIL concurrent writers do not drop sections"
+    echo "    got: $concurrency_result"
+fi
+
 echo "# outside-workspace delegation"
 cat > "$SCRATCH/stdin-outside.json" <<EOF
 {"workspace":{"current_dir":"/tmp/no-ivy-here"},"model":{"id":"opus"}}

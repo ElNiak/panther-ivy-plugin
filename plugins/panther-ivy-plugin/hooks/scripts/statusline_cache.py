@@ -23,6 +23,7 @@ import os
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Callable
 
 CACHE_VERSION = 1
 
@@ -65,16 +66,17 @@ def _now_iso() -> str:
 
 
 def _read_cache(path: Path) -> dict:
-    """Read and return the cache JSON, or a fresh skeleton if missing/corrupt."""
+    """Read and return the cache JSON, or a fresh skeleton if missing/corrupt.
+
+    Assumes the caller already holds the sibling ``statusline.lock`` exclusive
+    lock; no per-file lock is taken here because ``os.replace`` atomicity
+    already prevents torn reads of the JSON body.
+    """
     if not path.exists():
         return {"version": CACHE_VERSION}
     try:
         with open(path) as f:
-            fcntl.flock(f, fcntl.LOCK_SH)
-            try:
-                data = json.load(f)
-            finally:
-                fcntl.flock(f, fcntl.LOCK_UN)
+            data = json.load(f)
         if not isinstance(data, dict):
             return {"version": CACHE_VERSION}
         if data.get("version") != CACHE_VERSION:
@@ -85,26 +87,51 @@ def _read_cache(path: Path) -> dict:
 
 
 def _atomic_write(path: Path, data: dict) -> None:
-    """Write ``data`` to ``path`` atomically via tempfile + rename."""
+    """Write ``data`` to ``path`` atomically via tempfile + rename.
+
+    Assumes the caller holds the sibling ``statusline.lock`` exclusive lock.
+    The ``os.replace`` at the end is itself atomic, so readers without the
+    lock still observe either the pre-write or post-write file — never a
+    partial write.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(
         prefix=".statusline-", suffix=".json.tmp", dir=str(path.parent)
     )
     try:
         with os.fdopen(fd, "w") as f:
-            fcntl.flock(f, fcntl.LOCK_EX)
-            try:
-                json.dump(data, f, separators=(",", ":"))
-                f.flush()
-                os.fsync(f.fileno())
-            finally:
-                fcntl.flock(f, fcntl.LOCK_UN)
+            json.dump(data, f, separators=(",", ":"))
+            f.flush()
+            os.fsync(f.fileno())
         os.replace(tmp_name, path)
     except OSError:
         try:
             os.unlink(tmp_name)
         except OSError:
             pass
+
+
+def _with_cache_lock(path: Path, fn: "Callable[[], None]") -> None:
+    """Run ``fn()`` while holding an exclusive lock on a sibling lockfile.
+
+    Cross-process serialization of the read-modify-write sequence. Without
+    this, two hooks firing in the same Claude turn (e.g. SessionStart +
+    PreToolUse) could each read an empty cache, each merge only their own
+    section, and each overwrite the other's section via ``os.replace`` —
+    silently losing updates.
+
+    Args:
+        path: Cache file path. The lock is taken on ``<path>.lock``.
+        fn: Zero-arg callable executed while the lock is held.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    with open(lock_path, "a") as lockf:
+        fcntl.flock(lockf.fileno(), fcntl.LOCK_EX)
+        try:
+            return fn()
+        finally:
+            fcntl.flock(lockf.fileno(), fcntl.LOCK_UN)
 
 
 def update_sections(workspace_root: str, sections: dict) -> None:
@@ -125,17 +152,21 @@ def update_sections(workspace_root: str, sections: dict) -> None:
         return
     try:
         path = cache_path_for(workspace_root)
-        cache = _read_cache(path)
-        for section, data in sections.items():
-            if not section or not isinstance(data, dict):
-                continue
-            existing = cache.get(section)
-            merged = {**existing, **data} if isinstance(existing, dict) else dict(data)
-            if section in _SECTIONS_WITH_TIMESTAMP and "last_checked_at" not in merged:
-                merged["last_checked_at"] = _now_iso()
-            cache[section] = merged
-        cache["version"] = CACHE_VERSION
-        _atomic_write(path, cache)
+
+        def _apply() -> None:
+            cache = _read_cache(path)
+            for section, data in sections.items():
+                if not section or not isinstance(data, dict):
+                    continue
+                existing = cache.get(section)
+                merged = {**existing, **data} if isinstance(existing, dict) else dict(data)
+                if section in _SECTIONS_WITH_TIMESTAMP and "last_checked_at" not in merged:
+                    merged["last_checked_at"] = _now_iso()
+                cache[section] = merged
+            cache["version"] = CACHE_VERSION
+            _atomic_write(path, cache)
+
+        _with_cache_lock(path, _apply)
     except Exception:
         pass
 
@@ -143,13 +174,15 @@ def update_sections(workspace_root: str, sections: dict) -> None:
 def update_section(workspace_root: str, section: str, data: dict) -> None:
     """Merge ``data`` into ``section`` of the workspace's statusline cache.
 
-    The cache file is created on first write. Each call is atomic; concurrent
-    writers from different hooks serialize via ``fcntl.LOCK_EX``.
+    The cache file is created on first write. Concurrent writers from
+    different hooks serialize on a sibling ``statusline.lock`` file so that
+    two simultaneous writes to different sections do not silently overwrite
+    each other.
 
     Sections in :data:`_SECTIONS_WITH_TIMESTAMP` automatically receive a
     ``last_checked_at`` field set to the current UTC time unless the caller
-    already provided one. Callers needing freshness tracking for other sections
-    should include the field explicitly.
+    already provided one. Callers needing freshness tracking for other
+    sections should include the field explicitly.
 
     Args:
         workspace_root: Absolute path to the Ivy workspace root.
@@ -162,17 +195,18 @@ def update_section(workspace_root: str, section: str, data: dict) -> None:
         return
     try:
         path = cache_path_for(workspace_root)
-        cache = _read_cache(path)
-        existing = cache.get(section)
-        if isinstance(existing, dict):
-            merged = {**existing, **data}
-        else:
-            merged = dict(data)
-        if section in _SECTIONS_WITH_TIMESTAMP and "last_checked_at" not in merged:
-            merged["last_checked_at"] = _now_iso()
-        cache[section] = merged
-        cache["version"] = CACHE_VERSION
-        _atomic_write(path, cache)
+
+        def _apply() -> None:
+            cache = _read_cache(path)
+            existing = cache.get(section)
+            merged = {**existing, **data} if isinstance(existing, dict) else dict(data)
+            if section in _SECTIONS_WITH_TIMESTAMP and "last_checked_at" not in merged:
+                merged["last_checked_at"] = _now_iso()
+            cache[section] = merged
+            cache["version"] = CACHE_VERSION
+            _atomic_write(path, cache)
+
+        _with_cache_lock(path, _apply)
     except Exception:
         # Statusline cache is best-effort; never let it break a hook.
         pass
