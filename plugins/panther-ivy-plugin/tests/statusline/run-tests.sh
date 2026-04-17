@@ -302,14 +302,17 @@ FAKE_GLOBAL_SLOW="$SCRATCH/fake-global-slow.sh"
 cat > "$FAKE_GLOBAL_SLOW" <<'EOF'
 #!/usr/bin/env bash
 cat >/dev/null
-sleep 1
+sleep 3
 echo "never reached"
 EOF
 chmod +x "$FAKE_GLOBAL_SLOW"
+# Force a 0.3s timeout so the test completes quickly and is not racy with
+# the default budget.
 output_slow="$(
     NO_COLOR=1 \
     PANTHER_IVY_STATUSLINE_CACHE_PATH="$SCRATCH/cache-healthy.json" \
     PANTHER_IVY_GLOBAL_STATUSLINE="$FAKE_GLOBAL_SLOW" \
+    PANTHER_IVY_STATUSLINE_GLOBAL_TIMEOUT="0.3" \
     PANTHER_IVY_STATUSLINE_MODE="suppress-overlaps" \
     bash "$MAIN" < "$SCRATCH/stdin.json" 2>/dev/null | strip_ansi
 )"

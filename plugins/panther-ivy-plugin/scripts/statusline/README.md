@@ -56,6 +56,7 @@ distinguish that failure mode from cache staleness.
 | `PANTHER_IVY_STATUSLINE_MODE` | override mode for this session |
 | `PANTHER_IVY_STATUSLINE_DEBUG=1` | log render errors to `~/.claude/panther-ivy-plugin/logs/statusline.log` (rotates at 1 MB) |
 | `PANTHER_IVY_GLOBAL_STATUSLINE` | path to the global script (default `~/.claude/statusline-command.sh`) |
+| `PANTHER_IVY_STATUSLINE_GLOBAL_TIMEOUT` | seconds to wait for the global subprocess (default `1`) — bump if your global script runs git, cost accounting, or other sub-commands that occasionally exceed it |
 | `PANTHER_IVY_STATUSLINE_CACHE_PATH` | *(tests only)* override the cache file path |
 | `PANTHER_IVY_STATUSLINE_CACHE_ROOT` | *(tests only)* override the cache directory root |
 | `PANTHER_IVY_STATUSLINE_STALE_SECONDS` | *(tests only)* override the 60 s stale threshold |

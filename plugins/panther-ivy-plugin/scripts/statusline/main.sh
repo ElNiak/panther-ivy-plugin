@@ -132,6 +132,14 @@ _global_elements_for_mode() {
 }
 
 # --- Invoke global statusline subprocess ------------------------------------
+# Budget is deliberately loose (default 1 s). The global statusline often
+# shells out to git, cost accounting, and a handful of per-element checks
+# that add up to 150–300 ms on real machines. Tightening this back to the
+# original 200 ms caused every render to silently collapse to ivy-only
+# because the global was killed mid-run. Override per session via
+# PANTHER_IVY_STATUSLINE_GLOBAL_TIMEOUT=<seconds>.
+_GLOBAL_TIMEOUT="${PANTHER_IVY_STATUSLINE_GLOBAL_TIMEOUT:-1}"
+
 _invoke_global() {
     local elements="$1"
     [ -n "$elements" ] || return 0
@@ -139,7 +147,8 @@ _invoke_global() {
 
     local output rc
     output="$(CLAUDE_STATUSLINE_ELEMENTS="$elements" \
-        "$TIMEOUT_BIN" 0.2 "$GLOBAL_STATUSLINE" <<< "$INPUT_JSON" 2>/dev/null)"
+        "$TIMEOUT_BIN" "$_GLOBAL_TIMEOUT" "$GLOBAL_STATUSLINE" \
+        <<< "$INPUT_JSON" 2>/dev/null)"
     rc=$?
     if [ "$rc" -ne 0 ]; then
         _log "global statusline failed (rc=$rc); falling back to ivy-only"
