@@ -177,6 +177,26 @@ if [ -n "$WORKFLOW_SUGGESTION" ]; then
     context="$context $WORKFLOW_SUGGESTION"
 fi
 
+# --- Seed the statusline cache for this workspace ---
+if [ -n "$DETECTED_ROOT" ] && [ "$DETECTED_TYPE" = "panther" ]; then
+    _DETECTED_AT="$(date -u +%FT%TZ)"
+    _ACTIVE_PROTO="${ACTIVE_GROUP:-}"
+    _CACHE_DATA=$(python3 -c "import json,sys; print(json.dumps({'root': sys.argv[1], 'protocol': sys.argv[2], 'detected_at': sys.argv[3]}))" \
+        "$DETECTED_ROOT" "$_ACTIVE_PROTO" "$_DETECTED_AT" 2>/dev/null) || _CACHE_DATA=""
+    if [ -n "$_CACHE_DATA" ]; then
+        python3 "$SCRIPT_DIR/statusline_cache.py" --workspace "$DETECTED_ROOT" \
+            --section workspace --data "$_CACHE_DATA" 2>/dev/null || true
+    fi
+    _MCP_CACHE_STATUS="unknown"
+    case "$MCP_STATUS" in
+        ready) _MCP_CACHE_STATUS="up" ;;
+        starting) _MCP_CACHE_STATUS="starting" ;;
+        "not started") _MCP_CACHE_STATUS="down" ;;
+    esac
+    python3 "$SCRIPT_DIR/statusline_cache.py" --workspace "$DETECTED_ROOT" \
+        --section mcp --data "{\"status\":\"$_MCP_CACHE_STATUS\"}" 2>/dev/null || true
+fi
+
 # Escape context for JSON safety using proper JSON escaping
 context_escaped=$(printf '%s' "$context" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])" 2>/dev/null)
 if [ -z "$context_escaped" ]; then

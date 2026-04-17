@@ -34,6 +34,18 @@
       "type": "boolean",
       "description": "Enable observability event logging to JSONL files (true/false)",
       "sensitive": false
+    },
+    "statusline_mode": {
+      "title": "Statusline Mode",
+      "type": "string",
+      "description": "How the plugin statusline composes with the global statusline: ivy-only | minimal | full-delegate | suppress-overlaps (default)",
+      "sensitive": false
+    },
+    "statusline_debug": {
+      "title": "Statusline Debug",
+      "type": "boolean",
+      "description": "Log statusline render errors to ~/.claude/panther-ivy-plugin/logs/statusline.log",
+      "sensitive": false
     }
   }
 }

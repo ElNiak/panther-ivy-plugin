@@ -3,6 +3,8 @@
     "IVY_LSP_LOG_LEVEL": "${user_config.log_level:INFO}",
     "PANTHER_IVY_ENABLE_SERENA": "${user_config.enable_serena:0}",
     "IVY_LSP_FORCE_REINSTALL": "${user_config.force_reinstall:0}",
-    "IVY_OBSERVABILITY_ENABLED": "${user_config.observability_enabled:1}"
+    "IVY_OBSERVABILITY_ENABLED": "${user_config.observability_enabled:1}",
+    "PANTHER_IVY_STATUSLINE_MODE": "${user_config.statusline_mode:suppress-overlaps}",
+    "PANTHER_IVY_STATUSLINE_DEBUG": "${user_config.statusline_debug:0}"
   }
 }

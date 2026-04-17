@@ -21,6 +21,7 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from hook_utils import get_mcp_health_state_path, emit_hook_output, MAX_CONSECUTIVE_MCP_FAILURES
+from statusline_cache import update_from_hook as _statusline_update
 
 _STATE_TTL = 300  # Reset state after 5 minutes of no activity
 _STALE_PORT_AGE = 120  # Port file older than 2 min with no TCP → stale
@@ -152,12 +153,14 @@ def main():
         if state["consecutive_failures"] > 0:
             state["consecutive_failures"] = 0
             _write_state(state)
+        _statusline_update("mcp", {"status": "up"})
         return  # Allow
 
     if pid_result is False:
         # MCP process is dead — definitive failure
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
         _write_state(state)
+        _statusline_update("mcp", {"status": "down", "last_error": "pid-check-failed"})
         _emit_result(state)
         return
 
@@ -167,12 +170,14 @@ def main():
         if state["consecutive_failures"] > 0:
             state["consecutive_failures"] = 0
             _write_state(state)
+        _statusline_update("mcp", {"status": "up"})
         return  # Allow
 
     if tcp_result is False:
         # Fresh port file but sidecar not responding — definitive failure
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
         _write_state(state)
+        _statusline_update("mcp", {"status": "down", "last_error": "tcp-unreachable"})
         _emit_result(state)
         return
 
@@ -182,6 +187,7 @@ def main():
     if state["consecutive_failures"] > 0:
         state["consecutive_failures"] = 0
         _write_state(state)
+    _statusline_update("mcp", {"status": "up"})
     return
 
 

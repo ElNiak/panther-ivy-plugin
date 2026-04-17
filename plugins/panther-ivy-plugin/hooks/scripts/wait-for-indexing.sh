@@ -17,6 +17,13 @@ EOFT
 MCP_LOG="${IVY_MCP_LOG_PATH:-/tmp/ivy-mcp-latest.log}"
 LSP_LOG="${IVY_LSP_LOG_PATH:-/tmp/ivy-lsp-lsp-latest.log}"
 MAX_WAIT="${IVY_LSP_INDEX_TIMEOUT:-12}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+_update_statusline() {
+    # Best-effort statusline cache update; failures are silent.
+    python3 "$SCRIPT_DIR/statusline_cache.py" --auto-workspace \
+        --section "$1" --data "$2" 2>/dev/null || true
+}
 
 # --- Guard: skip polling if MCP log is unavailable ---
 # If IVY_MCP_LOG_PATH was not explicitly set AND the fallback file doesn't exist,
@@ -136,6 +143,18 @@ elif [ "$MCP_READY" = "1" ]; then
     MSG="${MSG} Note: If an ivy MCP tool fails unexpectedly, wait 5 seconds and retry once — the server may be recovering."
 else
     MSG="[ivy-indexing] WARNING: MCP server did not start within ${MAX_WAIT}s. MCP tools may be unavailable. IMPORTANT: If any ivy MCP tool call fails with a server error, wait 10 seconds and retry the same call up to 3 times before reporting failure to the user."
+fi
+
+# --- Statusline cache update ---
+if [ "$MCP_READY" = "1" ]; then
+    _update_statusline mcp '{"status":"up"}'
+else
+    _update_statusline mcp '{"status":"down","last_error":"startup-timeout"}'
+fi
+if [ "$LSP_INDEXED" = "1" ]; then
+    _update_statusline lsp '{"status":"ready"}'
+elif [ "$LSP_STATUS" = "still indexing" ]; then
+    _update_statusline lsp '{"status":"indexing"}'
 fi
 
 # Escape for JSON

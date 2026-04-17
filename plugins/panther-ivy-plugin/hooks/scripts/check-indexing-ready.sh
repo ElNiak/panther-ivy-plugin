@@ -15,6 +15,12 @@ set -euo pipefail
 MCP_LOG="${IVY_MCP_LOG_PATH:-/tmp/ivy-mcp-latest.log}"
 LSP_LOG="${IVY_LSP_LOG_PATH:-/tmp/ivy-lsp-lsp-latest.log}"
 WORKSPACE_ROOT="${IVY_WORKSPACE_ROOT:-}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+_update_statusline() {
+    python3 "$SCRIPT_DIR/statusline_cache.py" --auto-workspace \
+        --section "$1" --data "$2" 2>/dev/null || true
+}
 
 # Circuit breaker: after 6 denials (~60s), degrade to warning
 DENY_STATE="/tmp/ivy-lsp-pids/indexing-deny-count"
@@ -34,6 +40,7 @@ _reset_deny() {
 # Signal 1: LSP finished Phase 1 indexing
 if [ -f "$LSP_LOG" ] && grep -q "Indexed .* files" "$LSP_LOG" 2>/dev/null; then
     _reset_deny
+    _update_statusline lsp '{"status":"ready"}'
     exit 0  # Ready — allow tool call
 fi
 
@@ -42,6 +49,7 @@ if [ -n "$WORKSPACE_ROOT" ]; then
     for idx_dir in "$WORKSPACE_ROOT"/protocol-testing/*/.ivy-index; do
         if [ -d "$idx_dir" ] && [ -f "$idx_dir/manifest.json" ]; then
             _reset_deny
+            _update_statusline lsp '{"status":"ready"}'
             exit 0  # Offline index available — allow tool call
         fi
     done
@@ -50,12 +58,14 @@ fi
 # Signal 3: MCP prepopulated from offline index
 if [ -f "$MCP_LOG" ] && grep -q "Pre-populated from offline index\|pre-warmed\|PREWARM-DONE" "$MCP_LOG" 2>/dev/null; then
     _reset_deny
+    _update_statusline lsp '{"status":"ready"}'
     exit 0  # MCP model ready — allow tool call
 fi
 
 # Signal 4: MCP server declared ready (consistent with wait-for-indexing.sh)
 if [ -f "$MCP_LOG" ] && grep -q "\[MCP-READY\]" "$MCP_LOG" 2>/dev/null; then
     _reset_deny
+    _update_statusline lsp '{"status":"ready"}'
     exit 0  # MCP ready sentinel — allow tool call
 fi
 
@@ -70,11 +80,13 @@ if [ -f "$MCP_LOG" ] && grep -q "Starting ivy-lsp MCP server" "$MCP_LOG" 2>/dev/
         if [ "$AGE" -lt 120 ]; then
             DENY_COUNT=$(_increment_deny)
             if [ "$DENY_COUNT" -gt 6 ]; then
+                _update_statusline lsp '{"status":"ready"}'
                 cat <<ENDJSON
 {"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"[ivy-indexing] LSP indexing appears stuck (${AGE}s, ${DENY_COUNT} denied calls). Allowing tool call — results may be incomplete. Consider running /nct-health."}}
 ENDJSON
                 exit 0
             fi
+            _update_statusline lsp '{"status":"indexing"}'
             cat <<ENDJSON
 {"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"[ivy-indexing] LSP is still indexing the workspace (${AGE}s elapsed, attempt ${DENY_COUNT}/6). Wait 10 seconds and retry.","additionalContext":"The LSP workspace index is not yet complete. Retry this tool call after a short wait."}}
 ENDJSON

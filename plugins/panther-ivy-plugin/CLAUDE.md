@@ -161,6 +161,31 @@ Tool result formatting is handled programmatically by `render-tool-result.py`
 - Agents do not inherit output styles. They inherit shared rules via CLAUDE.md
   and carry their own output format sections.
 
+## Status Bar
+
+The plugin ships a specialized Claude Code status bar at
+`scripts/statusline/main.sh`. When invoked inside an Ivy workspace it renders
+protocol, active workflow phase, LSP health, MCP health, and the active test
+file alongside the user's global statusline output. Outside a workspace it
+execs `~/.claude/statusline-command.sh` unchanged.
+
+Enable it by adding to `~/.claude/settings.json`:
+
+```json
+"statusLine": {
+  "type": "command",
+  "command": "${CLAUDE_PLUGIN_ROOT}/scripts/statusline/main.sh"
+}
+```
+
+Configure via plugin user-config or env var:
+- `statusline_mode` / `PANTHER_IVY_STATUSLINE_MODE`: `ivy-only | minimal | full-delegate | suppress-overlaps` (default)
+- `statusline_debug` / `PANTHER_IVY_STATUSLINE_DEBUG=1`: log render errors
+
+Rendering is cache-driven; the existing SessionStart, PreToolUse, PostToolUse,
+and Notification hooks populate `~/.claude/panther-ivy-plugin/cache/<hash>/statusline.json`
+so the renderer never probes live state. See `scripts/statusline/README.md`.
+
 ## Quick Reference
 
 **Workflows**: navigate, verify, build, review, triage

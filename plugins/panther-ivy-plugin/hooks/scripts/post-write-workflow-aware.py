@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, read_stdin
+from statusline_cache import update_from_hook as _statusline_update
 
 from workflow_state import find_protocol_dir, get_active_workflow
 
@@ -25,6 +26,15 @@ def main():
 
     if not file_path or not file_path.endswith(".ivy"):
         return
+
+    # Track the most recently written .ivy file as the statusline "active test
+    # file" — a best-effort hint; the workflow skill may override this with a
+    # more authoritative focus target.
+    from os.path import basename
+    _statusline_update("test_file", {
+        "basename": basename(file_path),
+        "source": "last-edited",
+    })
 
     protocol_dir = find_protocol_dir()
     if protocol_dir and get_active_workflow(protocol_dir) is not None:
