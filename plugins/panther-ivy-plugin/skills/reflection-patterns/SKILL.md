@@ -1,6 +1,6 @@
 ---
 name: reflection-patterns
-description: "Structured interaction templates (Reflection Gate, Multi-Perspective Exploration, Situation Briefing, Completion Verification Gate) and the adversarial quality-gate discipline layer. Use when a workflow skill reaches a phase boundary needing user input, or when dispatching G1-G5 adversarial critics."
+description: "Reflection Gate, Multi-Perspective Exploration, Situation Briefing, and Completion Verification Gate templates plus the G1-G5 adversarial quality-gate discipline layer. Use at workflow phase boundaries or when dispatching gate critics."
 user-invocable: false
 context: fork
 ---

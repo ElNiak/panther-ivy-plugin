@@ -1,6 +1,6 @@
 ---
 name: review
-description: "Quality and coverage auditing for Ivy models. Use when the user asks for coverage checks, quality audits, or model reviews."
+description: "RFC requirement-to-monitor traceability, coverage audits, and model quality review for Ivy specs. Use when user asks \"what MUSTs am I missing?\", \"RFC coverage?\", \"traceability gap?\", or \"review my model\"."
 ---
 
 ## Output Style

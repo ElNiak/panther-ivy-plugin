@@ -1,6 +1,6 @@
 ---
 name: ivy-toolkit
-description: "25-tool MCP catalog with parameter matrix and selection guide. Use when choosing or invoking MCP tools for Ivy operations."
+description: "18-tool MCP catalog with parameter matrix and selection guide (ivy_verify, ivy_compile, ivy_coverage, ivy_rfc, ivy_diagnostics, ivy_workspace, ivy_iut_test, ivy_status, ivy_workflow_state). Use when choosing or invoking MCP tools for Ivy operations."
 user-invocable: false
 ---
 

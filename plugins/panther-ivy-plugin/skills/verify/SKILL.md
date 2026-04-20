@@ -1,6 +1,6 @@
 ---
 name: verify
-description: "Test-compile-execute cycle with failure diagnosis. Use when the user wants to check, test, debug, or verify Ivy specifications."
+description: "Verify-compile-IUT test cycle with failure diagnosis. Use when user says \"check my spec\", \"verify this\", \"test the handshake\", or encounters errors like counterexample found, invariant violated, compilation error, ivy_check failed."
 ---
 
 ## Output Style
