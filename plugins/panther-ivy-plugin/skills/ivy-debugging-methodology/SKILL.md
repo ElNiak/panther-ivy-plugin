@@ -8,8 +8,8 @@ user-invocable: false
 
 ## Hard Rule
 
-You MUST complete steps 1-6 before proposing ANY fix. Skipping directly to a fix is forbidden.
-If you cannot find a working example or skill reference that explains the error, say so explicitly rather than guessing.
+The checklist below is mandatory because fixes proposed without evidence from it are flagged UNSOUND by the G4 verification gate.
+If no working example or skill reference explains the error, say so explicitly rather than guessing.
 
 ## Mandatory Pre-Fix Checklist
 
@@ -93,7 +93,7 @@ load the `ivy-writing-guide` skill and read `references/serializer-patterns.md`.
 ## Integration
 
 - **LOADED BY:** verify workflow (Phase 6 Diagnose), spec-analyst agent (compile error diagnosis), model-reviewer agent (when failures are flagged).
-- **PRECEDES:** the G4 verification gate cites the six mandatory pre-fix steps here (catalog entry `#405`); fixes proposed without these steps are UNSOUND by gate criteria.
+- **PRECEDES:** the G4 verification gate cites the eight mandatory pre-fix steps here (catalog entry `#405`); fixes proposed without these steps are UNSOUND by gate criteria.
 
 **Related skills:**
 - **`ivy-error-patterns`** — Error message lookup table and the numbered catalog this methodology cites.
