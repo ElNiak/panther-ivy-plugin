@@ -190,7 +190,7 @@ ivy_workflow_state(
   payload={
     "gate": "g{1..5}",
     "verdict": "SOUND" | "UNSOUND" | "ABSTAIN",
-    "vote": {"sound": int, "unsound": int, "unsure": int},
+    "vote": {"sound": int, "unsound": int, "abstain": int},
     "patterns": [{"id": "#NN", "file": "...", "line": int, "reason": "..."}],
     "abstain_reason": "..." | null,
     "tier": "haiku|sonnet|opus",

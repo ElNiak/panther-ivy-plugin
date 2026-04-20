@@ -35,8 +35,8 @@ Our convention: **once `inflight >= confirm_needed + refute_needed - 1`, the rem
 Concretely, with Sonnet × 5 at 4-confirm / 2-refute:
 - If the first 4 critics all return `SOUND`, do not spawn critic 5. Emit `VERDICT_SOUND` immediately.
 - If the first 2 critics return `UNSOUND`, do not spawn critics 3-5. Emit `VERDICT_UNSOUND` immediately.
-- If after 4 spawns the tally is 3 SOUND / 1 UNSOUND / 0 UNSURE, the 5th can still tip; spawn it.
-- If after 5 spawns the tally is 3 SOUND / 1 UNSOUND / 1 UNSURE, no threshold is met; emit `VERDICT_ABSTAIN`.
+- If after 4 spawns the tally is 3 SOUND / 1 UNSOUND / 0 ABSTAIN, the 5th can still tip; spawn it.
+- If after 5 spawns the tally is 3 SOUND / 1 UNSOUND / 1 ABSTAIN, no threshold is met; emit `VERDICT_ABSTAIN`.
 
 ## Revise-fail budget
 
@@ -52,9 +52,9 @@ This paragraph is embedded in every per-gate critic template to keep the isolati
 
 Embedded in every per-gate critic template alongside the isolation reminder:
 
-> **Do not guess.** A wrong confident verdict is worse than an honest `UNSURE`. The measure that matters is conditional accuracy — when you say `SOUND`, are you right?
+> **Do not guess.** A wrong confident verdict is worse than an honest `ABSTAIN`. The measure that matters is conditional accuracy — when you say `SOUND`, are you right?
 >
-> If your reasoning hits a wall, return `UNSURE` with a short reason. The orchestrator's voting rules handle it. Your job is not to close the gate; your job is to report what you genuinely saw.
+> If your reasoning hits a wall, return `ABSTAIN` with a short reason. The orchestrator's voting rules handle it. Your job is not to close the gate; your job is to report what you genuinely saw.
 
 ## Changing tier defaults
 
