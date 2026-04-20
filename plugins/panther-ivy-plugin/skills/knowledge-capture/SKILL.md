@@ -105,3 +105,13 @@ At the start of each gate (before Step 2), check the most recent digest for `sta
 ## Graduation Check (Emergent Insights)
 
 After writing to `.claude/rules/insights.md`, check whether 3+ entries cluster around the same theme. If so, recommend promoting them: present the cluster to the user and suggest moving to the appropriate primary-category rule file.
+
+## Integration
+
+- **LOADED BY:** build workflow (Phase 3 Knowledge Gate, Phase 5 Quality Gate), verify workflow (Phase 4 Post-Execution, Phase 7 Post-Fix), review workflow (Phase 2 Knowledge Gate, Phase 3 Findings), and the `/nct-learn` command.
+- **WRITES TO:** `.claude/rules/*.md`, `.claude/rules/insights.md`, and user-memory files when candidates are approved.
+- **READS FROM:** `.panther-ivy/session-logs/{timestamp}.json` (session events) and existing `.claude/rules/` files (to diff against).
+
+**Related skills:**
+- **`session-retrospective`** — User-invocable entry point that wraps this skill plus a skill/reference audit for end-of-session review.
+- **`reflection-patterns`** — Adversarial-gate discipline layer; gate verdicts feed the session digest when this skill runs.

@@ -1,0 +1,28 @@
+{
+  "gate": "g4",
+  "description": "G4 verification gate fires on PostToolUse when ivy_verify completes (regardless of pass or fail).",
+  "should_trigger": [
+    {"prompt": "Run ivy_verify on bgp_server_test_session.ivy", "expected_tool_match": "ivy_verify"},
+    {"prompt": "Verify the QUIC connection isolate", "expected_tool_match": "ivy_verify"},
+    {"prompt": "Check whether the BGP UPDATE spec verifies", "expected_tool_match": "ivy_verify"},
+    {"prompt": "Re-verify after my latest fix", "expected_tool_match": "ivy_verify"},
+    {"prompt": "Run formal verification on the just-edited frame layer", "expected_tool_match": "ivy_verify"},
+    {"prompt": "Verify all isolates in the protection layer", "expected_tool_match": "ivy_verify"},
+    {"prompt": "Did this verify cleanly? Run ivy_verify and show me", "expected_tool_match": "ivy_verify"},
+    {"prompt": "Run the verifier with a 60-second timeout on quic_packet.ivy", "expected_tool_match": "ivy_verify"},
+    {"prompt": "Confirm the spec verifies at the connection isolate", "expected_tool_match": "ivy_verify"},
+    {"prompt": "ivy_verify(relative_path='bgp_stack/bgp_fsm.ivy', isolate='bgp_session')", "expected_tool_match": "ivy_verify"}
+  ],
+  "should_not_trigger": [
+    {"prompt": "Run ivy_compile to produce the test binary", "expected_tool_match": "ivy_compile, not ivy_verify"},
+    {"prompt": "Run ivy_diagnostics(mode='structural') for a fast structural check", "expected_tool_match": "ivy_diagnostics"},
+    {"prompt": "Show me the coverage stats", "expected_tool_match": "ivy_coverage"},
+    {"prompt": "Run ivy_iut_test against frr_bgp", "expected_tool_match": "ivy_iut_test → G5, not G4"},
+    {"prompt": "Read the verified file's contents", "expected_tool_match": "Read"},
+    {"prompt": "Show ivy_status mode=health", "expected_tool_match": "ivy_status"},
+    {"prompt": "Edit the spec to add a require", "expected_tool_match": "Edit on *.ivy → G2"},
+    {"prompt": "Search for 'assume true' across the workspace", "expected_tool_match": "Grep"},
+    {"prompt": "Open quic_connection.ivy", "expected_tool_match": "Read"},
+    {"prompt": "List the available IUTs for BGP", "expected_tool_match": "no tool match"}
+  ]
+}

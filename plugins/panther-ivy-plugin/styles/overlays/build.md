@@ -8,6 +8,7 @@
 ## Mandatory Sections
 - **Layer Progress** -- table from build-state.yaml showing status per layer
 - **Current Layer** -- what's being worked on, dependencies satisfied
+- **Gate verdict** -- present when a G1 (post-blueprint), G2 (post-layer-write), or G3 (post-test-spec-write) gate has fired this turn; see `tool-renderers/ivy_verdict.md` for the block format. Place after "Current Layer" and before "Next Steps".
 - **Next Steps** -- next layer in dependency order
 
 ## Tool Presentation

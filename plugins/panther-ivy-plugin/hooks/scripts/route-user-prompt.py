@@ -177,6 +177,43 @@ def main() -> None:
         skill_list = ", ".join(learning_skills)
         parts.append(f"[ROUTING:KNOWLEDGE] Load knowledge skills: {skill_list}")
 
+    # G1 exploration gate: fires when the build workflow is in phase
+    # "blueprint-done". The directive below instructs Claude to dispatch G1
+    # critics before advancing to Phase 3 (Write). Phase transition is the
+    # idempotency mechanism — after Claude runs the gate and moves phase
+    # forward, subsequent UserPromptSubmit turns will not re-emit the
+    # directive.
+    if active_workflow_name == "build" and active and active.get("phase") == "blueprint-done":
+        if protocol_dir:
+            append_journal_event(
+                protocol_dir,
+                event_type="gate_dispatched",
+                payload={
+                    "gate": "g1",
+                    "trigger": "route-user-prompt.py",
+                },
+                workflow="build",
+                phase=active.get("phase"),
+            )
+        parts.append(
+            "[G1 exploration gate] Build phase is `blueprint-done`. Before advancing to Phase 3 (Write), "
+            "dispatch the G1 exploration gate: (1) load the `reflection-patterns` skill via the Skill tool, "
+            "(2) read the G1 verbatim critic template at `critic_prompts/g1_exploration.md` within that skill, "
+            "(3) apply the discipline-layer rules (verbatim prompts, dual context isolation, asymmetric vote "
+            "3-of-3 for Opus default / 4-of-5 for Sonnet, pigeonhole exit, calibrated abstention), "
+            "(4) each critic must load the `ivy-error-patterns` skill and apply ID ranges #100-149 + "
+            "#150-199 (if NACT) + #250-299, (5) aggregate into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN, "
+            "(6) on UNSOUND write `[GAP:]` markers per `.claude/rules/gap-markers.md` (use `# [GAP: …]` "
+            "YAML-comment form when annotating `build-state.yaml`; never insert bare `[GAP:]` tokens into "
+            "YAML structure), (7) append a `gate_verdict` event to the workflow journal via "
+            "`ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`, "
+            "(8) render the verdict block per `styles/tool-renderers/ivy_verdict.md`. Only advance the build "
+            "phase past `blueprint-done` on VERDICT_SOUND."
+        )
+
+    if not parts:
+        return
+
     emit_hook_output("UserPromptSubmit", additional_context="\n".join(parts))
 
 

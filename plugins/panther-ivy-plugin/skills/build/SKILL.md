@@ -7,7 +7,7 @@ description: "Multi-session protocol model construction from RFC to formal Ivy m
 
 This workflow's output formatting is managed by the style system.
 Follow the style directives injected via `additionalContext` -- they contain
-your active workflow overlay and phase modifier. Do not invent your own
+the active workflow overlay and phase modifier. Do not invent
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
 ## Iron Law
@@ -71,13 +71,25 @@ digraph build_flow {
 
 # Build Workflow
 
-Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.
+Read `.panther-ivy/active-workflow` on every turn to determine the current phase. Update the phase field on transition.
+
+## Adversarial Quality Gates
+
+This workflow fires three adversarial quality gates during its lifecycle. Each gate dispatches context-isolated critics with verbatim prompts from the `reflection-patterns` skill and produces a calibrated verdict (`SOUND` / `UNSOUND(#NN, …)` / `ABSTAIN`) persisted to the workflow journal as a `gate_verdict` event.
+
+| Gate | Fires | Artifact | Template |
+|---|---|---|---|
+| G1 exploration | After Phase 2 (blueprint), before Phase 3 | `build-state.yaml` + RFC scope | `reflection-patterns` → `critic_prompts/g1_exploration` |
+| G2 modeling | PostToolUse on `Write\|Edit` of `*.ivy` (excluding `*_test_*.ivy`) during Phase 3 | The just-written layer file | `reflection-patterns` → `critic_prompts/g2_modeling` |
+| G3 test-spec | PostToolUse on `Write\|Edit` of `*_test_*.ivy` during Phase 3 | The just-written test spec | `reflection-patterns` → `critic_prompts/g3_testspec` |
+
+See `reflection-patterns` for the discipline contracts (verbatim prompts, dual context isolation, asymmetric vote, pigeonhole exit), the catalog pointer (`ivy-error-patterns` skill), and the `.claude/rules/gap-markers.md` convention for `[GAP: #NN]` markers the orchestrator writes on `UNSOUND` verdicts.
 
 ## Journal Requirements
 
 Throughout this workflow, record state changes to the workflow journal:
 
-- **Decisions**: When you make or confirm a design/implementation choice (e.g., deferring a requirement, choosing layer order, selecting methodology), immediately call:
+- **Decisions**: When making or confirming a design/implementation choice (e.g., deferring a requirement, choosing layer order, selecting methodology), immediately call:
   `ivy_workflow_state(action="append_journal", protocol="<protocol>", event_type="decision", state='{"summary": "<what was decided>", "context": "<why>"}')`
 
 - **Progress**: After completing a meaningful sub-step (e.g., "compiled 3/8 layers", "fixed 2 verification failures"), call:
@@ -184,6 +196,10 @@ decisions:
 
 Update phase to `"blueprint-done"` via `ivy_workflow_state(action="set", workflow="build", phase="blueprint-done", protocol="<protocol>")`.
 
+### G1 Exploration Gate
+
+After the phase is set to `"blueprint-done"`, the G1 exploration gate fires (either via the `route-user-prompt.py` hook's post-blueprint branch or by the workflow inline invoking `reflection-patterns` Pattern B with the G1 verbatim template). Proceed to Phase 3 only on `VERDICT_SOUND`. On `VERDICT_UNSOUND`, resolve the cited `[GAP: #NN]` markers in `build-state.yaml` or the scope notes and re-run the gate. On `VERDICT_ABSTAIN`, surface the abstention reason and decide: collect more evidence, escalate to Opus tier, or accept + promote relevant GAPs to `// DEFERRED` before proceeding.
+
 ---
 
 ## Phase 3 — Write
@@ -192,11 +208,19 @@ Load `references/layer-scaffolding.md` for the full per-layer scaffolding proced
 
 1. Load `ivy-writing-guide` skill
 2. Write ONE layer at a time in dependency order; run `ivy_compile` after each
-3. On compile error: dispatch `spec-analyst`, fix inline, loop until clean
+3. On compile error: dispatch `spec-analyst`, fix inline, recompile — bounded to **5 attempts per layer**. If the layer still fails to compile after 5 attempts, stop looping and escalate to the user: "This layer has systematic issues — 5 compile attempts have not resolved it. Recommend re-examining the blueprint (Phase 2) or the upstream layer's interface." Silent retry past the cap is the pattern `#403` (error whitelisting) exists to discourage.
 4. On compile success: update `build-state.yaml` layer status
 5. Reflection Gate every 3 layers
 6. Handle type propagation via `propagation-patterns` skill if needed
 7. Knowledge Gate on completion of all layers
+
+### G2 / G3 Gates Fire Per-File
+
+After each `Write`/`Edit` on a `.ivy` file, a PostToolUse hook spawns critics from the `reflection-patterns` skill:
+- `*.ivy` (non-test): G2 modeling critics (catalog slice `#200-249` + `#250-299` + NSCT `#260-289`).
+- `*_test_*.ivy`: G3 test-spec critics (catalog slice `#200-208` + `#256-259` + `#300-399`).
+
+On `VERDICT_UNSOUND`, the orchestrator writes `[GAP: #NN <reason>]` markers inline at the cited locations. Do not proceed to the next layer until each `[GAP:]` is either fixed or deliberately promoted to `// DEFERRED YYYY-MM-DD: …` per the `.claude/rules/gap-markers.md` convention. On `VERDICT_ABSTAIN`, the verdict lands silently in the workflow journal; read it at the next Reflection Gate.
 
 ---
 
@@ -297,15 +321,15 @@ On session resume, actual progress is inferred from the file system: which `.ivy
 
 ## Background Compilation
 
-When `ivy_compile` would block for minutes, you can run it in a background subagent and continue productive work in the main conversation.
+When `ivy_compile` would block for minutes, run it in a background subagent while productive work continues in the main conversation.
 
 ### When to Use
 
 - The model is large and compilation historically takes >60s
 - There are independent tasks remaining (writing the next layer's scaffold, reviewing existing layers, running diagnostics on other files)
-- The current layer's implementation is complete and you're waiting on compile confirmation
+- The current layer's implementation is complete and the compile confirmation is pending
 
-Do NOT background when: you need the compile result to proceed (e.g., diagnosing a compile error inline), or when writing a single small layer where the compile is fast.
+Do NOT background when: the next step requires the compile result (e.g., diagnosing a compile error inline), or when writing a single small layer where the compile is fast.
 
 ### How to Background
 
@@ -339,7 +363,7 @@ Avoid calling `ivy_verify` or `ivy_compile` in the main conversation while a bac
 When the background agent completes, read its result and integrate into the current workflow phase:
 
 - **SUCCESS**: Update `build-state.yaml` layer status, proceed to next layer or Phase 4
-- **FAILURE**: Dispatch `spec-analyst` with the error output, fix inline, recompile (synchronously, since you need the feedback loop)
+- **FAILURE**: Dispatch `spec-analyst` with the error output, fix inline, recompile (synchronously, since the feedback loop is needed)
 - **ERROR/TIMEOUT**: Report to user, offer to retry synchronously
 
 The staleness rule still applies: if the `.ivy` file was edited after the background compilation started, the result is stale and must be re-run.

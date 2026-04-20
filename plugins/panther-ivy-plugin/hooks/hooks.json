@@ -107,6 +107,31 @@
         ]
       },
       {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/assess-modeling.py",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/assess-testspec.py",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "ivy_iut_test",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/assess-trace.py",
+            "timeout": 15
+          }
+        ]
+      },
+      {
         "matcher": "ivy_verify|ivy_coverage|ivy_extract_requirements|ivy_quality",
         "hooks": [
           {

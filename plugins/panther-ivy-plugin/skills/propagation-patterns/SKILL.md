@@ -39,37 +39,7 @@ To add a new scalar field to a struct type:
 
 ### MiniP Concrete Example
 
-In `ping_ser.ivy`, the `ping_s_init` case transitions directly to `ping_s_payload` (`state = ping_s_payload`). The `ping_s_payload` state has no `set()` case — it is a sentinel for `open_tag()`/`close_tag()`.
-
-To add `seq_num : byte` between packet header and payload:
-
-**Enum change:**
-```cpp
-// Before:
-enum {ping_s_init, ping_s_frame, ping_s_time, ping_s_payload} state;
-// After:
-enum {ping_s_init, ping_s_seq_num, ping_s_frame, ping_s_time, ping_s_payload} state;
-```
-
-**Init transition change:**
-```cpp
-// Before (in ping_s_init case):
-state = ping_s_payload;
-// After:
-state = ping_s_seq_num;
-```
-
-**New case:**
-```cpp
-case ping_s_seq_num:
-{
-    setn(res, 1);
-    state = ping_s_payload;
-}
-break;
-```
-
-**Deserializer:** Mirror the above changes using `getn(res, 1)`. Also check and update `payload_length` if hardcoded (MiniP has `payload_length = 12`).
+For the MiniP Add-Field worked example with enum, init-transition, new case, and deserializer mirror, see `references/minip-examples.md`.
 
 ## Add-Variant Pattern
 
@@ -95,45 +65,7 @@ To add a new frame variant to a variant type:
 
 ### MiniP Variant Example
 
-To add an `error` frame variant to `frame` (in `ping_frame.ivy`) with `error_code : byte`:
-
-**Ivy definition (add after the `timestamp` object):**
-```ivy
-    # (0x04)
-    object error = {
-        variant this of frame = struct {
-            error_code : byte
-        }
-    }
-```
-
-**Serializer `open_tag()` (add after tag 2 block):**
-```cpp
-else if (tag == 3) {
-    state = ping_s_error;
-    frame_type = 0x04;
-}
-```
-
-**Serializer enum + set():**
-```cpp
-// Add to enum:
-ping_s_error
-// Add case:
-case ping_s_error:
-{
-    setn(res, 1);
-}
-break;
-```
-
-**Deserializer `open_tag()` (add after frame_type 0x03 block):**
-```cpp
-if (frame_type == 0x04) {
-    state = ping_s_error;
-    return 3;
-}
-```
+For the MiniP Add-Variant worked example with Ivy definition, tag dispatch in serializer and deserializer, and state transitions, see `references/minip-examples.md`.
 
 ## Ser/Deser Asymmetry Warnings
 
@@ -144,3 +76,13 @@ These asymmetries apply across all protocols. Always check for them:
 - **State count differences.** State counts may differ between ser and deser (e.g., QUIC: 55 ser states vs 53 deser states). Do not assume they match.
 - **Counter management.** The `data_remaining` counter management differs between ser and deser for variable-length fields.
 - **Hardcoded constants (MiniP-specific).** The MiniP deserializer has `payload_length = 12` (hardcoded wire length) and `current_ping_size == 5` (iteration cap). These are semantic values that `ivyc` compilation cannot validate. Adding a field or variant may require updating them. Always flag hardcoded integer literals in the deser's `set()`/`get()`/`open_list_elem()` methods for user review.
+
+## Integration
+
+- **LOADED BY:** build workflow (Phase 3 Write when a type change affects serializers across layers), verify workflow (Phase 6 Diagnose when a failure traces to an asymmetry between ser and deser).
+- **CALLS:** `ivy_propagation(mode="impact", type_name=<name>, change_type=<add_field|add_variant>)` as the authoritative impact source.
+
+**Related skills:**
+- **`specification-patterns`** — 14-layer template and where serializer files sit in it.
+- **`ivy-writing-guide`** — `references/serializer-patterns.md` for the C++ state-machine internals.
+- **`ivy-toolkit`** — `ivy_propagation` tool parameters.

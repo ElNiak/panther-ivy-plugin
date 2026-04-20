@@ -8,6 +8,7 @@
 ## Mandatory Sections
 - **Verification Results** -- always present, pass/fail per isolate
 - **Failure Details** -- only if failures exist, one entry per failure
+- **Gate verdict** -- present when a G4 (post-`ivy_verify`) or G5 (post-`ivy_iut_test`) gate has fired this turn; see `tool-renderers/ivy_verdict.md` for the block format. Place after "Failure Details" and before "Next Steps".
 - **Next Steps** -- from base, but scoped to verification actions only
 
 ## Tool Presentation

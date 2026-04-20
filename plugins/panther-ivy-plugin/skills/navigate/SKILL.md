@@ -7,7 +7,7 @@ description: "Context-aware routing hub. Use when the user's intent is unclear, 
 
 This workflow's output formatting is managed by the style system.
 Follow the style directives injected via `additionalContext` -- they contain
-your active workflow overlay and phase modifier. Do not invent your own
+the active workflow overlay and phase modifier. Do not invent
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
 ## Anti-Rationalization
@@ -49,7 +49,7 @@ digraph navigate_flow {
 
 # Navigate Workflow
 
-Read `.panther-ivy/active-workflow` on every turn to determine your current phase before proceeding. If the file says you are in a phase, resume that phase directly.
+Read `.panther-ivy/active-workflow` on every turn to determine the current phase before proceeding. If the file names a phase, resume that phase directly.
 
 Navigate is the central hub. Every other workflow returns here on completion. Navigate dispatches to a workflow which eventually returns to navigate — it never returns to itself.
 

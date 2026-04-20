@@ -1,6 +1,6 @@
 ---
 name: methodology-reference
-description: "NCT/NACT/NSCT methodology selection and workflow guidance. Use when starting model construction or choosing a verification approach."
+description: "NCT (compliance) / NACT (security) / NSCT (simulation) methodology selection and workflow guidance. Use when choosing a testing methodology, starting model construction, or mapping RFC requirements to an Ivy testing strategy."
 user-invocable: false
 ---
 
@@ -57,7 +57,7 @@ Specifications use `export` to declare actions that the test mirror generates ra
 
 ### NCT Workflow Summary
 
-See [comprehensive-methodology-detail.md](references/comprehensive-methodology-detail.md) for the full 10-step NCT workflow with tool guidance.
+Load `references/comprehensive-methodology-detail.md` for the full 10-step NCT workflow with tool guidance.
 
 ### Directory Structure
 
@@ -148,7 +148,7 @@ Entity definitions reside in `apt_entities/` with behavioral constraints in `apt
 
 ## NSCT
 
-Simulation-based testing via Shadow Network Simulator. Reuses NCT Ivy specs; difference is `type: shadow_ns` in PANTHER config. Requires `build_mode: ""` (Shadow-compatible). See [comprehensive-methodology-detail.md](references/comprehensive-methodology-detail.md) for topology config examples and NCT vs NSCT comparison.
+Simulation-based testing via Shadow Network Simulator. Reuses NCT Ivy specs; difference is `type: shadow_ns` in PANTHER config. Requires `build_mode: ""` (Shadow-compatible). Load `references/comprehensive-methodology-detail.md` for topology config examples and NCT vs NSCT comparison.
 
 ### NSCT Checkpoints
 
@@ -264,7 +264,7 @@ after frame.ack.handle(f) {
 
 ## Verification Workflow
 
-See [comprehensive-methodology-detail.md](references/comprehensive-methodology-detail.md) for failure patterns, debugging cycle, common errors, and verification checkpoints.
+Load `references/comprehensive-methodology-detail.md` for failure patterns, debugging cycle, common errors, and verification checkpoints.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: reflection-patterns
-description: "Structured interaction templates (Reflection Gate, Multi-Perspective, Briefing). Use when a workflow skill calls this skill at a phase boundary for user input."
+description: "Structured interaction templates (Reflection Gate, Multi-Perspective Exploration, Situation Briefing, Completion Verification Gate) and the adversarial quality-gate discipline layer. Use when a workflow skill reaches a phase boundary needing user input, or when dispatching G1-G5 adversarial critics."
 user-invocable: false
 context: fork
 ---
@@ -131,6 +131,85 @@ A mandatory gate before any workflow transitions to complete or returns to navig
 3. **Coverage delta** — If the workflow added monitors or assertions, run `ivy_coverage(mode="stats")` and confirm coverage did not regress.
 
 4. **Gate**: Only transition to complete if all three pass. If any fails, stay in current phase and report the failure to the user.
+
+---
+
+## Adversarial Quality Gates (G1–G5) — Discipline Layer atop MPE/CVG
+
+Pattern B (MPE) and Pattern D (CVG) provide the dispatch substrate for the plugin's adversarial quality gates. Five gates fire at lifecycle decision points and produce calibrated verdicts (`SOUND` / `UNSOUND(#NN, …)` / `ABSTAIN`) instead of free-form analysis. Each gate uses a context-isolated MPE fan-out with four discipline contracts that bind how critics are spawned and how their votes are aggregated.
+
+### The five gates
+
+| # | Gate | Lifecycle step | Workflow + insertion | Hook event |
+|---|---|---|---|---|
+| G1 | exploration | scope + blueprint | `build` after Phase 2, before Phase 3 | UserPromptSubmit + post-blueprint |
+| G2 | per-layer modeling | each `.ivy` layer write | `build` Phase 3 | PostToolUse on `Write\|Edit` of `*.ivy` |
+| G3 | test-spec | each test-spec write | `build` Phase 3 (test sub-step) | PostToolUse on `Write\|Edit` of `*_test_*.ivy` |
+| G4 | verification | after `ivy_verify` returns | `verify` Phase 4 | PostToolUse on `ivy_verify` |
+| G5 | trace analysis | after `ivy_iut_test` returns | `verify` Phase 5 | PostToolUse on `ivy_iut_test` |
+
+### The four discipline contracts
+
+These are the constraints that turn an MPE fan-out into an adversarial quality gate. The orchestrator (the workflow phase code or the wiring hook) MUST honor all four.
+
+1. **Verbatim spawn prompts.** Load the per-gate critic prompt template from `references/critic_prompts/g{N}.md` and pass it to the `Agent` tool unmodified. Do not paraphrase, do not concatenate with chat history, do not synthesize an alternative. The first three paragraphs of every template are load-bearing — a session that rewrites them produces critics that grind and confidently get wrong answers.
+
+2. **Dual context isolation.** Each critic sees only `(RFC clause(s) + the artifact + the catalog slice)`. It does not see the chat history, the design rationale, or sibling critics' verdicts. The orchestrator's spawn prompt is built from a single template render — no concatenation of upstream conversation.
+
+3. **Asymmetric vote with pigeonhole exit.** Aggregate critic verdicts using the gate's tier configuration (see `references/model_tier_defaults.md`). Default Sonnet × 5: `≥4 SOUND` → `VERDICT_SOUND`; `≥2 UNSOUND` → `VERDICT_UNSOUND`; otherwise → `VERDICT_ABSTAIN`. Stop spawning once a threshold is mathematically locked.
+
+4. **Calibrated abstention as a structured verdict.** `VERDICT_ABSTAIN` is a first-class output, not a fallback to silence. It records which critics said what, why no threshold cleared, and a recommended next step (collect more evidence, consult user, or escalate to Opus).
+
+### Per-gate templates
+
+The five verbatim templates live under `references/critic_prompts/`:
+
+- `g1_exploration.md` — audits `build-state.yaml` + RFC scope; catalog slice `#100-149` + (`#150-199` if NACT) + `#250-299`
+- `g2_modeling.md` — audits a just-written `.ivy` layer file; catalog slice `#200-249` + `#250-299` + (`#260-265` if NSCT)
+- `g3_testspec.md` — audits a `*_test_*.ivy` file with the requirement manifest and coverage matrix; catalog slice `#200-208` + `#256-259` + `#300-399`
+- `g4_verification.md` — audits an `ivy_verify` JSON return + the verified spec; catalog slice `#200-249` + `#250-299` + `#400-499`
+- `g5_trace.md` — audits IUT run artifacts (analysis JSON, Ivy trace, IUT log, pcap); catalog slice `#100-107` + `#500-559` + (`#560-589` if NSCT)
+
+### Tier configuration
+
+`references/model_tier_defaults.md` holds the per-tier and per-gate critic counts and thresholds. The orchestrator reads `CLAUDE_MODEL_TIER` (`haiku` | `sonnet` | `opus`); if unset, defaults to Sonnet.
+
+### Verdict persistence
+
+Two new event types coexist in the workflow journal — no new state file required:
+
+- **`gate_dispatched`** — written by the gate hook (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, the G4 branch of `record-workflow-error.py`, and the G1 branch of `route-user-prompt.py`) at the moment a gate is triggered, before any critic spawns. The breadcrumb lets the journal show which gates fired even if Claude never dispatches the critics. Payload: `{gate, trigger, artifact?, layer?, methodology?, ...}`.
+- **`gate_verdict`** — written by Claude (the orchestrator) after the critic fan-out completes and the asymmetric vote has resolved. Payload schema:
+
+```
+ivy_workflow_state(
+  action="append_journal",
+  workflow=<active workflow>,
+  phase=<gate insertion phase>,
+  event_type="gate_verdict",
+  payload={
+    "gate": "g{1..5}",
+    "verdict": "SOUND" | "UNSOUND" | "ABSTAIN",
+    "vote": {"sound": int, "unsound": int, "unsure": int},
+    "patterns": [{"id": "#NN", "file": "...", "line": int, "reason": "..."}],
+    "abstain_reason": "..." | null,
+    "tier": "haiku|sonnet|opus",
+    "duration_s": float
+  }
+)
+```
+
+Both types appear alongside the existing `phase_transition`, `context_switch`, `error`, `decision`, `progress`, `session_start`, `session_end`. They are whitelisted in `_VALID_EVENT_TYPES` in both the local `workflow_state.py` helper and the MCP tool's `workflow_state.py` so writes are accepted.
+
+### GAP markers
+
+On `VERDICT_UNSOUND`, the orchestrator (never a critic) writes `[GAP: #NN <reason>]` markers inline at the cited file:line locations using `Edit`. The full convention — relationship to existing `claim-discussion` resolution prefixes (`RESOLVED`, `IUT_FINDING`, `DEFERRED`, `GUARD_ADDED`, `KNOWN_DEVIATION`, `N/A`), promotion rules, and listing/grep commands — lives in `.claude/rules/gap-markers.md`.
+
+### Catalog
+
+The `ivy-error-patterns` skill owns the numbered, append-only catalog (`verifier_patterns.md`). Sparse IDs preserve provenance; do not renumber. NACT entries (#150-199) load when `build-state.yaml:methodology` is `nact`; NSCT entries (#260-289 and #560-589) load when methodology is `nsct`.
+
+Cross-skill access: each critic's verbatim spawn prompt instructs the critic to load the `ivy-error-patterns` skill via the Skill tool, which makes the catalog available. The critic then reads only entries in its assigned ID range. The spawning agent must have the Skill tool and `ivy-error-patterns` available — either through its `subagent_type` tool set or by declaring `skills: [ivy-error-patterns]` in the agent's frontmatter.
 
 ---
 

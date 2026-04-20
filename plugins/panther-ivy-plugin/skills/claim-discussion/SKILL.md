@@ -19,6 +19,8 @@ Structured discussion templates for resolving verification claims, RFC mapping d
 | `ivy_extract_requirements` or RFC mapping | `references/mapping-claim.md` |
 | `ivy_coverage(mode="gaps")` shows uncovered reqs | `references/coverage-claim.md` |
 
+After identifying the matching trigger above, Load the corresponding file: `references/verification-claim.md`, `references/mapping-claim.md`, or `references/coverage-claim.md`.
+
 ## Persistence — Inline Resolution Comments
 
 All claim discussion outcomes are recorded as inline comments in `.ivy` files:

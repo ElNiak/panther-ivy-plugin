@@ -89,3 +89,14 @@ If the fix introduces new errors, return to Step 1 for the new error.
 
 For C++ serializer state machine issues (wrong bytes on wire, `deser_err` throws, state machine stuck),
 load the `ivy-writing-guide` skill and read `references/serializer-patterns.md`.
+
+## Integration
+
+- **LOADED BY:** verify workflow (Phase 6 Diagnose), spec-analyst agent (compile error diagnosis), model-reviewer agent (when failures are flagged).
+- **PRECEDES:** the G4 verification gate cites the six mandatory pre-fix steps here (catalog entry `#405`); fixes proposed without these steps are UNSOUND by gate criteria.
+
+**Related skills:**
+- **`ivy-error-patterns`** — Error message lookup table and the numbered catalog this methodology cites.
+- **`counterexample-guide`** — Trace interpretation for verification failures (Step 1 / Step 2 consume its output).
+- **`ivy-writing-guide`** — Language reference consulted in Step 3.
+- **`ivy-toolkit`** — MCP tool inventory consulted in Step 4.

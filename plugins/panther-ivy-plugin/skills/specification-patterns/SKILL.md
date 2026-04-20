@@ -160,7 +160,7 @@ protocol-testing/{prot}/
 
 ## Formal Model Pattern Library
 
-7 recurring patterns across PANTHER Ivy protocol models (QUIC, BGP, CoAP, MiniP). See `references/pattern-library-detail.md` for full code examples and decision points.
+7 recurring patterns across PANTHER Ivy protocol models (QUIC, BGP, CoAP, MiniP). Load `references/pattern-library-detail.md` for full code examples and decision points.
 
 ### Pattern Overview
 
@@ -187,11 +187,11 @@ module (no deps)
 
 **Scaffolding order**: variants -> entity -> module -> serdes -> monitors -> shim
 
-See [pattern-library-detail.md](references/pattern-library-detail.md) for composition rules and detailed patterns.
+Load `references/pattern-library-detail.md` for composition rules and detailed patterns.
 
 ## Reference Files
 
-- **references/pattern-library-detail.md** -- Full formal model pattern library with code examples
+Load `references/frame-queuing-pattern.md` for the frame-queuing composition pattern (building composite protocol messages with sub-element arrays).
 
 ## Integration
 

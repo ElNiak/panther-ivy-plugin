@@ -28,6 +28,8 @@ _VALID_EVENT_TYPES = frozenset({
     "progress",
     "error",
     "context_switch",
+    "gate_dispatched",
+    "gate_verdict",
 })
 
 

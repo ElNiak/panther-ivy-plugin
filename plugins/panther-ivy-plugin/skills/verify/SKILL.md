@@ -7,7 +7,7 @@ description: "Test-compile-execute cycle with failure diagnosis. Use when the us
 
 This workflow's output formatting is managed by the style system.
 Follow the style directives injected via `additionalContext` -- they contain
-your active workflow overlay and phase modifier. Do not invent your own
+the active workflow overlay and phase modifier. Do not invent
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
 ## Iron Law
@@ -63,13 +63,24 @@ digraph verify_flow {
 
 # Verify Workflow
 
-Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.
+Read `.panther-ivy/active-workflow` on every turn to determine the current phase. Update the phase field on transition.
+
+## Adversarial Quality Gates
+
+This workflow fires two adversarial quality gates during its lifecycle. Each gate dispatches context-isolated critics with verbatim prompts from the `reflection-patterns` skill and produces a calibrated verdict (`SOUND` / `UNSOUND(#NN, …)` / `ABSTAIN`) persisted to the workflow journal as a `gate_verdict` event.
+
+| Gate | Fires | Artifact | Template |
+|---|---|---|---|
+| G4 verification | PostToolUse on `ivy_verify` (Phase 4) | The `ivy_verify` JSON return + the verified spec | `reflection-patterns` → `critic_prompts/g4_verification` |
+| G5 trace analysis | PostToolUse on `ivy_iut_test` (Phase 5) | Run summary + Ivy trace + IUT log + pcap | `reflection-patterns` → `critic_prompts/g5_trace` |
+
+G4's load-bearing purpose is to catch false `SOUND` — `ivy_verify` returning `status: OK` when the proof obligation collapsed via unsound `assume`, trusted-isolate leakage, or solver-wall timeout masqueraded as pass. G5's purpose is to distinguish an IUT bug from a model bug in the IUT run's trace and pcap. See `reflection-patterns` for the discipline contracts, the catalog pointer (`ivy-error-patterns` skill), and `.claude/rules/gap-markers.md` for the `[GAP: #NN]` marker convention.
 
 ## Journal Requirements
 
 Throughout this workflow, record state changes to the workflow journal:
 
-- **Decisions**: When you make or confirm a design/implementation choice (e.g., deferring a requirement, choosing layer order, selecting methodology), immediately call:
+- **Decisions**: When making or confirming a design/implementation choice (e.g., deferring a requirement, choosing layer order, selecting methodology), immediately call:
   `ivy_workflow_state(action="append_journal", protocol="<protocol>", event_type="decision", state='{"summary": "<what was decided>", "context": "<why>"}')`
 
 - **Progress**: After completing a meaningful sub-step (e.g., "compiled 3/8 layers", "fixed 2 verification failures"), call:
@@ -178,6 +189,15 @@ Run the compiled test:
 ivy_verify(relative_path=<test_file>)
 ```
 
+### G4 Verification Gate Fires After `ivy_verify` Returns
+
+Regardless of `ivy_verify` pass/fail, a PostToolUse hook spawns G4 verification critics from the `reflection-patterns` skill with catalog slice `#200-249` + `#250-299` + `#400-499`. The critics audit whether `status: OK` (or `FAIL`) reflects genuine soundness: they scan the diff for whitelisted errors (`#403`), flag unsound `assume` collapses (`#401`), trusted-isolate NativeAction leaks (`#402`, `#207`), and solver-wall-masquerading-as-sound (`#404` — `duration_s` near `timeout`).
+
+Gate verdict handling:
+- **`VERDICT_SOUND`**: treat `ivy_verify` result as authoritative, advance the workflow.
+- **`VERDICT_UNSOUND`**: the orchestrator writes `[GAP: #NN]` markers at the cited sites. These must be resolved (fix and re-verify) or deliberately promoted to `// DEFERRED YYYY-MM-DD: …` before the workflow treats the verification as conclusive.
+- **`VERDICT_ABSTAIN`**: treat the verdict as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not accept the upstream `ivy_verify` result without a concluding verdict from a subsequent G4 run.
+
 ### On PASS
 
 1. Report: "Verification passed for `<test_file>`."
@@ -246,6 +266,10 @@ Call the MCP tool:
 ivy_iut_test(protocol=<detected>, test_name=<from Phase 2>, iut_name=<selected>)
 ```
 
+### G5 Trace-Analysis Gate Fires After `ivy_iut_test` Returns
+
+After `ivy_iut_test` returns, a PostToolUse hook spawns G5 trace-analysis critics from the `reflection-patterns` skill with catalog slice `#100-107` + `#500-559` (+ NSCT `#560-589` if active). The critics read the run output directory in the mandatory order — `analysis/ivy_tester_results.json` → `logs/ivy_tester/compile/ivy_compile.log` (if compilation suspect) → `logs/ivy_tester/ivy_tester.log` → `logs/<iut>/<iut>.log` → `pcaps/*.pcap` via `tshark`. The primary load-bearing check is `#501` (Ivy trace claims event, pcap shows nothing) and `#505` (model bug misattributed to IUT). Critics may NOT re-invoke `ivy_iut_test` — they analyze the existing run only. On `VERDICT_UNSOUND`, GAP markers are written at the cited spec site and the run's reported verdict is considered suspect.
+
 ### On PASS
 
 1. Report: "IUT test passed. `<test_name>` succeeded against `<iut_name>` in {duration_seconds}s."
@@ -287,11 +311,16 @@ Update active-workflow phase to match the outcome: `ivy_workflow_state(action="s
 
 Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures. Summary:
 
-1. Load `counterexample-guide` for trace interpretation
-2. Multi-Perspective Diagnosis (dispatch spec-analyst + 2 Explore agents)
-3. Classify failure: invariant violation, type error, or structural issue
-4. Present diagnosis and ask user: fix or manual?
-5. If fix accepted: apply, re-verify (loop back to Phase 3), knowledge gate on completion
+1. Load `ivy-debugging-methodology` first — its six mandatory pre-fix research steps must complete before any fix is proposed (G4 pattern `#405` fires otherwise)
+2. Load `counterexample-guide` for trace interpretation if a counterexample is present
+3. Multi-Perspective Diagnosis (dispatch spec-analyst + 2 Explore agents)
+4. Classify failure: invariant violation, type error, structural issue, or abstention from the upstream gate
+5. Present diagnosis and ask user: fix or manual?
+6. If fix accepted: apply, re-verify (loop back to Phase 3), knowledge gate on completion
+
+**Iteration cap (important):** The fix-and-re-verify loop is bounded. After 5 consecutive fix attempts without reaching a PASS, stop looping and escalate to the user: "This failure appears systematic — 5 fix attempts have not resolved it. Recommend stepping back to design review (switch to `build` workflow) or deferring via `// DEFERRED YYYY-MM-DD: …`." Silent retry past the cap is the exact pattern `#405` / `#403` exist to discourage.
+
+**On VERDICT_ABSTAIN from G4:** Treat as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not treat the upstream `ivy_verify` result as authoritative.
 
 ---
 
@@ -306,7 +335,7 @@ Before completing, apply **Pattern D (Completion Verification Gate)** from the `
 
 ## Background Verification
 
-When `ivy_verify` would block for minutes, you can run it in a background subagent and continue productive work in the main conversation.
+When `ivy_verify` would block for minutes, run it in a background subagent while productive work continues in the main conversation.
 
 ### When to Use
 

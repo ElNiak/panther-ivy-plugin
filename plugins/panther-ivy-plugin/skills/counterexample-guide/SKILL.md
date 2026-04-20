@@ -101,6 +101,17 @@ Look for unguarded state variables or orphaned monitors that relate to the faili
 
 ## Common Failure Patterns
 
+Each of the four patterns below is catalogued (with IDs `#410`–`#413`) in the `ivy-error-patterns` skill for adversarial-gate citation:
+
+| Pattern here | Catalog ID |
+|---|---|
+| Missing Guard | `#410` |
+| Uninitialized State | `#411` |
+| Incorrect Monitor Scope | `#412` |
+| Invariant Too Strong | `#413` |
+
+G4 verification critics and G5 trace critics load the `ivy-error-patterns` skill and cite these IDs when a counterexample classification applies. The text below is the full treatment with fix procedures; catalog entries are the short critic-facing summaries.
+
 ### 1. Missing Guard
 
 **Symptom**: The counterexample reaches an action without a required precondition being true.
@@ -216,20 +227,22 @@ Step 2: connection.handshake_complete
 
 ## Example
 
-See [references/trace-example.md](references/trace-example.md) for a complete end-to-end trace interpretation example.
+Load `references/trace-example.md` for a complete end-to-end trace interpretation example.
 
 ---
 
 ## Integration
 
-- **USED BY:** spec-analyst/model-reviewer agents (typically during orchestrator Phase 4)
+- **USED BY:** spec-analyst/model-reviewer agents (typically during orchestrator Phase 4); G4 verification critics and G5 trace-analysis critics for counterexample classification.
 
 **Prerequisite:** `ivy-writing-guide` -- Understanding Ivy syntax for before/after monitors, invariants, and state variables.
 
 **Related skills:**
 - **methodology-reference** -- General verification debugging cycle and error taxonomy
-- **ivy-toolkit** -- MCP tool documentation (see references/tool-catalog.md)
+- **ivy-toolkit** -- MCP tool documentation
 - **ivy-writing-guide** -- Ivy syntax for before/after monitors, invariants, state variables
+- **ivy-error-patterns** -- Owns the numbered failure-pattern catalog; the four patterns here are catalogued as `#410`–`#413`
+- **reflection-patterns** -- Adversarial-gate discipline layer; G4 and G5 critic templates load this guide for counterexample classification
 
 **Related agents:**
 - **spec-analyst** -- Automated verification and diagnosis

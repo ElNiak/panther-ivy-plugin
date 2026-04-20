@@ -1,19 +1,31 @@
 ---
 name: ivy-error-patterns
-description: "Error-to-fix lookup table for cryptic Ivy messages. Use when encountering \"not found\", \"ungrounded\", \"invariant failed\", \"type mismatch\", or any Ivy error."
+description: "Numbered verifier-patterns catalog and Ivy error lookup. Use when encountering Ivy errors (\"not found\", \"ungrounded\", \"invariant failed\", \"type mismatch\") or when an adversarial gate cites a catalog pattern #NN that needs interpretation."
 user-invocable: false
 ---
 
-# Ivy Error Patterns Reference
+# Ivy Error Patterns & Verifier Catalog
 
-Lookup table for Ivy error messages. Each entry maps a cryptic error to its root cause and the correct fix.
+This skill owns two related reference files:
+
+- **`references/verifier_patterns.md`** — the numbered, append-only catalog cited by adversarial quality gates G1–G5. Each entry carries a sparse ID preserving source provenance, a trigger condition, a check procedure, a source citation, and a methodology tag (`NCT` | `NACT` | `NSCT` | `Ivy` | `Plugin-Memory`).
+- **`references/error-table.md`** — the legacy 12-entry quick-lookup table for cryptic Ivy error messages, kept for fast-path debugging.
 
 ## How to Use
 
-1. Find the error message substring in the headings of `references/error-table.md`
-2. Read the root cause and correct pattern
-3. Check the working example to confirm the fix matches existing conventions
-4. Apply the fix
+**When debugging a cryptic Ivy error message** (e.g., you just saw `'X' not found` or `ungrounded variable` in compiler output):
+
+1. Load `references/error-table.md` and find the error substring in its headings.
+2. Read the root cause and correct pattern.
+3. Check the working example to confirm the fix matches existing conventions.
+4. Apply the fix.
+
+**When an adversarial gate cites a catalog pattern** (e.g., a `[GAP: #250 missing re-entry guard]` marker appears in a spec, or a `gate_verdict` event names `#401`):
+
+1. Load `references/verifier_patterns.md` and locate the entry by ID.
+2. Read the trigger, what to check, and the cited source.
+3. If the source is a `feedback_*` memory ID, consult the plugin memory for additional context.
+4. Apply the fix pattern in place.
 
 ## Top 5 Most Common Errors (Quick Reference)
 
@@ -25,10 +37,27 @@ Lookup table for Ivy error messages. Each entry maps a cryptic error to its root
 | `assumption failed` | Isolate assumption not satisfied by spec | Run `ivy_model_info`, check assumed isolate's guarantees |
 | Missing `after init` | Relations start with arbitrary values | Add `after init { rel(X) := false; }` block |
 
-For the full 12-entry lookup table with code examples and working references, see `references/error-table.md`.
+## Catalog overview
+
+`references/verifier_patterns.md` organizes entries by lifecycle-gate ID range:
+
+| Range | Gate(s) | Topic |
+|---|---|---|
+| #100-149 | G1, G5 | NCT base lifecycle failures |
+| #150-199 | G1 | NACT attacker-model and mutation failures (NACT overlay) |
+| #200-249 | G2, G3, G4 | Ivy decidability and testing-tutorial patterns |
+| #250-299 | G2, G3, G4 | Plugin-memory migrations |
+| #260-289 | G2 | NSCT timer and topology (NSCT overlay) |
+| #300-399 | G3 | Test-spec authoring patterns |
+| #400-499 | G4 | Verification verdict patterns |
+| #500-559 | G5 | Trace-analysis patterns |
+| #560-589 | G5 | NSCT replay and syscall (NSCT overlay) |
+
+Each gate loads only its range slice plus the methodology overlay indicated by `build-state.yaml:methodology`. See `references/verifier_patterns.md` for the per-gate slice list.
 
 ## Related
 
-- **`ivy-writing-guide`** — Language reference for correct patterns
-- **`ivy-debugging-methodology`** — Pre-fix research workflow (run BEFORE applying fixes from this table)
-- **`counterexample-guide`** — Trace interpretation for verification failures
+- **`ivy-writing-guide`** — Language reference for correct patterns.
+- **`ivy-debugging-methodology`** — Pre-fix research workflow (run BEFORE applying fixes).
+- **`counterexample-guide`** — Trace interpretation for verification failures; its four named patterns are catalogued as #410-413.
+- **`reflection-patterns`** — Adversarial-gate discipline layer; references this catalog from every gate's critic prompt.

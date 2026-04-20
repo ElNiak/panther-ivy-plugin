@@ -1,14 +1,14 @@
 {
   "workflows": {
     "verify": {
-      "keywords": ["verify", "check", "test", "pass", "fail", "debug", "counterexample", "invariant violation", "ivy_check", "ivy_verify", "compile error", "verification", "unsatisfied", "safety property"],
-      "intentPatterns": ["(does|did|will).*pass", "(why|what).*fail", "run.*test", "\\bfix\\b.*\\.(ivy)\\b", "error.*(line|ivy)", "check.*spec"],
+      "keywords": ["verify", "check", "test", "pass", "fail", "debug", "counterexample", "invariant violation", "ivy_check", "ivy_verify", "compile error", "verification", "unsatisfied", "safety property", "is this sound", "real verify", "adversarial check", "interpret this counterexample", "audit verification", "false sound", "spurious pass"],
+      "intentPatterns": ["(does|did|will).*pass", "(why|what).*fail", "run.*test", "\\bfix\\b.*\\.(ivy)\\b", "error.*(line|ivy)", "check.*spec", "is\\s+this\\s+(actually\\s+)?sound", "did.*verify.*for.*right.*reason", "interpret.*(this\\s+)?counterexample", "(model|IUT)\\s+bug"],
       "fileTriggers": ["*.ivy"],
       "priority": "high"
     },
     "build": {
-      "keywords": ["build", "scaffold", "create", "model", "add pattern", "propagate", "new spec", "write spec", "add layer", "new protocol", "implement", "extend"],
-      "intentPatterns": ["(create|build|write|design|implement|start).*?(model|spec|protocol|layer)", "(add|implement).*?(layer|pattern|frame|type|action)", "RFC\\s*\\d+.*model"],
+      "keywords": ["build", "scaffold", "create", "model", "add pattern", "propagate", "new spec", "write spec", "add layer", "new protocol", "implement", "extend", "audit this layer", "audit this blueprint", "is this blueprint complete", "gate this layer"],
+      "intentPatterns": ["(create|build|write|design|implement|start).*?(model|spec|protocol|layer)", "(add|implement).*?(layer|pattern|frame|type|action)", "RFC\\s*\\d+.*model", "audit.*(layer|blueprint|model)", "is\\s+this\\s+(layer|blueprint|test\\s*spec)\\s+(sound|complete)"],
       "fileTriggers": ["*.ivy"],
       "priority": "medium"
     },

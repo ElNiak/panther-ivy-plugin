@@ -7,7 +7,7 @@ description: "Quality and coverage auditing for Ivy models. Use when the user as
 
 This workflow's output formatting is managed by the style system.
 Follow the style directives injected via `additionalContext` -- they contain
-your active workflow overlay and phase modifier. Do not invent your own
+the active workflow overlay and phase modifier. Do not invent
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
 ## Iron Law
@@ -46,13 +46,13 @@ Do not skip marking tasks as `completed`.
 
 # Review Workflow
 
-Read `.panther-ivy/active-workflow` on every turn to determine your current phase. Update the phase field as you transition.
+Read `.panther-ivy/active-workflow` on every turn to determine the current phase. Update the phase field on transition.
 
 ## Journal Requirements
 
 Throughout this workflow, record state changes to the workflow journal:
 
-- **Decisions**: When you make or confirm a design/implementation choice (e.g., deferring a requirement, choosing layer order, selecting methodology), immediately call:
+- **Decisions**: When making or confirming a design/implementation choice (e.g., deferring a requirement, choosing layer order, selecting methodology), immediately call:
   `ivy_workflow_state(action="append_journal", protocol="<protocol>", event_type="decision", state='{"summary": "<what was decided>", "context": "<why>"}')`
 
 - **Progress**: After completing a meaningful sub-step (e.g., "compiled 3/8 layers", "fixed 2 verification failures"), call:
