@@ -23,6 +23,8 @@ TaskCreate(subject="Check workspace indexing", activeForm="Checking indexing")
 
 Read `.panther-ivy/active-workflow` on every turn to determine the current phase before proceeding.
 
+When invoked with `args="full-health-check"` (for example, from the `/nct-health` slash command), follow the 9-step validation runbook in `references/full-health-check.md` instead of the quick Phase 1-3 cycle below. The deep runbook is the `/nct-health` replacement; the quick cycle below remains the default for preflight and restart scenarios.
+
 ## Journal Requirements
 
 Throughout this workflow, record state changes to the workflow journal:
