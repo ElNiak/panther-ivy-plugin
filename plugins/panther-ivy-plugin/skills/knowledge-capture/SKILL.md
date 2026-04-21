@@ -102,6 +102,53 @@ For each user response:
 
 At the start of each gate (before Step 2), check the most recent digest for `status: deferred` candidates. If found, re-present them in Step 5 alongside any new candidates.
 
+## Plan-Approval Capture Trigger
+
+Fires at session start when the workflow journal contains a `plan_approved` entry that has not yet been paired with a knowledge-capture cycle. Plan-mode sessions produce a distinct class of learnings that don't fit neatly into the general Step 2 reflection — the interesting material is the process of authoring the plan, not the `.ivy` files the plan targets.
+
+### Trigger condition
+
+At session start, before Step 1:
+
+1. Read the last 20 journal entries via `ivy_workflow_state(action="get_journal", protocol="<protocol>", last_n=20)`.
+2. Scan for `plan_approved` entries that do not have a corresponding `knowledge_captured` marker further down the journal.
+3. For each unmatched `plan_approved` entry, run this capture trigger.
+
+### Prompt
+
+Present once per unmatched entry via `AskUserQuestion`:
+
+```
+[Knowledge Gate - Plan Approval]
+Last session approved plan: {plan_file}
+  Supersedes: {N} prior decision(s)
+  Caller workflow: {caller}
+  G0 verdict: {SOUND|UNSOUND|ABSTAIN (cycle N)} — {if unsound, dissenter reasons}
+
+Capture learnings from the plan authoring process?
+  (a) Yes, walk through typical candidate categories
+  (b) No, I'll use /nct-learn manually if something comes up
+  (c) Defer to the next session start
+```
+
+### If user picks (a) — walk through candidate categories
+
+Present each of the three typical plan-mode capture categories in sequence, using Step 5's standard approve / edit / reject / change target / defer options per candidate:
+
+1. **Process gaps uncovered.** Surface points during plan authoring where the plugin's workflow skills or hooks failed to do what they should have (e.g., a gate that didn't fire, a dispatch that was silently skipped, a detection signal that was missed). The 2026-04-21 plan-mode-aware-skills spec itself came out of this category. Candidate text template: "In plan mode, <skill or hook> <failed to do X>. Root cause: <what was missing>. Fix: <what was added or planned>."
+
+2. **Decisions reversed by adversarial review.** Surface load-bearing decisions the plan reversed relative to prior `build-state.yaml` entries, with the reason the reversal survived the G0 critic(s). Candidate text template: "Plan <name> superseded <prior decision> because <reason>. G0 critics confirmed the reversal under slice <catalog IDs>."
+
+3. **Syntax/idiom confirmations from Ivy source inspection.** Surface any Ivy syntax patterns verified against `ivy/include/1.7/` stdlib or the parser source during plan writing. These often come from "are you sure Ivy supports X?" challenges that escalated to source-code inspection. Candidate text template: "Ivy 1.7 syntax `<pattern>` is supported per <stdlib-file:line or parser-grammar-rule>. Example: <one-liner>."
+
+After user confirms each candidate, write to the target file chosen by Step 4's classification reviewer agent. Append a `knowledge_captured` journal entry referencing the `plan_approved` entry's timestamp so the trigger does not re-fire on subsequent session starts.
+
+### If user picks (b) or (c)
+
+Record the outcome:
+- **(b) No**: Append a `knowledge_captured` entry with `status: user_declined`. Do not re-prompt.
+- **(c) Defer**: Do not append `knowledge_captured`. Trigger re-fires at the next session start.
+
 ## Graduation Check (Emergent Insights)
 
 After writing to `.claude/rules/insights.md`, check whether 3+ entries cluster around the same theme. If so, recommend promoting them: present the cluster to the user and suggest moving to the appropriate primary-category rule file.
