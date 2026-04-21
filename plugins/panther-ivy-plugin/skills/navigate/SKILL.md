@@ -1,6 +1,7 @@
 ---
 name: navigate
 description: "Context-aware routing hub. Use when the user's intent is unclear, when resuming a session, or when another workflow completes."
+
 ---
 
 ## Output Style
@@ -32,7 +33,10 @@ TaskCreate(subject="Dispatch to workflow", activeForm="Dispatching workflow")
 
 ```dot
 digraph navigate_flow {
-  "Session start / workflow complete" -> "Phase 1: Silent context scan";
+  "Session start / workflow complete" -> "Phase 0: Plan-mode detection";
+  "Phase 0: Plan-mode detection" -> "Plan-Author Branch" [label="plan mode active"];
+  "Phase 0: Plan-mode detection" -> "Phase 1: Silent context scan" [label="plan mode inactive"];
+  "Plan-Author Branch" -> "Draft plan" -> "Append plan_approved journal entry" -> "ExitPlanMode";
   "Phase 1: Silent context scan" -> "Phase 2: Classify intent";
   "Phase 2: Classify intent" -> "Warm resume?" [label="build-state exists"];
   "Warm resume?" -> "Dispatch build (resume)" [label="yes"];
@@ -52,6 +56,42 @@ digraph navigate_flow {
 Read `.panther-ivy/active-workflow` on every turn to determine the current phase before proceeding. If the file names a phase, resume that phase directly.
 
 Navigate is the central hub. Every other workflow returns here on completion. Navigate dispatches to a workflow which eventually returns to navigate — it never returns to itself.
+
+---
+
+## Phase 0 — Plan-mode detection
+
+Before the silent context scan, inspect the active session context for plan-mode indicators. Plan mode is a Claude Code harness feature that forbids non-plan edits; if active, navigate must route to the Plan-Author Branch rather than dispatching a workflow that would mutate state.
+
+### Detection signals
+
+Look for any of these in the session's system-reminder messages and `additionalContext` blocks accumulated since session start:
+
+1. The literal phrase `Plan mode is active`.
+2. The edit-restriction phrase `You MUST NOT make any edits` (plan mode's enforcement text).
+3. A plan file path of the form `/Users/*/plans/*.md` named in a plan-mode system-reminder (e.g., `No plan file exists yet. You should create your plan at /Users/<user>/.claude/plans/<name>.md`).
+
+Any single indicator is sufficient. The three exist because Claude Code's plan-mode activation surfaces at different places depending on whether plan mode was set via CLI flag, keybinding, or `EnterPlanMode` mid-session.
+
+### Routing rule
+
+- **If any indicator is present:** set mode = `plan-author`. Skip Phase 1's Step 4 (triage preflight) because it mutates state. Run the read-only parts of Phase 1 (the silent context scan is safe in plan mode), then route to the **Plan-Author Branch** further down this skill instead of Phase 2's dispatch.
+- **If no indicator is present:** proceed to Phase 1 normally.
+
+### Journal note
+
+After Phase 0 routes to Plan-Author (or falls through to Phase 1), append a `context_switch` journal entry recording the detection outcome:
+
+```
+ivy_workflow_state(
+  action="append_journal",
+  protocol="<protocol>",
+  event_type="context_switch",
+  payload={"detection": "plan_mode_active" | "plan_mode_inactive", "mode": "plan-author" | "normal"}
+)
+```
+
+This is advisory — if the MCP tool is unavailable (e.g., during plugin development sessions), skip the journal write and continue. The detection outcome is also captured downstream by the Plan-Author Branch's `plan_approved` entry.
 
 ---
 
@@ -197,6 +237,55 @@ Dispatch based on answers.
 
 ---
 
+## Plan-Author Branch (only when Phase 0 detected plan mode)
+
+This branch replaces Phase 2's dispatch. Plan mode blocks state-mutating actions, so the normal workflow-dispatch path cannot run. The Plan-Author Branch gathers context, helps the user draft the plan, records an auditable handoff, and then ExitPlanMode returns control to the harness.
+
+### Step 1 — Silent context scan (safe in plan mode)
+
+Run Phase 1's Steps 1–3 (locate protocol, check active build, check recent `.ivy` changes) and Step 2b (check workflow journal). Skip Step 4 (triage preflight) because triage may mutate state. Gather the same context that normal navigate would — the information is still useful even though dispatch won't happen.
+
+### Step 2 — Situation Briefing framed for plan-mode options
+
+Load `reflection-patterns` skill and apply Pattern C (Situation Briefing) with options framed for plan authoring rather than workflow dispatch:
+
+- "Write a plan for X" — where X is inferred from the user's opening question and the context scan.
+- "Audit an existing plan" — if the user references an existing plan file.
+- "Clarify scope before writing" — when the user's intent is ambiguous enough that drafting would be premature.
+- "Learn before planning" — if the context suggests the user should load a methodology or syntax reference first.
+
+### Step 3 — Draft the plan
+
+When the user is ready to draft, help them produce the plan file at the path named in the plan-mode system-reminder (e.g., `/Users/<user>/.claude/plans/<name>.md`). If the plan involves a non-trivial implementation, invoke `Skill(skill="superpowers:writing-plans")` to apply that skill's structure. Do NOT attempt to dispatch `build`, `verify`, or `review` — they would fail under plan mode's edit restrictions.
+
+Throughout drafting, present option-level decisions via `AskUserQuestion` (not inline prose) per the `feedback_askuserquestion_always` convention. Implementation-plan tasks should present 2–3 options per modification task per `feedback_plan_task_options`.
+
+### Step 4 — Append `plan_approved` journal entry
+
+Before the user calls `ExitPlanMode`, append the handoff record that Phase 1.5 will consume on the next invocation (see Task 3):
+
+```
+ivy_workflow_state(
+  action="append_journal",
+  protocol="<protocol>",
+  event_type="plan_approved",
+  payload={
+    "workflow": "<caller workflow, e.g. build or verify>",
+    "phase_before_plan": "<phase name the caller was in>",
+    "plan_file": "<absolute path to the plan file>",
+    "supersedes": ["<optional list of build-state decisions the plan reverses>"]
+  }
+)
+```
+
+The `caller` field is best-effort: if `active-workflow` names a paused workflow, use that; otherwise infer from the user's opening intent. The `supersedes` array is populated from a `## Supersedes` block in the plan file, if present.
+
+### Step 5 — ExitPlanMode
+
+Call `ExitPlanMode` to return control to the harness. Navigate's Phase 1.5 (defined later in this skill) fires on the next user turn to dispatch G0 and re-activate the caller workflow.
+
+---
+
 ## Dispatch
 
 ### Reflection Gate — Pre-Dispatch Check
@@ -242,7 +331,19 @@ When a workflow is invoked by another workflow (not by navigate directly):
 ## Integration
 
 - **Called by:** Session start (routing hook), other workflows on completion
-- **Calls:** `triage` (preflight), then dispatches to `build`, `verify`, `review`, or skills/agents
-- **Knowledge skills loaded:** `reflection-patterns` (SB after Phase 1, RG before dispatch, MPE on cold start), `knowledge-capture` (KG after Phase 1)
+- **Calls:** `triage` (preflight, skipped under plan mode), then dispatches to `build`, `verify`, `review`, or skills/agents. Plan-Author Branch may call `superpowers:writing-plans`.
+- **Knowledge skills loaded:** `reflection-patterns` (SB after Phase 1, RG before dispatch, MPE on cold start, Plan-Author Step 2), `knowledge-capture` (KG after Phase 1)
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`
 - **Infrastructure:** `ivy_workflow_state` MCP tool for state reads/writes; `track-workflow-skill.py` PostToolUse hook for automatic state on skill activation
+
+### Journal entry types this skill produces or consumes
+
+| Type | Direction | Introduced by |
+|------|-----------|---------------|
+| `context_switch` | produces (Phase 0 detection) | Phase 0 |
+| `plan_approved` | produces (Plan-Author Step 4) | Plan-Author Branch |
+| `workflow_resumed` | produces (Phase 1.5, see Task 3) | Post-plan-approval handoff |
+| `gate_verdict` with `gate: "g0"` | produces (Phase 1.5, via `reflection-patterns` G0 dispatch) | Post-plan-approval handoff |
+| `decision`, `phase_transition`, `session_start`, `session_end`, `error`, `progress` | both | Existing schema (unchanged) |
+
+Full schema for each type lives in `references/gates.md` (gate_verdict payload) and in `superpowers:writing-plans` (plan file conventions consumed by the `supersedes` extraction).
