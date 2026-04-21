@@ -37,7 +37,12 @@ digraph navigate_flow {
   "Phase 0: Plan-mode detection" -> "Plan-Author Branch" [label="plan mode active"];
   "Phase 0: Plan-mode detection" -> "Phase 1: Silent context scan" [label="plan mode inactive"];
   "Plan-Author Branch" -> "Draft plan" -> "Append plan_approved journal entry" -> "ExitPlanMode";
-  "Phase 1: Silent context scan" -> "Phase 2: Classify intent";
+  "Phase 1: Silent context scan" -> "Phase 1.5: plan_approved pending?";
+  "Phase 1.5: plan_approved pending?" -> "Dispatch G0 plan-gate" [label="yes"];
+  "Phase 1.5: plan_approved pending?" -> "Phase 2: Classify intent" [label="no"];
+  "Dispatch G0 plan-gate" -> "SOUND: re-activate caller workflow" [label="SOUND"];
+  "Dispatch G0 plan-gate" -> "UNSOUND: surface + user decision" [label="UNSOUND"];
+  "Dispatch G0 plan-gate" -> "ABSTAIN: gather evidence, re-run" [label="ABSTAIN"];
   "Phase 2: Classify intent" -> "Warm resume?" [label="build-state exists"];
   "Warm resume?" -> "Dispatch build (resume)" [label="yes"];
   "Warm resume?" -> "Route by intent" [label="no"];
@@ -164,6 +169,118 @@ The user's choice determines which Phase 2 branch to take.
 - Save session log (observability events + digest)
 - If deferred candidates found, present for user confirmation before routing
 - Resume workflow after gate completes
+
+---
+
+## Phase 1.5 — Post-plan-approval handoff
+
+Fires only on the turn after `ExitPlanMode`. Phase 0 and Phase 1.5 are mutually exclusive — if Phase 0 routed to the Plan-Author Branch (plan mode is still active), Phase 1.5 does NOT fire. Phase 1.5 fires when plan mode is NO LONGER active AND the workflow journal shows a recent `plan_approved` entry that has not yet been paired with a `workflow_resumed` entry.
+
+### Trigger condition
+
+After Phase 1's context scan completes, inspect the last few journal entries:
+
+```
+ivy_workflow_state(action="get_journal", protocol="<protocol>", last_n=10)
+```
+
+Phase 1.5 runs if BOTH:
+1. Phase 0's detection did NOT fire (plan mode is not active on this turn).
+2. The most recent `plan_approved` entry has no subsequent `workflow_resumed` entry.
+
+Otherwise, proceed to Phase 2.
+
+### Step 1 — Load the plan file
+
+Read the path from the `plan_approved` entry's `plan_file` field. Use `Read` on that path. If the file is missing (user deleted it after approval), log an `error` journal entry and halt with a message to the user asking how to proceed.
+
+### Step 2 — Extract committed decisions
+
+Scan the plan file for these structured markers:
+
+- `## Supersedes` block listing prior `build-state.yaml` decisions the plan reverses.
+- `Committed:` / `Committed design:` lines naming load-bearing design choices.
+- `Revises:` lines naming prior `gate_verdict` entries the plan invalidates.
+
+Extraction is best-effort — plans authored without these markers still proceed, but the G0 critic will have less structured context to audit against. If the plan-author convention evolves (e.g., a YAML front-matter block), this step extends.
+
+### Step 3 — Dispatch G0 plan-gate
+
+Load `reflection-patterns` and dispatch the G0 variant:
+
+```
+Skill(skill="panther-ivy-plugin:reflection-patterns")
+```
+
+Then, following the discipline contracts in `references/gates.md`, spawn 3 Opus critics in parallel (single message, three `Agent` tool calls) using the verbatim template at `references/critic_prompts/g0_plan.md`. Provide each critic with:
+
+- Absolute path to the plan file.
+- The `plan_approved` journal entry contents.
+- Current `build-state.yaml` contents.
+- Superseded `decision` and `gate_verdict` journal entries (if any).
+- The methodology overlay (`NCT` / `NACT` / `NSCT`) from `build-state.yaml:methodology`.
+
+Each critic returns `SOUND`, `UNSOUND(#NN, …)`, or `ABSTAIN`.
+
+### Step 4 — Record the verdict
+
+Aggregate the three critics per the asymmetric-vote rule (Opus × 3, confirmer-threshold 2, refute-threshold 1) and write the outcome:
+
+```
+ivy_workflow_state(
+  action="append_journal",
+  protocol="<protocol>",
+  event_type="gate_verdict",
+  payload={
+    "gate": "g0",
+    "verdict": "SOUND" | "UNSOUND" | "ABSTAIN",
+    "vote": {"sound": int, "unsound": int, "abstain": int},
+    "patterns": [...],
+    "cycle": <1-3>,
+    "tier": "opus",
+    "duration_s": <elapsed>
+  }
+)
+```
+
+### Step 5 — SOUND: update state and re-activate caller workflow
+
+If `verdict == SOUND`:
+
+1. Update `build-state.yaml`'s `decisions:` block by merging the plan's committed decisions, marking any superseded entries with `status: superseded_by: <plan_file>`.
+2. Append a `workflow_resumed` journal entry:
+   ```
+   event_type="workflow_resumed"
+   payload={"workflow": "<caller>", "phase_after_resume": "<next phase>", "g0_cycle": <N>}
+   ```
+3. Re-activate the caller workflow by calling:
+   ```
+   ivy_workflow_state(action="set", workflow="<caller>", phase="<next phase>", protocol="<protocol>")
+   ```
+   where `<caller>` is read from the `plan_approved` entry and `<next phase>` is typically the phase that would naturally follow `phase_before_plan`. For a build that was in `blueprint-done-revise-N`, the next phase after a SOUND G0 is `modeling`.
+4. Dispatch the caller: `Skill(skill="panther-ivy-plugin:<caller>")`.
+
+### Step 6 — UNSOUND: surface and halt
+
+If `verdict == UNSOUND`:
+
+1. Present the dissenter reasons to the user via `AskUserQuestion` (per `feedback_askuserquestion_always`). Include the cited pattern IDs, file:line locators, and each critic's justification.
+2. Offer three follow-up options:
+   - **Revise the plan** — re-enter plan mode to fix the flagged issues. Phase 1.5 re-fires on the next approval (cycle counter increments, budget is 3).
+   - **Overrule G0** — user authority accepts the verdict against the critics. Record a `decision` journal entry with `override_reason: <user-provided>` before re-activating the workflow.
+   - **Defer** — pause without re-activation; the `plan_approved` entry remains open until the next Phase 1.5 run.
+3. Do NOT re-activate the workflow on UNSOUND without explicit user input.
+
+If the cycle count reaches 3 and the verdict is still UNSOUND, escalate: halt with a summary of all three cycles' dissenter reasons and wait for user direction. Do not auto-overrule.
+
+### Step 7 — ABSTAIN: insufficient evidence
+
+If `verdict == ABSTAIN`:
+
+1. Present the abstain reasons to the user (usually "critic could not decide without X").
+2. Offer to gather the missing evidence (RFC text fetch, additional file reads, wider journal scan) and re-run G0.
+
+ABSTAIN does not consume a cycle from the 3-cycle budget; only `UNSOUND` does.
 
 ---
 
