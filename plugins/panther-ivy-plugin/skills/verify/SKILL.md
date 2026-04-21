@@ -10,6 +10,26 @@ Follow the style directives injected via `additionalContext` -- they contain
 the active workflow overlay and phase modifier. Do not invent
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
+## Phase 0 — Plan-mode preamble
+
+Before running any verify-phase logic, inspect the session context for plan-mode indicators. Plan mode blocks `ivy_verify`, `ivy_compile`, and any tool that mutates state, so the normal verify cycle cannot proceed.
+
+Detection signals (any one is sufficient):
+
+1. The literal phrase `Plan mode is active` in a system-reminder.
+2. The edit-restriction phrase `You MUST NOT make any edits`.
+3. A plan file path of the form `/Users/*/plans/*.md` named in a plan-mode system-reminder.
+
+If any indicator is present, switch to plan authoring instead of verify dispatch:
+
+1. Run read-only context gathering only: check the workflow journal for recent `error`, `gate_verdict`, and `decision` entries; skip any step that would mutate state.
+2. Present a situation briefing via `AskUserQuestion` framed for plan-mode options — "draft a plan for the verify failure we hit", "draft a plan to restructure the verification approach", "clarify the verification scope before writing", "learn the Ivy verification model first".
+3. Help the user draft the plan at the path named in the plan-mode system-reminder. If the plan covers a non-trivial implementation, invoke `Skill(skill="superpowers:writing-plans")`.
+4. Before `ExitPlanMode`, append a `plan_approved` journal entry with `workflow: "verify"`, `phase_before_plan: <whatever phase the user was in>`, `plan_file`, and `supersedes` (extracted from the plan's `## Supersedes` block if present).
+5. Call `ExitPlanMode`.
+
+Do NOT attempt to dispatch `ivy_verify`, `ivy_compile`, `ivy_iut_test`, or any state-mutating tool during plan mode — the call will be rejected and the session ends in an ambiguous state. Navigate's Phase 1.5 handles the re-entry on the next invocation after `ExitPlanMode`.
+
 ## Iron Law
 
 ```
