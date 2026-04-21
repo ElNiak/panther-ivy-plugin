@@ -30,6 +30,9 @@ _VALID_EVENT_TYPES = frozenset({
     "context_switch",
     "gate_dispatched",
     "gate_verdict",
+    "plan_approved",
+    "workflow_resumed",
+    "knowledge_captured",
 })
 
 
