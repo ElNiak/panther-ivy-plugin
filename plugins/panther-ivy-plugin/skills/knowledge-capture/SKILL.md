@@ -1,14 +1,15 @@
 ---
 name: knowledge-capture
-description: "Extract reusable lessons from the current session into plugin rules. Use when completing a workflow phase, after /nct-learn, or when a surprising fix or pattern emerges."
-user-invocable: false
+description: "Capture session learnings into plugin rules AND audit plugin skills/references. Use after workflow phases, /nct-learn, 'session retro', 'what did we learn', 'improve skills', or 'what could be improved'."
+user-invocable: true
 context: fork
-allowed-tools: "Read Grep Glob Write Edit Agent AskUserQuestion Bash(ls *)"
+allowed-tools: "Read Grep Glob Write Edit Agent AskUserQuestion Bash(git diff *) Bash(git log *) Bash(ls *)"
+when_to_use: "Invoked by knowledge gates in workflow skills, by /nct-learn, and by end-of-session retrospective triggers. Trigger phrases: 'what did we learn', 'improve skills', 'session retro', 'what could be improved', 'improve references'."
 ---
 
 # Knowledge Capture
 
-Internal skill invoked by knowledge gates in workflow SKILLs. Extracts learnings from the current session, classifies them, and persists approved entries to plugin rules files or user memory.
+Extracts session learnings into plugin rules and (for top-level user retrospectives) audits existing plugin skills and references for accuracy, completeness, and coverage gaps. When invoked from a workflow gate (`invocation_depth > 0`), it runs the learning-capture flow only; when invoked by the user at end-of-session (`invocation_depth == 0`), it also runs the skill/reference audit layer.
 
 ## Pre-Check
 
@@ -23,7 +24,6 @@ Read all target files to understand what is already documented:
 - `.claude/rules/tool-reference.md`
 - `.claude/rules/nct-methodology.md`
 - `.claude/rules/insights.md`
-- `CLAUDE.md` (plugin root)
 
 Note key topics and patterns already covered. This prevents duplicate entries.
 
@@ -76,7 +76,25 @@ The agent returns a placement recommendation per candidate:
 
 Incorporate the agent's recommendations into the presentation.
 
+## Step 4.5 — Audit Skills and References
+
+**Gate**: Run this step only when `invocation_depth == 0` in the active-workflow state (i.e., top-level user retrospective, not a workflow-gate invocation). When skipped, proceed directly to Step 5 with Section A only.
+
+For each skill and reference in the plugin:
+
+1. **Description accuracy**: Does the skill's `description` field still match what the skill actually does? Flag stale trigger phrases or missing use cases revealed by the session.
+2. **Step accuracy**: Do the steps reference current tool names, correct MCP tool parameters, and valid file paths? Flag any step that contradicts what was observed during the session.
+3. **Cross-reference validity**: Do skills reference other skills, agents, or files that still exist? Flag broken references.
+4. **Reference currency**: Do reference docs reflect current Ivy patterns, tool capabilities, and methodology? Flag outdated content.
+5. **Coverage gaps**: Identify patterns, workflows, or learnings from this session that NO existing skill or reference covers. These are candidates for new skills or reference additions.
+
+Dispatch parallel agents for independent audit tasks (e.g., one for skill descriptions, one for reference docs) when the knowledge base is large.
+
+**Success criteria**: A list of specific improvement recommendations, each with the target file, line/section, what's wrong, and proposed fix. Results feed Section B of Step 5.
+
 ## Step 5 — Draft and Confirm
+
+### Section A — New Learnings (from Step 3)
 
 Present each candidate via `AskUserQuestion`:
 
@@ -97,6 +115,34 @@ For each user response:
 - **(c) Reject**: Update the digest with `status: rejected`. Do not write.
 - **(d) Change target**: Ask the user which file, then write there.
 - **(e) Defer**: Update the digest with `status: deferred`. Re-present at the next knowledge gate.
+
+### Section B — Skill/Reference Improvements (from Step 4.5)
+
+Present only when Step 4.5 ran (i.e., `invocation_depth == 0`) and produced improvements. Skip when Step 4.5 was skipped or produced nothing.
+
+```
+[Skill & Reference Audit] M improvement(s) identified:
+
+1. {skill-name}/SKILL.md: {issue description}
+   -> Proposed fix: {concrete change}
+   -> (a) Approve  (b) Edit  (c) Reject
+
+2. .claude/rules/{file}.md: {issue description}
+   -> Proposed fix: {concrete change}
+   -> (a) Approve  (b) Edit  (c) Reject
+```
+
+For each user response:
+
+- **(a) Approve**: Edit the target SKILL.md or reference file with the approved fix. For description changes, verify the new description follows the skill-conventions rules (under 250 chars, front-loaded triggers, third person).
+- **(b) Edit**: Ask the user for the revised fix via `AskUserQuestion`, then write.
+- **(c) Reject**: Skip the item. No write.
+
+For coverage gaps approved as new skills, create a stub `SKILL.md` with the agreed name, description, and placeholder steps under `skills/<new-name>/`. Flag it for future development.
+
+After all Section B writes, run `git diff --stat` and summarise files changed.
+
+**Success criteria**: Every Section A and Section B item has a user verdict, and every approved item is written to disk.
 
 ## Deferred Candidate Handling
 
@@ -160,5 +206,4 @@ After writing to `.claude/rules/insights.md`, check whether 3+ entries cluster a
 - **READS FROM:** `.panther-ivy/session-logs/{timestamp}.json` (session events) and existing `.claude/rules/` files (to diff against).
 
 **Related skills:**
-- **`session-retrospective`** — User-invocable entry point that wraps this skill plus a skill/reference audit for end-of-session review.
 - **`reflection-patterns`** — Adversarial-gate discipline layer; gate verdicts feed the session digest when this skill runs.

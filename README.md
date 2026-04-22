@@ -120,7 +120,6 @@ panther-ivy-plugin/
 │       │   └── plugin.json  # Plugin manifest (name, version, description)
 │       ├── .mcp.json        # ivy-tools MCP server configuration
 │       ├── .lsp.json        # LSP configuration (co-located)
-│       ├── CLAUDE.md        # Operating guide (workflow routing, tool rules, methodology)
 │       ├── routing-rules.json # Smart routing rules for UserPromptSubmit hook
 │       ├── settings.json    # Plugin settings
 │       ├── agents/          # 3 internal agents (dispatched by workflows)

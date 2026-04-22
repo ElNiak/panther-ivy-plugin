@@ -49,7 +49,7 @@ after init { conn_seen(C) := false; }
 - Detectable when: `build-state.yaml` was updated, MPE agents were consulted, or layer structure was discussed during the build workflow
 
 **Persistence targets:**
-- Generic (applies to all protocols): Plugin `CLAUDE.md` or `.claude/rules/nct-methodology.md`
+- Generic (applies to all protocols): `.claude/rules/nct-methodology.md`
 - Protocol-specific: Protocol-level documentation or a new protocol-scoped rule file
 
 **Entry format:** Decision statement with rationale.
