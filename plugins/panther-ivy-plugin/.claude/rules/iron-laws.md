@@ -50,6 +50,6 @@ A tool result for file `F` is *stale* if `F` itself or any file in `F`'s transit
 
 - Edits to workspace files outside `F`'s include closure do not invalidate the result.
 - The recorded timestamp is whatever the tool returns (commonly `started_at` for `ivy_verify`; if absent, treat the result's age as zero only for the current turn).
-- A sub-workflow invoked at `invocation_depth > 0` does not invalidate parent-frame results unless it edits files in the closure.
+- A workflow dispatched via `pending_dispatch` is a new causal frame; prior tool results in the emitting workflow remain valid unless the dispatched workflow edits files in the emitting workflow's include closure.
 - Stale results don't count as evidence — re-run the relevant tool before claiming PASS, transitioning phases, or proposing a concrete patch.
 - If `ivy_analysis(mode="includes")` is unavailable in the current session, fall back to workspace-wide invalidation and note the conservative scope when citing the result.

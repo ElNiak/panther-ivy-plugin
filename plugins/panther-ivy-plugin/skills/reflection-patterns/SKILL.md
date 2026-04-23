@@ -17,24 +17,24 @@ A structured pause to re-evaluate whether the current workflow still matches the
 
 **When invoked, do these steps in order:**
 
-1. **Skip check**: If `invocation_depth > 0` (this workflow was called as a sub-workflow), skip this Reflection Gate entirely. Sub-workflows must not interrupt their parent's flow.
+1. **Summarize** the current state in 2-3 sentences: what phase you are in, what was found so far, what is pending.
 
-2. **Summarize** the current state in 2-3 sentences: what phase you are in, what was found so far, what is pending.
-
-3. **Re-evaluate** workflow fit by checking three signals:
+2. **Re-evaluate** workflow fit by checking three signals:
    - Has the user's recent language shifted toward a different workflow's domain? (e.g., asking about coverage during a verify workflow suggests switching to review)
    - Did findings suggest a different workflow would be more appropriate? (e.g., structural issues during verify suggest switching to build)
    - Are you in a dead-end loop? (same error encountered twice with no progress)
 
-4. **Present options** via `AskUserQuestion` with 2-3 choices:
+3. **Present options** via `AskUserQuestion` with 2-3 choices:
    - **(a)** Continue the current path — explain what happens next
    - **(b)** Switch to [named alternative workflow] — explain why it might be better, based on the signals above
    - **(c)** Pause and explain more — provide deeper context before the user decides
 
-5. **Act on choice**:
+4. **Act on choice**:
    - If (a): proceed with the next phase of the current workflow
-   - If (b): update the `active-workflow` state file to the new workflow and invoke it via `Skill(skill="{workflow_name}")`
+   - If (b): emit `append_pending_dispatch(target_workflow=<new>, reason=<why>)` on the journal, clear `active-workflow` via `ivy_workflow_state(action="clear")`, and end the turn — navigate will consume the `pending_dispatch` event and dispatch the new workflow
    - If (c): provide the expanded explanation, then re-present the choice
+
+Pattern A fires unconditionally at every designated insertion point. There is no "sub-workflow skip" — workflow composition rides on `pending_dispatch` journal events, so each workflow is a top-level frame from the state machine's perspective. The old `invocation_depth > 0` skip-check is removed.
 
 ---
 
