@@ -72,4 +72,6 @@ The executable can be found in the build/ directory.
 
 **IMPORTANT**: Do NOT run `ivyc` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile`.
 
+On an `InputValidationError` from `ivy_compile` (deferred-tool schema not loaded, MCP server unavailable), follow the canonical recovery pattern in `.claude/rules/mcp-tool-reliability.md`: one retry via `ToolSearch({query: "select:ivy_compile"})`, then AskUserQuestion with triage / skip / abandon options.
+
 See the `methodology-reference` knowledge skill for compilation troubleshooting.

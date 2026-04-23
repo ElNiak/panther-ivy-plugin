@@ -60,4 +60,6 @@ Display the model structure of the specified Ivy file using ivy-tools.
 
 **IMPORTANT**: Do NOT run `ivy_show` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info`.
 
+On an `InputValidationError` from `ivy_model_info` (deferred-tool schema not loaded, MCP server unavailable), follow the canonical recovery pattern in `.claude/rules/mcp-tool-reliability.md`: one retry via `ToolSearch({query: "select:ivy_model_info"})`, then AskUserQuestion with triage / skip / abandon options.
+
 See the `ivy-toolkit` skill for `ivy_model_info` parameter details.

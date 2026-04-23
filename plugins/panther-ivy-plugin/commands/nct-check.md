@@ -77,4 +77,6 @@ After presenting the result, engage the user before suggesting next steps. Refer
 
 **IMPORTANT**: Do NOT run `ivy_check` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify`.
 
+On an `InputValidationError` from `ivy_verify` (deferred-tool schema not loaded, MCP server unavailable), follow the canonical recovery pattern in `.claude/rules/mcp-tool-reliability.md`: one retry via `ToolSearch({query: "select:ivy_verify"})`, then AskUserQuestion with triage / skip / abandon options.
+
 See the `methodology-reference` knowledge skill for verification debugging strategies.

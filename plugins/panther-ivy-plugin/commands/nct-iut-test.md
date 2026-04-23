@@ -96,3 +96,5 @@ Test executed successfully against the IUT.
 ```
 
 **IMPORTANT**: Do NOT run `panther run` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_iut_test`. The MCP tool wraps `panther run` with structured output, error-coded failures, and test-result JSON that the PostToolUse render hook formats per the active workflow; direct `panther run` returns raw stdout the render hook cannot reshape.
+
+On an `InputValidationError` from `ivy_iut_test` (deferred-tool schema not loaded, MCP server unavailable), follow the canonical recovery pattern in `.claude/rules/mcp-tool-reliability.md`: one retry via `ToolSearch({query: "select:ivy_iut_test"})`, then AskUserQuestion with triage / skip / abandon options.
