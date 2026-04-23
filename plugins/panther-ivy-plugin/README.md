@@ -22,14 +22,12 @@ Read `.panther-ivy/active-workflow` on every turn to know your current workflow 
 ```yaml
 workflow: verify
 phase: compile
-invocation_depth: 0
 started: "2026-04-07T14:30:00Z"
-caller: null
 ```
 
 **Build-state file** (`<protocol-dir>/.panther-ivy/build-state.yaml`): Multi-session build progress. Written by the build workflow at Phase 2. Read by navigate for warm session resume.
 
-**Sub-workflow protocol:** When a workflow invokes another (e.g., build→verify), `invocation_depth` increments and `caller` records the invoker. On completion, decrement and return to caller — not to navigate.
+**Workflow composition:** Workflows compose via `pending_dispatch` journal events, not via a caller chain. When a workflow needs another workflow to run next (e.g., build → verify after Phase 4), it appends `pending_dispatch(target_workflow=<next>, reason=<why>)` and clears its own active-workflow flag. Navigate's Phase 1 Step 2c consumes the event on the next turn (or same-turn if the harness routes in-line), writes a paired `workflow_resumed` marker for idempotency, and dispatches the target.
 
 ## Tool Rules — CRITICAL
 
