@@ -137,6 +137,16 @@ If journal entries exist, compose a session context summary for the situation br
 
 Include this summary in the Situation Briefing: "Last session: [N] decisions, [M] errors, ended [cleanly/interrupted] at phase [phase]."
 
+### Step 2b.1: Last graduation sweep advisory
+
+Read `MEMORY.md`'s `Last graduation sweep: YYYY-MM-DD` line (first few lines of the file). If the file or line is absent, treat as unknown and skip this step. Otherwise compute days elapsed from that date to today's date.
+
+If days elapsed > 14, append to the activity summary (if one is produced this turn) or surface as a single advisory line:
+
+> [advisory] ~N days since last graduation sweep. Consider running `/nct-learn` when convenient.
+
+This is advisory only. Navigate never blocks or dispatches the sweep itself. The user decides.
+
 ### Step 2c: Check for a pending_dispatch to consume
 
 Scan the recent journal entries for a `pending_dispatch` whose target workflow has no subsequent `workflow_resumed` entry naming that same target. If one is found, treat it as an explicit hand-off from the workflow that emitted it:

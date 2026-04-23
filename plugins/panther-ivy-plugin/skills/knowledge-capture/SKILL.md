@@ -50,6 +50,18 @@ This runs unconditionally at every gate.
 
 The digest captures: workflow type, protocol, phases reached, files modified, errors and resolutions, patterns applied, verification outcomes, and knowledge candidates from this gate.
 
+## Graduation Sweep
+
+Trigger conditions:
+
+- `/nct-learn` slash command with sweep intent.
+- End-of-session retrospective when the user opts in.
+- navigate's Phase 1 advisory surfaces (days-since-last-sweep exceeds threshold).
+
+When invoked with sweep intent, follow the full procedure in `references/graduation-sweep.md`. The sweep is per-target with drill-in — the user approves groups of memory entries destined for the same target file, with an option to review entries individually. Archive and delete target classes require explicit user approval; nothing is removed silently. On completion, update `MEMORY.md`'s `Last graduation sweep:` line to today's date.
+
+The `auto-load-skill-references.py` hook will inject `graduation-sweep.md` as `additionalContext` when this skill is invoked (the file is > 100 lines so it will appear as a "Read required" pointer, which is expected).
+
 ## Step 3 — Classify Using Taxonomy
 
 Load `references/knowledge-taxonomy.md`. For each candidate learning from Step 2, match against the 5 category recognition heuristics. Assign a primary category and a target file.

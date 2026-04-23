@@ -1,7 +1,3 @@
----
-category: tier-a-always-on
----
-
 ## Ivy Formatting Conventions
 
 - Cite RFC sections as `[rfcNNNN:X.Y]` inline, never as footnotes. Always include
