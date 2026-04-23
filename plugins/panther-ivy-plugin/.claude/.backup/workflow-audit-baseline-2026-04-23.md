@@ -75,11 +75,17 @@ Inspection of current M hunks surfaced one behavior adjustment to the spec's as-
 
 ## Baseline test counts
 
-Recorded by Phase 0.3 (see task #4). Populated below after the pytest run.
+Recorded by Phase 0.3, 2026-04-23. Taken after baseline commit `9e273a8` landed and before any spec edits.
 
 ```
-pytest tests/ ...
-pytest hooks/scripts/tests/ ...
+pytest tests/                -> 2 failed, 226 passed in 16.94s (228 collected)
+pytest hooks/scripts/tests/  -> 21 passed                        (21 collected)
 ```
 
-(Phase 0.3 will append the tail of each run here.)
+Pre-existing failures (accepted as baseline; Phase 9.2 must not regress further):
+- `tests/test_routing.py::test_no_match_fallthrough`
+- `tests/test_routing.py::test_active_workflow_suppression`
+
+Both failures are in the routing test module and predate this plan; they do not touch `workflow_state.py` or any spec target file. If a spec (especially S7's `route-user-prompt.py:186` phase-string update) causes these to shift state (either more failures, or unexpected passes), investigate before declaring the phase complete.
+
+Phase 9.2 success criterion: `tests/` combined pass count ≥ 226; `hooks/scripts/tests/` pass count ≥ 21 + any new tests added by S1 / S8.
