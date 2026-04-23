@@ -238,3 +238,14 @@ Never combine ERROR discussion with WARNING discussion or summary. Handle each p
 - If you cannot determine whether something is an issue, flag it as INFO with a note to investigate.
 - Always check include dependencies by verifying referenced files exist on disk.
 - When reviewing PANTHER protocol models, be aware that models may use custom Ivy libraries from the `panther_ivy` submodule.
+
+## Failure Modes
+
+Callers follow `.claude/rules/agent-dispatch.md` on dispatch failure. Per-agent overrides of the canonical timeouts and retry policy:
+
+- **Timeout (180 s, Opus tier)** — default Opus budget is longer because Opus is slower per-turn; allow the full budget before escalating. Retry once on timeout.
+- **Context exhaustion (maxTurns ≈ 15)** — expected on large models. Output is usually partial but structurally valid (top-N findings enumerated, trailing sections truncated). **Do NOT auto-retry** on context exhaustion — prefer using the partial output unless the caller explicitly needs full enumeration. A second dispatch with the same prompt hits the same limit.
+- **Partial output** — accept and continue. Model-reviewer's structured severity sections are ordered by importance, so a partial read surfaces the critical findings first.
+- **Malformed output** — the severity-section structure is fixed (`ERROR` / `WARNING` / `INFO` blocks; or, in gate-critic mode, `SOUND` / `UNSOUND(#NN, ...)` / `ABSTAIN`). Missing section headers means the agent misunderstood its prompt. Retry with the caller restating the expected format.
+- **Tool-not-found** — indicates ivy-tools MCP server is unavailable. Escalate directly without retry; recovery lives in `.claude/rules/mcp-tool-reliability.md`.
+- **Explicit error** — no auto-retry. Surface immediately.

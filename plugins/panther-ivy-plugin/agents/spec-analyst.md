@@ -256,3 +256,14 @@ When coverage analysis reveals gaps:
 - Use tables for comparing features across protocols
 - For verification: provide structured PASS/FAIL with details
 - For errors: identify the failing isolate/invariant/property, the source location, and the likely cause
+
+## Failure Modes
+
+Callers follow `.claude/rules/agent-dispatch.md` on dispatch failure. Per-agent overrides of the canonical timeouts and retry policy:
+
+- **Timeout (90 s, Sonnet tier)** — default Sonnet budget. Retry once; if the retry also times out, escalate via the canonical 3-option menu.
+- **Context exhaustion (maxTurns ≈ 25)** — rare; output is usually complete by turn 15-20. If hit, retry with a narrower `target_files` scope rather than the same prompt — the original scope is unlikely to fit in 25 turns either.
+- **Partial output** — if the structured PASS/FAIL block is truncated mid-table, treat as partial. Retry is cheap.
+- **Malformed output** — the PASS/FAIL block has a fixed structure; missing headers or disordered sections indicate the agent misunderstood the prompt. Retry with a restated expected format.
+- **Tool-not-found** — rare given spec-analyst's broad tool allowlist. Indicates a plugin-infra issue (ivy-tools MCP server or LSP dead); escalate directly to the user without the auto-retry step.
+- **Explicit error** — no auto-retry. Surface immediately.

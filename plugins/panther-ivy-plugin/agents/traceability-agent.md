@@ -202,3 +202,14 @@ When gaps are found:
 - **ivy-toolkit** -- MCP tool parameter reference, selection matrix, and coordination workflows for all ivy-tools
 - **methodology-reference** -- RFC-to-Ivy mapping patterns, verification workflows, and quality gate details
 - **claim-discussion** -- Structured decision trees for RFC mapping, verification claims, and coverage gaps
+
+## Failure Modes
+
+Callers follow `.claude/rules/agent-dispatch.md` on dispatch failure. Per-agent overrides of the canonical timeouts and retry policy:
+
+- **Timeout (120 s, Sonnet tier — elevated from 90 s default)** — extended because traceability-agent's WebFetch on RFC URLs can exceed the 90 s Sonnet default on slow networks. Retry once; if the retry also times out, check network reachability before escalating (the user may be network-isolated).
+- **Context exhaustion (maxTurns ≈ 20)** — rare; most RFC-parsing tasks complete in 5-10 turns. If hit, retry with narrower RFC-section scope.
+- **Partial output** — the manifest YAML may be partially written. Verify with `yaml.safe_load()` before proceeding; re-dispatch on parse failure (the YAML is structured; a partial manifest is usually unparseable).
+- **Malformed output** — manifest YAML parse failure; retry with the expected format restated in the prompt.
+- **Tool-not-found on WebFetch** — network-isolated sessions. Fall back to user-provided RFC text pasted into the prompt rather than retrying.
+- **Explicit error** — no auto-retry. Surface immediately.
