@@ -273,3 +273,4 @@ If this review run needs another workflow to run next (e.g., the user asked for 
 - **MCP tools used:** `ivy_workspace` (protocol detection)
 - **State files:** `.panther-ivy/active-workflow`
 - **MCP tool reliability:** on `InputValidationError` from `ivy_coverage` / `ivy_quality` / `ivy_extract_requirements`, follow `.claude/rules/mcp-tool-reliability.md` — one retry via `ToolSearch({query: "select:<tool>"})`, then AskUserQuestion with triage / skip / abandon options.
+- **Agent dispatch:** review dispatches `traceability-agent` (Phase 2 coverage path), `model-reviewer` + `spec-analyst` + MPE Explore agents (Phase 2 quality path). On dispatch failure follow `.claude/rules/agent-dispatch.md`. Per-agent Failure Modes sections override default budgets.

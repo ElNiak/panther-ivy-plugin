@@ -450,3 +450,4 @@ The staleness rule still applies: if any `.ivy` file was edited after the backgr
 - **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_iut_test`
 - **State files:** `.panther-ivy/active-workflow`
 - **MCP tool reliability:** on `InputValidationError` from `ivy_verify` / `ivy_compile` / `ivy_iut_test`, follow `.claude/rules/mcp-tool-reliability.md` — one retry via `ToolSearch({query: "select:<tool>"})`, then AskUserQuestion with triage / skip / abandon options.
+- **Agent dispatch:** verify dispatches `spec-analyst` (Phase 6 diagnosis) and MPE Explore agents (Phase 6 Multi-Perspective Diagnosis). On dispatch failure follow `.claude/rules/agent-dispatch.md`.

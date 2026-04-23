@@ -415,3 +415,4 @@ The staleness rule still applies: if the `.ivy` file was edited after the backgr
 - **MCP tools used:** `ivy_compile`, `ivy_workspace`
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`
 - **MCP tool reliability:** on `InputValidationError` from `ivy_compile` / `ivy_workspace`, follow `.claude/rules/mcp-tool-reliability.md` — one retry via `ToolSearch({query: "select:<tool>"})`, then AskUserQuestion with triage / skip / abandon options.
+- **Agent dispatch:** build dispatches `spec-analyst` (Phase 3 compile-error diagnosis), `model-reviewer` + `traceability-agent` (Phase 5 quality gate, in parallel), and MPE Explore agents (Phase 1 architectural approach). On dispatch failure follow `.claude/rules/agent-dispatch.md`. Per-agent Failure Modes sections override default budgets — notably `model-reviewer`'s Opus tier (180 s) and no-auto-retry-on-context-exhaustion.
