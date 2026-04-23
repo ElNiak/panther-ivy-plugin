@@ -19,9 +19,9 @@ If `invocation_depth > 0` in the active-workflow state, **skip this gate entirel
 
 Read all target files to understand what is already documented:
 
-- `.claude/rules/ivy-patterns.md`
+- `~/.claude/projects/<project>/memory/reference_ivy_patterns.md` (was `.claude/rules/ivy-patterns.md` before 2026-04-23 move; the rule stub still injects a pointer on `.ivy` reads)
 - `.claude/rules/iron-laws.md`
-- `.claude/rules/nct-methodology.md`
+- `~/.claude/projects/<project>/memory/reference_nct_methodology.md` (was `.claude/rules/nct-methodology.md` before 2026-04-23 move; the rule stub still injects a pointer on `.ivy`/`.spec` reads)
 - `.claude/rules/insights.md`
 - `skills/ivy-debugging-methodology/references/debugging-environment.md` (was `.claude/rules/debugging.md` before 2026-04-22 refactor)
 - `skills/ivy-toolkit/references/tool-catalog.md` (was `.claude/rules/tool-reference.md` before 2026-04-22 refactor)
@@ -215,8 +215,8 @@ After writing to `.claude/rules/insights.md`, check whether 3+ entries cluster a
 ## Integration
 
 - **LOADED BY:** build workflow (Phase 3 Knowledge Gate, Phase 5 Quality Gate), verify workflow (Phase 4 Post-Execution, Phase 7 Post-Fix), review workflow (Phase 2 Knowledge Gate, Phase 3 Findings), and the `/nct-learn` command.
-- **WRITES TO:** `.claude/rules/*.md`, `.claude/rules/insights.md`, and user-memory files when candidates are approved.
-- **READS FROM:** `.panther-ivy/session-logs/{timestamp}.json` (session events) and existing `.claude/rules/` files (to diff against).
+- **WRITES TO:** `.claude/rules/iron-laws.md`, `.claude/rules/insights.md`, `~/.claude/projects/<project>/memory/reference_ivy_patterns.md`, `~/.claude/projects/<project>/memory/reference_nct_methodology.md`, and additional user-memory files when candidates are approved.
+- **READS FROM:** `.panther-ivy/session-logs/{timestamp}.json` (session events) and existing `.claude/rules/` + `~/.claude/projects/<project>/memory/reference_*.md` files (to diff against).
 
 **Related skills:**
 - **`reflection-patterns`** — Adversarial-gate discipline layer; gate verdicts feed the session digest when this skill runs.

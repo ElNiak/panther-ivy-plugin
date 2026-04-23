@@ -7,7 +7,7 @@ context: fork
 
 # APT Attack Patterns
 
-NACT (Network-Attack Compositional Testing) extends NCT with attacker perspective. The APT workspace at `protocol-testing/apt/` mirrors the 14-layer NCT template and adds four attack-specific layers. This skill catalogues the reusable structural patterns across those layers; the canonical methodology overview lives in `methodology-reference` and `.claude/rules/nct-methodology.md`.
+NACT (Network-Attack Compositional Testing) extends NCT with attacker perspective. The APT workspace at `protocol-testing/apt/` mirrors the 14-layer NCT template and adds four attack-specific layers. This skill catalogues the reusable structural patterns across those layers; the canonical methodology overview lives in `methodology-reference` and in the project auto-memory at `~/.claude/projects/<project>/memory/reference_nct_methodology.md` (the `.claude/rules/nct-methodology.md` stub points there).
 
 ## When this applies
 
@@ -28,7 +28,7 @@ Each layer follows one core invariant: attack behavior extends, never replaces, 
 
 ## Pattern 1 — 6-stage attack-lifecycle scaffolding
 
-The APT lifecycle in `.claude/rules/nct-methodology.md` defines **six sequential stages** (Reconnaissance → Infiltration → C2 Communication → Privilege Escalation → Maintain Persistence → Exfiltration). `apt_lifecycle/` holds one file per stage plus two supporting files: `attack_white_noise.ivy` for cross-cutting background traffic (not a stage; runs alongside any stage), and `attack_life_cycle.ivy` as the top-level aggregator. All are deliberately thin — action stubs plus rationale comments — with real behavior in per-protocol bindings under `apt_lifecycle/{prot}_apt_lifecycle/`.
+The APT lifecycle in `~/.claude/projects/<project>/memory/reference_nct_methodology.md` defines **six sequential stages** (Reconnaissance → Infiltration → C2 Communication → Privilege Escalation → Maintain Persistence → Exfiltration). `apt_lifecycle/` holds one file per stage plus two supporting files: `attack_white_noise.ivy` for cross-cutting background traffic (not a stage; runs alongside any stage), and `attack_life_cycle.ivy` as the top-level aggregator. All are deliberately thin — action stubs plus rationale comments — with real behavior in per-protocol bindings under `apt_lifecycle/{prot}_apt_lifecycle/`.
 
 | # | Role | File | Canonical content |
 |---|---|---|---|

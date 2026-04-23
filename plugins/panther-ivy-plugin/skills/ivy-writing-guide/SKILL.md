@@ -16,7 +16,7 @@ This skill combines the Ivy language reference, test specification patterns, and
 
 ## Canonical Syntax
 
-The canonical Ivy 1.7 syntax reference (types, relations, functions, individuals, actions, invariants, object system, module system, isolates, include directives, before/after monitors, state machines, shim bridges, RFC tags, weight attributes, RFC-to-Ivy mapping, test-spec template, generator patterns) lives in `.claude/rules/ivy-patterns.md`. That file is auto-loaded for `**/*.ivy` paths via its frontmatter, so any time you edit an Ivy file the canonical forms are already in context. This skill does not restate them; it adds the *practices* below to use alongside those forms.
+The canonical Ivy 1.7 syntax reference (types, relations, functions, individuals, actions, invariants, object system, module system, isolates, include directives, before/after monitors, state machines, shim bridges, RFC tags, weight attributes, RFC-to-Ivy mapping, test-spec template, generator patterns) lives in the project auto-memory as `~/.claude/projects/<project>/memory/reference_ivy_patterns.md` (moved from `.claude/rules/ivy-patterns.md` on 2026-04-23). The rule stub at that path still auto-loads for `**/*.ivy` paths and nudges Claude to `Read` the memory file. This skill does not restate the syntax; it adds the *practices* below to use alongside those canonical forms.
 
 Every Ivy file begins with `#lang ivy1.7` as its first line (the version PANTHER standardizes on).
 
@@ -83,7 +83,7 @@ Load `references/syntax-examples.md` for annotation workflow, tag conventions, a
 
 ## Protocol Modeling Patterns
 
-Load `references/generator-mechanics.md` for Z3 test generation mechanics, solver scope rules, and common generator pitfalls. Concrete protocol-modeling examples (client/server roles, boolean FSMs, packet-type hierarchies) live in `.claude/rules/ivy-patterns.md`.
+Load `references/generator-mechanics.md` for Z3 test generation mechanics, solver scope rules, and common generator pitfalls. Concrete protocol-modeling examples (client/server roles, boolean FSMs, packet-type hierarchies) live in `~/.claude/projects/<project>/memory/reference_ivy_patterns.md` (the `.claude/rules/ivy-patterns.md` stub points there).
 
 ## Common Syntax Traps
 

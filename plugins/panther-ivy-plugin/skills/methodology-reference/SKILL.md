@@ -17,7 +17,7 @@ user-invocable: false
 ## Shared Foundations
 
 All three methodologies share:
-- **14-layer specification template** (canonical table in `.claude/rules/nct-methodology.md`; optional-layer discussion and scaffolding decisions in `specification-patterns`)
+- **14-layer specification template** (canonical table in `~/.claude/projects/<project>/memory/reference_nct_methodology.md`; the `.claude/rules/nct-methodology.md` stub points there; optional-layer discussion and scaffolding decisions in `specification-patterns`)
 - **Before/after monitor pattern** for behavioral assertions
 - **`require`/`export`/`_finalize` semantics** for invariant enforcement
 - **Role inversion** (Ivy tester acts as the opposite role of the IUT)
