@@ -134,9 +134,11 @@ ivy_workflow_state(
 
 Both event types appear alongside the existing `phase_transition`, `context_switch`, `error`, `decision`, `progress`, `session_start`, `session_end`, `plan_approved`, `workflow_resumed`. They are whitelisted in `_VALID_EVENT_TYPES` in both the local `workflow_state.py` helper and the MCP tool's `workflow_state.py` so writes are accepted.
 
-## GAP marker convention
+## GAP markers
 
-The `[GAP: #NN <reason>]` marker syntax, per-format placement rules (Ivy / YAML / Markdown / JSON), promotion lifecycle (to `RESOLVED`, `IUT_FINDING`, `DEFERRED`, `GUARD_ADDED`, `KNOWN_DEVIATION`, `N/A`), and anti-patterns live canonically in the rule `.claude/rules/gap-markers.md`. The gate discipline, verdict schema, and tier configuration below refer to that rule for marker semantics.
+On `VERDICT_UNSOUND`, the orchestrator (never a critic) writes `[GAP: #NN <reason>]` markers inline at the cited file:line locations using `Edit`. The full convention — relationship to existing `claim-discussion` resolution prefixes (`RESOLVED`, `IUT_FINDING`, `DEFERRED`, `GUARD_ADDED`, `KNOWN_DEVIATION`, `N/A`), promotion rules, and listing/grep commands — lives in `.claude/rules/gap-markers.md`.
+
+G0 is a special case: its cited locations may be inside the plan file itself (under `/Users/*/plans/*.md`) rather than an `.ivy` file. The GAP marker convention still applies; the marker is inserted at the cited line in the plan file.
 
 ## Catalog
 
