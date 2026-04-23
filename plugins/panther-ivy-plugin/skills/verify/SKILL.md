@@ -1,6 +1,6 @@
 ---
 name: verify
-description: "Verify-compile-IUT test cycle with failure diagnosis. Use when user says \"check my spec\", \"verify this\", \"test the handshake\", or encounters errors like counterexample found, invariant violated, compilation error, ivy_check failed."
+description: "Verify-compile-IUT test cycle with failure diagnosis. Use when user says \"check my spec\", \"verify this\", \"test the handshake\", or encounters counterexample found, invariant violated, compilation error, or verification failed."
 ---
 
 ## Output Style
@@ -30,16 +30,9 @@ If any indicator is present, switch to plan authoring instead of verify dispatch
 
 Do NOT attempt to dispatch `ivy_verify`, `ivy_compile`, `ivy_iut_test`, or any state-mutating tool during plan mode — the call will be rejected and the session ends in an ambiguous state. Navigate's Phase 1.5 handles the re-entry on the next invocation after `ExitPlanMode`.
 
-## Iron Law
+## Iron Laws
 
-```
-NO FIX PROPOSALS WITHOUT COMPLETING COMPILE + VERIFY PHASES FIRST.
-If ivy_verify has not run in this turn, you cannot suggest code changes.
-```
-
-## Staleness Rule
-
-Any `ivy_verify` or `ivy_compile` result older than the most recent `.ivy` file edit is STALE. Do not cite stale results as evidence of correctness. Re-run before claiming PASS or transitioning phases.
+This skill is bound by `NO_FIX_WITHOUT_VERIFY` and the `STALENESS RULE`. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1, Read `.claude/rules/iron-laws.md` for the canonical wording and the four allowed-without-prior-verify carve-outs (debugging-methodology research, hypothesis generation, diagnostic exploration, comment-only edits). Summary for this skill: before proposing a concrete code-edit fix, ground it in either `ivy_verify` (end-of-phase) or `ivy_compile` + IUT (dev iteration loop) from the current turn, and cite which check ran.
 
 ## Step Tracking
 
@@ -407,6 +400,7 @@ The staleness rule still applies: if any `.ivy` file was edited after the backgr
 ## Integration
 
 - **Called by:** `navigate` (dispatch), `build` (post-build verification), user directly ("verify this", "run tests")
+- **Shortcut command alternative:** `/nct-check <file>` for a single-shot verification without workflow state; see `commands/README.md` for the full shortcut catalog.
 - **Calls:** `triage` (preflight), `spec-analyst` agent (diagnosis), `model-reviewer` agent (structural audit), `review` workflow (follow-up coverage)
 - **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 4, MPE Phase 6, SB Phase 7), `counterexample-guide` (Phase 6), `ivy-writing-guide` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3), `knowledge-capture` (KG Phase 4, KG Phase 7)
 - **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_iut_test`

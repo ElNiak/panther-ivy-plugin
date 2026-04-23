@@ -12,132 +12,24 @@ paths: "**/*.ivy"
 
 This skill combines the Ivy language reference, test specification patterns, and RFC bracket-tag annotation conventions. Use it whenever editing or creating `.ivy` files.
 
-## Ivy Language Basics
+**Boundary with `specification-patterns`:** this skill owns *language-level* decisions (before/after monitor syntax, `around` / `require` / `_generating` semantics, serializer/deserializer patterns). `specification-patterns` owns *layer-decomposition* decisions (which file does a type belong in, which layer depends on which, 14-layer template). Load both when designing a new layer; load only this one when editing within a layer.
 
-### File Header
+## Canonical Syntax
 
-Every Ivy file begins with a language version pragma:
-```ivy
-#lang ivy1.7
-```
-This must be the first line. Version 1.7 is the current standard used in PANTHER protocol models.
+The canonical Ivy 1.7 syntax reference (types, relations, functions, individuals, actions, invariants, object system, module system, isolates, include directives, before/after monitors, state machines, shim bridges, RFC tags, weight attributes, RFC-to-Ivy mapping, test-spec template, generator patterns) lives in `.claude/rules/ivy-patterns.md`. That file is auto-loaded for `**/*.ivy` paths via its frontmatter, so any time you edit an Ivy file the canonical forms are already in context. This skill does not restate them; it adds the *practices* below to use alongside those forms.
 
-### Type Declarations
+Every Ivy file begins with `#lang ivy1.7` as its first line (the version PANTHER standardizes on).
 
-```ivy
-type packet_id                              # Uninterpreted type
-type message_type = {request, response, error}  # Enumerated type
-type cid                                    # Abstract identifier
-type stream_kind = {unidir, bidir}          # Protocol-specific enum
-interpret bit -> bv[1]                      # Bitvector interpretation
-```
+### Search Before Writing
 
-Built-in types: `bool`, `nat` (natural numbers), `int` (integers), `bv[N]` (bitvectors).
+Before introducing a new declaration of any kind, grep the relevant protocol tree for existing instances so your new form matches existing conventions:
 
-### Relations (State Predicates)
+- Relations: `Grep(pattern="^relation ", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
+- Functions: `Grep(pattern="^function ", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
+- Actions: `Grep(pattern="action.*=", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
+- Invariants: `Grep(pattern="^invariant ", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
 
-> **Before writing a new relation**, grep for similar declarations: `Grep(pattern="^relation ", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
-
-```ivy
-relation sent(P: packet_id, N: node_id)
-relation connected(N1: node_id, N2: node_id)
-relation conn_seen(C:cid)
-```
-
-Relations are boolean-valued and represent protocol model state.
-
-### Functions and Individuals
-
-> **Before writing a new function**, grep for similar declarations: `Grep(pattern="^function ", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
-
-```ivy
-function packet_dest(P: packet_id) : node_id
-function last_pkt_num(C:cid, L:quic_packet_type) : pkt_num
-individual my_id : node_id
-individual the_cid : cid
-```
-
-### Actions
-
-> **Before writing a new action**, grep for similar patterns: `Grep(pattern="action.*=", glob="*.ivy", path="protocol-testing/<your-protocol>/")`
-
-Actions model state transitions with preconditions, effects, and postconditions:
-```ivy
-action send(src: node_id, dst: node_id, p: packet_id) = {
-    require connected(src, dst);
-    require ~sent(p, dst);
-    sent(p, dst) := true;
-    ensure sent(p, dst)
-}
-```
-
-- `require`: precondition that must hold
-- `ensure`: postcondition that must hold after
-- `:=`: deterministic assignment
-- `assume`: introduces an assumption (use sparingly, weakens the model)
-
-### Invariants
-
-Properties that must hold in every reachable state:
-```ivy
-invariant sent(P, N) -> connected(source(P), N)
-invariant ack_pending(P) -> sent(P, dest(P))
-```
-
-Invariants are checked inductively: must hold initially and be preserved by every action.
-
-## Object System
-
-```ivy
-object frame = {
-    type id
-    relation valid(F: id)
-    action create : id
-    action destroy(f: id)
-}
-```
-
-See the [README.md](README.md) for extended examples: `type this`, nested objects, axioms/conjectures.
-
-## Module System
-
-### Parameterized Modules
-
-```ivy
-module ordered_set(elem) = {
-    type this
-    relation contains(S: this, E: elem)
-    action add(s: this, e: elem) returns (s2: this)
-}
-```
-
-### Instances
-
-```ivy
-instance packet_set : ordered_set(packet_id)
-instance node_set : ordered_set(node_id)
-```
-
-### Isolates
-
-Isolates define verification boundaries separating specification from implementation:
-```ivy
-isolate protocol_spec = {
-    object client = { ... }
-    object server = { ... }
-    specification { invariant ... }
-}
-```
-
-## Include Directives
-
-```ivy
-include collections
-include order
-include my_protocol_types
-```
-
-Includes search the Ivy standard library and the current directory. No `.ivy` extension in the directive.
+Prefer to copy a working neighbor's shape over synthesizing a fresh declaration.
 
 ## Test Specification Patterns
 
@@ -191,58 +83,7 @@ Load `references/syntax-examples.md` for annotation workflow, tag conventions, a
 
 ## Protocol Modeling Patterns
 
-Load `references/generator-mechanics.md` for Z3 test generation mechanics, solver scope rules, and common generator pitfalls.
-
-### Client/Server Roles
-
-```ivy
-object client = {
-    individual id : node_id
-    relation connected
-    after init { connected := false }
-    action send_syn(srv: node_id) = {
-        require ~connected;
-    }
-}
-
-object server = {
-    individual id : node_id
-    relation listening
-    after init { listening := true }
-    action handle_syn(c: node_id) = {
-        require listening;
-    }
-}
-```
-
-### State Machines
-
-Model protocol states explicitly:
-```ivy
-type conn_state = {idle, connecting, established, closing, closed}
-individual state : conn_state
-after init { state := idle }
-
-action open_connection = {
-    require state = idle;
-    state := connecting
-}
-
-invariant state = established -> server.has_client(client.id)
-```
-
-### Packet Types
-
-```ivy
-type packet_type = {handshake, data_pkt, control, close}
-object packet = {
-    type this
-    function ptype(P: this) : packet_type
-    function src(P: this) : node_id
-    function dst(P: this) : node_id
-    function seq(P: this) : nat
-}
-```
+Load `references/generator-mechanics.md` for Z3 test generation mechanics, solver scope rules, and common generator pitfalls. Concrete protocol-modeling examples (client/server roles, boolean FSMs, packet-type hierarchies) live in `.claude/rules/ivy-patterns.md`.
 
 ## Common Syntax Traps
 

@@ -16,7 +16,7 @@ User-facing entry points activated by the routing system or natural language.
 | [review](review/) | Audit quality, check RFC coverage, run multi-agent review |
 | [triage](triage/) | Diagnose toolchain issues, health check LSP + MCP stack |
 
-## Knowledge Skills (9)
+## Knowledge Skills (12)
 
 Reference material loaded by workflows and agents on demand.
 
@@ -25,9 +25,12 @@ Reference material loaded by workflows and agents on demand.
 | [counterexample-guide](counterexample-guide/) | Interpreting ivy_verify counterexample traces and identifying fixes |
 | [specification-patterns](specification-patterns/) | 14-layer structural template and formal model pattern library |
 | [propagation-patterns](propagation-patterns/) | Patterns for propagating type changes across ser/deser state machines |
+| [apt-attack-patterns](apt-attack-patterns/) | APT-layer pattern library for NACT: 8-stage lifecycle, attack entities, protocol bindings, around-block monitors |
 | [ivy-writing-guide](ivy-writing-guide/) | Ivy language syntax, test spec patterns, RFC bracket-tag annotations |
 | [ivy-toolkit](ivy-toolkit/) | Single source of truth for all MCP tool documentation and tool selection guidance |
 | [claim-discussion](claim-discussion/) | Structured decision trees for verification claim resolution and coverage gap prioritization |
 | [methodology-reference](methodology-reference/) | Comprehensive reference for NCT, NACT, NSCT methodologies |
+| [ivy-debugging-methodology](ivy-debugging-methodology/) | Mandatory pre-fix research workflow for Ivy compilation and verification errors |
+| [ivy-error-patterns](ivy-error-patterns/) | Numbered verifier-patterns catalog and Ivy error lookup |
 | [reflection-patterns](reflection-patterns/) | Reusable reflection gate, multi-perspective exploration, and situation briefing patterns for workflows |
 | [knowledge-capture](knowledge-capture/) | Session knowledge extraction and persistence to plugin rules at workflow phase boundaries |

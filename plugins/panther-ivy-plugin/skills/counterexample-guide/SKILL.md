@@ -20,6 +20,8 @@ Use this skill when `ivy_verify` output contains either of these fields:
 
 If the verification fails but no counterexample is present, the failure is likely a type error, unresolved symbol, or Z3 timeout -- use the `methodology-reference` skill instead for those cases.
 
+**Methodology note.** Under NCT the default interpretation of a counterexample is *the IUT-side spec violates a compliance invariant*. Under NACT the perspective flips: a counterexample typically means *the attacker cannot reach a state the attack model claims is reachable* (i.e. the attack model is over-constrained). Under NSCT, counterexamples also need to be weighed against the seed / replay context (see `methodology-reference` for the per-methodology interpretation decision tree).
+
 ---
 
 > **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
@@ -101,7 +103,7 @@ Look for unguarded state variables or orphaned monitors that relate to the faili
 
 ## Common Failure Patterns
 
-Each of the four patterns below is catalogued (with IDs `#410`–`#413`) in the `ivy-error-patterns` skill for adversarial-gate citation:
+Each of the four patterns below is catalogued (with IDs `#410`–`#413`) in the `ivy-error-patterns` skill's `references/verifier_patterns.md` for adversarial-gate citation:
 
 | Pattern here | Catalog ID |
 |---|---|

@@ -325,7 +325,12 @@ Pattern detection, validation, comparison, scaffold completeness, and template s
 - `"Unknown pattern"` (scaffold mode) → valid patterns: serdes, variants, monitors, shim, module, entity
 - Template substitution failure (scaffold mode) → protocol name contains characters unsupported in Ivy identifiers
 
-**When to use:** `mode="check"` to audit a new protocol scaffold; `mode="compare"` to port patterns from a reference protocol; `mode="scaffold"` to bootstrap a new layer file with ready-to-edit Ivy source.
+**When to use:**
+- `mode="analyze"` — enumerate the patterns currently present in a protocol (variants, monitors, shims, modules, entities). Use during Phase 1 exploration to get a quick pattern inventory before deciding what to add or change.
+- `mode="validate"` — check the patterns already present for structural issues (missing guards, incomplete variants, unpaired serdes). Complements `ivy_diagnostics(mode="structural")`: diagnostics sees syntax, validate sees pattern-level correctness.
+- `mode="compare"` — port patterns from a reference protocol (set via `reference_protocol`) to the target.
+- `mode="check"` — audit a new protocol scaffold against the pattern library for completeness.
+- `mode="scaffold"` — bootstrap a new layer file with ready-to-edit Ivy source.
 
 ---
 
@@ -403,6 +408,25 @@ Manage workflow state files for multi-session tracking.
 - `"Invalid event_type '<t>'"` → valid: session_start, session_end, decision, phase_transition, progress, error, context_switch
 
 **When to use:** Read on every turn to know current workflow phase; write when transitioning phases in multi-session workflows.
+
+**Journal event types (action="append_journal"):** validated against `_VALID_EVENT_TYPES` in both `hooks/scripts/workflow_state.py` and `ivy_lsp/mcp/tools/workflow_state.py`. Unknown types are rejected.
+
+| Event type | Written by | Payload fields |
+|------------|------------|----------------|
+| `session_start` | workflow skills on entry | `resumed_from` |
+| `session_end` | workflow skills at clean exit | `clean`, `phase_at_exit` |
+| `decision` | workflow skills and user-confirmed choices | `summary`, arbitrary decision-specific keys |
+| `phase_transition` | workflow skills at phase boundaries | `from`, `to` |
+| `progress` | workflow skills during long-running steps | `detail` |
+| `error` | `record-workflow-error.py` hook and workflow skills | `detail`, `implication`, `summary` |
+| `context_switch` | navigate Phase 0 (plan-mode detection), other skills | `detection`, `mode` |
+| `gate_dispatched` | gate-trigger hooks (`assess-modeling.py`, `route-user-prompt.py`, etc.) | `gate`, `trigger`, `artifact`, `layer`, `methodology` |
+| `gate_verdict` | orchestrator after critic fan-out | `gate` ("g0".."g5"), `verdict`, `vote`, `patterns`, `cycle`, `tier`, `duration_s` |
+| `plan_approved` | navigate Plan-Author Branch on ExitPlanMode | `workflow` (caller), `phase_before_plan`, `plan_file`, `supersedes` |
+| `workflow_resumed` | navigate Phase 1.5 after G0 SOUND verdict | `workflow` (caller), `phase_after_resume`, `g0_cycle` |
+| `knowledge_captured` | knowledge-capture skill after a capture cycle | `source`, `status` (`approved`/`user_declined`/`deferred`), `references_plan_approved_ts` |
+
+Detailed payload shapes for `gate_verdict` are in `skills/reflection-patterns/references/gates.md`. `plan_approved` and `workflow_resumed` are consumed by `skills/navigate/SKILL.md` Phase 1.5.
 
 ---
 

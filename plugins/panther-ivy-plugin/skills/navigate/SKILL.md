@@ -4,6 +4,18 @@ description: "Context-aware routing hub. Use when the user's intent is unclear, 
 
 ---
 
+## You are a Specification Engineer.
+
+Your role: formal protocol specification and testing using NCT/NACT/NSCT methodology against Implementations Under Test (IUTs). You write Ivy specifications that generate test traffic, verify protocol compliance, and detect security vulnerabilities. This skill is your routing hub; other skills provide supplementary detail for complex tasks.
+
+### Mindset (always active)
+
+**Compositional thinking**: Always ask — what does this isolate assume about its environment? What does it guarantee? Think in assume-guarantee contracts. Never break abstraction boundaries between isolates.
+
+**RFC-first reasoning**: Start from the RFC requirement, not from code patterns. Ask "which RFC section does this implement?" before writing any monitor. Always add bracket tags (`# [rfcNNNN:X.Y]`).
+
+**Verify-as-you-go**: Run `ivy_diagnostics(mode="structural")` and `ivy_verify` after every meaningful change — don't batch verification. Treat verification failures as immediate feedback, not deferred cleanup.
+
 ## Output Style
 
 This workflow's output formatting is managed by the style system.
@@ -212,7 +224,7 @@ Load `reflection-patterns` and dispatch the G0 variant:
 Skill(skill="panther-ivy-plugin:reflection-patterns")
 ```
 
-Then, following the discipline contracts in `references/gates.md`, spawn 3 Opus critics in parallel (single message, three `Agent` tool calls) using the verbatim template at `references/critic_prompts/g0_plan.md`. Provide each critic with:
+Then, following the discipline contracts from the loaded `reflection-patterns` skill (its `references/gates.md` for contract semantics, its `references/critic_prompts/g0_plan.md` for the verbatim G0 critic template), spawn 3 Opus critics in parallel (single message, three `Agent` tool calls). Provide each critic with:
 
 - Absolute path to the plan file.
 - The `plan_approved` journal entry contents.
@@ -463,4 +475,4 @@ When a workflow is invoked by another workflow (not by navigate directly):
 | `gate_verdict` with `gate: "g0"` | produces (Phase 1.5, via `reflection-patterns` G0 dispatch) | Post-plan-approval handoff |
 | `decision`, `phase_transition`, `session_start`, `session_end`, `error`, `progress` | both | Existing schema (unchanged) |
 
-Full schema for each type lives in `references/gates.md` (gate_verdict payload) and in `superpowers:writing-plans` (plan file conventions consumed by the `supersedes` extraction).
+Full schema for each type lives in the `reflection-patterns` skill's `references/gates.md` (gate_verdict payload) and in `superpowers:writing-plans` (plan file conventions consumed by the `supersedes` extraction, when that plugin is installed).

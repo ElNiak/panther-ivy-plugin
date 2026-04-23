@@ -22,7 +22,7 @@ Extract from the error output:
 
 ### Step 2: Diagnostic Interpretation Protocol
 
-If the error came from `ivy_verify`, `ivy_lint`, or LSP diagnostics, read the **full `diagnostics` array**, not just `error_summary`.
+If the error came from `ivy_verify`, `ivy_diagnostics`, or LSP diagnostics, read the **full `diagnostics` array**, not just `error_summary`.
 
 Classify each diagnostic by its `source` field:
 
@@ -46,13 +46,13 @@ Load and check these skills for the failing construct:
 - `ivy-error-patterns` — look up the specific error message substring
 - `ivy-writing-guide` — check syntax rules for the construct type (relation, function, action, invariant, etc.)
 
-### Step 4: Run Linter
+### Step 4: Run Structural Check
 
-Call `ivy_lint` via MCP before running full verification:
+Call `ivy_diagnostics` in structural mode via MCP before running full verification:
 ```
-mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint(relative_path="<file>")
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics(relative_path="<file>", mode="structural")
 ```
-This runs in milliseconds and catches structural issues (missing `#lang`, unmatched braces, unresolved includes, parameter name collisions, missing init) without the cost of full `ivy_check`.
+This runs in milliseconds and catches structural issues (missing `#lang`, unmatched braces, unresolved includes, parameter name collisions, missing init) without the cost of full `ivy_verify`.
 
 ### Step 5: Search Existing Models for Working Examples
 
@@ -100,3 +100,6 @@ load the `ivy-writing-guide` skill and read `references/serializer-patterns.md`.
 - **`counterexample-guide`** — Trace interpretation for verification failures (Step 1 / Step 2 consume its output).
 - **`ivy-writing-guide`** — Language reference consulted in Step 3.
 - **`ivy-toolkit`** — MCP tool inventory consulted in Step 4.
+
+**References:**
+- `references/debugging-environment.md` — Self-evaluation protocol (anti-pattern checklist), directory structure conventions, log file paths, common failures, debug environment variables, LSP indexing awareness. Consult when stack/environment issues are suspected.

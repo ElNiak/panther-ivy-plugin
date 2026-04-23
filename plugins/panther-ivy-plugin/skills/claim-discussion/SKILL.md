@@ -23,7 +23,7 @@ After identifying the matching trigger above, Load the corresponding file: `refe
 
 ## Persistence — Inline Resolution Comments
 
-All claim discussion outcomes are recorded as inline comments in `.ivy` files:
+All claim discussion outcomes are recorded as inline comments in the source file. The date is always in ISO format (`YYYY-MM-DD`) and the comment prefix matches the host file's syntax: `#` for `.ivy`, `#` for `.yaml`, `<!-- … -->` for `.md`. This parallels the `[GAP: …]` placement rules in `.claude/rules/gap-markers.md`; a resolution comment is the author-written successor to a gate-written GAP marker.
 
 ```ivy
 require conn_state = open;  # [rfc9000:4.1] RESOLVED(2026-03-18): Confirmed spec-correct per user
@@ -39,7 +39,6 @@ require conn_state = open;  # [rfc9000:4.1] RESOLVED(2026-03-18): Confirmed spec
 | `N/A({date})` | Requirement not applicable with reason |
 
 ### Rules
-- Always include the date in ISO format (YYYY-MM-DD)
 - Keep comments concise (one line)
 - Place on the same line as the assertion when possible
 - Never remove existing resolution comments — append if revisiting

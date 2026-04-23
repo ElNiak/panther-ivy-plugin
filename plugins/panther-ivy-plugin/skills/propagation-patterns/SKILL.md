@@ -75,7 +75,7 @@ These asymmetries apply across all protocols. Always check for them:
 - **Byte-order handling.** Check for `reverse_bytes()` in the existing deserializer. If multi-byte fields use it, apply the same convention to new fields.
 - **State count differences.** State counts may differ between ser and deser (e.g., QUIC: 55 ser states vs 53 deser states). Do not assume they match.
 - **Counter management.** The `data_remaining` counter management differs between ser and deser for variable-length fields.
-- **Hardcoded constants (MiniP-specific).** The MiniP deserializer has `payload_length = 12` (hardcoded wire length) and `current_ping_size == 5` (iteration cap). These are semantic values that `ivyc` compilation cannot validate. Adding a field or variant may require updating them. Always flag hardcoded integer literals in the deser's `set()`/`get()`/`open_list_elem()` methods for user review.
+- **Hardcoded constants (MiniP-specific).** The MiniP deserializer at `protocol-testing/minip/minip_stack/ping_deser.ivy` has `payload_length = 12` (hardcoded wire length) and `current_ping_size == 5` (iteration cap). These are semantic values that `ivyc` compilation cannot validate. Adding a field or variant may require updating them. Always flag hardcoded integer literals in the deser's `set()`/`get()`/`open_list_elem()` methods for user review.
 
 ## Integration
 
@@ -84,5 +84,5 @@ These asymmetries apply across all protocols. Always check for them:
 
 **Related skills:**
 - **`specification-patterns`** — 14-layer template and where serializer files sit in it.
-- **`ivy-writing-guide`** — `references/serializer-patterns.md` for the C++ state-machine internals.
+- **`ivy-writing-guide`** — load this skill via the `Skill` tool and consult its `references/serializer-patterns.md` for the C++ state-machine internals.
 - **`ivy-toolkit`** — `ivy_propagation` tool parameters.

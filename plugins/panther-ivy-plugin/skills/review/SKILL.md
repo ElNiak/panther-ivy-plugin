@@ -30,12 +30,9 @@ If any indicator is present, switch to plan authoring instead of review dispatch
 
 Do NOT attempt to dispatch `ivy_coverage`, `ivy_quality`, `ivy_extract_requirements`, or any state-mutating tool during plan mode — the call will be rejected and the session ends in an ambiguous state. Navigate's Phase 1.5 handles the re-entry on the next invocation after `ExitPlanMode`.
 
-## Iron Law
+## Iron Laws
 
-```
-NO QUALITY JUDGMENTS WITHOUT RUNNING ivy_coverage AND ivy_quality FIRST.
-Impressionistic assessments ("looks good") are forbidden — cite tool output.
-```
+This skill is bound by `NO_QUALITY_WITHOUT_COVERAGE` and the `STALENESS RULE`. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1 (Triage), Read `.claude/rules/iron-laws.md` for the canonical wording and the explicit non-targets (style/naming feedback, readability comments, design alternatives are allowed without tool citations — they are not "quality verdicts"). Summary for this skill: before stating a formal coverage or quality verdict, cite `ivy_coverage` and/or `ivy_quality` output from the current turn inline.
 
 ## Step Tracking
 

@@ -10,16 +10,9 @@ Follow the style directives injected via `additionalContext` -- they contain
 the active workflow overlay and phase modifier. Do not invent
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
-## Iron Law
+## Iron Laws
 
-```
-NO LAYER IMPLEMENTATION WITHOUT COMPLETING SCAFFOLD + STRUCTURAL CHECK FIRST.
-If ivy_diagnostics(mode="structural") has not passed, do not write the next layer.
-```
-
-## Staleness Rule
-
-Any `ivy_verify` or `ivy_compile` result older than the most recent `.ivy` file edit is STALE. Do not cite stale results as evidence of correctness. Re-run before claiming PASS or transitioning phases.
+This skill is bound by `NO_LAYER_WITHOUT_SCAFFOLD` and the `STALENESS RULE`. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording, the explicit "Out of scope" carve-outs (patches to existing layers, files outside `{prot}_stack/`, drafts outside discovery path), and the plan-mode exemption clause. Summary for this skill: ground each net-new layer file in a passing `ivy_diagnostics(mode="structural")` for the prior layer; treat any tool result older than the most recent edit to a file in the include closure as stale.
 
 ## Step Tracking
 
@@ -208,7 +201,7 @@ Load `references/layer-scaffolding.md` for the full per-layer scaffolding proced
 
 1. Load `ivy-writing-guide` skill
 2. Write ONE layer at a time in dependency order; run `ivy_compile` after each
-3. On compile error: dispatch `spec-analyst`, fix inline, recompile — bounded to **5 attempts per layer**. If the layer still fails to compile after 5 attempts, stop looping and escalate to the user: "This layer has systematic issues — 5 compile attempts have not resolved it. Recommend re-examining the blueprint (Phase 2) or the upstream layer's interface." Silent retry past the cap is the pattern `#403` (error whitelisting) exists to discourage.
+3. On compile error: dispatch `spec-analyst`, fix inline, recompile — bounded to **5 attempts per layer**. If the layer still fails to compile after 5 attempts, stop looping and escalate to the user: "This layer has systematic issues — 5 compile attempts have not resolved it. Recommend re-examining the blueprint (Phase 2) or the upstream layer's interface." Silent retry past the cap is the behaviour that pattern `#403` (error whitelisting; see the `ivy-error-patterns` catalog) exists to discourage.
 4. On compile success: update `build-state.yaml` layer status
 5. Reflection Gate every 3 layers
 6. Handle type propagation via `propagation-patterns` skill if needed
@@ -226,7 +219,7 @@ On `VERDICT_UNSOUND`, the orchestrator writes `[GAP: #NN <reason>]` markers inli
 
 ## Phase 4 — Verify
 
-Invoke `verify` as a sub-workflow: set `invocation_depth += 1`, `caller = "build"`, then `Skill(skill="verify")`. Verify runs its full cycle and returns here (caller-based return). Restore `workflow = "build"`, `phase = "verified"`.
+Invoke `verify` as a sub-workflow: update `<protocol-dir>/.panther-ivy/active-workflow` to set `invocation_depth += 1` and `caller = "build"`, then `Skill(skill="verify")`. Verify runs its full cycle and returns here (caller-based return). On return, restore `workflow = "build"` and `phase = "verified"` in the same `active-workflow` file.
 
 ---
 
@@ -373,6 +366,7 @@ The staleness rule still applies: if the `.ivy` file was edited after the backgr
 ## Integration
 
 - **Called by:** `navigate` (dispatch), user directly ("build a model", "scaffold a protocol")
+- **Shortcut command alternative:** `/nct-compile <file>` for a single-shot layer compile without workflow state; see `commands/README.md` for the full shortcut catalog.
 - **Calls:** `verify` (post-build verification), `spec-analyst` agent (compile error diagnosis), `model-reviewer` agent (quality gate), `traceability-agent` agent (coverage gate)
 - **Knowledge skills loaded:** `reflection-patterns` (MPE Phase 1, SB Phase 2, RG Phase 3, SB Phase 5), `methodology-reference` (Phase 1), `specification-patterns` (Phase 2), `ivy-writing-guide` (Phase 3), `counterexample-guide` (Phase 3 on error), `propagation-patterns` (Phase 3 on type change), `knowledge-capture` (KG Phase 3, KG Phase 5)
 - **MCP tools used:** `ivy_compile`, `ivy_workspace`

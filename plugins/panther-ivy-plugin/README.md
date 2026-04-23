@@ -1,32 +1,12 @@
 # panther-ivy-plugin — Ivy Formal Protocol Testing
 
-## You are a Specification Engineer.
-
-Your role: formal protocol specification and testing using NCT/NACT/NSCT methodology against Implementations Under Test (IUTs).
-You write Ivy specifications that generate test traffic, verify protocol compliance, and detect security vulnerabilities.
-This document is your self-contained operating guide. Skills provide supplementary detail for complex tasks.
-
-### Mindset (always active)
-
-**Compositional thinking**: Always ask — what does this isolate assume about its environment? What does it guarantee? Think in assume-guarantee contracts. Never break abstraction boundaries between isolates.
-
-**RFC-first reasoning**: Start from the RFC requirement, not from code patterns. Ask "which RFC section does this implement?" before writing any monitor. Always add bracket tags (`# [rfcNNNN:X.Y]`).
-
-**Verify-as-you-go**: Run `ivy_diagnostics(mode="structural")` and `ivy_verify` after every meaningful change — don't batch verification. Treat verification failures as immediate feedback, not deferred cleanup.
+> **Developer reference.** This README documents the plugin's architecture, routing, tools, and conventions for contributors reading the source. It is **not** auto-loaded into Claude Code at plugin install time — Claude Code's plugin auto-discovery targets `.claude-plugin/plugin.json`, `commands/`, `agents/`, `skills/`, `hooks/`, `.mcp.json`, `scripts/`, not README.md. Load-bearing runtime content lives in `skills/*/SKILL.md` and `.claude/rules/*.md`, which **are** auto-discovered. The agent-facing "Specification Engineer" framing that used to appear in this README now lives canonically in `skills/navigate/SKILL.md` so it actually reaches the agent at runtime; see that file for the current wording.
 
 Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation, analysis), agents, and skills.
 
 ## Workflow Routing
 
-When a user expresses intent, activate the matching workflow skill. If ambiguous, activate navigate.
-
-| User Intent | Workflow | Examples |
-|---|---|---|
-| Verify, test, debug failure | verify | "check my spec", "why did it fail", "run tests on handshake" |
-| Create model, add layers, propagate changes | build | "model QUIC connection", "add frame variants", "I changed a type" |
-| Audit quality, check coverage, review | review | "RFC coverage?", "review my model", "quality issues?" |
-| Toolchain broken, health check | triage | "MCP won't connect", "nothing works", "health check" |
-| Unclear intent, session resume, what's next | navigate | "where was I?", "what should I do?", "I'm new here" |
+Runtime routing is driven by `routing-rules.json`, which is authoritative: it defines the keyword, regex, file-trigger, and priority entries the `route-user-prompt.py` hook consults on every `UserPromptSubmit`. The five user-facing workflows (`verify`, `build`, `review`, `triage`, `navigate`) and one learning-injection bucket are declared there; refer to that file directly for the matching vocabulary, do not maintain a parallel table here.
 
 ### Routing Rules
 1. If a workflow is already active (check `<protocol-directory>/.panther-ivy/active-workflow`), stay in it unless the user explicitly asks to switch.
@@ -96,7 +76,10 @@ For parameters, timeouts, error handling, and rendering details, see the **ivy-t
 `spec-analyst`, `model-reviewer`, `traceability-agent`
 
 **Knowledge skills** (loaded by workflows, not user-facing):
-`counterexample-guide`, `specification-patterns`, `propagation-patterns`, `ivy-writing-guide`, `ivy-toolkit`, `claim-discussion`, `methodology-reference`, `ivy-debugging-methodology`, `ivy-error-patterns`, `reflection-patterns`, `knowledge-capture`
+`counterexample-guide`, `specification-patterns`, `propagation-patterns`, `apt-attack-patterns`, `ivy-writing-guide`, `ivy-toolkit`, `claim-discussion`, `methodology-reference`, `ivy-debugging-methodology`, `ivy-error-patterns`, `reflection-patterns`
+
+**User-invocable skills** (triggered by user intent or natural-language phrases, not workflow dispatch):
+`knowledge-capture` — review session learnings and audit plugin skills/references; also loaded by workflow knowledge gates and `/nct-learn` (`user-invocable: true`)
 
 ## Workspace Awareness
 
@@ -148,6 +131,13 @@ Output formatting is a 3-layer stack. Each layer overrides the one below it:
 Tool result formatting is handled programmatically by `render-tool-result.py`
 (PostToolUse hook). Do not duplicate tool formatting rules in output styles or overlays.
 
+Two subdirectories of `styles/` carry per-artifact templates consumed by the hooks:
+
+- `styles/tool-renderers/` — one file per rendered MCP tool (`ivy_verify.md`, `ivy_coverage.md`, `ivy_diagnostics.md`, `ivy_compile.md`, `ivy_quality.md`, `ivy_verdict.md`). Each file specifies the output phrasing per workflow / phase; `render-tool-result.py` selects the right section at runtime.
+- `styles/summaries/` — one file per workflow (`build.md`, `navigate.md`, `review.md`, `triage.md`, `verify.md`). These are summary templates loaded by `render-summary.py` (Stop hook) to produce the end-of-session recap.
+
+Neither directory is user-facing; changes there propagate through hooks only.
+
 ### Style Precedence Rules
 
 - Workflow overlays override output style dimensions for the active phase.
@@ -186,9 +176,56 @@ Rendering is cache-driven; the existing SessionStart, PreToolUse, PostToolUse,
 and Notification hooks populate `~/.claude/panther-ivy-plugin/cache/<hash>/statusline.json`
 so the renderer never probes live state. See `scripts/statusline/README.md`.
 
+## Environment Variables
+
+Most settings are configured through Claude Code's `userConfig` (see `plugin.json`) and surfaced as environment variables via `settings.json`. A few internal variables are set at runtime by the SessionStart hooks and consumed by later hooks and the MCP servers.
+
+### User-configurable (via `userConfig`)
+
+| Variable | userConfig field | Default | Purpose |
+|---|---|---|---|
+| `IVY_LSP_LOG_LEVEL` | `log_level` | `INFO` | LSP / MCP log verbosity (`DEBUG` / `INFO` / `WARN` / `ERROR`) |
+| `PANTHER_IVY_ENABLE_SERENA` | `enable_serena` | `0` | Launch the Serena MCP server (requires the `panther-serena` submodule) |
+| `IVY_LSP_FORCE_REINSTALL` | `force_reinstall` | `0` | Force `uvx` to reinstall `ivy-lsp` on every server start (useful during local `ivy-lsp` development) |
+| `IVY_OBSERVABILITY_ENABLED` | `observability_enabled` | `1` | Emit JSONL observability events to the session log |
+| `PANTHER_IVY_STATUSLINE_MODE` | `statusline_mode` | `suppress-overlaps` | Statusline composition: `ivy-only` / `minimal` / `full-delegate` / `suppress-overlaps` |
+| `PANTHER_IVY_STATUSLINE_DEBUG` | `statusline_debug` | `0` | Log statusline render errors to `~/.claude/panther-ivy-plugin/logs/statusline.log` |
+
+### Runtime-set (populated by SessionStart hooks)
+
+These are written to `$CLAUDE_ENV_FILE` by `detect-ivy-workspace.sh` so downstream hooks and the MCP / LSP server processes inherit them. Do not set them manually.
+
+| Variable | Purpose |
+|---|---|
+| `IVY_WORKSPACE_ROOT` | Absolute path to the detected Ivy workspace root |
+| `IVY_SESSION_ID` | Date-prefixed Claude session id used for per-session log and cache directories |
+| `IVY_LSP_LOG_PATH` | Path to the latest LSP log symlink |
+| `IVY_MCP_LOG_PATH` | Path to the latest MCP log symlink |
+| `IVY_MCP_PID_FILE` | PID file path for the MCP server |
+| `IVY_ACTIVE_WORKSPACE` | Workspace group name when one is explicitly set via `/set-workspace` |
+
+### Optional overrides (user environment)
+
+Set these in your shell environment before starting Claude Code if you need to override the defaults.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `IVY_OBSERVABILITY_DIR` | `$IVY_WORKSPACE_ROOT/.observability` then `/tmp/ivy-observability` | Override for JSONL observability log root |
+| `IVY_LSP_LOG_DIR` | `/tmp` | Override for LSP / MCP / Serena log directory |
+| `IVY_LSP_INCLUDE_PATHS` | `protocol-testing` | LSP indexing include paths (inside a PANTHER workspace without `.ivyworkspace`) |
+| `IVY_LSP_EXCLUDE_PATHS` | `submodules,test,doc,examples,notebooks,patches,ivy` | LSP indexing exclude paths |
+
+### Harness-provided
+
+| Variable | Purpose |
+|---|---|
+| `CLAUDE_PLUGIN_ROOT` | Plugin install directory, used in `hooks.json`, `.mcp.json`, and `settings.json` for path resolution |
+| `CLAUDE_ENV_FILE` | Path the harness reads after each hook run to propagate exported env vars to later tool calls |
+| `CLAUDE_SESSION_ID` / `CLAUDE_CODE_SESSION_ID` | Claude Code session identifier (consumed by the session-id resolution chain in `hook_utils.resolve_session_id`) |
+
 ## Quick Reference
 
 **Workflows**: navigate, verify, build, review, triage
 **Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-iut-test, /nct-health, /nct-observability, /nct-learn
 **Internal agents**: spec-analyst, model-reviewer, traceability-agent
-**Internal knowledge**: counterexample-guide, specification-patterns, propagation-patterns, ivy-writing-guide, ivy-toolkit, claim-discussion, methodology-reference, ivy-debugging-methodology, ivy-error-patterns, reflection-patterns, knowledge-capture
+**Internal knowledge**: counterexample-guide, specification-patterns, propagation-patterns, apt-attack-patterns, ivy-writing-guide, ivy-toolkit, claim-discussion, methodology-reference, ivy-debugging-methodology, ivy-error-patterns, reflection-patterns, knowledge-capture

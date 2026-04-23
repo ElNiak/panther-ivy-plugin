@@ -17,7 +17,7 @@ user-invocable: false
 ## Shared Foundations
 
 All three methodologies share:
-- **14-layer specification template** (see `specification-patterns`)
+- **14-layer specification template** (canonical table in `.claude/rules/nct-methodology.md`; optional-layer discussion and scaffolding decisions in `specification-patterns`)
 - **Before/after monitor pattern** for behavioral assertions
 - **`require`/`export`/`_finalize` semantics** for invariant enforcement
 - **Role inversion** (Ivy tester acts as the opposite role of the IUT)
@@ -98,6 +98,8 @@ See the `ivy-error-patterns` skill for the full error-to-fix lookup table. The m
 ---
 
 ## NACT
+
+For the concrete pattern library backing NACT (stage-file scaffolding, attack-entity composition, protocol-binding template, `around`-block monitors), load the `apt-attack-patterns` skill via the `Skill` tool.
 
 ### APT 6-Stage Lifecycle
 

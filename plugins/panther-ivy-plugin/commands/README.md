@@ -2,7 +2,9 @@
 
 ## Overview
 
-This directory contains 5 shortcut commands for direct Ivy tool access within the panther-ivy-plugin for Claude Code. All commands use the `ivy-tools` MCP tools -- they do NOT invoke Ivy CLI tools directly via Bash.
+This directory contains 7 shortcut commands for direct Ivy tool access within the panther-ivy-plugin for Claude Code. Five of them (`/nct-check`, `/nct-compile`, `/nct-model-info`, `/nct-iut-test`, `/nct-observability`) wrap ivy-tools MCP tools; `/nct-health` runs the 9-step diagnostic via the `triage` skill; `/nct-learn` manually triggers `knowledge-capture`. All commands use the `ivy-tools` MCP surface — they do NOT invoke Ivy CLI tools directly via Bash.
+
+The plugin also exposes two workspace-scoping commands: `/set-workspace <protocol> [<roles>]` to activate a workspace (edits outside the active protocol are then blocked by the PreToolUse hook), and `/clear-workspace` to remove the restriction. Called without arguments, `/set-workspace` reports the current state and the available groups (`quic`, `apt`, `apt_quic`, `minip`, `bgp`, `coap`, `scaffolds`).
 
 For guided multi-step operations, use the workflow skills (`verify`, `build`, `review`, `triage`, `navigate`) instead.
 

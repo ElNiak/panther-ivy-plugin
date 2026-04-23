@@ -76,7 +76,7 @@ Provides deterministic execution (seed-controlled), scale testing (many nodes), 
 | 11 | Entity Behavior | `ivy_{prot}_{role}_behavior.ivy` | FSM + before/after monitors |
 | 12 | Shims | `{prot}_shim.ivy` | Formal model ↔ implementation bridge |
 | 13 | Serialization | `{prot}_ser.ivy`, `{prot}_deser.ivy` | Wire format encoding/decoding |
-| 14 | Utilities | `byte_stream.ivy`, `file.ivy`, `time.ivy` | Common utilities |
+| 14 | Utilities | `byte_stream.ivy`, `file.ivy`, `time.ivy`, `random_value.ivy` | Common utilities |
 
 **Dependency order**: Types(1) → Error(9), Frame(4) → Packet(5) → Protection(6) → Connection(7) → Entities(10-12)
 

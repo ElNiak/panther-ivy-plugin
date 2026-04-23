@@ -20,10 +20,11 @@ If `invocation_depth > 0` in the active-workflow state, **skip this gate entirel
 Read all target files to understand what is already documented:
 
 - `.claude/rules/ivy-patterns.md`
-- `.claude/rules/debugging.md`
-- `.claude/rules/tool-reference.md`
+- `.claude/rules/iron-laws.md`
 - `.claude/rules/nct-methodology.md`
 - `.claude/rules/insights.md`
+- `skills/ivy-debugging-methodology/references/debugging-environment.md` (was `.claude/rules/debugging.md` before 2026-04-22 refactor)
+- `skills/ivy-toolkit/references/tool-catalog.md` (was `.claude/rules/tool-reference.md` before 2026-04-22 refactor)
 
 Note key topics and patterns already covered. This prevents duplicate entries.
 

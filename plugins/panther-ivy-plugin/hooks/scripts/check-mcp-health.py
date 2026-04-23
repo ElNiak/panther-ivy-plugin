@@ -10,9 +10,7 @@ Maintains a failure counter in a state file.  After 3 consecutive
 definitive failures, blocks the tool call with advice.
 """
 
-import fcntl
 import glob
-import json
 import os
 import socket
 import subprocess
@@ -20,44 +18,16 @@ import sys
 import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from hook_utils import get_mcp_health_state_path, emit_hook_output, MAX_CONSECUTIVE_MCP_FAILURES
+from hook_utils import (
+    MAX_CONSECUTIVE_MCP_FAILURES,
+    emit_hook_output,
+    read_mcp_health_state,
+    write_mcp_health_state,
+)
 from statusline_cache import update_from_hook as _statusline_update
 
-_STATE_TTL = 300  # Reset state after 5 minutes of no activity
 _STALE_PORT_AGE = 120  # Port file older than 2 min with no TCP → stale
 _PID_DIR = "/tmp/ivy-lsp-pids"
-
-
-def _read_state() -> dict:
-    """Read the health state file, returning defaults if missing/stale."""
-    path = get_mcp_health_state_path()
-    try:
-        with open(path) as f:
-            fcntl.flock(f, fcntl.LOCK_SH)
-            try:
-                state = json.load(f)
-            finally:
-                fcntl.flock(f, fcntl.LOCK_UN)
-        if time.time() - state.get("last_update", 0) > _STATE_TTL:
-            return {"consecutive_failures": 0, "last_update": time.time()}
-        return state
-    except (OSError, json.JSONDecodeError, KeyError):
-        return {"consecutive_failures": 0, "last_update": time.time()}
-
-
-def _write_state(state: dict) -> None:
-    """Write the health state file."""
-    path = get_mcp_health_state_path()
-    state["last_update"] = time.time()
-    try:
-        with open(path, "w") as f:
-            fcntl.flock(f, fcntl.LOCK_EX)
-            try:
-                json.dump(state, f)
-            finally:
-                fcntl.flock(f, fcntl.LOCK_UN)
-    except OSError:
-        pass
 
 
 def _check_pid_alive():
@@ -145,21 +115,21 @@ def _check_sidecar_alive():
 
 
 def main():
-    state = _read_state()
+    state = read_mcp_health_state()
 
     # --- Tier 1: PID check (fast, no network) ---
     pid_result = _check_pid_alive()
     if pid_result is True:
         if state["consecutive_failures"] > 0:
             state["consecutive_failures"] = 0
-            _write_state(state)
+            write_mcp_health_state(state)
         _statusline_update("mcp", {"status": "up"})
         return  # Allow
 
     if pid_result is False:
         # MCP process is dead — definitive failure
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
-        _write_state(state)
+        write_mcp_health_state(state)
         _statusline_update("mcp", {"status": "down", "last_error": "pid-check-failed"})
         _emit_result(state)
         return
@@ -169,14 +139,14 @@ def main():
     if tcp_result is True:
         if state["consecutive_failures"] > 0:
             state["consecutive_failures"] = 0
-            _write_state(state)
+            write_mcp_health_state(state)
         _statusline_update("mcp", {"status": "up"})
         return  # Allow
 
     if tcp_result is False:
         # Fresh port file but sidecar not responding — definitive failure
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
-        _write_state(state)
+        write_mcp_health_state(state)
         _statusline_update("mcp", {"status": "down", "last_error": "tcp-unreachable"})
         _emit_result(state)
         return
@@ -186,7 +156,7 @@ def main():
     # report the error directly on the tool result.
     if state["consecutive_failures"] > 0:
         state["consecutive_failures"] = 0
-        _write_state(state)
+        write_mcp_health_state(state)
     _statusline_update("mcp", {"status": "up"})
     return
 

@@ -12,9 +12,12 @@
 
 ## Self-Review
 
-- After producing output that contains analysis, recommendations, or design
-  choices, append a brief "Considerations" block listing:
+- After producing a model response to the user that contains analysis,
+  recommendations, or design choices, append a brief "Considerations" block
+  listing:
   - **Pro**: What this approach gets right
   - **Con**: What risks, trade-offs, or limitations exist
   - **Alternatives considered**: Other options and why they were not chosen
+- This rule governs Claude's response to the user, not plugin source documents
+  (skills, rules, agents) that teach these conventions.
 - For simple factual outputs (tool results, file listings), skip self-review.

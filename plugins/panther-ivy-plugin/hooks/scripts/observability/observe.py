@@ -11,23 +11,43 @@ Usage:
 
 import argparse
 import collections
-import fcntl
 import json
 import os
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from hook_utils import get_mcp_health_state_path, emit_hook_output, MAX_CONSECUTIVE_MCP_FAILURES
+    from hook_utils import (
+        MAX_CONSECUTIVE_MCP_FAILURES,
+        emit_hook_output,
+        read_mcp_health_state,
+        write_mcp_health_state,
+    )
     _HAS_HOOK_UTILS = True
 except ImportError:
     _HAS_HOOK_UTILS = False
 
-_SKIP_TOOLS = {"Read", "Grep", "Glob", "LS"}
+_DEFAULT_SKIP_TOOLS = {"Read", "Grep", "Glob", "LS"}
+
+
+def _resolve_skip_tools() -> set[str]:
+    """Read the skip-list from $IVY_OBSERVABILITY_SKIP_TOOLS or fall back to the default.
+
+    The env var is a comma-separated list of tool names. An empty string value
+    disables skipping entirely (every tool is logged). The default (`Read`,
+    `Grep`, `Glob`, `LS`) prevents the highest-frequency read-only tools from
+    flooding the JSONL observability stream.
+    """
+    override = os.environ.get("IVY_OBSERVABILITY_SKIP_TOOLS")
+    if override is None:
+        return set(_DEFAULT_SKIP_TOOLS)
+    return {t.strip() for t in override.split(",") if t.strip()}
+
+
+_SKIP_TOOLS = _resolve_skip_tools()
 _KNOWN_EVENTS = {
     "PreToolUse", "PostToolUse", "PostToolUseFailure", "SessionStart",
     "SessionEnd", "Stop", "SubagentStart", "SubagentStop",
@@ -210,23 +230,9 @@ def _handle_mcp_health_circuit_breaker(tool_name: str) -> None:
         return
 
     try:
-        state_path = get_mcp_health_state_path()
-        state: dict = {"consecutive_failures": 0, "last_update": time.time()}
-        if os.path.exists(state_path):
-            with open(state_path) as f:
-                fcntl.flock(f, fcntl.LOCK_SH)
-                try:
-                    state = json.load(f)
-                finally:
-                    fcntl.flock(f, fcntl.LOCK_UN)
+        state = read_mcp_health_state()
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
-        state["last_update"] = time.time()
-        with open(state_path, "w") as f:
-            fcntl.flock(f, fcntl.LOCK_EX)
-            try:
-                json.dump(state, f)
-            finally:
-                fcntl.flock(f, fcntl.LOCK_UN)
+        write_mcp_health_state(state)
 
         if state["consecutive_failures"] >= MAX_CONSECUTIVE_MCP_FAILURES:
             emit_hook_output(

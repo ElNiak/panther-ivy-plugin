@@ -4,6 +4,18 @@ paths: ["**/*.ivy"]
 
 ## Ivy Language Patterns (from QUIC Reference Model)
 
+### File Header
+
+Every Ivy file's first line is the language version pragma. PANTHER standardizes on Ivy 1.7.
+
+```ivy
+#lang ivy1.7
+```
+
+### Built-in Types
+
+`bool`, `nat` (natural numbers), `int` (integers), `bv[N]` (bitvectors of width N).
+
 ### Types and State
 ```ivy
 type cid                                    # Uninterpreted type
@@ -14,6 +26,35 @@ relation conn_seen(C:cid)                   # Boolean predicate (state)
 function last_pkt_num(C:cid, L:quic_packet_type) : pkt_num  # Stateful value
 individual the_cid : cid                    # Constant
 ```
+
+### Action Body Semantics
+
+Actions model state transitions. Four body-level keywords:
+
+- `require` — precondition that must hold when the action fires. Under `_generating`, `require` acts as a generator constraint.
+- `ensure` — postcondition that must hold after the body runs.
+- `:=` — deterministic assignment to a relation, function, or individual.
+- `assume` — introduces an assumption. Weakens the model soundness, use only when the assumption is externally guaranteed.
+
+```ivy
+action send(src: node_id, dst: node_id, p: packet_id) = {
+    require connected(src, dst);
+    require ~sent(p, dst);
+    sent(p, dst) := true;
+    ensure sent(p, dst)
+}
+```
+
+### Invariants
+
+Properties that must hold in every reachable state. Ivy checks them inductively: the invariant must hold initially (after `after init`) and be preserved by every action.
+
+```ivy
+invariant sent(P, N) -> connected(source(P), N)
+invariant ack_pending(P) -> sent(P, dest(P))
+```
+
+Variables in an invariant are implicitly universally quantified. `invariant sent(P, N)` means "for all P, N, sent(P, N) is true" — rarely what the author intends. Bind via implication or a conditional form.
 
 ### Before/After Monitor
 ```ivy
@@ -33,6 +74,58 @@ after packet_event(src:ip.endpoint, dst:ip.endpoint, pkt:quic_packet) {
 }
 ```
 
+### Object System
+
+Objects group types, state, and actions under a namespace. `type this` declares the object's own self-type; nested objects compose namespaces.
+
+```ivy
+object frame = {
+    type id
+    relation valid(F: id)
+    action create : id
+    action destroy(f: id)
+}
+```
+
+### Module System
+
+Parameterized modules produce reusable type-polymorphic components.
+
+```ivy
+module ordered_set(elem) = {
+    type this
+    relation contains(S: this, E: elem)
+    action add(s: this, e: elem) returns (s2: this)
+}
+
+instance packet_set : ordered_set(packet_id)
+instance node_set : ordered_set(node_id)
+```
+
+### Isolates
+
+Isolates define verification boundaries that separate specification from implementation. Each isolate is verified independently; other isolates are abstracted via their `specification` block.
+
+```ivy
+isolate protocol_spec = {
+    object client = { ... }
+    object server = { ... }
+    specification { invariant ... }
+}
+```
+
+### Include Directives
+
+Includes search the Ivy standard library (`ivy/include/1.7`) and the current workspace include path. The directive omits the `.ivy` extension.
+
+```ivy
+include collections
+include order
+include my_protocol_types
+```
+
+Ivy does not support circular includes.
+
 ### Object/Module Composition
 ```ivy
 object quic_endpoint = {
@@ -41,6 +134,30 @@ object quic_endpoint = {
         variant this of quic_endpoint = struct { }
         individual ep : ip.endpoint
         after init { ep.protocol := ip.udp; ep.addr := address; ep.port := port; }
+    }
+}
+```
+
+### Client/Server Roles
+
+Entity roles are typically modelled as two sibling objects with complementary state:
+
+```ivy
+object client = {
+    individual id : node_id
+    relation connected
+    after init { connected := false }
+    action send_syn(srv: node_id) = {
+        require ~connected;
+    }
+}
+
+object server = {
+    individual id : node_id
+    relation listening
+    after init { listening := true }
+    action handle_syn(c: node_id) = {
+        require listening;
     }
 }
 ```
@@ -56,6 +173,38 @@ after init { sending_ready(S) := true; sending_send(S) := false; }
 action handle_sending_send(id:stream_id) = {
     sending_ready(id) := false;
     sending_send(id) := true;
+}
+```
+
+### State Machine (Enum-valued)
+
+An alternative, single-valued state pattern using an enumerated type. Prefer this when states are mutually exclusive and the FSM is small; prefer the boolean-relation form above when states can be concurrent or parameterized by an identifier.
+
+```ivy
+type conn_state = {idle, connecting, established, closing, closed}
+individual state : conn_state
+after init { state := idle }
+
+action open_connection = {
+    require state = idle;
+    state := connecting
+}
+
+invariant state = established -> server.has_client(client.id)
+```
+
+### Packet Type Enum Pattern
+
+Common shape for a wire-level packet object that carries a variant tag and addressing / sequencing fields.
+
+```ivy
+type packet_type = {handshake, data_pkt, control, close}
+object packet = {
+    type this
+    function ptype(P: this) : packet_type
+    function src(P: this) : node_id
+    function dst(P: this) : node_id
+    function seq(P: this) : nat
 }
 ```
 

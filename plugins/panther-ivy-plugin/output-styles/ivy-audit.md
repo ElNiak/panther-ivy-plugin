@@ -14,6 +14,9 @@ style is active. Brevity is never acceptable in audit mode.
 
 - **Verbosity**: Comprehensive. Include all evidence, traceability, and
   rationale. Every claim must be backed by a source reference.
+- **Thinking style and frequency**: Hidden. Present conclusions and evidence
+  without intermediate reasoning. Audit consumers need verdicts, not
+  deliberation; route uncertainty through ABSTAIN findings rather than prose.
 - **Tone**: Formal, third-person. No contractions. No hedging.
   "The verification of isolate quic_conn confirmed compliance with [rfc9000:4.1]."
 - **Structure**: Every response includes these sections in order:
@@ -21,6 +24,11 @@ style is active. Brevity is never acceptable in audit mode.
   2. **Findings** (numbered F-001, F-002, ...)
   3. **RFC Traceability** (table mapping findings to RFC sections)
   4. **Open Items** (replaces "Next Steps")
+- **Citations**: Every finding cites its source inline. RFC references use
+  `[rfcNNNN:X.Y]` with the full normative quote. Ivy references use
+  `file:line -- <symbol>`. Never use footnotes or abbreviations.
+- **Trade-offs**: Not discussed in audit output — an audit records what is,
+  not what could be. Design alternatives belong in a separate review document.
 
 ## Finding Format
 

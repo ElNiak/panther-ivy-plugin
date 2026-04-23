@@ -10,6 +10,8 @@ user-invocable: false
 
 This skill combines the 14-layer structural template with the formal model pattern library. Use it when creating new protocol specifications or adding patterns to existing ones.
 
+**Boundary with `ivy-writing-guide`:** this skill owns *layer-decomposition* decisions (which file does a type belong in, which layer depends on which). `ivy-writing-guide` owns *language-level* decisions (how to write a before/after monitor, what `around` means, how `require` interacts with `_generating`). Load both when designing a new layer; load only `ivy-writing-guide` when editing within a layer.
+
 ---
 
 ## 14-Layer Formal Model Template
@@ -20,34 +22,7 @@ The 14-layer template provides a structural pattern for decomposing any network 
 
 ### Layer Reference
 
-#### Core Protocol Stack (Layers 1-9, Always Required)
-
-| # | Layer | File Pattern | Purpose |
-|---|---|---|---|
-| 1 | Type Definitions | `{prot}_types.ivy` | Identifiers, bit vectors, enumerations -- the foundation |
-| 2 | Application | `{prot}_application.ivy` | Data transfer semantics, application-level events |
-| 3 | Security/Handshake | `{prot}_security.ivy` | Key establishment, handshake protocol |
-| 4 | Frame/Message | `{prot}_frame.ivy` | Protocol Data Unit definitions -- protocol semantics |
-| 5 | Packet | `{prot}_packet.ivy` | Wire-level packet structure and encoding rules |
-| 6 | Protection | `{prot}_protection.ivy` | Encryption/decryption procedures |
-| 7 | Connection/State | `{prot}_connection.ivy` | Session lifecycle, state machine management |
-| 8 | Transport Parameters | `{prot}_transport_parameters.ivy` | Negotiable parameters exchanged during handshake |
-| 9 | Error Handling | `{prot}_error_code.ivy` | Error taxonomy and error code definitions |
-
-#### Entity Model (Layers 10-12, Always Required)
-
-| # | Layer | File Pattern | Purpose |
-|---|---|---|---|
-| 10 | Entity Definitions | `ivy_{prot}_{role}.ivy` | Network participant instances |
-| 11 | Entity Behavior | `ivy_{prot}_{role}_behavior.ivy` | FSM and behavioral constraints (before/after monitors) |
-| 12 | Shims | `{prot}_shim.ivy` | Bridge between formal model and real implementations |
-
-#### Infrastructure (Layers 13-14, Mostly Reusable)
-
-| # | Layer | File Pattern | Purpose |
-|---|---|---|---|
-| 13 | Serialization/Deserialization | `{prot}_ser.ivy`, `{prot}_deser.ivy` | Wire format encoding/decoding |
-| 14 | Utilities | `byte_stream.ivy`, `file.ivy`, `time.ivy`, `random_value.ivy` | Common utilities |
+The canonical 14-layer table (Types / Application / Security / Frame / Packet / Protection / Connection / Transport Params / Error / Entity Defs / Entity Behavior / Shims / Serialization / Utilities, with file patterns and purposes) lives in `.claude/rules/nct-methodology.md`, which auto-loads for `**/*.ivy` paths. This skill does not restate it; the table below is for protocol-dependent *optional* layers that sit alongside the canonical 14.
 
 #### Optional Layers (Protocol-Dependent)
 

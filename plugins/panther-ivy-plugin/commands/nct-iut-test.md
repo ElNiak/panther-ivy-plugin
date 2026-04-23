@@ -95,4 +95,4 @@ Test executed successfully against the IUT.
 - Try compiling first: `/nct-compile {test_file}`
 ```
 
-**IMPORTANT**: Do NOT run `panther run` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_iut_test`.
+**IMPORTANT**: Do NOT run `panther run` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_iut_test`. The MCP tool wraps `panther run` with structured output, error-coded failures, and test-result JSON that the PostToolUse render hook formats per the active workflow; direct `panther run` returns raw stdout the render hook cannot reshape.

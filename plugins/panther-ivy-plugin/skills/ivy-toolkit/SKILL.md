@@ -1,6 +1,6 @@
 ---
 name: ivy-toolkit
-description: "18-tool MCP catalog with parameter matrix and selection guide (ivy_verify, ivy_compile, ivy_coverage, ivy_rfc, ivy_diagnostics, ivy_workspace, ivy_iut_test, ivy_status, ivy_workflow_state). Use when choosing or invoking MCP tools for Ivy operations."
+description: "18-tool ivy-tools MCP catalog plus Serena semantic tools, with parameter matrix, mode map, and selection guide. Use when choosing or invoking MCP tools for Ivy operations."
 user-invocable: false
 ---
 
@@ -12,8 +12,7 @@ skill instead of maintaining their own tool documentation.
 ## Iron Law
 
 **NEVER invoke `ivy_check`, `ivyc`, `ivy_show`, or `ivy_to_cpp` directly via Bash.**
-ALWAYS use the ivy-tools MCP equivalents. The PreToolUse hook enforces this, but
-you should know it proactively.
+ALWAYS use the ivy-tools MCP equivalents. The PreToolUse hook (`hooks/scripts/block-direct-ivy.sh`) warns about direct CLI invocations and suggests the MCP equivalent (exit 0, informational); you should follow the rule proactively rather than relying on the hook to block.
 
 ## Tool Architecture
 
@@ -23,6 +22,7 @@ Three complementary tool systems:
 |--------|---------|---------|
 | **Native Ivy LSP** | Navigation, diagnostics, go-to-definition | documentSymbol, definition, references, hover |
 | **ivy-tools MCP** | Verification, compilation, analysis | ivy_verify, ivy_compile, ivy_model_info, ivy_diagnostics |
+| **serena MCP** | Semantic symbol search, rename, refactor, session memory | find_symbol, find_referencing_symbols, rename_symbol, replace_symbol_body |
 | **Claude native tools** | File I/O, search, editing | Read, Write, Edit, Grep, Glob |
 
 **Workflow:** Navigate (LSP) -> Understand (LSP+MCP) -> Edit (Claude) -> Verify (MCP)
@@ -34,7 +34,7 @@ Three complementary tool systems:
 | `ivy_verify` | Formal verification | After writing/modifying specs | FAST + DEEP |
 | `ivy_compile` | Compile to test binary | After verification passes | FAST + DEEP |
 | `ivy_model_info` | Show model structure | Understanding a spec file | FAST |
-| `ivy_diagnostics` | Structural check (mode="structural"), full 5-layer (mode="full"), or verification dashboard (mode="dashboard") | Before full verification / deep analysis / Phase 4 reporting | FAST + DEEP |
+| `ivy_diagnostics` | Structural check (mode="structural"), full 5-layer (mode="full"), verification dashboard (mode="dashboard"), or cross-workspace symbol-collision scan (mode="collisions") | Before full verification / deep analysis / Phase 4 reporting / include-graph collision triage | FAST + DEEP |
 | `ivy_analysis` | Include dependencies (mode="includes") or workspace scope (mode="scope") | Phase 1 exploration / workspace management | FAST + DEEP |
 | `ivy_status` | Server capabilities (mode="capabilities") or health status (mode="health") | Pre-flight check / diagnostics | FAST |
 | `ivy_coverage` | Requirement coverage stats | Phase 1 + Phase 5 | DEEP |
@@ -46,16 +46,9 @@ Three complementary tool systems:
 | `ivy_manifest` | Show/generate protocol manifest | Protocol inventory | FAST |
 | `ivy_propagation` | Type propagation analysis — variants (mode="variants"), serdes correlation (mode="serdes"), change impact (mode="impact") | Type analysis, ser/des analysis, change analysis | FAST + DEEP |
 | `ivy_rfc` | RFC lookup, search, and normative analysis (modes: get/search/section) | RFC operations during spec authoring | FAST |
-
-## Rendering Awareness
-
-5 tools have PostToolUse hook formatters that reformat raw JSON into workflow-appropriate prose:
-`ivy_verify`, `ivy_compile`, `ivy_diagnostics`, `ivy_coverage`, `ivy_quality`.
-
-**Do NOT reformat** results from these tools — they arrive pre-formatted.
-**DO format** results from all other tools per ivy-formatting.md rules (prose or tables, no raw JSON).
-
-See `references/hook-lifecycle.md` for the full rendering pipeline.
+| `ivy_workspace` | Activate, inspect, or clear protocol workspace scoping (actions: set/get/list/clear) | Workspace management and cross-protocol isolation | FAST |
+| `ivy_workflow_state` | Read / append the active-workflow flag and per-workflow journal | Workflow phase transitions, journal writes | FAST |
+| `ivy_iut_test` | Execute a compiled test binary against a real IUT via PANTHER | End-to-end IUT runs during verify workflow | DEEP |
 
 ## Mode Mapping
 
@@ -85,6 +78,24 @@ The Ivy LSP provides these operations through the native LSP tool:
 | `textDocument/implementation` | Action to before/after monitors |
 | `callHierarchy/incomingCalls` | Who calls this action |
 | `callHierarchy/outgoingCalls` | What this action calls |
+
+## Serena Semantic Tools
+
+Serena runs as a second MCP server (registered in `.mcp.json` alongside ivy-tools, gated on `PANTHER_IVY_ENABLE_SERENA`). It provides semantic symbol operations that complement Ivy LSP navigation with cross-file refactoring and session memory.
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| `find_symbol` | Locate symbols by name path (class, function, relation, action) | Precise symbol lookup when you know the name |
+| `find_referencing_symbols` | Find every symbol referencing the target | Safe rename / impact analysis |
+| `get_symbols_overview` | Top-level outline of a file's symbols | Orientation without reading whole file |
+| `rename_symbol` | Rename a symbol across all references | Cross-file refactor preserving callers |
+| `replace_symbol_body` | Replace a symbol's body (keeps signature/name) | Edit an action body without touching its signature |
+| `insert_after_symbol` / `insert_before_symbol` | Insert code adjacent to a named symbol | Add monitors next to existing ones |
+| `search_for_pattern` | Fast pattern search across workspace | Regex-scope search when LSP doesn't fit |
+| `ivy_diagnostics`, `ivy_goto_definition`, `ivy_server_status`, `ivy_test_scope` | Serena-exposed Ivy LSP wrappers | Use when ivy-tools MCP is unavailable or for lower-level LSP access |
+| `list_memories`, `read_memory`, `write_memory`, `edit_memory`, `rename_memory`, `delete_memory` | Session memory for cross-turn notes | Persistent design notes and decisions within a session |
+
+**When to prefer Serena over ivy-tools MCP:** cross-file refactoring, symbol renaming, or session memory. For verification / compilation / coverage / RFC lookup, prefer the ivy-tools MCP table above.
 
 ## Coverage Tool Scoping
 

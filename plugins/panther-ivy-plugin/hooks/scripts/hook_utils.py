@@ -5,9 +5,11 @@ Centralizes session ID resolution, workspace detection, MCP health state
 management, and JSON hook output formatting.
 """
 
+import fcntl
 import json
 import os
 import sys
+import time
 try:
     from ivy_lsp.infra.observability.session import resolve_session_id as _canonical_resolve
 except ImportError:
@@ -67,6 +69,60 @@ def get_mcp_health_state_path() -> str:
 
 
 MAX_CONSECUTIVE_MCP_FAILURES = 3
+
+_MCP_HEALTH_STATE_TTL = 300  # Reset the circuit breaker after 5 min of no activity.
+
+
+def read_mcp_health_state() -> dict:
+    """Read the MCP health state file under a shared fcntl lock.
+
+    Returns a fresh defaults dict when the file is missing, unreadable,
+    or when its ``last_update`` timestamp is older than the TTL (the
+    circuit breaker auto-resets after a period of no activity). A file
+    that exists but contains unparseable JSON is also treated as a miss
+    and the caller's next write will overwrite it — the circuit breaker
+    prefers self-healing over preserving a broken state across sessions.
+
+    Returns:
+        A ``{"consecutive_failures": int, "last_update": float}`` dict.
+    """
+    path = get_mcp_health_state_path()
+    try:
+        with open(path) as f:
+            fcntl.flock(f, fcntl.LOCK_SH)
+            try:
+                state = json.load(f)
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
+        if time.time() - state.get("last_update", 0) > _MCP_HEALTH_STATE_TTL:
+            return {"consecutive_failures": 0, "last_update": time.time()}
+        return state
+    except (OSError, json.JSONDecodeError, KeyError):
+        return {"consecutive_failures": 0, "last_update": time.time()}
+
+
+def write_mcp_health_state(state: dict) -> None:
+    """Write the MCP health state file under an exclusive fcntl lock.
+
+    Always stamps ``last_update`` before writing so the TTL-based
+    auto-reset remains correct. Silent on OSError — callers run this on
+    the hook hot path and must not fail the session on I/O errors.
+
+    Args:
+        state: Mutable dict written as JSON. ``last_update`` is set
+            before writing; any caller-provided value is overwritten.
+    """
+    path = get_mcp_health_state_path()
+    state["last_update"] = time.time()
+    try:
+        with open(path, "w") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                json.dump(state, f)
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
+    except OSError:
+        pass
 
 
 def read_stdin() -> dict:
