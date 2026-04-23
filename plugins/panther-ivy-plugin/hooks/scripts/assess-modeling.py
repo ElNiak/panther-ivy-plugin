@@ -12,6 +12,34 @@ marker writing).
 
 Non-blocking — always exits 0. Gate dispatch failures are non-fatal; the
 verdict event is recorded in the workflow journal, not surfaced as an error.
+
+## Why build-only?
+
+G2 audits layer modeling soundness during *construction* — ungrounded
+quantifiers, missing invariants, actions without require guards, the
+structural pathologies that matter most when a layer is being written for
+the first time. The filter line below (``if ctx is None or ctx.workflow
+!= "build": return``) is intentional scoping, not inertia.
+
+Verify's Phase 7 fix loop is expected to be narrow counterexample-driven
+repairs bounded by cluster 7's journal-counted attempt cap (5 per test
+file, cumulative across sessions, soft-reset via an
+``override_attempt_cap`` decision). Broadening G2 to verify-phase .ivy
+edits raises audit volume faster than it raises soundness confidence: the
+fix cycle already carries attempt-counter accountability, and
+counterexample-driven patches rarely introduce the structural pathologies
+G2 is calibrated for.
+
+Review's Phase 3 inline fixes either stay small (qualitative patches) or,
+under cluster 1's design, dispatch back to ``build`` via
+``pending_dispatch(build, phase_hint="<appropriate>")`` for structural
+rethink. Either way, any .ivy write that warrants G2 re-runs G2 naturally
+by re-entering ``build``.
+
+Users who want an adversarial audit outside build emit
+``append_pending_dispatch(target_workflow="build",
+phase_hint="layer-check")`` from the current workflow and let navigate
+re-engage ``build``.
 """
 
 import os
@@ -99,6 +127,8 @@ def main() -> None:
         return
 
     ctx = WorkflowContext.current()
+    # G2 is build-only by design — see "Why build-only?" in the module
+    # docstring for the rationale.
     if ctx is None or ctx.workflow != "build":
         return
 

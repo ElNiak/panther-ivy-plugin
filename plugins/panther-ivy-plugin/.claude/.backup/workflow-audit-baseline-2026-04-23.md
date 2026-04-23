@@ -1,6 +1,6 @@
 # Workflow-Audit Follow-Ups Baseline — 2026-04-23
 
-Phase 0.1 of the plan at `docs/superpowers/specs/2026-04-23-workflow-audit-followups-tracker.md`.
+Phase 0.1 deliverable of the 2026-04-23 workflow-audit follow-up execution (the cluster-1 → cluster-12 commit chain landed on this branch).
 
 This file records the classification of all pre-existing working-tree changes in the plugin submodule as of 2026-04-23, and the pass/fail counts of the plugin's test suites before any spec-driven edits. Both inform Phase 9.2's regression check.
 

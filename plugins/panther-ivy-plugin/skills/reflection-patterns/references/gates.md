@@ -74,6 +74,7 @@ See `references/critic_prompts/g1_exploration.md` for the verbatim template.
 See `references/critic_prompts/g2_modeling.md`.
 
 - **Trigger:** each `.ivy` layer file write during `build` Phase 3.
+- **Workflow filter:** fires only when `active-workflow.workflow == "build"`. Writes made during `verify` Phase 7 (fix) or `review` Phase 3 (resolution) do NOT dispatch G2 — see "G2/G3 workflow scope" below.
 - **Scope:** the single just-written `.ivy` file.
 - **Catalog slice:** `#200-249` + `#250-299` + (`#260-265` if NSCT).
 
@@ -82,8 +83,20 @@ See `references/critic_prompts/g2_modeling.md`.
 See `references/critic_prompts/g3_testspec.md`.
 
 - **Trigger:** each `*_test_*.ivy` file write during `build` Phase 3 test sub-step.
+- **Workflow filter:** fires only when `active-workflow.workflow == "build"`. Writes made outside `build` do NOT dispatch G3 — see "G2/G3 workflow scope" below.
 - **Scope:** the test-spec file plus the requirement manifest and coverage matrix.
 - **Catalog slice:** `#200-208` + `#256-259` + `#300-399`.
+
+### G2/G3 workflow scope
+
+Both gates are build-only by design. G2 audits layer modeling soundness during *construction* — ungrounded quantifiers, missing invariants, actions without require guards, the structural pathologies that matter most when a layer is being written for the first time. G3 audits test-spec soundness in the same construction window — coverage gaps against target RFC MUSTs, generator over-constraint, test pathologies that matter most at first authoring.
+
+Why not fire during `verify` or `review`:
+
+- Verify's Phase 7 fix loop is bounded by the journal-counted attempt cap (5 per test file, cumulative across sessions, soft-reset via `override_attempt_cap` decision). Counterexample-driven repairs rarely introduce the structural pathologies G2/G3 are calibrated for; broadening the gates raises audit volume faster than soundness confidence.
+- Review's Phase 3 inline fixes are either small qualitative patches or, for structural concerns, dispatch back to `build` via `append_pending_dispatch(target_workflow="build", phase_hint="layer-check")`. Any `.ivy` write that warrants G2/G3 re-runs G2/G3 naturally when `build` re-enters Phase 3.
+
+Re-engagement path when a user outside `build` wants an adversarial gate audit: emit `append_pending_dispatch(target_workflow="build", phase_hint="layer-check")` from the current workflow and clear the active-workflow flag. Navigate re-enters `build`, the next layer/test-spec edit fires the gate naturally.
 
 ## G4 — Verification
 

@@ -12,6 +12,24 @@ the gate dispatch (verbatim prompt, asymmetric vote, calibrated verdict, GAP
 marker writing).
 
 Non-blocking — always exits 0.
+
+## Why build-only?
+
+G3 audits test-spec soundness during *construction* — coverage-matrix
+gaps relative to the target RFC's MUST requirements, generator over-
+constraint that silently skips test cases, and the structural pathologies
+in ``*_test_*.ivy`` that matter most when a test spec is being written
+for the first time. The filter line below (``if ctx is None or
+ctx.workflow != "build": return``) is intentional scoping.
+
+Verify's Phase 7 fix loop and review's Phase 3 inline fixes, under the
+cluster 1 design, either stay small or dispatch back to ``build`` via
+``pending_dispatch`` when the change warrants G3 re-run. That is the
+re-engagement path — users write in ``build``, G3 fires.
+
+Users who want an adversarial audit of a test spec outside ``build``
+emit ``append_pending_dispatch(target_workflow="build",
+phase_hint="layer-check")`` and let navigate re-engage ``build``.
 """
 
 import os
@@ -78,6 +96,8 @@ def main() -> None:
         return
 
     ctx = WorkflowContext.current()
+    # G3 is build-only by design — see "Why build-only?" in the module
+    # docstring for the rationale.
     if ctx is None or ctx.workflow != "build":
         return
 

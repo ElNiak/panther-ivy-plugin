@@ -319,6 +319,12 @@ Update active-workflow phase to match the outcome: `ivy_workflow_state(action="s
 
 ## Phase 6 — Diagnose & Phase 7 — Fix
 
+### G2/G3 scope note
+
+Adversarial gates G2 (layer modeling) and G3 (test-spec) do NOT fire on fix edits made inside the verify workflow; they are build-time gates by design. Load `reflection-patterns` and read its `references/gates.md` "G2/G3 workflow scope" section for the canonical rationale and re-engagement path.
+
+Short form for this skill: if a Phase 7 fix raises structural concerns the counterexample diagnosis did not catch, return to `build` via `append_pending_dispatch(target_workflow="build", phase_hint="layer-check")` and clear the active-workflow flag. Navigate re-enters `build` on its next turn; the re-edit path re-engages G2 naturally.
+
 ### Post-Edit workspace-block recovery
 
 After every `Write` / `Edit` on a `.ivy` file during Phase 7 (fix application), inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. The hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file) when the target `.ivy` is outside the active workspace.

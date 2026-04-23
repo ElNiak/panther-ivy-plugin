@@ -224,6 +224,8 @@ Load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)**:
 
 **If the user wants fixes:**
 
+Adversarial gates G2 (layer modeling) and G3 (test-spec) do NOT fire on review-inline fixes — they are build-time gates by design. For structural concerns that warrant G2/G3 re-run, dispatch back to `build` via `append_pending_dispatch(target_workflow="build", phase_hint="layer-check")` and clear the active-workflow flag; review is for audit, not construction. Load `reflection-patterns` and read its `references/gates.md` "G2/G3 workflow scope" section for the canonical rationale.
+
 Guide fixes inline using the relevant agent's recommendations. After applying fixes, re-run the analysis that found the issue to confirm resolution.
 
 After any `Write` / `Edit` on a `.ivy` file during this inline-fix path, inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. If blocked, append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal and present `AskUserQuestion` with three options per `.claude/rules/mcp-tool-reliability.md`: switch workspace to the file's protocol (run `/set-workspace <inferred>`), clear workspace restrictions (run `/clear-workspace`), or abandon this fix and record a `decision` entry.
