@@ -25,7 +25,7 @@ from hook_utils import emit_hook_output, read_stdin
 from workflow_state import (
     WorkflowContext,
     append_journal_event,
-    get_build_state,
+    get_build_state_safe,
 )
 
 _ERROR_PATTERNS = [
@@ -105,7 +105,7 @@ def main() -> None:
         )
 
     if tool_name == "ivy_verify":
-        build_state = get_build_state(ctx.protocol_dir) or {}
+        build_state = get_build_state_safe(ctx.protocol_dir) or {}
         protocol = build_state.get("protocol") or os.path.basename(ctx.protocol_dir.rstrip("/"))
         methodology = build_state.get("methodology")
 

@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, read_stdin, resolve_sessions_dir
-from workflow_state import WorkflowContext, get_build_state, get_journal_entries
+from workflow_state import WorkflowContext, get_build_state_safe, get_journal_entries
 
 CLAIM_PATTERNS = {
     "resolved": re.compile(r"RESOLVED\("),
@@ -140,7 +140,7 @@ def audit_journal(protocol_dir: str, workflow: str | None) -> list[str]:
     decisions = [e for e in entries if e.get("type") == "decision"]
 
     if workflow == "build" and not decisions:
-        build_state = get_build_state(protocol_dir)
+        build_state = get_build_state_safe(protocol_dir)
         if build_state and build_state.get("decisions"):
             warnings.append(
                 "Build state has decisions but no decision events were journaled this session."
@@ -179,7 +179,7 @@ def build_summary(
     # Build state (for build workflow)
     build_state = None
     if workflow == "build" and protocol_dir:
-        build_state = get_build_state(protocol_dir)
+        build_state = get_build_state_safe(protocol_dir)
 
     # Compose summary
     parts: list[str] = []

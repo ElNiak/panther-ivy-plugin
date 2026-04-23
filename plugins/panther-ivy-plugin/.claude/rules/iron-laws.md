@@ -1,4 +1,5 @@
 ---
+category: tier-b-invariant
 paths: ["**/*.ivy", "**/*.spec"]
 ---
 

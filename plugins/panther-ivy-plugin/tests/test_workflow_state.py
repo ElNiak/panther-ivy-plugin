@@ -116,6 +116,114 @@ class TestBuildStateRoundtrip:
         assert result == state
 
 
+class TestGetBuildStateParseFailure:
+    """Tests for get_build_state() raising on parse failure (cluster-12 S8)."""
+
+    def test_missing_file_returns_none(self, tmp_path):
+        mod = _import_module()
+        assert mod.get_build_state(str(tmp_path)) is None
+
+    def test_valid_file_returns_dict(self, tmp_path):
+        mod = _import_module()
+        state = {"phase": "compile", "layers": {"quic_types": "complete"}}
+        mod.set_build_state(str(tmp_path), state)
+        assert mod.get_build_state(str(tmp_path)) == state
+
+    def test_malformed_yaml_raises(self, tmp_path):
+        mod = _import_module()
+        state_dir = tmp_path / ".panther-ivy"
+        state_dir.mkdir()
+        (state_dir / "build-state.yaml").write_text(
+            "phase: compile\n" "  : bad-yaml\n" "layers: [unclosed\n"
+        )
+        with pytest.raises(mod.BuildStateParseError):
+            mod.get_build_state(str(tmp_path))
+
+    def test_non_dict_root_raises(self, tmp_path):
+        """A parseable-but-non-dict root (e.g., a YAML list) is a parse failure."""
+        mod = _import_module()
+        state_dir = tmp_path / ".panther-ivy"
+        state_dir.mkdir()
+        (state_dir / "build-state.yaml").write_text("- phase: compile\n- layers: []\n")
+        with pytest.raises(mod.BuildStateParseError):
+            mod.get_build_state(str(tmp_path))
+
+
+class TestValidateActiveWorkflow:
+    """Tests for validate_active_workflow() (cluster-12 S8)."""
+
+    _KNOWN = {"navigate", "build", "verify", "review", "triage"}
+
+    def test_missing_file_is_valid(self, tmp_path):
+        mod = _import_module()
+        ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=self._KNOWN)
+        assert (ok, reason) == (True, None)
+
+    def test_valid_3_field_schema_passes(self, tmp_path):
+        mod = _import_module()
+        mod.set_active_workflow(str(tmp_path), "build", "modeling")
+        ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=self._KNOWN)
+        assert (ok, reason) == (True, None)
+
+    def test_corrupt_yaml_is_invalid(self, tmp_path):
+        mod = _import_module()
+        state_dir = tmp_path / ".panther-ivy"
+        state_dir.mkdir()
+        (state_dir / "active-workflow").write_text("workflow: build\n  : bad-yaml\n")
+        ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=self._KNOWN)
+        assert ok is False
+        assert reason is not None
+        assert "YAML parse error" in reason
+
+    def test_unknown_workflow_is_invalid(self, tmp_path):
+        mod = _import_module()
+        state_dir = tmp_path / ".panther-ivy"
+        state_dir.mkdir()
+        (state_dir / "active-workflow").write_text(
+            "workflow: imaginary\nphase: modeling\nstarted: '2026-04-23T09:00:00+00:00'\n"
+        )
+        ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=self._KNOWN)
+        assert ok is False
+        assert reason is not None
+        assert "imaginary" in reason
+
+    def test_empty_phase_is_invalid(self, tmp_path):
+        mod = _import_module()
+        state_dir = tmp_path / ".panther-ivy"
+        state_dir.mkdir()
+        (state_dir / "active-workflow").write_text(
+            "workflow: build\nphase: ''\nstarted: '2026-04-23T09:00:00+00:00'\n"
+        )
+        ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=self._KNOWN)
+        assert ok is False
+        assert reason is not None
+        assert "phase" in reason
+
+    def test_bad_iso_timestamp_is_invalid(self, tmp_path):
+        mod = _import_module()
+        state_dir = tmp_path / ".panther-ivy"
+        state_dir.mkdir()
+        (state_dir / "active-workflow").write_text(
+            "workflow: build\nphase: modeling\nstarted: 'yesterday'\n"
+        )
+        ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=self._KNOWN)
+        assert ok is False
+        assert reason is not None
+        assert "started" in reason
+
+    def test_empty_known_workflows_skips_name_check(self, tmp_path):
+        """If known_workflows resolves empty (e.g., plugin root unavailable),
+        the workflow-name check is skipped but structural checks still run."""
+        mod = _import_module()
+        state_dir = tmp_path / ".panther-ivy"
+        state_dir.mkdir()
+        (state_dir / "active-workflow").write_text(
+            "workflow: anything\nphase: modeling\nstarted: '2026-04-23T09:00:00+00:00'\n"
+        )
+        ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=set())
+        assert (ok, reason) == (True, None)
+
+
 class TestFindProtocolDir:
     def test_from_env_var(self, monkeypatch, tmp_path):
         proto_dir = tmp_path / "protocol-testing"

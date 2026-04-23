@@ -259,6 +259,103 @@ def clear_active_workflow(protocol_dir: str) -> None:
         pass
 
 
+def _known_workflows_from_routing_rules() -> set[str]:
+    """Return the set of known workflow names from routing-rules.json.
+
+    Reads the ``workflows`` top-level key from the plugin's routing-rules.json
+    at call time. If the file is missing or unreadable, returns an empty set —
+    callers of :func:`validate_active_workflow` should treat that as a reason
+    to pass an explicit ``known_workflows`` argument rather than accept the
+    empty default, since an empty set would cause every workflow to be flagged
+    as unknown.
+    """
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if not plugin_root:
+        return set()
+    path = Path(plugin_root) / "routing-rules.json"
+    if not path.exists():
+        return set()
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return set()
+    workflows = data.get("workflows")
+    if not isinstance(workflows, dict):
+        return set()
+    return {name for name in workflows if isinstance(name, str)}
+
+
+def validate_active_workflow(
+    protocol_dir: str,
+    known_workflows: set[str] | None = None,
+) -> tuple[bool, str | None]:
+    """Validate the ``active-workflow`` YAML file against the 3-field schema.
+
+    Reads ``<protocol_dir>/.panther-ivy/active-workflow`` and checks:
+
+    - File is valid YAML (``yaml.safe_load`` succeeds and yields a dict).
+    - ``workflow`` is a non-empty string in the ``known_workflows`` set.
+    - ``phase`` is a non-empty string.
+    - ``started`` parses as ISO-8601.
+
+    Args:
+        protocol_dir: Path to the protocol directory.
+        known_workflows: Optional set of accepted workflow names. When None,
+            defaults to the ``workflows`` keys of the plugin's
+            ``routing-rules.json`` (read at call time so the validator stays
+            current as new workflows land). If the default resolves to the
+            empty set (plugin root unavailable, file missing, or malformed),
+            the workflow-name check is skipped — the other three checks
+            still run.
+
+    Returns:
+        (True, None) if the file is absent (absence is valid; no active
+            workflow is a normal state) or present and well-formed.
+        (False, reason) if the file is malformed. ``reason`` is a
+            human-readable short explanation suitable for surfacing to the
+            user via AskUserQuestion.
+    """
+    path = _state_dir(protocol_dir) / _ACTIVE_WORKFLOW_FILE
+    if not path.exists():
+        return True, None
+
+    try:
+        with open(path) as f:
+            data = yaml.safe_load(f)
+    except OSError as exc:
+        return False, f"could not read active-workflow file: {exc}"
+    except yaml.YAMLError as exc:
+        return False, f"YAML parse error: {exc}"
+
+    if not isinstance(data, dict):
+        return False, f"expected a YAML dict, got {type(data).__name__}"
+
+    workflow = data.get("workflow")
+    if not isinstance(workflow, str) or not workflow:
+        return False, "missing or empty 'workflow' field"
+
+    if known_workflows is None:
+        known_workflows = _known_workflows_from_routing_rules()
+    if known_workflows and workflow not in known_workflows:
+        reason = f"unknown workflow '{workflow}' (expected one of {sorted(known_workflows)})"
+        return False, reason
+
+    phase = data.get("phase")
+    if not isinstance(phase, str) or not phase:
+        return False, "missing or empty 'phase' field"
+
+    started = data.get("started")
+    if not isinstance(started, str) or not started:
+        return False, "missing or empty 'started' field"
+    try:
+        datetime.fromisoformat(started)
+    except (TypeError, ValueError):
+        return False, f"'started' is not a valid ISO-8601 timestamp: {started!r}"
+
+    return True, None
+
+
 def is_workflow_stale(protocol_dir: str, max_age_hours: int = 2) -> bool:
     """Check if the active workflow's started timestamp exceeds *max_age_hours*.
 
@@ -280,19 +377,70 @@ def is_workflow_stale(protocol_dir: str, max_age_hours: int = 2) -> bool:
     return age.total_seconds() > max_age_hours * 3600
 
 
+class BuildStateParseError(Exception):
+    """Raised when ``build-state.yaml`` exists but fails YAML parse.
+
+    Distinguishes parse failure (file is present but corrupt — caller must
+    handle / back up) from missing-file (benign — caller treats as a fresh
+    build session).
+    """
+
+
 def get_build_state(protocol_dir: str) -> dict | None:
-    """Read build-state.yaml.
+    """Read ``<protocol_dir>/.panther-ivy/build-state.yaml``.
 
     Returns:
-        Parsed dict, or None if the file does not exist.
+        None if the file does not exist.
+        dict if the file parses successfully.
+
+    Raises:
+        BuildStateParseError: the file exists but YAML parse fails, or the
+            parse yields a non-dict root. Includes the underlying parse
+            error's message and the file path for caller diagnostics.
     """
     path = _state_dir(protocol_dir) / _BUILD_STATE_FILE
     if not path.exists():
         return None
     try:
         with open(path) as f:
-            return yaml.safe_load(f)
-    except (OSError, yaml.YAMLError):
+            parsed = yaml.safe_load(f)
+    except OSError as exc:
+        raise BuildStateParseError(
+            f"could not read build-state.yaml at {path}: {exc}"
+        ) from exc
+    except yaml.YAMLError as exc:
+        raise BuildStateParseError(
+            f"YAML parse error in {path}: {exc}"
+        ) from exc
+    if not isinstance(parsed, dict):
+        raise BuildStateParseError(
+            f"expected a dict at {path} root, got {type(parsed).__name__}"
+        )
+    return parsed
+
+
+def get_build_state_safe(protocol_dir: str) -> dict | None:
+    """Hook-friendly wrapper: returns None on BOTH missing file and parse failure.
+
+    Passive observers (hook scripts, status-line renderers) that want to
+    continue gracefully when ``build-state.yaml`` is corrupt should call this
+    wrapper instead of :func:`get_build_state`. Workflow bodies that own the
+    file (build Phase 2 Step 2) should call :func:`get_build_state` directly
+    and handle :class:`BuildStateParseError` with user-visible recovery.
+
+    The parse failure is swallowed but reported once per process to
+    ``sys.stderr`` so the user can investigate, without the hook itself
+    raising.
+    """
+    try:
+        return get_build_state(protocol_dir)
+    except BuildStateParseError as exc:
+        if "workflow_state" not in sys.modules or not getattr(
+            sys.modules[__name__], "_BUILD_STATE_WARNED", False
+        ):
+            msg = f"WARN: get_build_state_safe swallowed parse failure at {protocol_dir}: {exc}"
+            print(msg, file=sys.stderr)
+            setattr(sys.modules[__name__], "_BUILD_STATE_WARNED", True)
         return None
 
 

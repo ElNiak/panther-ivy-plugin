@@ -25,7 +25,7 @@ from workflow_state import (
     append_journal_event,
     find_protocol_dir,
     get_active_workflow,
-    get_build_state,
+    get_build_state_safe,
 )
 
 
@@ -112,7 +112,7 @@ def main() -> None:
     protocol_dir = find_protocol_dir()
     methodology = None
     if protocol_dir:
-        build_state = get_build_state(protocol_dir) or {}
+        build_state = get_build_state_safe(protocol_dir) or {}
         methodology = build_state.get("methodology")
 
         state = get_active_workflow(protocol_dir) or {}
