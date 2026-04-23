@@ -10,6 +10,26 @@ Follow the style directives injected via `additionalContext` -- they contain
 the active workflow overlay and phase modifier. Do not invent
 formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
+## Phase 0 — Plan-mode preamble
+
+Before running any build-phase logic, inspect the session context for plan-mode indicators. Plan mode blocks `ivy_compile`, `Write`/`Edit` on `.ivy` files, and any tool that mutates state, so the normal build cycle cannot proceed.
+
+Detection signals (any one is sufficient):
+
+1. The literal phrase `Plan mode is active` in a system-reminder.
+2. The edit-restriction phrase `You MUST NOT make any edits`.
+3. A plan file path of the form `/Users/*/plans/*.md` named in a plan-mode system-reminder.
+
+If any indicator is present, switch to plan authoring instead of build dispatch:
+
+1. Run read-only context gathering only: check the workflow journal for recent `error`, `gate_verdict`, and `decision` entries; inspect `build-state.yaml` if present; skip any step that would mutate state or scaffold new `.ivy` files.
+2. Present a situation briefing via `AskUserQuestion` framed for plan-mode options — "draft a plan for the new layer we need", "draft a plan to restructure the blueprint", "clarify the modeling scope before writing", "learn the 14-layer template first".
+3. Help the user draft the plan at the path named in the plan-mode system-reminder. If the plan covers a non-trivial implementation, invoke `Skill(skill="superpowers:writing-plans")`.
+4. Before `ExitPlanMode`, append a `plan_approved` journal entry with `workflow: "build"`, `phase_before_plan: <whatever phase the user was in>`, `plan_file`, and `supersedes` (extracted from the plan's `## Supersedes` block if present).
+5. Call `ExitPlanMode`.
+
+Do NOT attempt to dispatch `ivy_compile`, `ivy_verify`, `Write`, `Edit`, or any state-mutating tool during plan mode — the call will be rejected and the session ends in an ambiguous state. Navigate's Phase 1.5 handles the re-entry on the next invocation after `ExitPlanMode`.
+
 ## Iron Laws
 
 This skill is bound by `NO_LAYER_WITHOUT_SCAFFOLD` and the `STALENESS RULE`. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording, the explicit "Out of scope" carve-outs (patches to existing layers, files outside `{prot}_stack/`, drafts outside discovery path), and the plan-mode exemption clause. Summary for this skill: ground each net-new layer file in a passing `ivy_diagnostics(mode="structural")` for the prior layer; treat any tool result older than the most recent edit to a file in the include closure as stale.
@@ -219,7 +239,22 @@ On `VERDICT_UNSOUND`, the orchestrator writes `[GAP: #NN <reason>]` markers inli
 
 ## Phase 4 — Verify
 
-Invoke `verify` as a sub-workflow: update `<protocol-dir>/.panther-ivy/active-workflow` to set `invocation_depth += 1` and `caller = "build"`, then `Skill(skill="verify")`. Verify runs its full cycle and returns here (caller-based return). On return, restore `workflow = "build"` and `phase = "verified"` in the same `active-workflow` file.
+Hand control to the `verify` workflow via a `pending_dispatch` event — no in-place state mutation, no direct `Skill(...)` invocation:
+
+1. Append the dispatch:
+   ```
+   append_pending_dispatch(
+     protocol="<protocol>",
+     target_workflow="verify",
+     reason="build Phase 4 — post-modeling verification"
+   )
+   ```
+2. Clear the active-workflow flag: `ivy_workflow_state(action="clear", protocol="<protocol>")`.
+3. End Phase 4. Build's turn is finished.
+
+Navigate's Phase 1 Step 2c consumes the `pending_dispatch` on the next turn (or same-turn if the harness routes in-line) and dispatches `verify`. Verify runs its full cycle — including Phase 5 IUT testing, which now runs unconditionally because the cluster-1 refactor removed its `invocation_depth > 0` skip guard. On completion verify emits `pending_dispatch(build, phase_hint="quality-gate")` so build re-activates at Phase 5 on the following turn.
+
+Build's Phase 5 reads the most recent `gate_verdict` (G4, G5) and `progress` journal entries to learn verify's outcome — the journal is the data bus between workflow frames; no shared memory besides `build-state.yaml`. If verify failed and the user chose to abandon rather than loop, the absence of a `pending_dispatch(build)` from verify is the signal to stop; build's re-entry then surfaces a summary and either returns to navigate or prompts the user.
 
 ---
 
@@ -292,11 +327,7 @@ Present a summary of what was built:
 
 ### Step 2: Clear state
 
-Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`.
-
-### Step 3: Return to navigate
-
-Navigate re-activates on the next user turn and offers context-appropriate next steps based on the completed build.
+If this build run needs another workflow to run next (e.g., user explicitly asked for a review after the quality gate), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate's Phase 1 Step 2c consumes any pending dispatch on the next user turn. If no hand-off is needed, simply clear the flag — navigate re-activates on the next user turn and offers context-appropriate next steps based on the completed build.
 
 ---
 

@@ -101,20 +101,15 @@ Resolve the protocol in this order:
 
 If still ambiguous, ask: "Which protocol should I review?"
 
-### Step 3: Run triage preflight
+### Step 3: Run triage preflight (inline)
 
-Invoke `triage` as a sub-workflow to confirm MCP/LSP health before dispatching agents:
+Confirm MCP/LSP health before dispatching review agents. Preflight is a read-only skill call with no state writes:
 
-1. Set the active-workflow flag:
-   - `workflow = "triage"`
-   - `phase = "preflight"`
-   - `invocation_depth` = current depth + 1
-   - `caller = "review"`
-2. Invoke: `Skill(skill="triage")`
-3. Triage runs Phase 1 only (because `invocation_depth > 0`). Returns silently if healthy.
-4. After triage returns, restore:
-   - `workflow = "review"`
-   - `phase = "triaged"`
+```
+Skill(skill="panther-ivy-plugin:triage", args="preflight")
+```
+
+Triage runs Phase 1 only and returns to review's current turn. `active-workflow` stays on `(workflow=review, phase=triaged)` throughout. On healthy: triage returns silently. On failure: triage escalates to Phase 2–3 interactively; on repair completion it emits `pending_dispatch(review, reason="post-triage-repair")` so navigate re-activates review on the next turn.
 
 ### Situation Briefing — Review Type Confirmation
 
@@ -233,19 +228,17 @@ Guide fixes inline using the relevant agent's recommendations. After applying fi
 
 **If the user wants verification:**
 
-**Depth limit:** If `invocation_depth >= 3`, do not invoke sub-workflows. Instead, return to the caller (decrement depth, restore caller's workflow) or return to navigate with a summary of what was attempted and what remains.
+Emit a `pending_dispatch` naming `verify` and let navigate route the hand-off on the next turn — review does not dispatch verify directly:
 
-Dispatch to `verify` as a sub-workflow:
+```
+append_pending_dispatch(
+  protocol="<protocol>",
+  target_workflow="verify",
+  reason="review Phase 3 — user requested targeted verification of flagged findings"
+)
+```
 
-1. Set the active-workflow flag:
-   - `workflow = "verify"`
-   - `phase = "init"`
-   - `invocation_depth` = current depth + 1
-   - `caller = "review"`
-2. Invoke: `Skill(skill="verify")`
-3. After verify returns, restore:
-   - `workflow = "review"`
-   - `phase = "findings"`
+Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")` and end the turn. Navigate's Phase 1 Step 2c consumes the entry and dispatches `verify`. On verify's completion it may emit `pending_dispatch(review, phase_hint="findings")` to hand control back — review then re-enters with the verify outcome readable from the journal (`gate_verdict`, `progress`).
 
 **If the user accepts as-is:**
 
@@ -266,8 +259,7 @@ Proceed to completion.
 
 Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill.
 
-- If `invocation_depth > 0`: Decrement depth. Restore `caller` as the active workflow in the active-workflow file. The caller resumes.
-- If `invocation_depth == 0`: Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate re-activates on the next user turn.
+If this review run needs another workflow to run next (e.g., the user asked for targeted verification on a flagged finding), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate's Phase 1 Step 2c consumes any pending dispatch on the next user turn. If no hand-off is needed, simply clear the flag — navigate re-activates on the next user turn.
 
 ---
 

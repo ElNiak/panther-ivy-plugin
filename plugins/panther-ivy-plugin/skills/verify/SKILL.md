@@ -105,23 +105,15 @@ These journal entries enable warm session resume and decision traceability acros
 
 ## Phase 1 — Preflight
 
-### Step 1: Stack health check
+### Step 1: Stack health check (inline preflight)
 
-Invoke the `triage` skill as a sub-workflow. Before invoking, write the active-workflow flag:
+Invoke triage in preflight mode — a read-only stack health check with no state writes:
 
-- `workflow = "triage"`
-- `phase = "preflight"`
-- `invocation_depth` = current depth + 1
-- `caller = "verify"`
+```
+Skill(skill="panther-ivy-plugin:triage", args="preflight")
+```
 
-Invoke: `Skill(skill="triage")`
-
-Triage runs Phase 1 only (because `invocation_depth > 0`). If the stack is healthy it returns silently. If something is broken, triage handles diagnosis and repair interactively before returning here.
-
-After triage returns, restore the active-workflow flag:
-
-- `workflow = "verify"`
-- `phase = "preflight"`
+Triage runs Phase 1 only and returns to verify's current turn. `active-workflow` stays on `(workflow=verify, phase=preflight)` throughout. If the stack is healthy triage returns silently; if something is broken, triage escalates to its Phase 2–3 interactively (user sees diagnosis) and emits `pending_dispatch(verify, reason="post-triage-repair")` on completion so navigate re-activates verify on the next turn.
 
 ### Step 2: Detect target protocol
 
@@ -214,12 +206,17 @@ Gate verdict handling:
 ### On PASS
 
 1. Report: "Verification passed for `<test_file>`."
-2. Offer follow-ups: "Run another test? Check coverage? Review model quality?"
-3. If the user picks coverage or review, dispatch to the `review` workflow as a sub-workflow:
-   - **Depth limit:** If `invocation_depth >= 3`, do not invoke sub-workflows. Instead, return to the caller (decrement depth, restore caller's workflow) or return to navigate with a summary of what was attempted and what remains.
-   - Set `invocation_depth` += 1, `caller = "verify"` on the active-workflow flag
-   - Invoke: `Skill(skill="review")`
-4. Update phase to `"pass"`, then proceed to completion.
+2. Offer follow-ups via `AskUserQuestion`: "Run another test? Check coverage? Review model quality? Done."
+3. If the user picks coverage or review, do NOT dispatch review directly. Emit a `pending_dispatch` naming `review` and let navigate hand control over on the next turn:
+   ```
+   append_pending_dispatch(
+     protocol="<protocol>",
+     target_workflow="review",
+     reason="verify Phase 4 PASS — user requested coverage/quality review"
+   )
+   ```
+   Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")` and end the turn. Navigate's Phase 1 Step 2c consumes the entry and dispatches `review` on the next user turn (or same turn if the harness routes in-line).
+4. If the user picks "Run another test" or "Done", update phase to `"pass"` and proceed to completion.
 
 ### Reflection Gate — Post-Execution Direction
 
@@ -249,7 +246,7 @@ Move to Phase 6. Update phase to `"executed"` via `ivy_workflow_state(action="se
 
 ## Phase 5 — IUT Testing (optional)
 
-Only entered after Phase 4 succeeds (formal verification passes). Skipped when `invocation_depth > 0` (verify called as sub-workflow from build).
+Entered whenever Phase 4 succeeds. IUT testing runs unconditionally on Phase 4 PASS — including when verify was reached via `pending_dispatch` from build (the cluster-1 refactor removes the pre-existing `invocation_depth > 0` skip guard, which had caused IUT testing to be bypassed in `build → verify` chains).
 
 ### Step 1: Offer IUT testing
 
@@ -341,8 +338,7 @@ Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures
 
 Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill.
 
-- If `invocation_depth > 0`: Decrement depth. Restore `caller` as the active workflow in the active-workflow file. The caller resumes.
-- If `invocation_depth == 0`: Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate re-activates on the next user turn.
+If this verify run needs another workflow to run next (e.g., the user picked "review coverage" on Phase 4 PASS), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate's Phase 1 Step 2c consumes any pending dispatch on the next user turn (or same-turn if the harness routes in-line). If no hand-off is needed, simply clear the flag — navigate re-activates on the next user turn.
 
 ---
 

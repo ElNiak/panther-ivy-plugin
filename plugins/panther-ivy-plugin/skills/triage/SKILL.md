@@ -23,7 +23,13 @@ TaskCreate(subject="Check workspace indexing", activeForm="Checking indexing")
 
 Read `.panther-ivy/active-workflow` on every turn to determine the current phase before proceeding.
 
-When invoked with `args="full-health-check"` (for example, from the `/nct-health` slash command), follow the 9-step validation runbook in `references/full-health-check.md` instead of the quick Phase 1-3 cycle below. The deep runbook is the `/nct-health` replacement; the quick cycle below remains the default for preflight and restart scenarios.
+Triage accepts three invocation modes via `args`:
+
+- `args="preflight"` — read-only stack-health check used by other workflows to confirm tools are responsive before dispatching. Runs Phase 1 only; on healthy, returns silently to the caller's turn without mutating state. On failure, escalates to Phase 2–3 inline.
+- `args="full-health-check"` — the 9-step validation runbook in `references/full-health-check.md` (the `/nct-health` replacement). Deep diagnostic, user-facing.
+- *(no args)* — direct invocation: runs the full Phase 1–3 cycle interactively, with user-facing summaries.
+
+Preflight replaces the pre-cluster-1 pattern where callers set `invocation_depth`/`caller` before invoking triage; that pattern is gone — callers now just pass `args="preflight"` and triage reads the string.
 
 ## Journal Requirements
 
@@ -90,10 +96,10 @@ fi
 
 **If everything is healthy:**
 
-- If `invocation_depth > 0` (preflight mode): Return silently to caller. Do not produce any user-facing output. Decrement `invocation_depth` and restore the caller's workflow in the active-workflow file.
-- If `invocation_depth == 0` (direct invocation): Report "Stack is healthy. MCP, LSP [, and Serena] all responding." Then clear the active-workflow flag and return to navigate.
+- If invoked with `args="preflight"`: return silently to the caller's turn. Do not produce user-facing output. Do not write the active-workflow file (preflight is read-only). The caller's skill body resumes immediately.
+- If invoked directly (no `args`, or any args other than `preflight`/`full-health-check`): report "Stack is healthy. MCP, LSP [, and Serena] all responding." Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")` and return to navigate.
 
-**If something is dead:** Update phase to `"diagnose"` via `ivy_workflow_state(action="set", workflow="triage", phase="diagnose", protocol="<protocol>")` and proceed to Phase 2.
+**If something is dead:** Update phase to `"diagnose"` via `ivy_workflow_state(action="set", workflow="triage", phase="diagnose", protocol="<protocol>")` and proceed to Phase 2. Preflight callers fall through to Phase 2 too — broken tools block the caller, so the user sees the diagnose-and-fix flow regardless of invocation mode.
 
 ---
 
@@ -233,12 +239,16 @@ Suggested manual steps:
 
 ## Preflight Export
 
-Other workflows silently call triage Phase 1 before their first MCP tool invocation by setting `invocation_depth > 0` and `caller` to the calling workflow name.
+Other workflows (navigate, verify, build, review) silently call triage Phase 1 before their first MCP tool invocation by invoking:
 
-When invoked as preflight (`invocation_depth > 0`):
-- Run Phase 1 only
-- On healthy: return immediately with no user interaction
-- On failure: proceed to Phase 2-3 (user interaction required, since broken tools block the calling workflow)
+```
+Skill(skill="panther-ivy-plugin:triage", args="preflight")
+```
+
+When invoked this way:
+- Triage runs Phase 1 only. It does not write `active-workflow`.
+- On healthy: returns to the caller's turn with no user interaction.
+- On failure: proceeds to Phase 2–3 (user interaction required; broken tools block the calling workflow). Because preflight did not write `active-workflow`, the caller's flag remains intact while triage handles repair; upon completion triage emits `pending_dispatch(<caller>, reason="post-triage-repair")` so navigate can hand control back to the caller naturally.
 
 ---
 
@@ -246,8 +256,7 @@ When invoked as preflight (`invocation_depth > 0`):
 
 Before completing, apply **Pattern D (Completion Verification Gate)** from the `reflection-patterns` skill. For triage, only the structural check (step 1) is required — skip the anti-pattern checklist and coverage delta.
 
-- If `invocation_depth > 0`: Decrement depth. Restore `caller` as the active workflow in the active-workflow file. The caller resumes.
-- If `invocation_depth == 0`: Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate re-activates on the next turn.
+Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. If triage was reached via the preflight-failure escalation path (see Preflight Export), emit a paired `pending_dispatch` naming the original caller workflow before clearing, so navigate's Phase 1 Step 2c re-activates the caller on its next turn. Otherwise, simply clear the flag — navigate re-activates on the next user turn.
 
 ---
 

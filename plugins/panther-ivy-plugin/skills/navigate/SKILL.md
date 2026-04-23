@@ -72,7 +72,7 @@ digraph navigate_flow {
 
 Read `.panther-ivy/active-workflow` on every turn to determine the current phase before proceeding. If the file names a phase, resume that phase directly.
 
-Navigate is the central hub. Every other workflow returns here on completion. Navigate dispatches to a workflow which eventually returns to navigate — it never returns to itself.
+Navigate is the central hub. Every other workflow completes by clearing its active-workflow flag; workflows that need another workflow to run next emit a `pending_dispatch` journal event naming the target. Navigate re-enters itself same-turn only via an explicit `pending_dispatch` — the self-reentry is bounded and visible in the journal (see Phase 1 Step 2c).
 
 ---
 
@@ -120,7 +120,7 @@ Do not produce user-facing output during this phase. Gather context silently.
 
 Resolve the protocol directory by calling `ivy_workflow_state(action="get", protocol="<protocol>")`. The `protocol_dir` field in the response gives the resolved path. If not found, fall through to the cold-start branch in Phase 2.
 
-**Note:** The PostToolUse hook on Skill automatically sets the active-workflow to `navigate/init` when this skill is invoked. Explicit `set` calls are only needed when dispatching to other workflows or updating phase.
+**Note:** The PostToolUse hook on Skill automatically writes the active-workflow file with `workflow="navigate"`, `phase="init"` when this skill is invoked. Explicit `set` calls are only needed when dispatching to other workflows or updating phase.
 
 ### Step 2: Check for active build
 
@@ -137,6 +137,24 @@ If journal entries exist, compose a session context summary for the situation br
 
 Include this summary in the Situation Briefing: "Last session: [N] decisions, [M] errors, ended [cleanly/interrupted] at phase [phase]."
 
+### Step 2c: Check for a pending_dispatch to consume
+
+Scan the recent journal entries for a `pending_dispatch` whose target workflow has no subsequent `workflow_resumed` entry naming that same target. If one is found, treat it as an explicit hand-off from the workflow that emitted it:
+
+1. Append a `workflow_resumed` entry naming the target to mark consumption (idempotency marker; write it *before* dispatching so a retry is safe):
+   ```
+   ivy_workflow_state(
+     action="append_journal",
+     protocol="<protocol>",
+     event_type="workflow_resumed",
+     payload={"workflow": "<target>", "dispatched_from": "<emitting workflow>"}
+   )
+   ```
+2. Skip Phase 2's branch-by-context and the Plan-Author Branch; proceed directly to the Dispatch section.
+3. The Dispatch section sets `active-workflow` to `(workflow=<target>, phase=<phase_hint or "init">)` and invokes `Skill(skill="panther-ivy-plugin:<target>")` in the same turn.
+
+A `pending_dispatch` with a `workflow_resumed` already paired against it is stale and is ignored; Phase 1 proceeds to Step 3. Pending dispatches older than the `active-workflow` staleness threshold (2 h) are treated as stale regardless of the pairing — a stalled chain left over from a prior session should not be resumed silently.
+
 ### Step 3: Check recent Ivy changes
 
 ```bash
@@ -145,21 +163,17 @@ git log --oneline -5 -- '*.ivy'
 
 Record the results. If there are recent changes, note which files and when.
 
-### Step 4: Run triage preflight
+### Step 4: Run triage preflight (inline)
 
-Invoke the `triage` workflow as a sub-workflow to confirm stack health before proceeding:
+Confirm stack health before proceeding. Preflight is loaded inline as a skill call with `args="preflight"` — no state writes, no workflow dispatch:
 
-1. Read the current active-workflow state (if any)
-2. Set a new active-workflow flag:
-   - `workflow = "triage"`
-   - `phase = "preflight"`
-   - `invocation_depth = 1`
-   - `caller = "navigate"`
-3. Invoke: `Skill(skill="triage")`
-4. Triage runs Phase 1 only (because `invocation_depth > 0`). If the stack is healthy, it returns silently. If the stack is broken, triage handles diagnosis and repair interactively before returning.
-5. After triage returns, restore navigate's active-workflow state:
-   - `workflow = "navigate"`
-   - `phase = "context-scan"`
+```
+Skill(skill="panther-ivy-plugin:triage", args="preflight")
+```
+
+Triage's Phase 1 runs in preflight mode (read-only health checks), returns a pass/fail summary to navigate's current turn, and does not alter `active-workflow`. Navigate stays on `phase = "context-scan"` throughout.
+
+If preflight reports failures, navigate surfaces the failures to the user via `AskUserQuestion` and offers: "Run triage interactively to diagnose and repair" (dispatches `triage` as a full workflow via `pending_dispatch(triage, reason="preflight failed")`) or "Continue anyway" (proceeds to Step 5 with the failure recorded in a `progress` journal entry). Users who type "things are broken" or similar still dispatch triage as a full workflow via Phase 2's routing table.
 
 ### Situation Briefing — Context Scan Results
 
@@ -255,22 +269,23 @@ ivy_workflow_state(
 )
 ```
 
-### Step 5 — SOUND: update state and re-activate caller workflow
+### Step 5 — SOUND: emit pending_dispatch to re-activate caller workflow
 
 If `verdict == SOUND`:
 
 1. Update `build-state.yaml`'s `decisions:` block by merging the plan's committed decisions, marking any superseded entries with `status: superseded_by: <plan_file>`.
-2. Append a `workflow_resumed` journal entry:
+2. Emit a `pending_dispatch` naming the caller workflow (read from the `plan_approved` entry) with the next phase as `phase_hint`. For a build that was in `blueprint-done-revise-N`, the next phase after a SOUND G0 is `modeling`:
    ```
-   event_type="workflow_resumed"
-   payload={"workflow": "<caller>", "phase_after_resume": "<next phase>", "g0_cycle": <N>}
+   append_pending_dispatch(
+     protocol="<protocol>",
+     target_workflow="<caller>",
+     phase_hint="<next phase>",
+     reason="G0 SOUND on cycle <N>"
+   )
    ```
-3. Re-activate the caller workflow by calling:
-   ```
-   ivy_workflow_state(action="set", workflow="<caller>", phase="<next phase>", protocol="<protocol>")
-   ```
-   where `<caller>` is read from the `plan_approved` entry and `<next phase>` is typically the phase that would naturally follow `phase_before_plan`. For a build that was in `blueprint-done-revise-N`, the next phase after a SOUND G0 is `modeling`.
-4. Dispatch the caller: `Skill(skill="panther-ivy-plugin:<caller>")`.
+3. Clear navigate's active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")` and end the turn. Navigate's Phase 1 Step 2c on the next user turn (or same turn if the harness routes the `pending_dispatch` back to navigate in-line) consumes the entry and dispatches `<caller>` with the `phase_hint`, writing the paired `workflow_resumed` marker as part of Step 2c's idempotency protocol.
+
+Navigate does NOT call `Skill(skill="panther-ivy-plugin:<caller>")` directly here — the hand-off rides on `pending_dispatch` so the journal carries the full causal chain (`plan_approved` → `gate_verdict{SOUND}` → `pending_dispatch` → `workflow_resumed`).
 
 ### Step 6 — UNSOUND: surface and halt
 
@@ -391,7 +406,7 @@ Throughout drafting, present option-level decisions via `AskUserQuestion` (not i
 
 ### Step 4 — Append `plan_approved` journal entry
 
-Before the user calls `ExitPlanMode`, append the handoff record that Phase 1.5 will consume on the next invocation (see Task 3):
+Before the user calls `ExitPlanMode`, append the handoff record that Phase 1.5 will consume on the next invocation (see the `## Phase 1.5 — Post-plan-approval handoff` section above):
 
 ```
 ivy_workflow_state(
@@ -411,7 +426,7 @@ The `caller` field is best-effort: if `active-workflow` names a paused workflow,
 
 ### Step 5 — ExitPlanMode
 
-Call `ExitPlanMode` to return control to the harness. Navigate's Phase 1.5 (defined later in this skill) fires on the next user turn to dispatch G0 and re-activate the caller workflow.
+Call `ExitPlanMode` to return control to the harness. Navigate's Phase 1.5 (the `## Phase 1.5 — Post-plan-approval handoff` section above) fires on the next user turn to dispatch G0 and re-activate the caller workflow.
 
 ---
 
@@ -447,16 +462,6 @@ If the user's goal doesn't clearly map to a workflow, ask one clarifying questio
 
 ---
 
-## Sub-Workflow Return Rule
-
-When a workflow is invoked by another workflow (not by navigate directly):
-
-- The calling workflow sets `invocation_depth += 1` and `caller = calling_workflow` on the active-workflow flag before invoking.
-- On completion: if `invocation_depth > 0`, the called workflow decrements depth and returns to `caller`, not to navigate.
-- If `invocation_depth == 0`, the workflow clears the active-workflow flag and navigate re-activates on the next user turn.
-
----
-
 ## Integration
 
 - **Called by:** Session start (routing hook), other workflows on completion
@@ -471,7 +476,8 @@ When a workflow is invoked by another workflow (not by navigate directly):
 |------|-----------|---------------|
 | `context_switch` | produces (Phase 0 detection) | Phase 0 |
 | `plan_approved` | produces (Plan-Author Step 4) | Plan-Author Branch |
-| `workflow_resumed` | produces (Phase 1.5, see Task 3) | Post-plan-approval handoff |
+| `pending_dispatch` | consumes (Phase 1 Step 2c) | Any workflow emitting a hand-off |
+| `workflow_resumed` | produces (Phase 1 Step 2c + Phase 1.5 Step 5) | Pending-dispatch consumption + post-plan-approval handoff |
 | `gate_verdict` with `gate: "g0"` | produces (Phase 1.5, via `reflection-patterns` G0 dispatch) | Post-plan-approval handoff |
 | `decision`, `phase_transition`, `session_start`, `session_end`, `error`, `progress` | both | Existing schema (unchanged) |
 
