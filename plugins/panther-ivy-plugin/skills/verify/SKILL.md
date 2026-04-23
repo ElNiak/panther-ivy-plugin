@@ -353,7 +353,30 @@ Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures
 5. Present diagnosis and ask user: fix or manual?
 6. If fix accepted: apply, re-verify (loop back to Phase 3), knowledge gate on completion
 
-**Iteration cap (important):** The fix-and-re-verify loop is bounded. After 5 consecutive fix attempts without reaching a PASS, stop looping and escalate to the user: "This failure appears systematic — 5 fix attempts have not resolved it. Recommend stepping back to design review (switch to `build` workflow) or deferring via `// DEFERRED YYYY-MM-DD: …`." Silent retry past the cap is the exact pattern `#405` / `#403` exist to discourage.
+**Iteration cap (journal-counted, per-test-file, cumulative across sessions):** The fix-and-re-verify loop is bounded by a concrete counter read from the workflow journal, not by prose accountability. Before each fix iteration:
+
+1. Compute the attempt key: `<test_file>` as a path relative to the protocol directory (e.g., `bgp/bgp_tests/server_tests/bgp_server_test_join.ivy`, not an absolute path). Key canonicalization is load-bearing — workspace-root changes between sessions must produce the same key.
+2. Read the journal: `ivy_workflow_state(action="get_journal", protocol="<protocol>", last_n=200)`.
+3. Walk backward to find the most recent `decision` with `payload.kind == "override_attempt_cap"` and `payload.key == <test_file>`. Note its index as `override_idx` (or `-1` if absent).
+4. Count `progress` entries with `payload.kind == "fix_attempt"` and `payload.key == <test_file>` that appear *after* `override_idx`. This is `count`.
+5. If `count >= 5`, ESCALATE via the three-option menu below.
+6. Otherwise, append the fix_attempt entry and proceed:
+   ```
+   ivy_workflow_state(
+     action="append_journal",
+     protocol="<protocol>",
+     event_type="progress",
+     state='{"kind": "fix_attempt", "key": "<test_file>", "protocol": "<protocol>"}'
+   )
+   ```
+
+**Escalation menu** (three options via `AskUserQuestion`, per `feedback_askuserquestion_always`):
+
+- **Continue anyway** — user believes the next fix resolves. Append `decision{kind: "override_attempt_cap", key: "<test_file>"}`; the cap re-engages for the next 5 attempts after this override.
+- **Abandon this file** — record `decision{summary: "Abandon <test_file> after N attempts"}` and proceed to On Completion (no further attempts on this key this session).
+- **Switch workflow** — typically back to `build` for structural rethink. Emit `append_pending_dispatch(target_workflow="build", phase_hint="<appropriate>", reason="Fix loop capped on <test_file>")` and clear the active-workflow flag.
+
+Silent retry past the cap without an `override_attempt_cap` decision is the exact pattern `#405` / `#403` exist to discourage. `/nct-observability` surfaces per-key attempt counts and overrides so the cumulative pattern is visible across sessions.
 
 **On VERDICT_ABSTAIN from G4:** Treat as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not treat the upstream `ivy_verify` result as authoritative.
 

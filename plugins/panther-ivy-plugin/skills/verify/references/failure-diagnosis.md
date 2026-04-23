@@ -65,13 +65,28 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
 
 ### Step 1: Apply the fix
 
-Apply the fix suggested by the spec-analyst. If editing `.ivy` files, invoke the `ivy-writing-guide` skill to load language reference guidance before making changes.
+Before applying the fix, evaluate the attempt-counter gate (per the SKILL.md "Iteration cap" block):
+
+1. Compute the attempt key as the test file path relative to the protocol directory.
+2. Read the journal (`ivy_workflow_state(action="get_journal", last_n=200)`), walk backward to the most recent `decision{kind: "override_attempt_cap", key: <same>}` entry (`override_idx`), then count `progress{kind: "fix_attempt", key: <same>}` entries after `override_idx`.
+3. If `count >= 5`, DO NOT apply the fix. Present the 3-option escalation menu (`Continue anyway` records an `override_attempt_cap` decision and resets the cap; `Abandon this file` records a decision and exits to On Completion; `Switch workflow` emits `pending_dispatch(build, ...)` for structural rethink).
+4. Otherwise, append the fix-attempt marker and proceed:
+   ```
+   ivy_workflow_state(
+     action="append_journal",
+     protocol="<protocol>",
+     event_type="progress",
+     state='{"kind": "fix_attempt", "key": "<test_file>", "protocol": "<protocol>"}'
+   )
+   ```
+
+Apply the fix suggested by the spec-analyst. If editing `.ivy` files, invoke the `ivy-writing-guide` skill to load language reference guidance before making changes. After the Edit, follow the post-Edit workspace-block recovery pattern documented in the main SKILL.md.
 
 ### Step 2: Re-verify
 
 Loop back to Phase 3 (recompile). The cycle is: Phase 3 (compile) → Phase 4 (execute) → Phase 6 (diagnose) → Phase 7 (fix) → Phase 3 again.
 
-This loop continues until verification passes or the user decides to stop.
+This loop continues until verification passes, the user decides to stop, or the journal-counted attempt cap fires (5 attempts per test file, cumulative across sessions; soft-reset via the `override_attempt_cap` decision event).
 
 ### On user stopping
 

@@ -16,12 +16,22 @@ Write spec files ONE layer at a time, in dependency order (Types first, then Fra
 
 After writing EACH layer:
 
-1. Run `ivy_compile` for a compile check on the new file.
-2. **On compile error:**
+1. **Attempt-counter gate** (before each compile attempt — per the SKILL.md "compile-attempt cap" block):
+   - Compute the attempt key as the layer's canonical name from `build-state.yaml.layers` (e.g., `bgp_open`, not the file path).
+   - Read the journal: `ivy_workflow_state(action="get_journal", protocol="<protocol>", last_n=200)`.
+   - Walk backward to the most recent `decision{kind: "override_attempt_cap", key: <same layer>}` (index `override_idx`, or `-1` if absent).
+   - Count `progress{kind: "compile_attempt", key: <same layer>}` entries after `override_idx`.
+   - If `count >= 5`, ESCALATE via `AskUserQuestion`:
+     - **Continue anyway** — append `decision{kind: "override_attempt_cap", key: "<layer>"}`; the cap re-engages after 5 more attempts.
+     - **Abandon this layer** — mark the layer's `build-state.yaml` status as `abandoned`, record `decision{summary: "Abandon <layer> after N attempts"}`, move to the next layer in dependency order.
+     - **Switch workflow** — emit `append_pending_dispatch(target_workflow="verify", reason="Compile loop capped on <layer>")` (or `build` if structural rethink is needed), clear the active-workflow flag.
+   - Otherwise, append `progress{kind: "compile_attempt", key: "<layer>", protocol: "<protocol>"}` and proceed to step 2.
+2. Run `ivy_compile` for a compile check on the new file.
+3. **On compile error:**
    - Dispatch the `spec-analyst` agent with the full error output.
    - If the error involves counterexample interpretation, load the `counterexample-guide` skill.
-   - Fix inline (no workflow switch). Loop compile-fix until the layer compiles cleanly.
-3. **On compile success:**
+   - Fix inline. Loop back to step 1 (re-evaluate the attempt cap, then recompile).
+4. **On compile success:**
    - Update the layer's status in `build-state.yaml` to `"complete"` via `ivy_workflow_state(action="set_build", protocol="<protocol>", state="<JSON>")`.
 
 ### Inform-and-continue checkpoint between layers

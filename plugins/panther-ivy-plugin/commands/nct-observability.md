@@ -70,6 +70,18 @@ Produce a summary table:
 | ivy_verify | N | Nms | N |
 | ivy_diagnostics | N | Nms | N |
 | ... | | | |
+
+### Attempt Counts
+
+Per-file / per-layer attempt counters read from the workflow journal. Shows cumulative `fix_attempt` (verify) and `compile_attempt` (build) counts since the most recent `override_attempt_cap` decision for each key (or session start if no override has been recorded).
+
+| Key | Kind | Count | Overrides | Last attempt |
+|-----|------|-------|-----------|--------------|
+| bgp/bgp_tests/server_tests/bgp_server_test_join.ivy | fix_attempt | 3 | 0 | HH:MM:SS |
+| bgp_open | compile_attempt | 5 | 1 | HH:MM:SS |
+| ... | | | | |
+
+Sourced from `ivy_workflow_state(action="get_journal", last_n=200)`. Walk the journal per-key: count `progress{kind in {fix_attempt, compile_attempt}}` entries that appear after the most recent `decision{kind: "override_attempt_cap"}` for the same `key`. A non-zero `Overrides` column means the user has authorized the cap to re-engage at least once for that key — an escalation hotspot worth surfacing.
 ```
 
 #### Mode: `events`
