@@ -85,7 +85,38 @@ def emit_hook_output(
     deny_reason: str | None = None,
     system_message: str | None = None,
 ) -> None:
-    """Print structured hook JSON output to stdout."""
+    """Print a Claude Code advanced-protocol hook JSON decision to stdout.
+
+    Emits the canonical hook envelope::
+
+        {"hookSpecificOutput": {"hookEventName": ..., ...}, "systemMessage": ...}
+
+    The caller MUST return via a normal exit 0 after calling this function.
+    Per the Claude Code hooks protocol (https://code.claude.com/docs/en/hooks),
+    JSON output is only processed on exit 0; `sys.exit(2)` would cause the JSON
+    payload to be ignored entirely and fall back to the legacy block-on-exit-2
+    contract, which discards ``deny_reason`` and ``additional_context``.
+
+    For PreToolUse hooks, passing ``deny_reason`` sets
+    ``permissionDecision: "deny"`` in the envelope and blocks the tool call.
+    This is the authoritative blocking mechanism; do not combine it with
+    ``sys.exit(2)``.
+
+    Args:
+        event_name: Hook event name, e.g. ``"PreToolUse"`` / ``"PostToolUse"``
+            / ``"SessionStart"``. Placed in ``hookSpecificOutput.hookEventName``.
+        additional_context: Optional string appended to the model's prompt as
+            ``additionalContext``. Non-blocking.
+        deny_reason: Optional string that turns the envelope into a blocking
+            deny decision. Sets ``permissionDecision`` to ``"deny"`` and
+            ``permissionDecisionReason`` to this value. Valid only for
+            PreToolUse hooks.
+        system_message: Optional top-level ``systemMessage`` field the Claude
+            Code runtime surfaces to the user out-of-band from the model.
+
+    Returns:
+        None. Output is printed to stdout as a single JSON line.
+    """
     hook_output: dict = {"hookEventName": event_name}
     if deny_reason:
         hook_output["permissionDecision"] = "deny"

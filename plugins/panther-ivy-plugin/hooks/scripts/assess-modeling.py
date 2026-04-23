@@ -23,9 +23,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, read_stdin
 
 from workflow_state import (
+    WorkflowContext,
     append_journal_event,
-    find_protocol_dir,
-    get_active_workflow,
     get_build_state,
 )
 
@@ -99,21 +98,17 @@ def main() -> None:
     if not _is_layer_file(file_path):
         return
 
-    protocol_dir = find_protocol_dir()
-    if not protocol_dir:
+    ctx = WorkflowContext.current()
+    if ctx is None or ctx.workflow != "build":
         return
 
-    active = get_active_workflow(protocol_dir)
-    if not active or active.get("workflow") != "build":
-        return
-
-    build_state = get_build_state(protocol_dir) or {}
-    protocol = build_state.get("protocol") or os.path.basename(protocol_dir.rstrip("/"))
+    build_state = get_build_state(ctx.protocol_dir) or {}
+    protocol = build_state.get("protocol") or os.path.basename(ctx.protocol_dir.rstrip("/"))
     methodology = build_state.get("methodology")
     layer_name = _detect_layer(file_path, build_state)
 
     append_journal_event(
-        protocol_dir,
+        ctx.protocol_dir,
         event_type="gate_dispatched",
         payload={
             "gate": "g2",
@@ -123,7 +118,7 @@ def main() -> None:
             "methodology": methodology,
         },
         workflow="build",
-        phase=active.get("phase"),
+        phase=ctx.phase,
     )
 
     emit_hook_output(

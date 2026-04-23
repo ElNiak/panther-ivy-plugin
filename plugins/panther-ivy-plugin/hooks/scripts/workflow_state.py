@@ -7,6 +7,8 @@ workflow context and multi-session build progress.
 
 import json
 import os
+import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -150,6 +152,68 @@ def get_active_workflow(protocol_dir: str) -> dict | None:
             return data if isinstance(data, dict) else None
     except (OSError, yaml.YAMLError):
         return None
+
+
+_WORKFLOW_CONTEXT_FIELDS = frozenset(
+    {"workflow", "phase", "invocation_depth", "caller", "started"}
+)
+
+_WARNED_UNKNOWN_FIELDS: set[str] = set()
+
+
+@dataclass
+class WorkflowContext:
+    """Active workflow state plus the protocol directory it belongs to.
+
+    Attributes:
+        protocol_dir: Absolute path to the protocol directory (parent of
+            ``.panther-ivy/``).
+        workflow: Name of the active workflow (e.g. ``"build"``, ``"verify"``).
+        phase: Current phase within the workflow.
+        invocation_depth: Nesting depth for recursive invocations. 0 means
+            top-level.
+        caller: Optional identifier of the caller that set the workflow.
+        started: ISO-8601 UTC timestamp when the workflow was set.
+    """
+
+    protocol_dir: str
+    workflow: str
+    phase: str | None = None
+    invocation_depth: int = 0
+    caller: str | None = None
+    started: str | None = None
+
+    @classmethod
+    def current(cls, protocol: str | None = None) -> "WorkflowContext | None":
+        """Resolve the active workflow context.
+
+        Args:
+            protocol: Optional protocol name to narrow the search.
+
+        Returns:
+            A populated ``WorkflowContext`` when a protocol directory is
+            found and its active-workflow file exists, else ``None``.
+        """
+        protocol_dir = find_protocol_dir(protocol)
+        if protocol_dir is None:
+            return None
+        state = get_active_workflow(protocol_dir)
+        if not state:
+            return None
+        filtered = {
+            k: v for k, v in state.items() if k in _WORKFLOW_CONTEXT_FIELDS
+        }
+        unknown = set(state.keys()) - _WORKFLOW_CONTEXT_FIELDS
+        new_unknown = unknown - _WARNED_UNKNOWN_FIELDS
+        if new_unknown:
+            print(
+                f"WARN: WorkflowContext dropped unknown fields: {sorted(new_unknown)}",
+                file=sys.stderr,
+            )
+            _WARNED_UNKNOWN_FIELDS.update(new_unknown)
+        if "workflow" not in filtered:
+            return None
+        return cls(protocol_dir=protocol_dir, **filtered)
 
 
 def set_active_workflow(

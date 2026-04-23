@@ -23,9 +23,8 @@ sys.path.insert(
 )
 from hook_utils import emit_hook_output, read_stdin
 from workflow_state import (
+    WorkflowContext,
     append_journal_event,
-    find_protocol_dir,
-    get_active_workflow,
     get_build_state,
 )
 
@@ -81,11 +80,9 @@ def main() -> None:
     if tool_name not in _WATCHED_TOOLS:
         return
 
-    protocol_dir = find_protocol_dir()
-    if not protocol_dir:
+    ctx = WorkflowContext.current()
+    if ctx is None:
         return
-
-    active = get_active_workflow(protocol_dir)
 
     tool_result = hook_input.get("tool_result", "")
     if isinstance(tool_result, dict):
@@ -93,28 +90,27 @@ def main() -> None:
     elif not isinstance(tool_result, str):
         tool_result = str(tool_result)
 
-    if active:
-        error_summary = _extract_error_summary(tool_result)
-        if error_summary:
-            append_journal_event(
-                protocol_dir,
-                event_type="error",
-                payload={
-                    "summary": error_summary,
-                    "tool": tool_name,
-                    "recoverable": True,
-                },
-                workflow=active.get("workflow"),
-                phase=active.get("phase"),
-            )
+    error_summary = _extract_error_summary(tool_result)
+    if error_summary:
+        append_journal_event(
+            ctx.protocol_dir,
+            event_type="error",
+            payload={
+                "summary": error_summary,
+                "tool": tool_name,
+                "recoverable": True,
+            },
+            workflow=ctx.workflow,
+            phase=ctx.phase,
+        )
 
-    if tool_name == "ivy_verify" and active:
-        build_state = get_build_state(protocol_dir) or {}
-        protocol = build_state.get("protocol") or os.path.basename(protocol_dir.rstrip("/"))
+    if tool_name == "ivy_verify":
+        build_state = get_build_state(ctx.protocol_dir) or {}
+        protocol = build_state.get("protocol") or os.path.basename(ctx.protocol_dir.rstrip("/"))
         methodology = build_state.get("methodology")
 
         append_journal_event(
-            protocol_dir,
+            ctx.protocol_dir,
             event_type="gate_dispatched",
             payload={
                 "gate": "g4",
@@ -122,8 +118,8 @@ def main() -> None:
                 "tool": tool_name,
                 "methodology": methodology,
             },
-            workflow=active.get("workflow") or "verify",
-            phase=active.get("phase"),
+            workflow=ctx.workflow,
+            phase=ctx.phase,
         )
 
         emit_hook_output(

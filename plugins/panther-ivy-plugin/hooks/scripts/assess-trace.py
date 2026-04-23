@@ -115,7 +115,7 @@ def main() -> None:
         build_state = get_build_state(protocol_dir) or {}
         methodology = build_state.get("methodology")
 
-        active = get_active_workflow(protocol_dir) or {}
+        state = get_active_workflow(protocol_dir) or {}
         append_journal_event(
             protocol_dir,
             event_type="gate_dispatched",
@@ -125,8 +125,8 @@ def main() -> None:
                 "artifacts": {k: v for k, v in artifacts.items() if k != "summary"},
                 "methodology": methodology,
             },
-            workflow=active.get("workflow") or "verify",
-            phase=active.get("phase"),
+            workflow=state.get("workflow"),
+            phase=state.get("phase"),
         )
 
     emit_hook_output(

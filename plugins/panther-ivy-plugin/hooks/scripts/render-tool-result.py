@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, read_stdin
-from workflow_state import find_protocol_dir, get_active_workflow
+from workflow_state import WorkflowContext
 
 RENDERED_TOOLS = {
     "ivy_verify",
@@ -253,12 +253,8 @@ def main():
     if not tool_output:
         sys.exit(0)
 
-    protocol_dir = find_protocol_dir()
-    workflow = None
-    if protocol_dir:
-        state = get_active_workflow(protocol_dir)
-        if state:
-            workflow = state.get("workflow")
+    ctx = WorkflowContext.current()
+    workflow = ctx.workflow if ctx else None
 
     formatter = FORMATTERS.get(base_tool)
     if not formatter:

@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, read_stdin, resolve_sessions_dir
-from workflow_state import find_protocol_dir, get_active_workflow, get_build_state, get_journal_entries
+from workflow_state import WorkflowContext, get_build_state, get_journal_entries
 
 CLAIM_PATTERNS = {
     "resolved": re.compile(r"RESOLVED\("),
@@ -266,14 +266,10 @@ def main():
     if not ivy_files:
         sys.exit(0)
 
-    protocol_dir = find_protocol_dir()
-    workflow = None
-    phase = None
-    if protocol_dir:
-        state = get_active_workflow(protocol_dir)
-        if state:
-            workflow = state.get("workflow")
-            phase = state.get("phase")
+    ctx = WorkflowContext.current()
+    workflow = ctx.workflow if ctx else None
+    phase = ctx.phase if ctx else None
+    protocol_dir = ctx.protocol_dir if ctx else None
 
     summary = build_summary(ivy_files, workflow, phase, protocol_dir)
     emit_hook_output("Stop", additional_context=summary)

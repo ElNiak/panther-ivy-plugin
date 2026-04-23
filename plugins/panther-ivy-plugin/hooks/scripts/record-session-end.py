@@ -16,9 +16,8 @@ sys.path.insert(
 )
 from hook_utils import read_stdin
 from workflow_state import (
+    WorkflowContext,
     append_journal_event,
-    find_protocol_dir,
-    get_active_workflow,
     rotate_journal,
 )
 
@@ -26,26 +25,22 @@ from workflow_state import (
 def main() -> None:
     read_stdin()
 
-    protocol_dir = find_protocol_dir()
-    if not protocol_dir:
-        return
-
-    active = get_active_workflow(protocol_dir)
-    if not active:
+    ctx = WorkflowContext.current()
+    if ctx is None:
         return
 
     append_journal_event(
-        protocol_dir,
+        ctx.protocol_dir,
         event_type="session_end",
         payload={
             "clean": True,
-            "phase_at_exit": active.get("phase", "unknown"),
+            "phase_at_exit": ctx.phase or "unknown",
         },
-        workflow=active.get("workflow"),
-        phase=active.get("phase"),
+        workflow=ctx.workflow,
+        phase=ctx.phase,
     )
 
-    rotate_journal(protocol_dir)
+    rotate_journal(ctx.protocol_dir)
 
 
 if __name__ == "__main__":

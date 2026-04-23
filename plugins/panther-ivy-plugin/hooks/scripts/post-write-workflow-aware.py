@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, read_stdin
 from statusline_cache import update_from_hook as _statusline_update
 
-from workflow_state import find_protocol_dir, get_active_workflow
+from workflow_state import WorkflowContext
 
 
 def main():
@@ -36,8 +36,7 @@ def main():
         "source": "last-edited",
     })
 
-    protocol_dir = find_protocol_dir()
-    if protocol_dir and get_active_workflow(protocol_dir) is not None:
+    if WorkflowContext.current() is not None:
         return
 
     emit_hook_output(

@@ -13,12 +13,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from workflow_state import find_protocol_dir, get_active_workflow
+from workflow_state import WorkflowContext
 
 
 def main():
-    protocol_dir = find_protocol_dir()
-    if protocol_dir and get_active_workflow(protocol_dir) is not None:
+    if WorkflowContext.current() is not None:
         sys.exit(0)
 
     try:
