@@ -292,6 +292,16 @@ def validate_active_workflow(
 ) -> tuple[bool, str | None]:
     """Validate the ``active-workflow`` YAML file against the 3-field schema.
 
+    MCP-surfacing status (2026-04-23): this helper is called by in-process
+    Python consumers (tests, hooks, future CLI tooling). Navigate's Phase 1
+    Step 0 consumer described in the S8 spec is currently deferred — it
+    requires adding ``ivy_workflow_state(action="validate")`` in the
+    ivy-lsp submodule so a SKILL.md body can invoke validation via MCP.
+    Until that lands, navigate relies on :func:`get_active_workflow`'s
+    silent-None-on-corruption behavior; downstream reads that hit corrupt
+    state surface the failure indirectly.
+
+
     Reads ``<protocol_dir>/.panther-ivy/active-workflow`` and checks:
 
     - File is valid YAML (``yaml.safe_load`` succeeds and yields a dict).
@@ -383,6 +393,16 @@ class BuildStateParseError(Exception):
     Distinguishes parse failure (file is present but corrupt — caller must
     handle / back up) from missing-file (benign — caller treats as a fresh
     build session).
+
+    MCP-surfacing status (2026-04-23): SKILL.md workflow bodies call state
+    ops via the ``ivy_workflow_state`` MCP tool, not via this Python module
+    directly, so they cannot catch ``BuildStateParseError`` as an exception.
+    Consuming this exception from navigate / build requires adding an MCP
+    action in the ivy-lsp submodule (e.g. ``ivy_workflow_state(
+    action="get_build")`` that distinguishes missing-file from parse-
+    failure in its error surface). Until then this exception is consumed
+    only by in-process Python callers: unit tests, hooks (via
+    :func:`get_build_state_safe`), and future CLI tooling.
     """
 
 

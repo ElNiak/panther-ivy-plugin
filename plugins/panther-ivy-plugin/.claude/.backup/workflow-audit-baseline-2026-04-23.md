@@ -67,6 +67,12 @@ Consequence: **all M/??/D paths are classified `unrelated` or `delete-intended` 
 
 Total: 40 paths classified. 0 require special three-way merging; 0 require deferral to after spec commits.
 
+## Outstanding integration gates
+
+- **S1 same-turn Skill() chaining** (deferred 2026-04-23, user decision): the post-S1 integration gate described in the plan (spawn a test protocol dir; type "build a QUIC minimal model"; observe whether `/nct-observability` shows same-turn `pending_dispatch → workflow_resumed` pairs or a forced turn break) is not run in this session. S1 ships with same-turn as the intended UX claim and next-turn hand-off as the documented fallback (S1 Risk #1). S3–S7 are authored so they work under either outcome. Verify in a real session before any downstream work claims same-turn UX without hedging.
+
+- **S8 MCP surface for validator + parse-error handler** (deferred 2026-04-23, user decision): the S8 spec's navigate Phase 1 Step 0 validator call and build Phase 2 Step 2 `BuildStateParseError` handler both assume a SKILL.md body can invoke Python helpers directly. SKILL.md bodies call state ops through the `ivy_workflow_state` MCP tool (in the ivy-lsp submodule), not through Python imports, so neither consumer can reach the Python-only API landed in S8 Commit A. **Deferral scope**: Commit B's two SKILL.md edits are skipped; the Python API (`validate_active_workflow`, `BuildStateParseError`, `get_build_state` loud behavior, `get_build_state_safe` wrapper) stays — it is useful now for hooks, tests, and future CLI tooling. **Follow-up required**: a later ivy-lsp submodule session adds `ivy_workflow_state(action="validate")` and propagates `BuildStateParseError` through `ivy_workflow_state(action="get_build")`'s error surface. Once those land, a follow-up commit in panther-ivy-plugin reinstates the navigate Step 0 and build Phase 2 Step 2 SKILL.md edits described in S8. The deferred docstrings in `workflow_state.py::BuildStateParseError` and `validate_active_workflow` record this dependency.
+
 ## Spec-side follow-ups (injected into spec phase instructions)
 
 Inspection of current M hunks surfaced one behavior adjustment to the spec's as-written edit inventory. Record here so the relevant phase catches it at execution time:
