@@ -1,12 +1,13 @@
 """Unit tests for track-workflow-skill.py workflow-state write logic.
 
-Covers the sub-workflow dispatch contract described in the plugin CLAUDE.md
-(active-workflow state management section). Focus:
+Covers the simplified 3-field active-workflow schema from the cluster-1
+workflow state-model refactor. Focus:
 
-- Fresh start when no prior active-workflow exists.
-- Nested dispatch increments invocation_depth and sets caller.
-- Same-workflow re-entry is a no-op (preserves started/invocation_depth).
-- Stale prior state (> 2h) is treated as fresh start, not nested.
+- Fresh start when no prior active-workflow exists (writes new 3-field dict).
+- Same-workflow re-entry is a no-op (preserves ``started``).
+- Different workflow => overwrite with a fresh timestamp. There is no caller
+  chain, no ``invocation_depth``, and no staleness branch — workflow
+  composition is journaled via ``pending_dispatch`` events instead.
 """
 
 from __future__ import annotations
@@ -53,12 +54,10 @@ def test_fresh_start_when_no_prior_state(protocol_dir: Path):
     mod = _load_module()
     now = "2026-04-20T12:00:00+00:00"
     new_state, kind = mod._compute_new_state(str(protocol_dir), None, "verify", now)
-    assert kind == "fresh"
+    assert kind == "overwrite"
     assert new_state == {
         "workflow": "verify",
         "phase": "init",
-        "invocation_depth": 0,
-        "caller": None,
         "started": now,
     }
 
@@ -68,7 +67,7 @@ def test_same_workflow_reentry_is_noop(protocol_dir: Path):
     started = datetime.now(timezone.utc) - timedelta(minutes=30)
     _write_active(
         protocol_dir,
-        {"workflow": "verify", "phase": "compile", "invocation_depth": 0, "caller": None},
+        {"workflow": "verify", "phase": "compile"},
         started=started,
     )
     prev = yaml.safe_load((protocol_dir / ".panther-ivy" / "active-workflow").read_text())
@@ -77,65 +76,44 @@ def test_same_workflow_reentry_is_noop(protocol_dir: Path):
     assert new_state is None
 
 
-def test_nested_dispatch_sets_caller_and_increments_depth(protocol_dir: Path):
+def test_different_workflow_overwrites_fresh(protocol_dir: Path):
+    """Any non-matching prior state is overwritten with a 3-field dict."""
     mod = _load_module()
     started = datetime.now(timezone.utc) - timedelta(minutes=10)
     _write_active(
         protocol_dir,
-        {"workflow": "verify", "phase": "compile", "invocation_depth": 0, "caller": None},
+        {"workflow": "verify", "phase": "compile"},
         started=started,
     )
     prev = yaml.safe_load((protocol_dir / ".panther-ivy" / "active-workflow").read_text())
     now = "2026-04-20T13:05:00+00:00"
     new_state, kind = mod._compute_new_state(str(protocol_dir), prev, "build", now)
-    assert kind == "nested"
+    assert kind == "overwrite"
     assert new_state == {
         "workflow": "build",
         "phase": "init",
-        "invocation_depth": 1,
-        "caller": "verify",
         "started": now,
     }
 
 
-def test_stale_prior_state_triggers_fresh_start(protocol_dir: Path):
+def test_overwrite_does_not_depend_on_staleness(protocol_dir: Path):
+    """The staleness branch was removed in cluster-1; stale prior => overwrite."""
     mod = _load_module()
-    # 5 hours ago → past the 2h staleness threshold in is_workflow_stale
     started = datetime.now(timezone.utc) - timedelta(hours=5)
     _write_active(
         protocol_dir,
-        {"workflow": "verify", "phase": "compile", "invocation_depth": 0, "caller": None},
+        {"workflow": "verify", "phase": "compile"},
         started=started,
     )
     prev = yaml.safe_load((protocol_dir / ".panther-ivy" / "active-workflow").read_text())
     now = "2026-04-20T13:10:00+00:00"
     new_state, kind = mod._compute_new_state(str(protocol_dir), prev, "build", now)
-    assert kind == "fresh"
+    assert kind == "overwrite"
     assert new_state == {
         "workflow": "build",
         "phase": "init",
-        "invocation_depth": 0,
-        "caller": None,
         "started": now,
     }
-
-
-def test_double_nesting_increments_from_one_to_two(protocol_dir: Path):
-    mod = _load_module()
-    started = datetime.now(timezone.utc) - timedelta(minutes=5)
-    _write_active(
-        protocol_dir,
-        {"workflow": "build", "phase": "init", "invocation_depth": 1, "caller": "verify"},
-        started=started,
-    )
-    prev = yaml.safe_load((protocol_dir / ".panther-ivy" / "active-workflow").read_text())
-    now = "2026-04-20T13:15:00+00:00"
-    new_state, kind = mod._compute_new_state(str(protocol_dir), prev, "review", now)
-    assert kind == "nested"
-    assert new_state is not None
-    assert new_state["invocation_depth"] == 2
-    assert new_state["caller"] == "build"
-    assert new_state["workflow"] == "review"
 
 
 def test_write_state_locked_serializes_under_flock(tmp_path: Path):
@@ -144,8 +122,6 @@ def test_write_state_locked_serializes_under_flock(tmp_path: Path):
     payload = {
         "workflow": "verify",
         "phase": "init",
-        "invocation_depth": 0,
-        "caller": None,
         "started": "2026-04-20T14:00:00+00:00",
     }
     mod._write_state_locked(str(target), payload)

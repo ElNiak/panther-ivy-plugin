@@ -35,6 +35,7 @@ _VALID_EVENT_TYPES = frozenset({
     "plan_approved",
     "workflow_resumed",
     "knowledge_captured",
+    "pending_dispatch",
 })
 
 
@@ -154,9 +155,7 @@ def get_active_workflow(protocol_dir: str) -> dict | None:
         return None
 
 
-_WORKFLOW_CONTEXT_FIELDS = frozenset(
-    {"workflow", "phase", "invocation_depth", "caller", "started"}
-)
+_WORKFLOW_CONTEXT_FIELDS = frozenset({"workflow", "phase", "started"})
 
 _WARNED_UNKNOWN_FIELDS: set[str] = set()
 
@@ -165,22 +164,22 @@ _WARNED_UNKNOWN_FIELDS: set[str] = set()
 class WorkflowContext:
     """Active workflow state plus the protocol directory it belongs to.
 
+    The schema has three fields. Workflow composition is journaled via
+    ``pending_dispatch`` events (see :func:`append_pending_dispatch`) rather
+    than a caller/depth chain; every workflow returns to navigate on
+    completion.
+
     Attributes:
         protocol_dir: Absolute path to the protocol directory (parent of
             ``.panther-ivy/``).
         workflow: Name of the active workflow (e.g. ``"build"``, ``"verify"``).
         phase: Current phase within the workflow.
-        invocation_depth: Nesting depth for recursive invocations. 0 means
-            top-level.
-        caller: Optional identifier of the caller that set the workflow.
         started: ISO-8601 UTC timestamp when the workflow was set.
     """
 
     protocol_dir: str
     workflow: str
     phase: str | None = None
-    invocation_depth: int = 0
-    caller: str | None = None
     started: str | None = None
 
     @classmethod
@@ -220,8 +219,6 @@ def set_active_workflow(
     protocol_dir: str,
     workflow: str,
     phase: str,
-    invocation_depth: int = 0,
-    caller: str | None = None,
 ) -> None:
     """Write the active-workflow YAML file.
 
@@ -229,8 +226,6 @@ def set_active_workflow(
         protocol_dir: Path to the protocol directory.
         workflow: Name of the active workflow.
         phase: Current phase within the workflow.
-        invocation_depth: Nesting depth for recursive invocations.
-        caller: Optional identifier of the caller that set the workflow.
     """
     state_path = _state_dir(protocol_dir)
     state_path.mkdir(parents=True, exist_ok=True)
@@ -238,11 +233,8 @@ def set_active_workflow(
     data: dict = {
         "workflow": workflow,
         "phase": phase,
-        "invocation_depth": invocation_depth,
         "started": datetime.now(timezone.utc).isoformat(),
     }
-    if caller is not None:
-        data["caller"] = caller
 
     with open(state_path / _ACTIVE_WORKFLOW_FILE, "w") as f:
         yaml.safe_dump(data, f)
@@ -361,6 +353,52 @@ def append_journal_event(
         yaml.safe_dump(entries, f, default_flow_style=False)
 
     return True
+
+
+def append_pending_dispatch(
+    protocol_dir: str,
+    target_workflow: str,
+    phase_hint: str | None = None,
+    reason: str | None = None,
+) -> bool:
+    """Append a ``pending_dispatch`` journal event signaling the next workflow.
+
+    Workflows emit ``pending_dispatch`` immediately before clearing their own
+    ``active-workflow`` flag to indicate which workflow navigate should
+    activate next. Navigate consumes the event by writing a paired
+    ``workflow_resumed`` entry and invoking the target skill.
+
+    The emitting workflow's current ``workflow`` and ``phase`` (read from
+    ``active-workflow``) are recorded on the journal entry's context fields;
+    the target workflow travels in the payload.
+
+    Args:
+        protocol_dir: Path to the protocol directory.
+        target_workflow: The workflow that should run next (e.g. ``"verify"``).
+        phase_hint: Optional phase to start the target in. When absent the
+            target starts at its own ``init`` phase.
+        reason: Human-readable reason for the dispatch (surfaced by
+            ``/nct-observability``).
+
+    Returns:
+        True if the event was appended, False if event-type validation
+        rejected the entry.
+    """
+    current = get_active_workflow(protocol_dir)
+    emitting_workflow = current.get("workflow") if current else None
+    emitting_phase = current.get("phase") if current else None
+    payload: dict = {"workflow": target_workflow}
+    if phase_hint is not None:
+        payload["phase_hint"] = phase_hint
+    if reason is not None:
+        payload["reason"] = reason
+    return append_journal_event(
+        protocol_dir,
+        event_type="pending_dispatch",
+        payload=payload,
+        workflow=emitting_workflow,
+        phase=emitting_phase,
+    )
 
 
 def get_journal_entries(protocol_dir: str, last_n: int = 20) -> list[dict]:

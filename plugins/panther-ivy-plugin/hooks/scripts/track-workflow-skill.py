@@ -1,24 +1,20 @@
 #!/usr/bin/env python3
 """PostToolUse hook for Skill: maintain active-workflow state across dispatch.
 
-Contract: the `active-workflow` YAML file's `invocation_depth` and `caller`
-fields together implement the sub-workflow protocol documented in the plugin
-CLAUDE.md (lines 41-52). When workflow A dispatches workflow B via the Skill
-tool, the hook captures A as B's `caller` and increments `invocation_depth`.
-When B completes, the skill body itself decrements via `ivy_workflow_state`.
+Contract: every Skill invocation that names a known workflow overwrites the
+``active-workflow`` YAML file with the 3-field schema
+``{workflow, phase=init, started=now}``. There is no caller chain, no
+``invocation_depth``, no staleness branch, and no same-workflow no-op — the
+only exception is a re-entry of the *same* workflow name, which preserves the
+existing ``started`` timestamp so mid-workflow Skill re-invocations do not
+reset age tracking.
 
-This hook only handles the entry path. Write path rules:
-- Same workflow as the existing active one: no-op (preserve `started`,
-  `invocation_depth`, `caller`). Re-invoking the same skill mid-workflow
-  does not reset its start timestamp or nesting depth.
-- Different workflow, existing is still active (not stale): nested
-  dispatch. Increment `invocation_depth`, set `caller` to the existing
-  workflow, refresh `started` to the child's start.
-- Different workflow, existing is absent or stale (> 2h): fresh start.
-  `invocation_depth=0`, `caller=null`.
+Workflow composition travels via ``pending_dispatch`` journal events (see
+:func:`workflow_state.append_pending_dispatch`) rather than parent/child state
+on disk.
 
-Concurrent writes are serialized via `fcntl.flock(..., LOCK_EX)` matching
-the pattern in `check-mcp-health.py`.
+Concurrent writes are serialized via ``fcntl.flock(..., LOCK_EX)`` matching
+the pattern in ``check-mcp-health.py``.
 """
 
 import fcntl
@@ -38,7 +34,6 @@ from workflow_state import (
     append_journal_event,
     find_protocol_dir,
     get_active_workflow,
-    is_workflow_stale,
     resolve_protocol_from_workspace,
 )
 
@@ -76,47 +71,23 @@ def _compute_new_state(
 ) -> tuple[dict[str, Any] | None, str]:
     """Compute the new active-workflow payload for a Skill dispatch.
 
-    Args:
-        protocol_dir: Path to the protocol directory (for staleness check).
-        previous: Parsed contents of the existing active-workflow file, or
-            None if no prior state exists.
-        workflow_name: The skill-derived workflow name being dispatched.
-        now_iso: ISO-8601 timestamp for the dispatch moment.
-
     Returns:
-        (new_state, kind). `new_state` is the dict to write, or None when
-        the dispatch is a same-workflow re-entry (no write needed). `kind`
-        is one of ``"reenter"``, ``"nested"``, ``"fresh"``.
+        (new_state, kind). ``new_state`` is the 3-field dict to write, or
+        None when the dispatch is a same-workflow re-entry (no write
+        needed — the existing ``started`` timestamp is preserved). ``kind``
+        is ``"reenter"`` or ``"overwrite"``.
     """
+    del protocol_dir  # retained for signature parity; no staleness branch
     if previous is not None and previous.get("workflow") == workflow_name:
         return None, "reenter"
-
-    if previous is not None and not is_workflow_stale(protocol_dir):
-        prior_depth = previous.get("invocation_depth", 0)
-        try:
-            depth = int(prior_depth) + 1
-        except (TypeError, ValueError):
-            depth = 1
-        return (
-            {
-                "workflow": workflow_name,
-                "phase": "init",
-                "invocation_depth": depth,
-                "caller": previous.get("workflow"),
-                "started": now_iso,
-            },
-            "nested",
-        )
 
     return (
         {
             "workflow": workflow_name,
             "phase": "init",
-            "invocation_depth": 0,
-            "caller": None,
             "started": now_iso,
         },
-        "fresh",
+        "overwrite",
     )
 
 
@@ -178,8 +149,6 @@ def main() -> None:
     effective_state = new_state or previous_state or {
         "workflow": workflow_name,
         "phase": "init",
-        "invocation_depth": 0,
-        "caller": None,
         "started": now_iso,
     }
 
@@ -187,8 +156,6 @@ def main() -> None:
         "workflow": {
             "name": effective_state["workflow"],
             "phase": effective_state.get("phase", "init"),
-            "invocation_depth": effective_state.get("invocation_depth", 0),
-            "caller": effective_state.get("caller"),
             "started": effective_state.get("started", now_iso),
         },
     }
@@ -196,13 +163,7 @@ def main() -> None:
         updates["workspace"] = {"protocol": protocol}
     _statusline_update_sections(updates)
 
-    if kind == "nested":
-        context = (
-            f"[workflow-state] Nested dispatch: "
-            f"{effective_state['caller']} -> {workflow_name} "
-            f"(depth {effective_state['invocation_depth']})"
-        )
-    elif kind == "reenter":
+    if kind == "reenter":
         context = f"[workflow-state] Re-entry ignored: {workflow_name} already active"
     else:
         context = f"[workflow-state] Set active workflow: {workflow_name}/init"
