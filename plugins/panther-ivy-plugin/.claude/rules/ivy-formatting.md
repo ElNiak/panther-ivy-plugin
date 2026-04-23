@@ -21,3 +21,36 @@
 - This rule governs Claude's response to the user, not plugin source documents
   (skills, rules, agents) that teach these conventions.
 - For simple factual outputs (tool results, file listings), skip self-review.
+
+## Severity Systems
+
+Three orthogonal severity systems exist in the plugin. Use the system that
+matches the concept being labeled.
+
+1. **Tool-outcome**: PASS / FAIL / WARN.
+   Use for the result of a mechanical tool run (`ivy_verify` returning
+   success/failure, a health-check step, a compile result). PASS/FAIL are
+   binary outcomes; WARN signals a tool succeeded but produced advisory
+   output. Used by: triage Phase 1-3, the `/nct-health` runbook, verify
+   Phase 3 compile result, `/nct-check` output.
+
+2. **Gate verdict**: SOUND / UNSOUND(#NN, reason, file:line) / ABSTAIN.
+   Use for the calibrated verdict of an adversarial quality gate (G0-G5).
+   ABSTAIN is a first-class output signalling insufficient evidence, not a
+   synonym for WARN or UNSURE. Used by: `reflection-patterns` gates;
+   `gate_verdict` journal entries; `model-reviewer` gate-critic mode.
+
+3. **Finding severity**: ERROR / WARNING / INFO.
+   Use for the severity of a code-level or workflow-level finding that has
+   a file:line locator. Format per the existing canonical rule above
+   (`ERROR: {file}:{line} -- {message}`). Used by: `model-reviewer`
+   interactive mode, build Phase 5 findings, review Phase 3 findings,
+   `spec-analyst` diagnostic reports.
+
+These systems do not map onto each other. A FAIL tool-outcome may correspond
+to multiple ERROR findings; an UNSOUND gate verdict may cite one or more
+ERROR-severity patterns; and an ABSTAIN is not a WARN.
+
+The audit-report-specific taxonomy `Critical / Major / Minor / Nit` used in
+the 2026-04-23 workflow audit belongs to that audit report, not to the
+runtime plugin, and is not one of the systems above.

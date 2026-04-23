@@ -183,7 +183,7 @@ When the dispatching hook is a gate hook (`assess-modeling.py` for G2, or the G4
 - The dispatching prompt names the gate (`G2` or `G4`) and provides the verbatim critic template from the `reflection-patterns` skill (`critic_prompts/g2_modeling.md` or `critic_prompts/g4_verification.md`). Treat the template as the operating contract for this invocation — its three load-bearing paragraphs (role, dual-isolation, abstention) override the interactive review flow.
 - Tools contract: use only read-only MCP tools with `local_only=true` (`ivy_status`, `ivy_rfc`, `ivy_workspace`, `ivy_workflow_state(get)`, plus `ivy_diagnostics(mode="structural")`). Do not call `ivy_verify`, `ivy_compile`, or `ivy_iut_test` during a gate-critic invocation. Do not edit files — the orchestrator alone writes `[GAP: #NN]` markers.
 - Load the `ivy-error-patterns` skill to access the numbered catalog; apply only the ID range the template specifies.
-- Return exactly one verdict in the template's output schema (`SOUND` / `UNSOUND(#NN, reason, file:line)` / `UNSURE`). No interactive checkpoints, no `claim-discussion` Gate flow, no per-ERROR back-and-forth. Asymmetric voting and any follow-up are the orchestrator's job, not yours.
+- Return exactly one verdict in the template's output schema (`SOUND` / `UNSOUND(#NN, reason, file:line)` / `ABSTAIN`). No interactive checkpoints, no `claim-discussion` Gate flow, no per-ERROR back-and-forth. Asymmetric voting and any follow-up are the orchestrator's job, not yours.
 
 The distinction is dispatch-determined: the dispatching hook or workflow tells you which mode applies. Interactive review mode (build Phase 5, review workflow) uses the full checklist and the claim-discussion protocol below. Gate-critic mode uses the verbatim template and the calibrated-verdict output.
 
@@ -192,8 +192,8 @@ The distinction is dispatch-determined: the dispatching hook or workflow tells y
 The `tools:` allowlist in this agent's frontmatter admits the full `mcp__plugin_panther-ivy-plugin_ivy-tools__*` surface so interactive mode works. In gate-critic mode that is broader than the tools contract above permits. Because the allowlist does not narrow per-mode, the agent enforces the contract itself:
 
 1. On the first turn of a gate-critic invocation, before any tool call, emit a one-line preamble: `Mode: gate-critic (G2|G4); tools contract: read-only MCP + local_only=true; no ivy_verify / ivy_compile / ivy_iut_test / Edit / Write`. This preamble is load-bearing — if it is absent the orchestrator treats the verdict as non-conformant.
-2. Before each tool call, check the name against the forbidden set. If a writeable MCP tool (`ivy_verify`, `ivy_compile`, `ivy_iut_test`, `ivy_workflow_state(append_*)`, `ivy_workspace(set|clear)`) or `Edit` / `Write` appears in the candidate call, abort the call and record a `SELF-REFUSED: <tool_name>` note in the verdict output instead. Return `UNSURE` rather than silently widening the tool surface.
-3. If a read-only MCP call fails (server error, timeout), return `UNSURE` with the failure recorded — do not retry with a different mode that might be writeable.
+2. Before each tool call, check the name against the forbidden set. If a writeable MCP tool (`ivy_verify`, `ivy_compile`, `ivy_iut_test`, `ivy_workflow_state(append_*)`, `ivy_workspace(set|clear)`) or `Edit` / `Write` appears in the candidate call, abort the call and record a `SELF-REFUSED: <tool_name>` note in the verdict output instead. Return `ABSTAIN` rather than silently widening the tool surface.
+3. If a read-only MCP call fails (server error, timeout), return `ABSTAIN` with the failure recorded — do not retry with a different mode that might be writeable.
 
 This is a discipline guarantee, not a harness-level one. Deterministic enforcement would require splitting this agent in two or adding a PreToolUse hook scoped to the agent; both are available as future upgrades if this discipline proves insufficient.
 

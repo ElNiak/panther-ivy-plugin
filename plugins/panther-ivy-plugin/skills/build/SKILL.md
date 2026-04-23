@@ -281,11 +281,11 @@ Dispatch both agents in a single message using two Agent tool calls:
 
 ### Step 2: Aggregate findings
 
-Collect findings from both agents. Classify by severity: critical, important, suggestion.
+Collect findings from both agents. Classify by severity per `.claude/rules/ivy-formatting.md` Severity Systems ("Finding severity"): ERROR, WARNING, INFO.
 
-### Gate checkpoint on critical issues
+### Gate checkpoint on ERROR findings
 
-If critical issues are found, present them to the user: "These critical issues were found: [list]. Fix them now? Or accept and move on?"
+If ERROR findings are produced, present them to the user: "These ERRORs were found: [list]. Fix them now? Or accept and move on?"
 
 Wait for explicit confirmation.
 
@@ -302,9 +302,9 @@ If the user wants fixes:
 Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
 
 - **What happened:** Summarize the quality gate results: how many findings by severity (critical/important/suggestion), which agents found what, overall model health.
-- **What it means:** Are critical issues blocking? Is coverage sufficient for the target methodology?
+- **What it means:** Are ERROR-severity findings blocking? Is coverage sufficient for the target methodology?
 - **Options:**
-  - "Fix critical issues now" (if any exist)
+  - "Fix ERROR findings now" (if any exist)
   - "Proceed to wrap-up — accept current quality level"
   - "Run full verification before wrapping up"
   - "Review coverage gaps in detail"

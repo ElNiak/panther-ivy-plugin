@@ -195,17 +195,17 @@ Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="rev
 
 ### Step 1: Present findings
 
-Present findings with severity classification:
+Present findings with severity classification (per `.claude/rules/ivy-formatting.md` Severity Systems — "Finding severity"):
 
-- **Critical:** Verification will fail, or the model is unsound. Must fix before committing.
-- **Important:** Quality concern that a code reviewer would flag. Should fix.
-- **Suggestion:** Improvement that doesn't affect correctness.
+- **ERROR:** Verification will fail, or the model is unsound. Must fix before committing.
+- **WARNING:** Quality concern that a code reviewer would flag. Should fix.
+- **INFO:** Improvement that doesn't affect correctness.
 
 Load the `claim-discussion` knowledge skill for structured discussion of any contested findings.
 
-### Gate checkpoint on critical issues
+### Gate checkpoint on ERROR findings
 
-If critical issues were found: "These critical issues were found: [list]. Fix them now? Run verify on flagged files?"
+If ERROR findings were produced: "These ERRORs were found: [list]. Fix them now? Run verify on flagged files?"
 
 Wait for explicit confirmation.
 
