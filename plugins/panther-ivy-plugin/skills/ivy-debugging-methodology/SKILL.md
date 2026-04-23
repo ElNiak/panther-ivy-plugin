@@ -102,4 +102,4 @@ load the `ivy-writing-guide` skill and read `references/serializer-patterns.md`.
 - **`ivy-toolkit`** — MCP tool inventory consulted in Step 4.
 
 **References:**
-- `references/debugging-environment.md` — Self-evaluation protocol (anti-pattern checklist), directory structure conventions, log file paths, common failures, debug environment variables, LSP indexing awareness. Consult when stack/environment issues are suspected.
+- `references/debugging-environment.md` — Self-evaluation protocol (anti-pattern checklist), debug environment variables, LSP indexing awareness. For the full 9-step health-check runbook (log paths, common failures, process liveness), see `skills/triage/references/full-health-check.md`.

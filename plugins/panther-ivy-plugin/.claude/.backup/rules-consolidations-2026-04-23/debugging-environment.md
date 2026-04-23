@@ -1,16 +1,3 @@
-# Debugging Environment
-
-This reference covers content unique to debugging flows: the agent self-evaluation loop,
-debug environment variables, and LSP indexing awareness.
-
-## Canonical 9-step runbook
-
-The full 9-step Ivy LSP + MCP health-check runbook (log file paths, common failures,
-process liveness, workspace access, cross-file resolution) lives in
-`skills/triage/references/full-health-check.md`. When a debugging session needs a full
-diagnostic, invoke the `triage` skill or `Read` that reference directly. This file does
-not duplicate that runbook.
-
 ## Agent Self-Evaluation Protocol
 
 After writing or modifying Ivy specifications, run this verification loop:
@@ -27,8 +14,41 @@ After writing or modifying Ivy specifications, run this verification loop:
    - Circular include dependencies → Ivy does not support circular includes, structure as DAG
    - Forgetting to `export _finalize` → end-state checks will not execute
 
-## Debug environment variables
+## Directory Structure
 
+```
+protocol-testing/{prot}/
+├── {prot}_stack/           # Core protocol model (layers 1-9)
+├── {prot}_entities/        # Entity definitions + behavior (layers 10-12)
+├── {prot}_shims/           # Implementation bridge (layer 12)
+├── {prot}_utils/           # Serialization + utilities (layers 13-14)
+└── {prot}_tests/
+    ├── server_tests/       # Ivy=client, tests server IUT
+    ├── client_tests/       # Ivy=server, tests client IUT
+    └── mim_tests/          # Man-in-the-middle tests
+```
+
+**Naming**: `{prot}_{layer}.ivy` for stack layers, `ivy_{prot}_{role}.ivy` for entities, `{prot}_{role}_test_*.ivy` for tests.
+
+**Reference**: `protocol-testing/quic/` (complete, 200+ files). **Template**: `protocol-testing/new_prot/` (scaffold).
+
+## Debugging & Troubleshooting
+
+**Health check**: Run the `triage` workflow or call `ivy_status(mode="health")` to verify LSP + MCP are working correctly.
+
+**Log files**:
+- `/tmp/ivy-lsp-latest.log` — symlink to whichever server started last (backward compat)
+- `/tmp/ivy-lsp-lsp-latest.log` — LSP server log (indexing, hover, definitions)
+- `/tmp/ivy-mcp-latest.log` — MCP server log (tool calls, model building)
+- Per-instance files: `ivy-lsp-<timestamp>-<pid>.log`
+
+**Common failures**:
+- LSP not starting: check if `uvx` is on PATH, check `/tmp/ivy-lsp-lsp-latest.log` for startup errors
+- Empty LSP results: workspace indexing may not be complete — check LSP log for "Indexed N files"
+- Z3 import error (ARM/Apple Silicon): use `development-scp-refactor` branch for stability
+- MCP server unresponsive: run `ivy_status(mode="capabilities")` to test connectivity, check `/tmp/ivy-mcp-latest.log`
+
+**Debug environment variables**:
 - `IVY_LSP_LOG_LEVEL=DEBUG` — verbose logging
 - `IVY_LSP_FORCE_REINSTALL=1` — force `uvx` to reinstall the package (not set by default; use when modifying local ivy-lsp source)
 - `IVY_LSP_DEV_ROOT=/path/to/local/ivy-lsp` — use local development copy
@@ -37,7 +57,9 @@ After writing or modifying Ivy specifications, run this verification loop:
 - `IVY_LSP_RFC_CACHE_DIR=/path` — override RFC disk cache location (default: `{workspace}/.ivy-cache/rfc/`)
 - `IVY_LSP_RFC_LOCAL_DIR=/path` — directory of local RFC text files (checked before remote fetch)
 
-## LSP Indexing Awareness
+**Restart**: Kill the `ivy_lsp` process — Claude Code automatically restarts it on the next LSP or MCP call.
+
+### LSP Indexing Awareness
 
 When `<new-diagnostics>` contains `[ivy-lsp] indexing in progress`, the LSP is still building its workspace index:
 
