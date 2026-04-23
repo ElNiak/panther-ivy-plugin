@@ -268,3 +268,4 @@ Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol=
 - **Log files:** `/tmp/ivy-lsp-lsp-latest.log`, `/tmp/ivy-mcp-latest.log`
 - **PID files:** `/tmp/ivy-lsp-*.pid`, `/tmp/ivy-mcp-*.pid`
 - **Port files:** `/tmp/ivy-mcp-*.port`
+- **MCP tool reliability:** triage is the dispatch target of the "Retry after fixing MCP server" escalation in `.claude/rules/mcp-tool-reliability.md`. Preflight mode is read-only; direct mode interactively diagnoses and repairs.

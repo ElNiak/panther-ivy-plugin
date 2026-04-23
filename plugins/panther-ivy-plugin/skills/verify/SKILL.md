@@ -319,6 +319,31 @@ Update active-workflow phase to match the outcome: `ivy_workflow_state(action="s
 
 ## Phase 6 — Diagnose & Phase 7 — Fix
 
+### Post-Edit workspace-block recovery
+
+After every `Write` / `Edit` on a `.ivy` file during Phase 7 (fix application), inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. The hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file) when the target `.ivy` is outside the active workspace.
+
+If the Edit was blocked:
+
+1. Append a structured `progress` journal entry:
+   ```
+   ivy_workflow_state(
+     action="append_journal",
+     protocol="<protocol>",
+     event_type="progress",
+     state='{"kind": "workspace_edit_blocked", "file": "<path>", "workspace_active": "<current>"}'
+   )
+   ```
+2. Present `AskUserQuestion` with three options (per `.claude/rules/mcp-tool-reliability.md`'s escalation pattern):
+   - **Switch workspace to the file's protocol** — run `/set-workspace <inferred-protocol>` (infer from the file's path relative to `protocol-testing/`), then retry the Edit.
+   - **Clear workspace restrictions** — run `/clear-workspace`, then retry the Edit.
+   - **Abandon this edit** — skip the edit; the fix loop continues with the change unapplied. Record a `decision` entry:
+     ```
+     decision{summary: "Edit skipped: workspace-blocked", context: "<file> outside <workspace>"}
+     ```
+
+If the harness does not surface workspace-scope-violation errors in the tool-result (platform limitation), this recovery path never fires — the Edit silently succeeds or silently fails at the filesystem layer. That case is a platform-level deficiency tracked as an upstream issue; the SKILL.md body's recovery pattern remains correct for when the signal does reach user-space.
+
 Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures. Summary:
 
 1. Load `ivy-debugging-methodology` first — its six mandatory pre-fix research steps must complete before any fix is proposed (G4 pattern `#405` fires otherwise)
@@ -401,3 +426,4 @@ The staleness rule still applies: if any `.ivy` file was edited after the backgr
 - **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 4, MPE Phase 6, SB Phase 7), `counterexample-guide` (Phase 6), `ivy-writing-guide` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3), `knowledge-capture` (KG Phase 4, KG Phase 7)
 - **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_iut_test`
 - **State files:** `.panther-ivy/active-workflow`
+- **MCP tool reliability:** on `InputValidationError` from `ivy_verify` / `ivy_compile` / `ivy_iut_test`, follow `.claude/rules/mcp-tool-reliability.md` — one retry via `ToolSearch({query: "select:<tool>"})`, then AskUserQuestion with triage / skip / abandon options.

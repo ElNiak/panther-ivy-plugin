@@ -226,6 +226,8 @@ Load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)**:
 
 Guide fixes inline using the relevant agent's recommendations. After applying fixes, re-run the analysis that found the issue to confirm resolution.
 
+After any `Write` / `Edit` on a `.ivy` file during this inline-fix path, inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. If blocked, append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal and present `AskUserQuestion` with three options per `.claude/rules/mcp-tool-reliability.md`: switch workspace to the file's protocol (run `/set-workspace <inferred>`), clear workspace restrictions (run `/clear-workspace`), or abandon this fix and record a `decision` entry.
+
 **If the user wants verification:**
 
 Emit a `pending_dispatch` naming `verify` and let navigate route the hand-off on the next turn — review does not dispatch verify directly:
@@ -270,3 +272,4 @@ If this review run needs another workflow to run next (e.g., the user asked for 
 - **Knowledge skills loaded:** `reflection-patterns` (SB Phase 1, MPE Phase 2, RG Phase 3), `claim-discussion` (Phase 3 for contested findings), `knowledge-capture` (KG Phase 2, KG Phase 3)
 - **MCP tools used:** `ivy_workspace` (protocol detection)
 - **State files:** `.panther-ivy/active-workflow`
+- **MCP tool reliability:** on `InputValidationError` from `ivy_coverage` / `ivy_quality` / `ivy_extract_requirements`, follow `.claude/rules/mcp-tool-reliability.md` — one retry via `ToolSearch({query: "select:<tool>"})`, then AskUserQuestion with triage / skip / abandon options.

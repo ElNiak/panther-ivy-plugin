@@ -227,6 +227,18 @@ Load `references/layer-scaffolding.md` for the full per-layer scaffolding proced
 6. Handle type propagation via `propagation-patterns` skill if needed
 7. Knowledge Gate on completion of all layers
 
+### Post-Edit workspace-block recovery
+
+After every `Write` / `Edit` on a `.ivy` file during Phase 3 (layer writes), inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. If the hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file), the layer was not written to disk:
+
+1. Append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal.
+2. Present `AskUserQuestion` with three options (per `.claude/rules/mcp-tool-reliability.md`):
+   - **Switch workspace to the file's protocol** — run `/set-workspace <inferred-protocol>`, then retry the Edit. Also update `build-state.yaml`'s `decisions` block if the workspace shift reflects a scope change.
+   - **Clear workspace restrictions** — run `/clear-workspace`, then retry the Edit. Appropriate for multi-protocol builds where the layer spans protocols.
+   - **Abandon this layer** — skip the Edit, mark the layer's `build-state.yaml` status as `abandoned`, record a `decision` entry, and move to the next layer in dependency order.
+
+Platform note: if the harness does not propagate PreToolUse-hook block signals into the tool-result, this path does not fire. File a platform-level issue if observed; the SKILL.md recovery pattern still applies whenever the signal reaches user-space.
+
 ### G2 / G3 Gates Fire Per-File
 
 After each `Write`/`Edit` on a `.ivy` file, a PostToolUse hook spawns critics from the `reflection-patterns` skill:
@@ -402,3 +414,4 @@ The staleness rule still applies: if the `.ivy` file was edited after the backgr
 - **Knowledge skills loaded:** `reflection-patterns` (MPE Phase 1, SB Phase 2, RG Phase 3, SB Phase 5), `methodology-reference` (Phase 1), `specification-patterns` (Phase 2), `ivy-writing-guide` (Phase 3), `counterexample-guide` (Phase 3 on error), `propagation-patterns` (Phase 3 on type change), `knowledge-capture` (KG Phase 3, KG Phase 5)
 - **MCP tools used:** `ivy_compile`, `ivy_workspace`
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`
+- **MCP tool reliability:** on `InputValidationError` from `ivy_compile` / `ivy_workspace`, follow `.claude/rules/mcp-tool-reliability.md` — one retry via `ToolSearch({query: "select:<tool>"})`, then AskUserQuestion with triage / skip / abandon options.

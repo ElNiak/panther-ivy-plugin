@@ -469,6 +469,7 @@ If the user's goal doesn't clearly map to a workflow, ask one clarifying questio
 - **Knowledge skills loaded:** `reflection-patterns` (SB after Phase 1, RG before dispatch, MPE on cold start, Plan-Author Step 2), `knowledge-capture` (KG after Phase 1)
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`
 - **Infrastructure:** `ivy_workflow_state` MCP tool for state reads/writes; `track-workflow-skill.py` PostToolUse hook for automatic state on skill activation
+- **MCP tool reliability:** on `InputValidationError` or any `ivy_*` MCP-tool failure, follow the canonical recovery pattern in `.claude/rules/mcp-tool-reliability.md` (ToolSearch retry-once, then AskUserQuestion with triage / skip / abandon options).
 
 ### Journal entry types this skill produces or consumes
 
