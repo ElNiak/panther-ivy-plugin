@@ -25,8 +25,9 @@
         "matcher": "ivy_verify",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "Tip: Consider running ivy_diagnostics(mode=\"structural\") first for fast structural validation (milliseconds vs seconds). This catches syntax errors before the heavier formal verification."
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/tip-shown.py",
+            "timeout": 5
           }
         ]
       },
@@ -54,8 +55,9 @@
         "matcher": "ivy_coverage",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "Tip: Always scope ivy_coverage with test_file for large workspaces. Run ivy_diagnostics first. Use mode=stats before mode=matrix."
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/tip-shown.py",
+            "timeout": 5
           }
         ]
       },

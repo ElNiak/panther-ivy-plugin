@@ -1,6 +1,6 @@
 {
   "name": "panther-ivy-plugin",
-  "description": "Unified Ivy formal protocol testing plugin providing both LSP (diagnostics, navigation, hover) and MCP (ivy-tools: verification, compilation, coverage analysis) servers. NCT/NACT/NSCT methodology guidance with agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.",
+  "description": "Ivy formal protocol tester. LSP + MCP servers, NCT/NACT/NSCT methodology, and 14-layer templates for writing, compiling, verifying, and running protocol specs against real implementations.",
   "version": "0.10.0",
   "author": {
     "name": "ElNiak",
