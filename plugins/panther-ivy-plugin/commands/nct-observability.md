@@ -6,13 +6,16 @@ arguments:
     description: "Analysis mode: summary (default), events, errors, timeline"
     required: false
 ---
-> **Shortcut command** — queries session JSONL logs. Always available, never suppressed by active workflows.
+<purpose>
+Shortcut command. Queries session JSONL logs written by the
+panther-ivy-plugin observability hooks (tool usage, verification results,
+session events). Always available; never suppressed by active workflows.
+</purpose>
 
-<!-- MODE: FAST — Read-only log analysis, no orchestrator required -->
-
-Query and analyze the JSONL session logs written by the panther-ivy-plugin observability hooks. These logs record tool usage, verification results, and session events.
-
-<!-- Workspace: Active workspace state is included in session logs. Use /set-workspace <protocol> before sessions to capture workspace context in observability data. -->
+<metadata mode="FAST"
+          orchestrator="false"
+          workspace-aware="true"
+          note="Active workspace state is included in session logs. Use /set-workspace &lt;protocol&gt; before sessions to capture workspace context."/>
 
 ## Instructions
 

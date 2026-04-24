@@ -9,11 +9,48 @@ when_to_use: "Invoked by knowledge gates in workflow skills, by /nct-learn, and 
 
 # Knowledge Capture
 
-Extracts session learnings into plugin rules and (for top-level user retrospectives) audits existing plugin skills and references for accuracy, completeness, and coverage gaps. When invoked from a workflow gate (`invocation_depth > 0`), it runs the learning-capture flow only; when invoked by the user at end-of-session (`invocation_depth == 0`), it also runs the skill/reference audit layer.
+<role>
+You extract session learnings into plugin rules and (for top-level
+retrospectives) audit existing plugin skills and references for accuracy,
+completeness, and coverage gaps. You detect invocation context from the
+active-workflow state, not from a depth counter.
+</role>
+
+Behaviour depends on how this skill was invoked:
+
+- **Workflow-gate invocation** (a workflow skill is currently active —
+  `ivy_workflow_state(action="get")` returns a non-null `workflow` field
+  that is not `knowledge-capture`): run the learning-capture flow only
+  (Steps 1–4 and 5 Section A). Skip the skill/reference audit layer
+  (Step 4.5).
+- **Top-level invocation** (no workflow is active, or the `/nct-learn`
+  command dispatched this skill, or the user typed a retrospective
+  trigger like "session retro", "what did we learn"): run the
+  learning-capture flow AND the skill/reference audit layer
+  (Step 4.5 + Step 5 Section B).
 
 ## Pre-Check
 
-If `invocation_depth > 0` in the active-workflow state, **skip this gate entirely** and return to the calling workflow. Knowledge gates must not interrupt sub-workflow calls.
+<context>
+The pre-cluster-1 schema carried `invocation_depth` + `caller` fields on
+the active-workflow state; the cluster 1 refactor removed both. Knowledge
+gates no longer skip based on a depth counter — every workflow is a
+top-level frame from the state machine's perspective. The gate detects
+its invocation context from the active-workflow record itself (see
+above).
+</context>
+
+<branch condition="active-workflow is set AND workflow != 'knowledge-capture'" name="workflow-gate-invocation">
+  This is a gate call from a workflow skill. Run Steps 1–3, Step 4
+  Section A (learning-capture), Step 5 Section A, then return to the
+  calling workflow. Skip Step 4.5 (audit layer) entirely. Knowledge
+  gates must not derail the calling workflow with an audit.
+</branch>
+
+<branch condition="active-workflow is unset OR workflow == 'knowledge-capture' OR trigger is /nct-learn" name="top-level-invocation">
+  Run the full flow including Step 4.5 (audit layer) and Step 5
+  Section B.
+</branch>
 
 ## Step 1 — Scan Existing Knowledge
 
@@ -91,7 +128,7 @@ Incorporate the agent's recommendations into the presentation.
 
 ## Step 4.5 — Audit Skills and References
 
-**Gate**: Run this step only when `invocation_depth == 0` in the active-workflow state (i.e., top-level user retrospective, not a workflow-gate invocation). When skipped, proceed directly to Step 5 with Section A only.
+**Gate**: Run this step only on a top-level invocation (see Pre-Check — no workflow active, or dispatched via `/nct-learn`, or retrospective trigger). When skipped, proceed directly to Step 5 with Section A only.
 
 Walk through the 5-item audit checklist in `references/skill-audit.md` — description accuracy, step accuracy, cross-reference validity, reference currency, and coverage gaps. Dispatch parallel agents for independent audit tasks when the knowledge base is large. Produce a list of improvement recommendations (target file, line/section, what's wrong, proposed fix) that feeds Section B of Step 5.
 
@@ -121,7 +158,7 @@ For each user response:
 
 ### Section B — Skill/Reference Improvements (from Step 4.5)
 
-Present only when Step 4.5 ran (i.e., `invocation_depth == 0`) and produced improvements. Skip when Step 4.5 was skipped or produced nothing.
+Present only when Step 4.5 ran (top-level invocation) and produced improvements. Skip when Step 4.5 was skipped or produced nothing.
 
 ```
 [Skill & Reference Audit] M improvement(s) identified:

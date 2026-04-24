@@ -4,12 +4,23 @@ description: "Manually trigger knowledge capture to extract and persist session 
 arguments: []
 ---
 
-> **Manual trigger** for the knowledge-capture skill. Use this when you want to capture learnings outside of the automatic knowledge gates embedded in workflow skills.
+<purpose>
+Manual trigger for the knowledge-capture skill. Use this when you want
+to capture learnings outside of the automatic knowledge gates embedded
+in workflow skills.
+</purpose>
 
-Invoke the `knowledge-capture` skill:
+<metadata mode="FAST" orchestrator="false" workspace-aware="false"/>
+
+<instructions>
+  <step n="1">Dispatch the knowledge-capture skill with no args:</step>
+</instructions>
+
+<dispatch target="knowledge-capture" via="skill"
+          reason="manual knowledge capture trigger (/nct-learn)"/>
 
 ```
 Skill(skill="panther-ivy-plugin:knowledge-capture")
 ```
 
-This runs the full 5-step knowledge capture flow: scan existing rules, reflect on the current session, classify learnings, spawn the classification reviewer agent, and present candidates for user confirmation.
+The skill runs the full 5-step knowledge capture flow: scan existing rules, reflect on the current session, classify learnings, spawn the classification reviewer agent, and present candidates for user confirmation.

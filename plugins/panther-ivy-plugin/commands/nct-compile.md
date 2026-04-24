@@ -12,33 +12,28 @@ arguments:
     description: Optional isolate name to compile specifically
     required: false
 ---
-> **Shortcut command** — directly calls `ivy_compile`. For guided compilation within a build cycle, use the `build` workflow.
+<purpose>
+Shortcut command. Directly calls `ivy_compile` on a single file. For
+guided compilation within a build cycle, use the `build` workflow.
+</purpose>
 
-<!-- MODE: FAST — Single-file compilation, no orchestrator required -->
-<!-- Warn if file has not been verified with /nct-check first -->
-
-Compile the specified Ivy model to a test executable using ivy-tools.
-
-<!-- Workspace: Active workspace scopes include resolution for compilation. Use /set-workspace <protocol> if not already set. -->
+<metadata mode="FAST"
+          orchestrator="false"
+          workspace-aware="true"
+          note="Active workspace scopes include resolution. Use /set-workspace &lt;protocol&gt; if not set. Prefer running /nct-check on the file first."/>
 
 ## Instructions
 
-1. Accept the file path argument. If no file is provided, ask the user which .ivy file to compile.
+<instructions>
+  <step n="1">Accept the file path argument. If no file is provided, ask the user which .ivy file to compile.</step>
+  <step n="2">Determine the target: use the `target` argument if provided, otherwise default to `"test"`.</step>
+  <step n="3">Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` with `relative_path`, `target`, and `isolate` (if supplied).</step>
+  <step n="4">Parse the JSON result (`success`, `output`, `target`, `duration_seconds`).</step>
+  <step n="5">Present results using the outcome templates below.</step>
+</instructions>
 
-2. Determine the target:
-   - If `target` argument provided, use it
-   - Otherwise default to `"test"`
-
-3. Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile` with:
-   - `relative_path`: the provided file path
-   - `target`: the compilation target
-   - `isolate`: the isolate argument if provided, otherwise omit
-
-4. Parse the JSON result containing `success`, `output`, `target`, and `duration_seconds`.
-
-5. Present results in this structured format:
-
-### If success is true (SUCCESS):
+<outcome verdict="success">
+<severity class="tool-outcome" value="PASS"/>
 ```
 ## Compilation Result: SUCCESS
 
@@ -53,8 +48,10 @@ The executable can be found in the build/ directory.
 - Run the test binary against an IUT via PANTHER experiment framework
 - Use `/nct-check` to verify formal properties before running
 ```
+</outcome>
 
-### If success is false (FAILURE):
+<outcome verdict="failure">
+<severity class="tool-outcome" value="FAIL"/>
 ```
 ## Compilation Result: FAILURE
 
@@ -69,6 +66,7 @@ The executable can be found in the build/ directory.
 - Use Claude's `Read` tool to check file structure
 - Check for missing includes or undefined symbols
 ```
+</outcome>
 
 **IMPORTANT**: Do NOT run `ivyc` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile`.
 

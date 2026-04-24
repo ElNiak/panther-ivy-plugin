@@ -9,28 +9,27 @@ arguments:
     description: Optional isolate name to check specifically
     required: false
 ---
-> **Shortcut command** — directly calls `ivy_verify`. For guided verification with failure diagnosis, use the `verify` workflow.
+<purpose>
+Shortcut command. Directly calls `ivy_verify` on a single file. For
+guided verification with failure diagnosis, use the `verify` workflow.
+</purpose>
 
-<!-- MODE: FAST — Single-file verification, no orchestrator required -->
-<!-- For full methodology workflow, use the build workflow instead -->
-
-Run formal verification on the specified Ivy file using ivy-tools.
-
-<!-- Workspace: Active workspace scopes include resolution for this file. Use /set-workspace <protocol> if not already set. -->
+<metadata mode="FAST"
+          orchestrator="false"
+          workspace-aware="true"
+          note="Active workspace scopes include resolution for this file. Use /set-workspace &lt;protocol&gt; if not already set."/>
 
 ## Instructions
 
-1. Accept the file path argument. If no file is provided, ask the user which .ivy file to verify.
+<instructions>
+  <step n="1">Accept the file path argument. If no file is provided, ask the user which .ivy file to verify.</step>
+  <step n="2">Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` with `relative_path` = the provided file path; pass `isolate` if the argument was supplied, otherwise omit.</step>
+  <step n="3">Parse the JSON result containing `success`, `diagnostics`, `diagnostic_count`, `raw_output`, and `duration_seconds`.</step>
+  <step n="4">Present results using the outcome templates below.</step>
+</instructions>
 
-2. Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify` with:
-   - `relative_path`: the provided file path
-   - `isolate`: the isolate argument if provided, otherwise omit
-
-3. Parse the JSON result containing `success`, `diagnostics`, `diagnostic_count`, `raw_output`, and `duration_seconds`.
-
-4. Present results in this structured format:
-
-### If success is true (PASS):
+<outcome verdict="PASS">
+<severity class="tool-outcome" value="PASS"/>
 ```
 ## Verification Result: PASS
 
@@ -42,8 +41,10 @@ All formal properties verified successfully.
 - Invariants: OK
 - Safety properties: OK
 ```
+</outcome>
 
-### If success is false (FAIL):
+<outcome verdict="FAIL">
+<severity class="tool-outcome" value="FAIL"/>
 ```
 ## Verification Result: FAIL
 
@@ -58,6 +59,7 @@ All formal properties verified successfully.
 - Use Claude's `Grep` tool or native LSP go-to-definition to locate the failing symbol
 - Check the behavior files for conflicting before/after monitors
 ```
+</outcome>
 
 ### Step 5: Interactive Claim Discussion
 

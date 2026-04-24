@@ -9,26 +9,29 @@ arguments:
     description: Optional isolate name to display information about
     required: false
 ---
-> **Shortcut command** — directly calls `ivy_model_info`. For model inspection within a review, use the `review` workflow.
+<purpose>
+Shortcut command. Directly calls `ivy_model_info` to display the model
+structure (types, relations, functions, actions, invariants, isolates)
+of the specified Ivy file. For model inspection within a review, use the
+`review` workflow.
+</purpose>
 
-<!-- MODE: FAST — Read-only model query, no orchestrator required -->
-
-Display the model structure of the specified Ivy file using ivy-tools.
-
-<!-- Workspace: Active workspace provides scoped include resolution for model introspection. Use /set-workspace <protocol> if not already set. -->
+<metadata mode="FAST"
+          orchestrator="false"
+          workspace-aware="true"
+          note="Active workspace provides scoped include resolution. Use /set-workspace &lt;protocol&gt; if not set."/>
 
 ## Instructions
 
-1. Accept the file path argument. If no file is provided, ask the user which .ivy file to inspect.
+<instructions>
+  <step n="1">Accept the file path argument. If no file is provided, ask the user which .ivy file to inspect.</step>
+  <step n="2">Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` with `relative_path` and `isolate` (if supplied).</step>
+  <step n="3">Parse the JSON result (`success`, `output`, `duration_seconds`).</step>
+  <step n="4">Present the model structure using the outcome template below. For large outputs, organize into collapsible sections or summarize with counts ("X types, Y relations, Z actions, W invariants").</step>
+</instructions>
 
-2. Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info` with:
-   - `relative_path`: the provided file path
-   - `isolate`: the isolate argument if provided, otherwise omit
-
-3. Parse the JSON result containing `success`, `output`, and `duration_seconds`.
-
-4. Present the model structure in a readable format:
-
+<outcome verdict="success">
+<severity class="tool-outcome" value="PASS"/>
 ```
 ## Model Structure: {file_path}
 
@@ -52,11 +55,12 @@ Display the model structure of the specified Ivy file using ivy-tools.
 ### Isolates
 {List all isolate definitions}
 ```
+</outcome>
 
-5. If the output is large, organize it into collapsible sections or summarize with key counts:
-   - "X types, Y relations, Z actions, W invariants"
-
-6. If success is false, present the error and suggest using `/nct-check` to diagnose.
+<outcome verdict="failure">
+<severity class="tool-outcome" value="FAIL"/>
+Present the error from `output`. Suggest `/nct-check {file}` to diagnose.
+</outcome>
 
 **IMPORTANT**: Do NOT run `ivy_show` directly via Bash. Always use `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info`.
 

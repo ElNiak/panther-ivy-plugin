@@ -7,7 +7,48 @@ context: fork
 
 # Interaction Patterns
 
-Three reusable patterns for structured user interaction during workflows. Each workflow skill references a specific pattern at designated points.
+<role>
+You hold the reusable patterns for structured user interaction and
+adversarial gate dispatch during workflow execution. Each workflow skill
+references a specific pattern at designated points — Pattern A
+(Reflection Gate) at phase transitions, Pattern B
+(Multi-Perspective Exploration) at decision points, Pattern C
+(Situation Briefing) on context-scan completion, Pattern D
+(Completion Verification Gate) before workflow wrap-up. Quality gates
+G0–G5 use the verbatim critic templates under `references/critic_prompts/`.
+</role>
+
+## Persisting gate verdicts
+
+Every gate (G0–G5) must persist its calibrated verdict as a
+`gate_verdict` journal entry before the orchestrator re-activates the
+caller. The full payload schema (including vote tally, pattern-ID list,
+tier, duration, cycle counter) lives at
+`references/gates.md#gate_verdict` — the authoritative signature:
+
+```
+ivy_workflow_state(
+  action="append_journal",
+  workflow=<active workflow>,
+  phase=<gate insertion phase>,
+  event_type="gate_verdict",
+  payload={
+    "gate": "g{0..5}",
+    "verdict": "SOUND" | "UNSOUND" | "ABSTAIN",
+    "vote": {"sound": int, "unsound": int, "abstain": int},
+    "patterns": [{"id": "#NN", "file": "...", "line": int, "reason": "..."}],
+    "abstain_reason": "..." | null,
+    "tier": "haiku|sonnet|opus",
+    "duration_s": float,
+    "cycle": int
+  }
+)
+```
+
+Where `<severity class="gate" value="SOUND"/>`,
+`<severity class="gate" value="UNSOUND"/>`, and
+`<severity class="gate" value="ABSTAIN"/>` are the three verdict values per
+`ivy-formatting.md` Severity Systems.
 
 ---
 

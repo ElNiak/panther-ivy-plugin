@@ -3,34 +3,23 @@ name: review
 description: "RFC requirement-to-monitor traceability, coverage audits, and model quality review for Ivy specs. Use when user asks \"what MUSTs am I missing?\", \"RFC coverage?\", \"traceability gap?\", or \"review my model\"."
 ---
 
-## Output Style
-
-This workflow's output formatting is managed by the style system.
-Follow the style directives injected via `additionalContext` -- they contain
-the active workflow overlay and phase modifier. Do not invent
-formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
+<role>
+You are the review workflow for the panther-ivy-plugin. Your job is to
+audit an existing Ivy protocol model for RFC coverage (traceability) and
+for model quality (structural, type, invariant, action, initialization,
+organization). You dispatch `traceability-agent` on the Coverage path,
+and `model-reviewer` + `spec-analyst` + an adversarial `Explore` agent
+on the Quality path. You are bound by the `NO_QUALITY_WITHOUT_COVERAGE`
+and `STALENESS_RULE` iron laws.
+</role>
 
 ## Phase 0 — Plan-mode preamble
 
-Before running any review-phase logic, inspect the session context for plan-mode indicators. Plan mode blocks `ivy_coverage`, `ivy_quality`, and any tool that mutates state, so the normal review cycle cannot proceed.
-
-<plan_mode_detection_signals source="navigate/references/plan-mode-lifecycle.md#detection-signals" />
-
-The three detection signals (plan-mode-active phrase, edit-restriction phrase, plan-file path) live canonically in `navigate/references/plan-mode-lifecycle.md`. Read that file for the full description; any single indicator is sufficient.
-
-If any indicator is present, switch to plan authoring instead of review dispatch:
-
-1. Run read-only context gathering only: check the workflow journal for recent `error`, `gate_verdict`, and `decision` entries; skip any step that would mutate state.
-2. Present a situation briefing via `AskUserQuestion` framed for plan-mode options — "draft a plan to close specific RFC coverage gaps", "draft a plan to refactor the model quality issues we found", "clarify the review scope before writing", "learn the coverage/traceability conventions first".
-3. Help the user draft the plan at the path named in the plan-mode system-reminder. If the plan covers a non-trivial implementation, invoke `Skill(skill="superpowers:writing-plans")`.
-4. Before `ExitPlanMode`, append a `plan_approved` journal entry with `workflow: "review"`, `phase_before_plan: <whatever phase the user was in>`, `plan_file`, and `supersedes` (extracted from the plan's `## Supersedes` block if present).
-5. Call `ExitPlanMode`.
-
-Do NOT attempt to dispatch `ivy_coverage`, `ivy_quality`, `ivy_extract_requirements`, or any state-mutating tool during plan mode — the call will be rejected and the session ends in an ambiguous state. Navigate's Phase 1.5 handles the re-entry on the next invocation after `ExitPlanMode`.
+If the session is in plan mode, follow the 5-step authoring procedure in `.claude/rules/plan-mode.md`. Review-specific `AskUserQuestion` option framings for Step 2 (situation briefing): "draft a plan to close specific RFC coverage gaps", "draft a plan to refactor the model quality issues we found", "clarify the review scope before writing", "learn the coverage/traceability conventions first".
 
 ## Iron Laws
 
-This skill is bound by `NO_QUALITY_WITHOUT_COVERAGE` and the `STALENESS RULE`. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1 (Triage), Read `.claude/rules/iron-laws.md` for the canonical wording and the explicit non-targets (style/naming feedback, readability comments, design alternatives are allowed without tool citations — they are not "quality verdicts"). Summary for this skill: before stating a formal coverage or quality verdict, cite `ivy_coverage` and/or `ivy_quality` output from the current turn inline.
+This skill is bound by <iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="review" enforcement="ivy_coverage / ivy_quality citation at verdict emission"/> and <iron-law name="STALENESS_RULE" workflow="review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1 (Triage), Read `.claude/rules/iron-laws.md` for the canonical wording and the explicit non-targets (style/naming feedback, readability comments, design alternatives are allowed without tool citations — they are not "quality verdicts"). Summary for this skill: before stating a formal coverage or quality verdict, cite `ivy_coverage` and/or `ivy_quality` output from the current turn inline.
 
 ## Step Tracking
 
@@ -129,7 +118,8 @@ Branch by the review type detected in Phase 1.
 
 ### Coverage Path
 
-Dispatch the `traceability-agent` agent:
+<dispatch target="traceability-agent" via="agent" phase="2"
+          reason="Phase 2 Coverage path — extract RFC requirements and audit ivy assertion coverage"/>
 
 1. The agent extracts RFC requirements from existing manifests, or reads `build-state.yaml` for the target RFC(s).
 2. The agent scans `.ivy` files for bracket-tag annotations (`# [rfcNNNN:X.Y]`).
@@ -143,13 +133,19 @@ Dispatch the `traceability-agent` agent:
 
 #### Multi-Perspective Exploration — Quality Analysis
 
-Load the `reflection-patterns` skill. Apply **Pattern B (Multi-Perspective Exploration)** with 3 agents:
+Load the `reflection-patterns` skill. Apply **Pattern B (Multi-Perspective Exploration)** with 3 agents dispatched in parallel (three Agent tool calls in one message):
 
-- **Exploration question:** "What are the quality issues in this protocol model?"
-- **Agents (dispatch all 3 in parallel):**
-  - **model-reviewer** (use `subagent_type: "panther-ivy-plugin:model-reviewer"`): 6-category structural audit (structural, type safety, invariants, actions, initialization, organization)
-  - **spec-analyst** (use `subagent_type: "panther-ivy-plugin:spec-analyst"`): Verification readiness, include trace, layer coherence
-  - **Adversarial Auditor** (use `subagent_type: "Explore"`): Red-team the model — find edge cases the structured audits miss, question assumptions in the spec, identify states that could be reached but aren't tested
+<dispatch target="model-reviewer" via="agent" phase="2"
+          reason="Phase 2 Quality path — 6-category structural audit (structural, type safety, invariants, actions, initialization, organization)"/>
+
+<dispatch target="spec-analyst" via="agent" phase="2"
+          reason="Phase 2 Quality path — verification readiness, include trace, layer coherence"/>
+
+<dispatch target="Explore" via="agent" phase="2"
+          role="Adversarial Auditor"
+          reason="Phase 2 Quality path — red-team the model: edge cases the structured audits miss, assumptions in the spec, unreachable-but-asserted states"/>
+
+Exploration question: "What are the quality issues in this protocol model?"
 
 Synthesize findings from all 3 agents before presenting. Dispatch all three agents IN PARALLEL (three Agent tool calls in one message):
 
