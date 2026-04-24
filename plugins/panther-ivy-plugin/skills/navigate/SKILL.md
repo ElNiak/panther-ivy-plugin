@@ -1,6 +1,6 @@
 ---
 name: navigate
-description: "Context-aware routing hub. Use when the user's intent is unclear, when resuming a session, or when another workflow completes."
+description: "Primary routing hub for Ivy protocol work. Invoked at session start, after every workflow completes, and whenever the user's next step is ambiguous — picks between build, verify, review, triage."
 
 ---
 
