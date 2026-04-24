@@ -178,6 +178,7 @@
     ],
     "SessionStart": [
       {
+        "_ordering": "SessionStart runs in array order: (1) cleanup-stale-pids clears stale MCP/LSP PIDs before anything checks liveness; (2) cleanup-stale-workflow clears orphaned active-workflow flags; (3) detect-ivy-workspace exports IVY_* env vars consumed by subsequent hooks and MCP servers; (4) observe.py records SessionStart; (5) wait-for-indexing blocks until the indexer is ready (up to 30s).",
         "hooks": [
           {
             "type": "command",
@@ -225,6 +226,7 @@
     ],
     "SessionEnd": [
       {
+        "_ordering": "SessionEnd runs in array order: (1) cleanup-ivy-lsp terminates LSP/MCP processes (must run before any hook that would try to call them); (2) observe.py flushes the SessionEnd JSONL event last, so the log captures the teardown.",
         "hooks": [
           {
             "type": "command",
@@ -245,6 +247,7 @@
     ],
     "Stop": [
       {
+        "_ordering": "Stop runs in array order: (1) record-session-end writes end-of-turn workflow-journal state; (2) render-summary reads the journal to produce the recap using styles/summaries/; (3) observe.py records the Stop event.",
         "hooks": [
           {
             "type": "command",
@@ -310,6 +313,7 @@
     ],
     "UserPromptSubmit": [
       {
+        "_ordering": "UserPromptSubmit runs in array order: (1) compose-style injects the active output-style overlay BEFORE routing so the routed workflow inherits the right style; (2) route-user-prompt consults routing-rules.json and activates the matching workflow; (3) observe.py records the prompt event.",
         "hooks": [
           {
             "type": "command",
@@ -339,6 +343,7 @@
     ],
     "Notification": [
       {
+        "_ordering": "Notification runs in array order: (1) notify-mcp-disconnect handles MCP-disconnect notifications first so the user sees them promptly; (2) observe.py records the Notification event for the session log.",
         "matcher": "",
         "hooks": [
           {
