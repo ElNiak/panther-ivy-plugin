@@ -9,6 +9,23 @@ skills:
   - ivy-toolkit
 ---
 
+<example>
+Context: User wants to extract normative requirements from an RFC to seed a protocol manifest.
+user: "Pull the MUST/SHOULD requirements out of RFC 9000 section 19 and produce a manifest I can check coverage against."
+assistant: "I'll use the traceability-agent to extract the normative requirements and emit a YAML manifest."
+<commentary>
+Extracting RFC normative text into a structured manifest is the agent's primary extraction function.
+</commentary>
+</example>
+
+<example>
+Context: The build workflow has finished Phase 3 and needs to know which MUSTs still lack coverage in the .ivy assertions.
+assistant: "Now I'll dispatch the traceability-agent to audit Ivy assertion coverage against the RFC manifest and report gaps."
+<commentary>
+Auditing coverage against an existing manifest is the agent's primary audit function, invoked by build/review workflows post-implementation.
+</commentary>
+</example>
+
 ## Dispatch Context
 
 When spawning this agent, the dispatching workflow MUST provide in the prompt:
