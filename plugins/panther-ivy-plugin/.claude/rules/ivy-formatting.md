@@ -12,9 +12,10 @@
 
 ## Self-Review
 
-- After producing a model response to the user that contains analysis,
-  recommendations, or design choices, append a brief "Considerations" block
-  listing:
+- Append a "Considerations" block to every response that contains any one
+  of: analysis, recommendations, or design choices. Treat this trigger as
+  disjunctive — a response with a single recommendation still qualifies.
+  The block lists:
   - **Pro**: What this approach gets right
   - **Con**: What risks, trade-offs, or limitations exist
   - **Alternatives considered**: Other options and why they were not chosen
