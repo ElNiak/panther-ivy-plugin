@@ -42,6 +42,8 @@ SEVERITY_VALUES: dict[str, frozenset[str]] = {
 
 DISPATCH_VIAS = frozenset({"skill", "agent", "pending_dispatch"})
 
+OUTCOME_VERDICTS = frozenset({"PASS", "FAIL", "WARN"})
+
 PAIRED_TAGS = frozenset(
     {
         "role",
@@ -103,6 +105,14 @@ def lint_file(path: Path) -> list[str]:
         if via and via not in DISPATCH_VIAS:
             problems.append(
                 f"{path}: <dispatch> has invalid via={via!r}; expected one of {sorted(DISPATCH_VIAS)}"
+            )
+
+    for match in re.finditer(r"<outcome\s+([^/>]*)/?>", text_no_inline):
+        attrs = _parse_attrs(match.group(1))
+        verdict = attrs.get("verdict", "")
+        if verdict.lower() in {"success", "failure", "pass", "fail", "warn"} and verdict not in OUTCOME_VERDICTS:
+            problems.append(
+                f"{path}: <outcome verdict={verdict!r}> — use uppercase PASS/FAIL/WARN for tool outcomes (matches <severity class='tool-outcome'> values). Non-tool verdicts (user-picks-up, warm-resume, preflight-fail, etc.) stay lowercase and are unchecked."
             )
 
     for name in RESERVED_PLACEHOLDERS:

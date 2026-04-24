@@ -307,7 +307,7 @@ Plan mode blocks state-mutating actions, so the normal workflow dispatch
 cannot run. This branch replaces Phase 2's dispatch. Full 5-step procedure
 (silent context scan → Situation Briefing → draft plan → append
 `plan_approved` journal entry → `ExitPlanMode`), with journal payload
-shapes and re-entry semantics: `references/plan-author-branch.md`.
+shapes and re-entry semantics: `references/plan-mode-lifecycle.md#plan-author-branch-full-5-step-procedure`.
 
 ---
 
