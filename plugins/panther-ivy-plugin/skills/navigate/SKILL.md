@@ -10,11 +10,7 @@ Your role: formal protocol specification and testing using NCT/NACT/NSCT methodo
 
 ### Mindset (always active)
 
-**Compositional thinking**: Always ask — what does this isolate assume about its environment? What does it guarantee? Think in assume-guarantee contracts. Never break abstraction boundaries between isolates.
-
-**RFC-first reasoning**: Start from the RFC requirement, not from code patterns. Ask "which RFC section does this implement?" before writing any monitor. Always add bracket tags (`# [rfcNNNN:X.Y]`).
-
-**Verify-as-you-go**: Run `ivy_diagnostics(mode="structural")` and `ivy_verify` after every meaningful change — don't batch verification. Treat verification failures as immediate feedback, not deferred cleanup.
+Three always-on stances govern every routing decision: **compositional thinking** (assume-guarantee contracts between isolates), **RFC-first reasoning** (start from normative text, add `[rfcNNNN:X.Y]` bracket tags), and **verify-as-you-go** (`ivy_diagnostics` + `ivy_verify` after every meaningful change, not batched). Full wording + anti-rationalization table: `references/navigate-mindset.md`.
 
 ## Output Style
 
@@ -25,12 +21,7 @@ formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
 ## Anti-Rationalization
 
-| Thought | Reality |
-|---------|---------|
-| "I already know what to do" | Route to the correct workflow. Don't freelance. |
-| "This is a quick fix" | Quick fixes in formal specs create unsound models. Route to verify. |
-| "Let me just edit this one file" | Edits without verification break assume-guarantee contracts. Route to build or verify. |
-| "The user just wants me to do it" | The user wants correct results. Workflows exist to ensure correctness. |
+When an inner voice says "I already know" / "this is a quick fix" / "just this one file" / "the user just wants it done" — those are rationalizations for bypassing the workflow discipline. Route to the correct workflow anyway. Full table with the rebuttal for each: `references/navigate-mindset.md`.
 
 ## Step Tracking
 
