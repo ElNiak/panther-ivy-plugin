@@ -1,6 +1,6 @@
 # panther-ivy-plugin — Ivy Formal Protocol Testing
 
-> **Developer reference.** This README documents the plugin's architecture, routing, tools, and conventions for contributors reading the source. It is **not** auto-loaded into Claude Code at plugin install time — Claude Code's plugin auto-discovery targets `.claude-plugin/plugin.json`, `commands/`, `agents/`, `skills/`, `hooks/`, `.mcp.json`, `scripts/`, not README.md. Load-bearing runtime content lives in `skills/*/SKILL.md` and `.claude/rules/*.md`, which **are** auto-discovered. The agent-facing "Specification Engineer" framing that used to appear in this README now lives canonically in `skills/navigate/SKILL.md` so it actually reaches the agent at runtime; see that file for the current wording.
+> **Developer reference.** This README is for contributors reading the source; it is not auto-loaded by Claude Code. Runtime content lives in `skills/*/SKILL.md`, `.claude-plugin/plugin.json`, and `.claude/rules/*.md` — all auto-discovered. The agent-facing "Specification Engineer" framing lives canonically in `skills/navigate/SKILL.md`.
 
 Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation, analysis), agents, and skills.
 
@@ -65,8 +65,14 @@ For parameters, timeouts, error handling, and rendering details, see the **ivy-t
 
 ### Shortcut Commands
 
-**Direct tool access** (bypass workflows):
-`/nct-check` (ivy_verify), `/nct-compile` (ivy_compile), `/nct-model-info` (ivy_model_info), `/nct-iut-test` (ivy_iut_test), `/nct-health` (9-step diagnostic), `/nct-observability` (JSONL logs)
+Direct tool access (bypass workflows):
+
+- `/nct-check <file.ivy>` — runs `ivy_verify` on the given file
+- `/nct-compile <file.ivy>` — runs `ivy_compile` to produce a test binary
+- `/nct-model-info <file.ivy>` — runs `ivy_model_info` (types, relations, actions)
+- `/nct-iut-test <protocol> <test> <iut>` — runs an IUT test via `panther run`
+- `/nct-health` — 9-step MCP/LSP diagnostic runbook
+- `/nct-observability` — query JSONL session logs
 
 ### Internal Components
 
