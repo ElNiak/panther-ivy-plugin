@@ -1,6 +1,6 @@
 ---
 name: knowledge-capture
-description: "Capture session learnings into plugin rules AND audit plugin skills/references. Use after workflow phases, /nct-learn, 'session retro', 'what did we learn', 'improve skills', or 'what could be improved'."
+description: "Captures session learnings into plugin rules and audits plugin skills/references. Use after workflow phases, /nct-learn, or retrospective triggers ('session retro', 'improve skills', 'improve references')."
 user-invocable: true
 context: fork
 allowed-tools: "Read Grep Glob Write Edit Agent AskUserQuestion Bash(git diff *) Bash(git log *) Bash(ls *)"
@@ -19,9 +19,9 @@ If `invocation_depth > 0` in the active-workflow state, **skip this gate entirel
 
 Read all target files to understand what is already documented:
 
-- `~/.claude/projects/<project>/memory/reference_ivy_patterns.md` (was `.claude/rules/ivy-patterns.md` before 2026-04-23 move; the rule stub still injects a pointer on `.ivy` reads)
+- `skills/ivy-writing-guide/references/ivy-1.7-patterns-reference.md` (canonical Ivy 1.7 syntax reference; `.claude/rules/ivy-patterns.md` auto-loads a pointer to it on `.ivy` edits)
 - `.claude/rules/iron-laws.md`
-- `~/.claude/projects/<project>/memory/reference_nct_methodology.md` (was `.claude/rules/nct-methodology.md` before 2026-04-23 move; the rule stub still injects a pointer on `.ivy`/`.spec` reads)
+- `skills/methodology-reference/references/comprehensive-methodology-detail.md` (NCT/NACT/NSCT methodology reference; `.claude/rules/nct-methodology.md` auto-loads a pointer to it on `.ivy`/`.spec` edits)
 - `.claude/rules/insights.md`
 - `skills/ivy-debugging-methodology/references/debugging-environment.md` (was `.claude/rules/debugging.md` before 2026-04-22 refactor)
 - `skills/ivy-toolkit/references/tool-catalog.md` (was `.claude/rules/tool-reference.md` before 2026-04-22 refactor)
