@@ -93,17 +93,7 @@ Incorporate the agent's recommendations into the presentation.
 
 **Gate**: Run this step only when `invocation_depth == 0` in the active-workflow state (i.e., top-level user retrospective, not a workflow-gate invocation). When skipped, proceed directly to Step 5 with Section A only.
 
-For each skill and reference in the plugin:
-
-1. **Description accuracy**: Does the skill's `description` field still match what the skill actually does? Flag stale trigger phrases or missing use cases revealed by the session.
-2. **Step accuracy**: Do the steps reference current tool names, correct MCP tool parameters, and valid file paths? Flag any step that contradicts what was observed during the session.
-3. **Cross-reference validity**: Do skills reference other skills, agents, or files that still exist? Flag broken references.
-4. **Reference currency**: Do reference docs reflect current Ivy patterns, tool capabilities, and methodology? Flag outdated content.
-5. **Coverage gaps**: Identify patterns, workflows, or learnings from this session that NO existing skill or reference covers. These are candidates for new skills or reference additions.
-
-Dispatch parallel agents for independent audit tasks (e.g., one for skill descriptions, one for reference docs) when the knowledge base is large.
-
-**Success criteria**: A list of specific improvement recommendations, each with the target file, line/section, what's wrong, and proposed fix. Results feed Section B of Step 5.
+Walk through the 5-item audit checklist in `references/skill-audit.md` — description accuracy, step accuracy, cross-reference validity, reference currency, and coverage gaps. Dispatch parallel agents for independent audit tasks when the knowledge base is large. Produce a list of improvement recommendations (target file, line/section, what's wrong, proposed fix) that feeds Section B of Step 5.
 
 ## Step 5 — Draft and Confirm
 
