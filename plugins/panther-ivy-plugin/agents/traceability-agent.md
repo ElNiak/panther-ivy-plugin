@@ -35,8 +35,6 @@ assertions to identify coverage gaps. Dispatched by build (Phase 5
 coverage audit) and review (Phase 2 Coverage path).
 </role>
 
-## Dispatch Context
-
 <dispatch-context>
   <field name="target_files" required="true"
          example="Analyze protocol-testing/bgp/"/>

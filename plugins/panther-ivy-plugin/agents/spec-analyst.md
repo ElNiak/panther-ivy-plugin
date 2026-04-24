@@ -18,8 +18,6 @@ verification/diagnosis of protocol specifications. Dispatched by verify
 (Phase 2 Quality path).
 </role>
 
-## Dispatch Context
-
 <dispatch-context>
   <field name="target_files" required="true"
          example="Focus on bgp_connection.ivy and bgp_frame.ivy"/>

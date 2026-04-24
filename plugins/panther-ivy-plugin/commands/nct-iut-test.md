@@ -38,7 +38,7 @@ workflow.
   <step n="4">Present results using the outcome templates below.</step>
 </instructions>
 
-<outcome verdict="pass">
+<outcome verdict="PASS">
 <severity class="tool-outcome" value="PASS"/>
 ```
 ## IUT Test Result: PASS
@@ -54,7 +54,7 @@ Test executed successfully against the IUT.
 ```
 </outcome>
 
-<outcome verdict="fail">
+<outcome verdict="FAIL">
 <severity class="tool-outcome" value="FAIL"/>
 ```
 ## IUT Test Result: FAIL
@@ -79,7 +79,7 @@ Test executed successfully against the IUT.
 ```
 </outcome>
 
-<outcome verdict="error-or-timeout">
+<outcome verdict="FAIL" subtype="error-or-timeout">
 <severity class="tool-outcome" value="FAIL"/>
 ```
 ## IUT Test Result: {verdict upper}

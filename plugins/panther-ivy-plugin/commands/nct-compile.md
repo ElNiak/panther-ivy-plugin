@@ -32,7 +32,7 @@ guided compilation within a build cycle, use the `build` workflow.
   <step n="5">Present results using the outcome templates below.</step>
 </instructions>
 
-<outcome verdict="success">
+<outcome verdict="PASS">
 <severity class="tool-outcome" value="PASS"/>
 ```
 ## Compilation Result: SUCCESS
@@ -50,7 +50,7 @@ The executable can be found in the build/ directory.
 ```
 </outcome>
 
-<outcome verdict="failure">
+<outcome verdict="FAIL">
 <severity class="tool-outcome" value="FAIL"/>
 ```
 ## Compilation Result: FAILURE

@@ -30,7 +30,7 @@ of the specified Ivy file. For model inspection within a review, use the
   <step n="4">Present the model structure using the outcome template below. For large outputs, organize into collapsible sections or summarize with counts ("X types, Y relations, Z actions, W invariants").</step>
 </instructions>
 
-<outcome verdict="success">
+<outcome verdict="PASS">
 <severity class="tool-outcome" value="PASS"/>
 ```
 ## Model Structure: {file_path}
@@ -57,7 +57,7 @@ of the specified Ivy file. For model inspection within a review, use the
 ```
 </outcome>
 
-<outcome verdict="failure">
+<outcome verdict="FAIL">
 <severity class="tool-outcome" value="FAIL"/>
 Present the error from `output`. Suggest `/nct-check {file}` to diagnose.
 </outcome>
