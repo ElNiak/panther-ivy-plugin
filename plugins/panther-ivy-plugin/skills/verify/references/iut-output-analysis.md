@@ -109,3 +109,43 @@ If the IUT reports "invalid value":
 | FRAME_ENCODING_ERROR | Frame bytes don't parse | Serializer state machine bug |
 | PROTOCOL_VIOLATION | Unexpected frame in context | Model allows frame in wrong connection state |
 | FLOW_CONTROL_ERROR | Data exceeds limit | Model doesn't track flow control windows |
+
+---
+
+## G5 Trace Analysis Gate
+
+Fires PostToolUse on every `ivy_iut_test` return. A PostToolUse hook spawns G5 trace-analysis critics from the `reflection-patterns` skill.
+
+### Trigger and catalog slice
+
+- **Hook**: PostToolUse on `ivy_iut_test`.
+- **Catalog slices applied by critics**: `#100-107` (wire-trace patterns) + `#500-559` (IUT-interaction patterns). Add `#560-589` (NSCT-specific patterns) if the test is running under NSCT.
+
+### Read order (mandatory)
+
+The critics read the run output directory in this exact order; short-circuit at the first step that explains the outcome:
+
+1. `analysis/ivy_tester_results.json` — structured verdict and run metadata.
+2. `logs/ivy_tester/compile/ivy_compile.log` (only if compilation is suspect — compile failures manifest here, not in the tester log).
+3. `logs/ivy_tester/ivy_tester.log` — the Ivy tester's event stream and `assertion_failed` lines.
+4. `logs/<iut>/<iut>.log` — the IUT's perspective on the interaction.
+5. `pcaps/*.pcap` via `tshark` — wire-level ground truth.
+
+### Primary load-bearing checks
+
+The two highest-signal patterns that G5 exists to catch:
+
+| Pattern | Meaning |
+|---|---|
+| `#501` | Ivy trace claims an event occurred, but the pcap shows nothing on the wire (shim/serializer broke the transmission path). |
+| `#505` | Model bug misattributed to IUT (the model's constraint was wrong, so the "IUT error" is spurious). |
+
+### Constraints
+
+- Critics MUST NOT re-invoke `ivy_iut_test` — they analyze the existing run only.
+- On `VERDICT_UNSOUND`, GAP markers are written at the cited spec site and the run's reported verdict is considered suspect.
+- On `VERDICT_ABSTAIN`, the upstream verdict stands provisionally but a concluding G5 re-run is required for conclusive reporting.
+
+### Discipline contracts
+
+Verbatim prompts and dual-context isolation: `reflection-patterns` skill, `references/critic_prompts/g5_trace.md`. GAP-marker conventions: `.claude/rules/gap-markers.md`.

@@ -1,6 +1,38 @@
 # Verify Workflow — Failure Diagnosis Reference
 
-Detailed failure diagnosis and fix procedures for the verify workflow (Phases 6 and 7).
+Detailed failure diagnosis and fix procedures for the verify workflow (Phases 6 and 7), plus the G4 verification-gate discipline contract fired PostToolUse on `ivy_verify`.
+
+---
+
+## G4 Verification Gate
+
+Fires PostToolUse on every `ivy_verify` return (pass or fail). A PostToolUse hook spawns G4 verification critics from the `reflection-patterns` skill.
+
+### Trigger and catalog slice
+
+- **Hook**: PostToolUse on `ivy_verify`.
+- **Catalog slices applied by critics**: `#200-249` (structural patterns) + `#250-299` (layer-modeling patterns) + `#400-499` (verification-soundness patterns).
+
+### What the critics audit
+
+The load-bearing purpose is to catch **false `SOUND`** — `ivy_verify` returning `status: OK` when the proof obligation collapsed for a non-soundness reason. Specifically the critics scan for:
+
+| Pattern | Meaning |
+|---|---|
+| `#403` | Error whitelisted via comment-out or `assume` |
+| `#401` | Unsound `assume` collapsed the proof obligation |
+| `#402`, `#207` | Trusted-isolate NativeAction leak into other isolates |
+| `#404` | Solver wall-timeout masquerading as pass (`duration_s` near `timeout`) |
+
+### Verdict handling
+
+- **`VERDICT_SOUND`** → treat `ivy_verify` result as authoritative; advance the workflow.
+- **`VERDICT_UNSOUND`** → the orchestrator writes `[GAP: #NN]` markers at the cited sites. These must be resolved (fix and re-verify) or deliberately promoted to `// DEFERRED YYYY-MM-DD: …` before the workflow treats the verification as conclusive.
+- **`VERDICT_ABSTAIN`** → treat the verdict as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not accept the upstream `ivy_verify` result without a concluding verdict from a subsequent G4 run.
+
+### Discipline contracts
+
+Verbatim prompts, dual-context isolation, asymmetric-vote rule, pigeonhole exit: `reflection-patterns` skill, `references/gates.md` and `references/critic_prompts/g4_verification.md`. GAP-marker conventions (placement per file type, promotion rules, anti-patterns): `.claude/rules/gap-markers.md`.
 
 ---
 

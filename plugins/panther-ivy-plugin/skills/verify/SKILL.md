@@ -12,23 +12,7 @@ formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
 
 ## Phase 0 — Plan-mode preamble
 
-Before running any verify-phase logic, inspect the session context for plan-mode indicators. Plan mode blocks `ivy_verify`, `ivy_compile`, and any tool that mutates state, so the normal verify cycle cannot proceed.
-
-Detection signals (any one is sufficient):
-
-1. The literal phrase `Plan mode is active` in a system-reminder.
-2. The edit-restriction phrase `You MUST NOT make any edits`.
-3. A plan file path of the form `/Users/*/plans/*.md` named in a plan-mode system-reminder.
-
-If any indicator is present, switch to plan authoring instead of verify dispatch:
-
-1. Run read-only context gathering only: check the workflow journal for recent `error`, `gate_verdict`, and `decision` entries; skip any step that would mutate state.
-2. Present a situation briefing via `AskUserQuestion` framed for plan-mode options — "draft a plan for the verify failure we hit", "draft a plan to restructure the verification approach", "clarify the verification scope before writing", "learn the Ivy verification model first".
-3. Help the user draft the plan at the path named in the plan-mode system-reminder. If the plan covers a non-trivial implementation, invoke `Skill(skill="superpowers:writing-plans")`.
-4. Before `ExitPlanMode`, append a `plan_approved` journal entry with `workflow: "verify"`, `phase_before_plan: <whatever phase the user was in>`, `plan_file`, and `supersedes` (extracted from the plan's `## Supersedes` block if present).
-5. Call `ExitPlanMode`.
-
-Do NOT attempt to dispatch `ivy_verify`, `ivy_compile`, `ivy_iut_test`, or any state-mutating tool during plan mode — the call will be rejected and the session ends in an ambiguous state. Navigate's Phase 1.5 handles the re-entry on the next invocation after `ExitPlanMode`.
+If any plan-mode indicator is present in session context (`Plan mode is active`, `You MUST NOT make any edits`, or a `/Users/*/plans/*.md` path), switch to plan authoring: skip `ivy_verify` / `ivy_compile` / `ivy_iut_test` (they mutate state), run read-only context gathering, draft the plan via a plan-mode `AskUserQuestion` briefing and `superpowers:writing-plans` (if non-trivial), append `plan_approved`, then `ExitPlanMode`. Navigate Phase 1.5 handles re-entry. Full 5-step procedure, detection signals, and journal payload: `references/plan-mode-preamble.md`.
 
 ## Iron Laws
 
@@ -196,12 +180,15 @@ ivy_verify(relative_path=<test_file>)
 
 ### G4 Verification Gate Fires After `ivy_verify` Returns
 
-Regardless of `ivy_verify` pass/fail, a PostToolUse hook spawns G4 verification critics from the `reflection-patterns` skill with catalog slice `#200-249` + `#250-299` + `#400-499`. The critics audit whether `status: OK` (or `FAIL`) reflects genuine soundness: they scan the diff for whitelisted errors (`#403`), flag unsound `assume` collapses (`#401`), trusted-isolate NativeAction leaks (`#402`, `#207`), and solver-wall-masquerading-as-sound (`#404` — `duration_s` near `timeout`).
+Regardless of `ivy_verify` pass/fail, a PostToolUse hook spawns G4 critics from `reflection-patterns` with catalog slice `#200-249` + `#250-299` + `#400-499`. Critics audit whether the reported status reflects genuine soundness (whitelisted errors #403, unsound `assume` #401, trusted-isolate leaks #402/#207, solver-wall-timeout masquerade #404).
 
 Gate verdict handling:
-- **`VERDICT_SOUND`**: treat `ivy_verify` result as authoritative, advance the workflow.
-- **`VERDICT_UNSOUND`**: the orchestrator writes `[GAP: #NN]` markers at the cited sites. These must be resolved (fix and re-verify) or deliberately promoted to `// DEFERRED YYYY-MM-DD: …` before the workflow treats the verification as conclusive.
-- **`VERDICT_ABSTAIN`**: treat the verdict as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not accept the upstream `ivy_verify` result without a concluding verdict from a subsequent G4 run.
+
+- **SOUND** → treat `ivy_verify` result as authoritative; advance.
+- **UNSOUND** → orchestrator writes `[GAP: #NN]` markers at cited sites; must be fixed-and-re-verified or promoted to `// DEFERRED YYYY-MM-DD:` before the workflow treats the verification as conclusive.
+- **ABSTAIN** → inconclusive. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not accept the upstream `ivy_verify` result.
+
+Discipline contracts, verbatim prompts, catalog slices: `references/failure-diagnosis.md` section "G4 Verification Gate".
 
 ### On PASS
 
@@ -278,7 +265,7 @@ ivy_iut_test(protocol=<detected>, test_name=<from Phase 2>, iut_name=<selected>)
 
 ### G5 Trace-Analysis Gate Fires After `ivy_iut_test` Returns
 
-After `ivy_iut_test` returns, a PostToolUse hook spawns G5 trace-analysis critics from the `reflection-patterns` skill with catalog slice `#100-107` + `#500-559` (+ NSCT `#560-589` if active). The critics read the run output directory in the mandatory order — `analysis/ivy_tester_results.json` → `logs/ivy_tester/compile/ivy_compile.log` (if compilation suspect) → `logs/ivy_tester/ivy_tester.log` → `logs/<iut>/<iut>.log` → `pcaps/*.pcap` via `tshark`. The primary load-bearing check is `#501` (Ivy trace claims event, pcap shows nothing) and `#505` (model bug misattributed to IUT). Critics may NOT re-invoke `ivy_iut_test` — they analyze the existing run only. On `VERDICT_UNSOUND`, GAP markers are written at the cited spec site and the run's reported verdict is considered suspect.
+A PostToolUse hook spawns G5 critics from `reflection-patterns` with catalog slice `#100-107` + `#500-559` (+ `#560-589` for NSCT). Critics analyze the existing run's output directory (read order: results.json → compile log → tester log → IUT log → pcap). Primary checks: `#501` (Ivy trace claims event, pcap shows nothing) and `#505` (model bug misattributed to IUT). Critics may NOT re-invoke `ivy_iut_test`. On UNSOUND, GAP markers are written and the reported verdict is suspect. Full read-order, catalog-slice, and discipline contract: `references/iut-output-analysis.md` section "G5 Trace Analysis Gate".
 
 ### On PASS
 
@@ -289,21 +276,12 @@ After `ivy_iut_test` returns, a PostToolUse hook spawns G5 trace-analysis critic
 
 ### On FAIL
 
-Load `references/iut-output-analysis.md` for the full 9-step IUT failure analysis procedure. Summary:
+Load `references/iut-output-analysis.md` for the full 9-step IUT failure analysis procedure (parse assertions → parse stderr → check IUT logs → cross-reference pcap via `tshark` → classify bug type → propose fix location). Summary:
 
-1. Parse test stdout for `assertion_failed` lines and map to RFC requirements.
-2. Parse stderr for serializer state machine debug output.
-3. Check IUT logs for protocol-level rejection reasons.
-4. Cross-reference with pcap (`tshark -Y "bgp" -V`).
-5. Classify: model bug, serializer bug, IUT bug, or unconstrained field.
-6. Propose fix location and re-run.
-
-Also present:
-- Key details from `experiment_summary` (test status, error message).
-- `output_dir`: "Full experiment output at `{output_dir}` — use Read to inspect further."
-- Offer: "Want me to investigate the failure? Or fix it yourself?"
-- If user wants investigation, move to Phase 6 (Diagnose) with the IUT failure context.
-- Update phase to `"iut-fail"`.
+1. Present `experiment_summary` details and `output_dir` to the user.
+2. Offer: "Investigate the failure? Or fix it yourself?"
+3. If investigation chosen, move to Phase 6 (Diagnose) with the IUT failure context.
+4. Update phase to `"iut-fail"` via `ivy_workflow_state(action="set", ...)`.
 
 ### On ERROR or TIMEOUT
 
@@ -359,32 +337,13 @@ Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures
 5. Present diagnosis and ask user: fix or manual?
 6. If fix accepted: apply, re-verify (loop back to Phase 3), knowledge gate on completion
 
-**Iteration cap (journal-counted, per-test-file, cumulative across sessions):** The fix-and-re-verify loop is bounded by a concrete counter read from the workflow journal, not by prose accountability. Before each fix iteration:
+### Iteration cap
 
-1. Compute the attempt key: `<test_file>` as a path relative to the protocol directory (e.g., `bgp/bgp_tests/server_tests/bgp_server_test_join.ivy`, not an absolute path). Key canonicalization is load-bearing — workspace-root changes between sessions must produce the same key.
-2. Read the journal: `ivy_workflow_state(action="get_journal", protocol="<protocol>", last_n=200)`.
-3. Walk backward to find the most recent `decision` with `payload.kind == "override_attempt_cap"` and `payload.key == <test_file>`. Note its index as `override_idx` (or `-1` if absent).
-4. Count `progress` entries with `payload.kind == "fix_attempt"` and `payload.key == <test_file>` that appear *after* `override_idx`. This is `count`.
-5. If `count >= 5`, ESCALATE via the three-option menu below.
-6. Otherwise, append the fix_attempt entry and proceed:
-   ```
-   ivy_workflow_state(
-     action="append_journal",
-     protocol="<protocol>",
-     event_type="progress",
-     state='{"kind": "fix_attempt", "key": "<test_file>", "protocol": "<protocol>"}'
-   )
-   ```
+The fix-and-re-verify loop is bounded by a journal-counted cap of **5 per test file, cumulative across sessions, soft-reset via an `override_attempt_cap` decision**. Before each fix iteration: compute the attempt key (the `<test_file>` path relative to the protocol directory — canonicalization is load-bearing), read the journal (`last_n=200`), count `progress{kind: "fix_attempt", key: <test_file>}` entries since the most recent matching `override_attempt_cap` decision. If `count >= 5`, escalate via `AskUserQuestion`: Continue anyway / Abandon this file / Switch workflow. Otherwise append the `fix_attempt` and proceed.
 
-**Escalation menu** (three options via `AskUserQuestion`, per `feedback_askuserquestion_always`):
+Silent retry past the cap without an override is pattern `#405` / `#403`. Full attempt-counter protocol, key-canonicalization rule, the escalation menu with exact journal payloads, and the workspace-block recovery pattern: `references/failure-diagnosis.md`.
 
-- **Continue anyway** — user believes the next fix resolves. Append `decision{kind: "override_attempt_cap", key: "<test_file>"}`; the cap re-engages for the next 5 attempts after this override.
-- **Abandon this file** — record `decision{summary: "Abandon <test_file> after N attempts"}` and proceed to On Completion (no further attempts on this key this session).
-- **Switch workflow** — typically back to `build` for structural rethink. Emit `append_pending_dispatch(target_workflow="build", phase_hint="<appropriate>", reason="Fix loop capped on <test_file>")` and clear the active-workflow flag.
-
-Silent retry past the cap without an `override_attempt_cap` decision is the exact pattern `#405` / `#403` exist to discourage. `/nct-observability` surfaces per-key attempt counts and overrides so the cumulative pattern is visible across sessions.
-
-**On VERDICT_ABSTAIN from G4:** Treat as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not treat the upstream `ivy_verify` result as authoritative.
+**On VERDICT_ABSTAIN from G4**: treat as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not treat the upstream `ivy_verify` result as authoritative.
 
 ---
 
@@ -398,52 +357,7 @@ If this verify run needs another workflow to run next (e.g., the user picked "re
 
 ## Background Verification
 
-When `ivy_verify` would block for minutes, run it in a background subagent while productive work continues in the main conversation.
-
-### When to Use
-
-- The target file is large or verification historically takes >60s
-- The user has asked for parallel work or there are independent tasks remaining (coverage checks, code review, diagnostics on other files)
-- You are in a workflow phase where subsequent steps do not depend on the verification result
-
-Do NOT background when: the next step immediately depends on the result (e.g., Phase 6 diagnosis needs the failure output), or when the user explicitly wants to wait.
-
-### How to Background
-
-Spawn a background subagent with a self-contained prompt:
-
-```
-Agent(
-  description: "Background ivy_verify",
-  run_in_background: true,
-  prompt: "Call the ivy_verify MCP tool with relative_path='<path>' in workspace '<protocol>'.
-           Report the full result: pass/fail, property count, any counterexample traces, duration.
-           If the tool errors or times out, report that too."
-)
-```
-
-The subagent loads MCP servers independently and calls `ivy_verify`. A notification arrives when it completes.
-
-### During the Wait
-
-Continue with work that does not depend on the verification result:
-
-- `ivy_coverage` or `ivy_diagnostics` on other files
-- Reading and reviewing Ivy source for structural issues
-- File edits, grep, git operations
-- Other MCP tool calls (`ivy_model_info`, `ivy_analysis(mode="includes")`, `ivy_patterns`)
-
-Avoid calling `ivy_verify` or `ivy_compile` in the main conversation while a background verification runs — the MCP semaphore limits concurrent tool execution.
-
-### Picking Up the Result
-
-When the background agent completes, read its result and integrate into the current workflow phase:
-
-- **PASS**: Update workflow state, proceed to next phase (Phase 5 or completion)
-- **FAIL**: Transition to Phase 6 (Diagnose) with the failure output
-- **ERROR/TIMEOUT**: Report to user, offer to retry synchronously
-
-The staleness rule still applies: if any `.ivy` file was edited after the background verification started, the result is stale and must be re-run.
+When `ivy_verify` would block for minutes, run it in a background subagent via `Agent(run_in_background: true, ...)` while productive work (coverage checks, code review, other-file diagnostics) continues in the main conversation. On completion, integrate per phase (PASS → next phase; FAIL → Phase 6 Diagnose). The staleness rule applies: re-run if any `.ivy` file was edited since the background run started. Full when-to-use, spawn prompt template, during-the-wait guidance, and result integration: `references/background-verification.md`.
 
 ---
 
