@@ -3,20 +3,23 @@ name: build
 description: "Use when starting a new protocol spec, scaffolding a new Ivy layer, or resuming an in-progress build. Multi-session construction from an RFC to a formal Ivy model."
 ---
 
-## Output Style
-
-This workflow's output formatting is managed by the style system.
-Follow the style directives injected via `additionalContext` -- they contain
-the active workflow overlay and phase modifier. Do not invent
-formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
+<role>
+You are the build workflow for the panther-ivy-plugin. Your job is to carry
+a protocol model from RFC to a structurally sound, verified Ivy
+specification layer by layer. You dispatch `spec-analyst` for compile-error
+diagnosis, `model-reviewer` and `traceability-agent` for the Phase 5
+quality and coverage audits, and MPE Explore agents at Phase 1 for
+architectural-approach exploration. You are bound by the
+`NO_LAYER_WITHOUT_SCAFFOLD` and `STALENESS_RULE` iron laws.
+</role>
 
 ## Phase 0 — Plan-mode preamble
 
-If the session is in plan mode (signalled by `Plan mode is active` in a system-reminder, `You MUST NOT make any edits`, or a `/Users/*/plans/*.md` path), skip all state-mutating tools: no `ivy_compile`, no `Write`/`Edit` on `.ivy` files, no scaffolding. Switch to plan authoring — read-only context gathering, a plan-mode `AskUserQuestion` briefing, draft the plan at the indicated path, append a `plan_approved` journal entry, then `ExitPlanMode`. Full five-step procedure and detection signals: `references/plan-mode-handling.md`.
+If the session is in plan mode, follow the 5-step authoring procedure in `.claude/rules/plan-mode.md`. Build-specific `AskUserQuestion` option framings for Step 2 (situation briefing): "draft a plan for the new layer we need", "draft a plan to restructure the blueprint", "clarify the modeling scope before writing", "learn the 14-layer template first".
 
 ## Iron Laws
 
-This skill is bound by `NO_LAYER_WITHOUT_SCAFFOLD` and the `STALENESS RULE`. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording, the explicit "Out of scope" carve-outs (patches to existing layers, files outside `{prot}_stack/`, drafts outside discovery path), and the plan-mode exemption clause. Summary for this skill: ground each net-new layer file in a passing `ivy_diagnostics(mode="structural")` for the prior layer; treat any tool result older than the most recent edit to a file in the include closure as stale.
+This skill is bound by <iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="build" enforcement="ivy_diagnostics precondition in Phase 3"/> and <iron-law name="STALENESS_RULE" workflow="build" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording, the explicit "Out of scope" carve-outs (patches to existing layers, files outside `{prot}_stack/`, drafts outside discovery path), and the plan-mode exemption clause. Summary for this skill: ground each net-new layer file in a passing `ivy_diagnostics(mode="structural")` for the prior layer; treat any tool result older than the most recent edit to a file in the include closure as stale.
 
 ## Step Tracking
 
@@ -43,7 +46,7 @@ TaskCreate(subject="Coverage audit (traceability-agent)")   → task B
 TaskUpdate(taskId=B, addBlockedBy=[A])
 ```
 
-Do not skip marking tasks as `completed` — incomplete tasks are visible to the user and signal unfinished work.
+Mark each task `completed` as soon as it finishes. Incomplete tasks stay visible to the user and read as unfinished work.
 
 ## Process Flow
 
@@ -222,7 +225,7 @@ After each `Write`/`Edit` on a `.ivy` file, a PostToolUse hook spawns critics fr
 - `*.ivy` (non-test): G2 modeling critics (catalog slice `#200-249` + `#250-299` + NSCT `#260-289`).
 - `*_test_*.ivy`: G3 test-spec critics (catalog slice `#200-208` + `#256-259` + `#300-399`).
 
-On `VERDICT_UNSOUND`, the orchestrator writes `[GAP: #NN <reason>]` markers inline at the cited locations. Do not proceed to the next layer until each `[GAP:]` is either fixed or deliberately promoted to `// DEFERRED YYYY-MM-DD: …` per the `.claude/rules/gap-markers.md` convention. On `VERDICT_ABSTAIN`, the verdict lands silently in the workflow journal; read it at the next Reflection Gate.
+On `VERDICT_UNSOUND`, the orchestrator writes `[GAP: #NN <reason>]` markers inline at the cited locations. Before starting the next layer, resolve every `[GAP:]` marker open across the current Phase 3 lifecycle — not just markers from the most recent write. Each marker is either fixed in place or deliberately promoted to `// DEFERRED YYYY-MM-DD: …` per `.claude/rules/gap-markers.md`. On `VERDICT_ABSTAIN`, the verdict lands silently in the workflow journal; read it at the next Reflection Gate.
 
 ---
 
@@ -253,18 +256,30 @@ Build's Phase 5 reads the most recent `gate_verdict` (G4, G5) and `progress` jou
 
 Dispatch both agents in a single message using two Agent tool calls:
 
-1. **`model-reviewer`** agent: structural correctness, type safety, invariant completeness, action well-formedness, initialization, organization
-2. **`traceability-agent`** agent: RFC coverage check against the blueprint's target RFC(s)
+<dispatch target="model-reviewer" via="agent" phase="5"
+          reason="Phase 5 quality audit — structural correctness, type safety, invariant completeness, action well-formedness, initialization, organization"/>
+
+<dispatch target="traceability-agent" via="agent" phase="5"
+          reason="Phase 5 coverage audit — RFC coverage check against the blueprint's target RFC(s)"/>
+
+Sequencing: the `Agent(...)` calls go in a single message so the two
+agents run in parallel. Classify their combined findings per Step 2.
 
 ### Step 2: Aggregate findings
 
-Collect findings from both agents. Classify by severity per `.claude/rules/ivy-formatting.md` Severity Systems ("Finding severity"): ERROR, WARNING, INFO.
+Collect findings from both agents. Classify by severity per
+`.claude/rules/ivy-formatting.md` Severity Systems ("Finding severity"):
+<severity class="finding" value="ERROR"/> /
+<severity class="finding" value="WARNING"/> /
+<severity class="finding" value="INFO"/>.
 
 ### Gate checkpoint on ERROR findings
 
-If ERROR findings are produced, present them to the user: "These ERRORs were found: [list]. Fix them now? Or accept and move on?"
-
-Wait for explicit confirmation.
+<checkpoint type="gate" id="phase-5-error-findings">
+If any <severity class="finding" value="ERROR"/> findings are produced,
+present them to the user: "These ERRORs were found: [list]. Fix them now?
+Or accept and move on?" Wait for explicit confirmation.
+</checkpoint>
 
 ### Step 3: Handle fixes
 

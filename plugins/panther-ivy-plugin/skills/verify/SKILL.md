@@ -3,20 +3,22 @@ name: verify
 description: "Verify-compile-IUT test cycle with failure diagnosis. Use when user says \"check my spec\", \"verify this\", \"test the handshake\", or encounters counterexample found, invariant violated, compilation error, or verification failed."
 ---
 
-## Output Style
-
-This workflow's output formatting is managed by the style system.
-Follow the style directives injected via `additionalContext` -- they contain
-the active workflow overlay and phase modifier. Do not invent
-formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
+<role>
+You are the verify workflow for the panther-ivy-plugin. Your job is to
+run the verify-compile-IUT cycle on an Ivy spec, diagnose failures, and
+return a calibrated verdict. You dispatch `spec-analyst` for
+counterexample diagnosis and MPE Explore agents at Phase 6 for
+Multi-Perspective Diagnosis. You are bound by the
+`NO_FIX_WITHOUT_VERIFY` and `STALENESS_RULE` iron laws.
+</role>
 
 ## Phase 0 — Plan-mode preamble
 
-If any plan-mode indicator is present in session context (`Plan mode is active`, `You MUST NOT make any edits`, or a `/Users/*/plans/*.md` path), switch to plan authoring: skip `ivy_verify` / `ivy_compile` / `ivy_iut_test` (they mutate state), run read-only context gathering, draft the plan via a plan-mode `AskUserQuestion` briefing and `superpowers:writing-plans` (if non-trivial), append `plan_approved`, then `ExitPlanMode`. Navigate Phase 1.5 handles re-entry. Full 5-step procedure, detection signals, and journal payload: `references/plan-mode-preamble.md`.
+If the session is in plan mode, follow the 5-step authoring procedure in `.claude/rules/plan-mode.md`. Verify-specific `AskUserQuestion` option framings for Step 2 (situation briefing): "Draft a plan for the verify failure we hit", "Draft a plan to restructure the verification approach", "Clarify the verification scope before writing", "Learn the Ivy verification model first".
 
 ## Iron Laws
 
-This skill is bound by `NO_FIX_WITHOUT_VERIFY` and the `STALENESS RULE`. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1, Read `.claude/rules/iron-laws.md` for the canonical wording and the four allowed-without-prior-verify carve-outs (debugging-methodology research, hypothesis generation, diagnostic exploration, comment-only edits). Summary for this skill: before proposing a concrete code-edit fix, ground it in either `ivy_verify` (end-of-phase) or `ivy_compile` + IUT (dev iteration loop) from the current turn, and cite which check ran.
+This skill is bound by <iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="verify" enforcement="hooks/scripts/block-direct-ivy.sh + workflow self-discipline"/> and <iron-law name="STALENESS_RULE" workflow="verify" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1, Read `.claude/rules/iron-laws.md` for the canonical wording and the four allowed-without-prior-verify carve-outs (debugging-methodology research, hypothesis generation, diagnostic exploration, comment-only edits). Summary for this skill: before proposing a concrete code-edit fix, ground it in either `ivy_verify` (end-of-phase) or `ivy_compile` + IUT (dev iteration loop) from the current turn, and cite which check ran.
 
 ## Step Tracking
 
@@ -37,7 +39,7 @@ TaskCreate(subject="Apply fix and re-verify", activeForm="Applying fix")
 TaskCreate(subject="Run Completion Verification Gate", activeForm="Running completion gate")
 ```
 
-Do not skip marking tasks as `completed` — incomplete tasks are visible to the user and signal unfinished work.
+Mark each task `completed` as soon as it finishes. Incomplete tasks stay visible to the user and read as unfinished work.
 
 ## Process Flow
 

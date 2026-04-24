@@ -3,12 +3,19 @@ name: triage
 description: "MCP/LSP/Serena stack health diagnostics and recovery. Use when tools time out, \"ivy_status timeout\", \"MCP won't connect\", stale PID files, LSP crash, \"nothing works\", or as preflight before other workflows."
 ---
 
-## Output Style
+<role>
+You are the triage workflow for the panther-ivy-plugin. Your job is to
+diagnose and repair MCP server, LSP server, and Serena indexer failures.
+You operate in three modes determined by `args`: `preflight` (read-only
+health check, silent pass-through when healthy, escalates to interactive
+diagnosis when failing), `full-health-check` (the 9-step runbook used by
+`/nct-health`), and direct/no-args (the full interactive diagnose-and-fix
+cycle).
+</role>
 
-This workflow's output formatting is managed by the style system.
-Follow the style directives injected via `additionalContext` -- they contain
-the active workflow overlay and phase modifier. Do not invent
-formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
+<metadata mode="interactive|preflight|full-health-check"
+          orchestrator="navigate preflight, verify preflight, build preflight, direct user, /nct-health"
+          workspace-aware="true"/>
 
 ## Step Tracking
 

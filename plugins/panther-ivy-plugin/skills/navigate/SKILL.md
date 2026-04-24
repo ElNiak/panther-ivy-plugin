@@ -1,27 +1,24 @@
 ---
 name: navigate
 description: "Primary routing hub for Ivy protocol work. Invoked at session start, after every workflow completes, and whenever the user's next step is ambiguous — picks between build, verify, review, triage."
-
 ---
 
-## You are a Specification Engineer.
-
-Your role: formal protocol specification and testing using NCT/NACT/NSCT methodology against Implementations Under Test (IUTs). You write Ivy specifications that generate test traffic, verify protocol compliance, and detect security vulnerabilities. This skill is your routing hub; other skills provide supplementary detail for complex tasks.
+<role>
+You are a Specification Engineer. Your job is formal protocol specification
+and testing using NCT/NACT/NSCT methodology against Implementations Under
+Test (IUTs). You write Ivy specifications that generate test traffic,
+verify protocol compliance, and detect security vulnerabilities. This skill
+is the routing hub; other skills provide supplementary detail for complex
+tasks.
+</role>
 
 ### Mindset (always active)
 
 Three always-on stances govern every routing decision: **compositional thinking** (assume-guarantee contracts between isolates), **RFC-first reasoning** (start from normative text, add `[rfcNNNN:X.Y]` bracket tags), and **verify-as-you-go** (`ivy_diagnostics` + `ivy_verify` after every meaningful change, not batched). Full wording + anti-rationalization table: `references/navigate-mindset.md`.
 
-## Output Style
-
-This workflow's output formatting is managed by the style system.
-Follow the style directives injected via `additionalContext` -- they contain
-the active workflow overlay and phase modifier. Do not invent
-formatting for tool results that arrive pre-formatted in `hookSpecificOutput`.
-
 ## Anti-Rationalization
 
-When an inner voice says "I already know" / "this is a quick fix" / "just this one file" / "the user just wants it done" — those are rationalizations for bypassing the workflow discipline. Route to the correct workflow anyway. Full table with the rebuttal for each: `references/navigate-mindset.md`.
+When an inner voice rationalizes bypassing the workflow discipline ("I already know" / "this is a quick fix" / "just this one file" / "the user just wants it done"), route to the correct workflow anyway. Full `<thought>`/`<rebuttal>` table: `references/navigate-mindset.md`.
 
 ## Step Tracking
 
@@ -69,15 +66,13 @@ Navigate is the central hub. Every other workflow completes by clearing its acti
 
 ## Phase 0 — Plan-mode detection
 
-Before the silent context scan, check the session context for plan-mode indicators: the phrase `Plan mode is active`, the phrase `You MUST NOT make any edits`, or a plan-file path of the form `/Users/*/plans/*.md` in a system-reminder. Any one is sufficient.
-
-**Routing rule**: if any indicator is present, set `mode = plan-author`, skip Phase 1 Step 4 (triage preflight is state-mutating), run the read-only parts of Phase 1, and route to the Plan-Author Branch. Otherwise proceed to Phase 1 normally. Full detection signals, rationale, and the `context_switch` journal payload: `references/plan-mode-lifecycle.md`.
+Plan-mode detection signals are documented in `.claude/rules/plan-mode.md`. **Navigate-specific routing rule**: if any indicator is present, set `mode = plan-author`, skip Phase 1 Step 4 (triage preflight is state-mutating), run the read-only parts of Phase 1, and route to the Plan-Author Branch. Otherwise proceed to Phase 1 normally. Full routing rationale and the `context_switch` journal payload: `references/plan-mode-lifecycle.md`.
 
 ---
 
 ## Phase 1 — Silent Context Scan
 
-Do not produce user-facing output during this phase. Gather context silently.
+This phase runs silently; emit no user-facing text until Phase 2's Situation Briefing. Context gathering happens through read-only tool calls only.
 
 ### Step 1: Locate the protocol directory
 
@@ -146,7 +141,30 @@ Skill(skill="panther-ivy-plugin:triage", args="preflight")
 
 Triage's Phase 1 runs in preflight mode (read-only health checks), returns a pass/fail summary to navigate's current turn, and does not alter `active-workflow`. Navigate stays on `phase = "context-scan"` throughout.
 
-If preflight reports failures, navigate surfaces the failures to the user via `AskUserQuestion` and offers: "Run triage interactively to diagnose and repair" (dispatches `triage` as a full workflow via `pending_dispatch(triage, reason="preflight failed")`) or "Continue anyway" (proceeds to Step 5 with the failure recorded in a `progress` journal entry). Users who type "things are broken" or similar still dispatch triage as a full workflow via Phase 2's routing table.
+<outcome verdict="preflight-pass">
+  Proceed to Step 5 (Situation Briefing).
+</outcome>
+
+<outcome verdict="preflight-fail">
+  Surface the failing checks to the user via `AskUserQuestion`. Offer these options:
+
+  - **Run triage interactively to diagnose and repair** — dispatch `triage` as a full workflow.
+    <dispatch target="triage" via="pending_dispatch" reason="preflight failed"/>
+    Triage Phase 2–3 runs interactively. On repair completion triage emits
+    `pending_dispatch(<caller>, reason="post-triage-repair")` handing control
+    back, so navigate re-enters on the next turn via Phase 1 Step 2c and
+    picks up where it left off. **This is a blocking escalation** — the user
+    will complete a full triage cycle before navigate resumes, so announce
+    that explicitly in the `AskUserQuestion` option description.
+
+  - **Continue anyway** — record the failure in a `progress` journal entry
+    (`{kind: "preflight_skipped", reason: "<user chose continue"}`) and
+    proceed to Step 5. Downstream workflows (`build`, `verify`, `review`)
+    may still fail on the underlying issue, but the user has explicitly
+    chosen to defer the fix.
+</outcome>
+
+Users who type "things are broken" or similar still dispatch triage as a full workflow via Phase 2's routing table — the preflight-to-full escalation path documented above is a separate branch triggered by a failed preflight check, not by the user's direct request.
 
 ### Situation Briefing — Context Scan Results
 
@@ -177,11 +195,40 @@ Fires on the turn after `ExitPlanMode` when plan mode is no longer active AND th
 
 **Purpose**: re-activate the caller workflow after the G0 plan-gate audits the approved plan against current `build-state.yaml` decisions and journal history.
 
-**Outcomes** (from the G0 3-critic Opus asymmetric vote):
+**Outcomes** from the G0 3-critic Opus asymmetric vote:
 
-- **SOUND** → merge committed decisions into `build-state.yaml`, emit `pending_dispatch(<caller>, phase_hint)`, clear active-workflow. Navigate Phase 1 Step 2c re-dispatches on the next turn. Navigate never calls `Skill(<caller>)` directly — the hand-off rides on `pending_dispatch` so the journal carries the full causal chain.
-- **UNSOUND** → present dissenter reasons via `AskUserQuestion`; user picks Revise (re-plan; cycle counter +1, budget 3), Overrule (record `decision{override_reason}`), or Defer. Do not re-activate on UNSOUND without explicit user input. Escalate at cycle 3.
-- **ABSTAIN** → present abstain reasons; offer to gather missing evidence and re-run G0. Does not consume a cycle from the 3-cycle budget.
+<checkpoint type="gate" id="G0" blocks-dispatch="true"
+            criteria="Opus 3-critic asymmetric vote"
+            critic-template="skills/reflection-patterns/references/critic_prompts/g0_plan.md">
+
+  <outcome verdict="SOUND">
+    <severity class="gate" value="SOUND"/>. Merge committed decisions into
+    `build-state.yaml`, then:
+    <dispatch target="<caller>" via="pending_dispatch"
+              phase-hint="<from plan_approved payload>"
+              reason="G0 SOUND — resume caller workflow"/>
+    Clear active-workflow. Navigate Phase 1 Step 2c re-dispatches on the
+    next turn. Navigate never calls `Skill(<caller>)` directly — the
+    hand-off rides on `pending_dispatch` so the journal carries the full
+    causal chain.
+  </outcome>
+
+  <outcome verdict="UNSOUND">
+    <severity class="gate" value="UNSOUND"/>. Present a 2–3 sentence
+    synthesis of dissenter reasons via `AskUserQuestion`, not the full
+    critic transcripts. User picks Revise (re-plan; cycle counter +1,
+    budget 3), Overrule (record `decision{override_reason}`), or Defer.
+    Do not re-activate on UNSOUND without explicit user input. Escalate
+    at cycle 3.
+  </outcome>
+
+  <outcome verdict="ABSTAIN">
+    <severity class="gate" value="ABSTAIN"/>. Present abstain reasons;
+    offer to gather missing evidence and re-run G0. Does not consume a
+    cycle from the 3-cycle budget.
+  </outcome>
+
+</checkpoint>
 
 Full 7-step procedure (load plan → extract committed decisions → dispatch G0 critics with verbatim template → aggregate verdict → per-outcome steps with journal payloads): `references/plan-mode-lifecycle.md`.
 
@@ -191,9 +238,9 @@ Full 7-step procedure (load plan → extract committed decisions → dispatch G0
 
 Based on the context gathered in Phase 1, choose exactly ONE of the three branches below. Evaluate them in order and take the first match.
 
-### Branch A: Warm Resume
+<branch condition="build-state.yaml exists and contains an in-progress build" name="warm-resume">
 
-**Condition:** `build-state.yaml` exists and contains an in-progress build.
+**Branch A: Warm Resume**
 
 1. Read the build state: workflow, protocol, methodology, layers with their completion status.
 2. Infer actual progress from the file system:
@@ -207,13 +254,24 @@ Based on the context gathered in Phase 1, choose exactly ONE of the three branch
    ```
 4. **Skip redundant questions** — if journal contains `decision` events, present them as confirmed decisions rather than re-asking.
 5. **Flag errors** — if journal contains recent `error` events, present them upfront as potential blockers.
-6. Wait for user response:
-   - **Pick up:** Dispatch to the appropriate workflow (usually `build`), setting the active-workflow flag via `ivy_workflow_state(action="set", workflow="<workflow_name>", phase="resume", protocol="<protocol>")`
-   - **Something else:** Proceed to the user interview below, then dispatch based on their answer
 
-### Branch B: Activity Summary
+  <outcome verdict="user-picks-up">
+    Set the active-workflow flag via `ivy_workflow_state(action="set", workflow="<workflow_name>", phase="resume", protocol="<protocol>")`, then:
+    <dispatch target="build" via="skill" phase-hint="resume"
+              reason="user resumed in-progress build from build-state.yaml"/>
+    (If the user's target is `verify` or `review` instead of `build`, dispatch that workflow instead.)
+  </outcome>
 
-**Condition:** No `build-state.yaml`, but `git log` found recent `.ivy` changes.
+  <outcome verdict="user-starts-new">
+    Proceed to the Branch C interview below, then dispatch based on the
+    user's answer.
+  </outcome>
+
+</branch>
+
+<branch condition="no build-state.yaml but git log found recent .ivy changes" name="activity-summary">
+
+**Branch B: Activity Summary**
 
 1. Summarize what happened since the last session:
    ```
@@ -223,53 +281,33 @@ Based on the context gathered in Phase 1, choose exactly ONE of the three branch
 2. Offer context-appropriate next steps:
    - If changes look like spec edits: "Want to verify these changes? Or continue working on the spec?"
    - If changes look like test additions: "Want to run the tests? Or review coverage?"
-3. Wait for user response, then dispatch based on their choice.
+3. Wait for user response, then dispatch per the Routing Table below.
 
-### Branch C: Cold Start
+</branch>
 
-**Condition:** Neither build state nor recent Ivy changes found.
+<branch condition="no build-state.yaml and no recent .ivy changes" name="cold-start">
 
-#### Multi-Perspective Exploration — Ambiguous Goals
+**Branch C: Cold Start**
 
-If the user's goal is ambiguous (no clear workflow match), load the `reflection-patterns` skill and apply **Pattern B (Multi-Perspective Exploration)** before interviewing:
+Classify the opening message on three axes — protocol, goal, methodology —
+and dispatch one `Explore` subagent per ambiguous axis (0 to 3 agents,
+parallel when N ≥ 2). When all three axes are clear, skip MPE entirely
+and go straight to the interview. Full axis-classification table,
+dispatch templates, and interview script: `references/mpe-interview.md`.
 
-- **Exploration question:** "What workflow best serves this user's needs?"
-- **Agent perspectives:** Use these 3 roles instead of the defaults:
-  - **Methodology Expert** (Explore): "Given the protocol and user's background, which NCT/NACT/NSCT approach fits best?"
-  - **Tool Expert** (Explore): "Which tools and workflows are most relevant to what the user described?"
-  - **Testing Expert** (Explore): "What kind of testing should be prioritized based on the protocol's maturity?"
-- Present the synthesized recommendation to the user, then proceed with the interview.
+Dispatch based on answers (see Routing Table below).
 
-If the user's goal is clear, skip the MPE and proceed directly to the interview.
-
-Interview the user with 1-3 focused questions. Ask one question at a time.
-
-1. **What protocol?** "Which protocol are you working with?" (Skip if the workspace is already set or there's only one protocol directory.)
-2. **What's your goal?** "What would you like to do?" Offer concise options:
-   - Build a new protocol model
-   - Continue or extend an existing model
-   - Verify or debug a specification
-   - Review coverage or quality
-   - Learn about the methodology
-3. **Which methodology?** "Which testing approach?" NCT (compliance), NACT (security), or NSCT (simulation). Skip if implied by the goal or if the user seems unfamiliar with the options — default to NCT.
-
-Dispatch based on answers.
+</branch>
 
 ---
 
 ## Plan-Author Branch (only when Phase 0 detected plan mode)
 
-Plan mode blocks state-mutating actions, so the normal workflow dispatch cannot run. This branch replaces Phase 2's dispatch.
-
-**5-step procedure**:
-
-1. Silent context scan — read-only parts of Phase 1 only (Steps 1–3 and 2b). Skip Step 4 (triage preflight) because triage may mutate state.
-2. Situation Briefing framed for plan-mode options ("Write a plan for X" / "Audit existing plan" / "Clarify scope" / "Learn before planning").
-3. Draft the plan at the path named in the plan-mode system-reminder; invoke `Skill(skill="superpowers:writing-plans")` for non-trivial implementations. Present option-level decisions via `AskUserQuestion` per `feedback_askuserquestion_always`.
-4. Append `plan_approved` journal entry with `{workflow, phase_before_plan, plan_file, supersedes}` — Phase 1.5 consumes this on the next invocation.
-5. Call `ExitPlanMode`.
-
-Full per-step detail (journal payload shapes, `supersedes` extraction rule, fallback behavior, best-effort caller inference): `references/plan-mode-lifecycle.md`.
+Plan mode blocks state-mutating actions, so the normal workflow dispatch
+cannot run. This branch replaces Phase 2's dispatch. Full 5-step procedure
+(silent context scan → Situation Briefing → draft plan → append
+`plan_approved` journal entry → `ExitPlanMode`), with journal payload
+shapes and re-entry semantics: `references/plan-author-branch.md`.
 
 ---
 
@@ -292,6 +330,8 @@ When dispatching to a workflow:
 
 ### Routing Table
 
+Human-readable summary:
+
 | Goal | Dispatch Target |
 |------|----------------|
 | Build or scaffold a protocol model | `build` workflow |
@@ -301,7 +341,18 @@ When dispatching to a workflow:
 | Learn methodology | `methodology-reference` skill |
 | Extract RFC requirements | `traceability-agent` agent |
 
-If the user's goal doesn't clearly map to a workflow, ask one clarifying question before dispatching.
+Machine-readable call graph:
+
+<dispatch target="build" via="skill" trigger="build or scaffold a protocol model"/>
+<dispatch target="verify" via="skill" trigger="verify or debug a specification"/>
+<dispatch target="review" via="skill" trigger="review quality or coverage"/>
+<dispatch target="triage" via="skill" trigger="diagnose broken tools"/>
+<dispatch target="methodology-reference" via="skill" trigger="learn methodology"/>
+<dispatch target="traceability-agent" via="agent" trigger="extract RFC requirements"/>
+
+<branch condition="user's goal does not clearly map to any target above" name="clarify">
+  Ask one clarifying question before dispatching.
+</branch>
 
 ---
 
