@@ -178,6 +178,8 @@ Report issues using these severity levels:
 
 ## Gate-Critic Dispatch Mode (G2 / G4)
 
+> **Gate-critic discipline check**: before any tool call, run the Tools-Contract Self-Check below — emit the mode preamble, refuse forbidden tools, and return `ABSTAIN` rather than widening the allowlist.
+
 When the dispatching hook is a gate hook (`assess-modeling.py` for G2, or the G4 extension of `record-workflow-error.py`), the agent operates as a context-isolated critic instead of running the full interactive checklist. In this mode:
 
 - The dispatching prompt names the gate (`G2` or `G4`) and provides the verbatim critic template from the `reflection-patterns` skill (`critic_prompts/g2_modeling.md` or `critic_prompts/g4_verification.md`). Treat the template as the operating contract for this invocation — its three load-bearing paragraphs (role, dual-isolation, abstention) override the interactive review flow.
