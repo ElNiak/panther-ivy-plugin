@@ -173,7 +173,7 @@ _OBSERVE_SPECS = {
         {
             "session_id": "int-test",
             "source": "startup",
-            "model": "claude-opus-4-6",
+            "model": "claude-opus-4-7",
             "agent_type": "main",
             "permission_mode": "default",
         },
