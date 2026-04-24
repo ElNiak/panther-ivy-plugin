@@ -270,6 +270,13 @@ When coverage analysis reveals gaps:
 - For verification: provide structured PASS/FAIL with details
 - For errors: identify the failing isolate/invariant/property, the source location, and the likely cause
 
+<integration
+  dispatched-by="verify Phase 6 (diagnosis), build Phase 3 (compile-error diagnosis), review Phase 2 (Quality path), direct user request"
+  calls="ivy-toolkit skill, counterexample-guide skill, claim-discussion skill"
+  modes="exploration (navigate protocol model) | verification-diagnosis (interpret ivy_verify / ivy_compile results)"
+  timeout-budget="90 s (Sonnet tier, per .claude/rules/agent-dispatch.md)"
+  severity-systems-emitted="finding (interactive) | tool-outcome (when reporting a single verify run)"/>
+
 ## Failure Modes
 
 Callers follow `.claude/rules/agent-dispatch.md` on dispatch failure. Per-agent overrides of the canonical timeouts and retry policy:

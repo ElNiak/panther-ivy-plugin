@@ -67,6 +67,10 @@ PAIRED_TAGS = frozenset(
         "catalog_slice",
         "artifact",
         "check_procedure",
+        "axes",
+        "axis",
+        "field",
+        "metadata",
     }
 )
 

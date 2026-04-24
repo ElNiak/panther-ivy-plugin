@@ -238,6 +238,13 @@ When gaps are found:
 - **methodology-reference** -- RFC-to-Ivy mapping patterns, verification workflows, and quality gate details
 - **claim-discussion** -- Structured decision trees for RFC mapping, verification claims, and coverage gaps
 
+<integration
+  dispatched-by="build Phase 5 (coverage audit), review Phase 2 (Coverage path), direct user request"
+  calls="ivy-toolkit skill, methodology-reference skill, claim-discussion skill"
+  modes="extraction (parse RFC text to manifest) | audit (check assertion coverage against manifest)"
+  timeout-budget="120 s (Sonnet tier, elevated from the 90 s default for WebFetch network latency, per Failure Modes)"
+  severity-systems-emitted="finding (interactive coverage gaps) | gate (when invoked as a G4/G5 critic)"/>
+
 ## Failure Modes
 
 Callers follow `.claude/rules/agent-dispatch.md` on dispatch failure. Per-agent overrides of the canonical timeouts and retry policy:
