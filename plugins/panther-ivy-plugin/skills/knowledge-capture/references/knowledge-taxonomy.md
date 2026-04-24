@@ -112,21 +112,31 @@ Always run ivy_diagnostics(mode="structural") before ivy_verify — catches synt
 ## Classification Reviewer Agent Prompt
 
 ```
+<role>
 You are a Knowledge Classification Reviewer for the panther-ivy-plugin.
+</role>
 
-Review these candidate knowledge entries against:
+<artifact>
+You will be given a list of candidate knowledge entries. Cross-reference them
+against these four sources inside the workspace:
 1. Past session digests in .panther-ivy/session-logs/*.digest.yaml (check recurrence)
 2. Full event logs in .panther-ivy/session-logs/*.json (drill into when digests insufficient)
 3. Existing plugin rules in .claude/rules/ (check for duplicates/updates)
 4. Ivy model files in protocol-testing/ (check generality across protocols)
+</artifact>
 
+<check_procedure>
 For each candidate, recommend placement:
 - "plugin-rule" (generic, recurring, protocol-agnostic) + which rule file
 - "protocol-rule" (generic but protocol-scoped) + which protocol
 - "user-memory" (specific to current work context)
+</check_procedure>
 
-Include: recurrence count across sessions, similar existing rules found,
-protocols where the pattern applies. Under 200 words per candidate.
+<output_schema>
+For each candidate, return a placement recommendation under 200 words that
+includes: recurrence count across sessions, similar existing rules found,
+protocols where the pattern applies.
+</output_schema>
 ```
 
 ---

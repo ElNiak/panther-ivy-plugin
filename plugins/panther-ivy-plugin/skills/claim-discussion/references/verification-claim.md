@@ -25,8 +25,12 @@ Use the `counterexample-guide` skill for detailed trace interpretation.
 
 ### Decision Tree
 
+<decision_tree>
+The calling skill emits each `Question N` block below as an `AskUserQuestion` call; the prose inside code blocks is the template the skill substitutes into AskUserQuestion options, not text for Claude to paste into the conversation.
+
 **Question 1** (Gate): "Is the violated assertion correct per the RFC?"
 
+<branch name="Yes — IUT Non-Compliance">
 #### Branch: Yes — IUT Non-Compliance
 ```
 This looks like a genuine IUT non-compliance.
@@ -42,7 +46,9 @@ Options:
 If (a): Add inline resolution comment and record in test findings.
 If (b): Add `# KNOWN_DEVIATION: {reason}` comment.
 If (c): Fetch/read the relevant RFC section, then re-ask Question 1.
+</branch>
 
+<branch name="No — Specification Issue">
 #### Branch: No — Specification Issue
 ```
 The assertion may be incorrect. What's wrong?
@@ -58,7 +64,9 @@ If (a): Relax the assertion. Propose concrete fix and confirm.
 If (b): Propose a `before` clause guard. Show the code and confirm.
 If (c): Propose `after init` fix. Show the code and confirm.
 If (d): Fetch/read RFC section, then re-present options.
+</branch>
 
+<branch name="Unsure">
 #### Branch: Unsure
 ```
 Let me show you the relevant RFC text so we can decide together.
@@ -70,6 +78,7 @@ Given this text, does the assertion `{code}` correctly capture the requirement?
 ```
 
 Then return to the Yes/No branches.
+</branch>
 
 ### Question 2 (Gate, if applicable): "Could this be a test generation issue?"
 
@@ -82,6 +91,7 @@ Options:
 (b) The `before` clause guard is missing — add a `require` in the `before` block
 (c) This is a real spec issue, not a generation problem
 ```
+</decision_tree>
 
 ### Resolution Actions
 

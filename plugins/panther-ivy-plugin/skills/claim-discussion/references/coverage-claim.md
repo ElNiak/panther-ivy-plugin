@@ -25,6 +25,9 @@ Highest-impact uncovered MUST requirements:
 
 ### Decision Tree
 
+<decision_tree>
+The calling skill emits each `Question N` block below as an `AskUserQuestion` call; the prose inside code blocks is the template the skill substitutes into AskUserQuestion options, not text for Claude to paste into the conversation.
+
 **Question 1** (Gate): "Which gaps should we prioritize?"
 ```
 Which of these uncovered MUST requirements should we address?
@@ -55,6 +58,7 @@ Are any of these requirements not applicable to your IUT or testing scenario?
 
 Mark any that should be excluded from coverage targets.
 ```
+</decision_tree>
 
 ### Resolution Actions
 

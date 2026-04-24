@@ -4,6 +4,7 @@ Complete error-to-fix reference. Each entry maps a cryptic Ivy error to its root
 
 ---
 
+<catalog_entry>
 ## 1. `'<name>' not found` on relation/function declaration
 
 **Trigger:** Using a parameter name that collides with an existing symbol or is parsed as an unresolved reference.
@@ -31,6 +32,9 @@ relation update_processed(S:bgp_id, D:bgp_id)
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 2. `ungrounded variable X in relation`
 
 **Trigger:** Free variable in a relation expression not bound by a quantifier or the head of a rule.
@@ -55,6 +59,9 @@ require exists S. req(other, S, self);
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 3. `invariant ... failed` / `failed to verify invariant preservation`
 
 **Trigger:** An action modifies state in a way that violates a declared invariant.
@@ -77,6 +84,9 @@ require exists S. req(other, S, self);
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 4. `assumption failed` (isolate assumption violation)
 
 **Trigger:** An isolate's assumptions about another isolate's behavior are not satisfied.
@@ -94,6 +104,9 @@ require exists S. req(other, S, self);
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 5. `type mismatch` / `type error`
 
 **Trigger:** Incompatible types in an expression (e.g., using `nat` where `packet_type` is expected).
@@ -109,6 +122,9 @@ require exists S. req(other, S, self);
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 6. `circular dependency`
 
 **Trigger:** Two or more modules or objects depend on each other via includes.
@@ -125,20 +141,26 @@ require exists S. req(other, S, self);
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 7. `not well-founded`
 
 **Trigger:** `definition ... not well-founded` during verification.
 
 **Root Cause:** Ivy requires every recursive definition to be well-founded — the recursive call must be on a structurally smaller argument so termination can be proven. A definition that calls itself without a decreasing measure violates this requirement.
 
+<anti_pattern>
 ```ivy
 # WRONG — count recurses on S without a decreasing measure
 definition count(S:set) = ite(empty(S), 0, 1 + count(S))
 # Error: definition count not well-founded
 ```
+</anti_pattern>
 
 **Correct Pattern:** Either eliminate recursion by using Ivy's built-in aggregate operators, or provide an explicit termination measure using a `decreases` clause:
 
+<example>
 ```ivy
 # RIGHT — no recursion; express using relations and quantifiers
 function count(S:set) : nat
@@ -148,25 +170,32 @@ axiom forall S. count(S) = card(S)
 definition count(S:set) decreases size(S) =
     ite(empty(S), 0, 1 + count(remove_min(S)))
 ```
+</example>
 
 **Related:** `ivy-writing-guide` skill > Definitions section
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 8. `uninterpreted sort has no instances`
 
 **Trigger:** `uninterpreted sort <T> has no instances` during verification or model extraction.
 
 **Root Cause:** A sort declared with `type T` is fully abstract — Ivy's model extractor requires at least one concrete member. Without axioms or an `individual` providing an element, Z3 cannot construct a finite model.
 
+<anti_pattern>
 ```ivy
 # WRONG — abstract sort with no inhabitants
 type connection_id
 # Error: uninterpreted sort connection_id has no instances
 ```
+</anti_pattern>
 
 **Correct Pattern:** Either enumerate values with `interpret`, declare at least one individual, or add an axiom asserting the sort is inhabited:
 
+<example>
 ```ivy
 # RIGHT — enumerate concrete values (preferred for small finite types)
 type connection_id = {cid_a, cid_b, cid_c}
@@ -179,6 +208,7 @@ individual default_cid : connection_id
 type connection_id
 axiom exists C:connection_id. true
 ```
+</example>
 
 **Working Examples:**
 - `protocol-testing/quic/quic_stack/quic_types.ivy` — `type cid` defined with `interpret cid -> bv[8]`
@@ -188,6 +218,9 @@ axiom exists C:connection_id. true
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 9. Z3 timeout / `unknown`
 
 **Trigger:** Verification takes too long; the SMT solver cannot decide.
@@ -202,12 +235,16 @@ axiom exists C:connection_id. true
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 10. `multiple definitions`
 
 **Trigger:** `<name> multiply defined` or `multiple definitions of <name>` during compilation or verification.
 
 **Root Cause:** Two files in the include graph declare the same symbol (type, relation, function, or action) at the top level. Ivy does not allow redeclaration — even if both declarations are identical.
 
+<anti_pattern>
 ```ivy
 # file_a.ivy
 include bgp_type
@@ -222,12 +259,14 @@ include file_a
 include file_b
 # Error: connection_state multiply defined
 ```
+</anti_pattern>
 
 **Correct Pattern:**
 1. Run `ivy_analysis(mode="includes")` to identify which two files both declare the symbol.
 2. Move the shared declaration to a single common file and `include` that file from both.
 3. If the two declarations differ in intent, namespace one inside an `object` to avoid collision.
 
+<example>
 ```ivy
 # RIGHT — declare once in a shared file (e.g., bgp_connection_state.ivy)
 type connection_state = {idle, active, established}
@@ -238,6 +277,7 @@ include bgp_connection_state
 # file_b.ivy — include the same shared file (no redeclaration)
 include bgp_connection_state
 ```
+</example>
 
 **Working Examples:**
 - `protocol-testing/bgp/bgp_types/bgp_type.ivy` — canonical shared type declarations included by all BGP stack files
@@ -247,6 +287,9 @@ include bgp_connection_state
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 11. `cannot find isolate X`
 
 **Trigger:** Misspelled isolate name or missing declaration.
@@ -261,6 +304,9 @@ include bgp_connection_state
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 12. Missing `after init` causing arbitrary initial values
 
 **Trigger:** Invariant fails on initial state; relations have unexpected values.
@@ -269,6 +315,7 @@ include bgp_connection_state
 
 **Correct Pattern:** Explicitly initialize all mutable relations in `after init` blocks:
 
+<example>
 ```ivy
 after init {
     conn_seen(C) := false;
@@ -276,6 +323,7 @@ after init {
     conn_closed(C) := false;
 }
 ```
+</example>
 
 **Working Examples:**
 - `protocol-testing/quic/quic_stack/quic_packet.ivy:300` — `after init { conn_seen(C) := false; ... }`
@@ -285,31 +333,12 @@ after init {
 
 ---
 
+</catalog_entry>
+
+<catalog_entry>
 ## 13. Generator starvation (test passes but no protocol traffic)
 
-**Trigger:** Test completes with PASS verdict but pcap shows few or no protocol messages. Alternatively, the IUT's hold timer expires or the connection drops mid-test despite no verification failure.
+**Trigger:** Test completes with PASS verdict but pcap shows few or no protocol messages; or the IUT's hold timer expires mid-test despite no verification failure.
 
-**Symptom:** High iteration count (e.g., 1000+) with disproportionately few messages in the pcap (fewer than 5). The generator spends most iterations on non-message actions (timers, internal state transitions) and rarely selects message-producing actions.
-
-**Root Cause:** One or more of:
-- **Timer competition**: Exported timer events (e.g., `timeout_event`) consume generator iterations without producing wire traffic. The generator picks timer actions because they have fewer `require` guards.
-- **Two-step message patterns**: Message construction split across two exported actions (e.g., `create_msg` + `send_msg`). The generator must pick both in sequence, but random selection makes this unlikely.
-- **Missing handle exports**: Sub-element builder actions (e.g., `frame.path_attribute.handle`) are not exported, so the generator cannot construct composite messages.
-- **Over-constrained `before` guards**: `require` clauses on message actions reject most generated inputs, causing the generator to fall back to simpler actions.
-
-**Correct Pattern:**
-
-1. Apply the auto-send pattern: merge message construction and sending into a single exported action so every selection produces a wire message.
-2. Remove timer event exports (`timeout_event`, `keepalive_timer`) from the test file. Handle timers internally via `after init` or shim callbacks.
-3. Export handle actions for composite message sub-elements, guarded by `_generating`:
-   ```ivy
-   export frame.path_attribute.handle
-   before frame.path_attribute.handle(f:frame.path_attribute, ...) {
-       if _generating { require connected(the_cid); }
-   }
-   ```
-4. Simplify `before` guards on message actions to reduce rejection rate.
-
-**Diagnosis:** Run wire validation after IUT test (see `verify` workflow, Post-IUT Wire Validation). Use tshark to count messages per direction and compare against iteration count.
-
-**Related:** `generator-mechanics.md`, `verify` workflow > Post-IUT Wire Validation
+Full diagnosis (timer competition, two-step message patterns, missing handle exports, over-constrained `before` guards) and the correct patterns (auto-send, handle exports, guard simplification) live in `generator-patterns.md`.
+</catalog_entry>

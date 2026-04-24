@@ -55,6 +55,15 @@ invariant ack_pending(P) -> sent(P, dest(P))
 
 Variables in an invariant are implicitly universally quantified. `invariant sent(P, N)` means "for all P, N, sent(P, N) is true" — rarely what the author intends. Bind via implication or a conditional form.
 
+## Axioms and Conjectures
+
+```ivy
+axiom connected(X, Y) -> connected(Y, X)                  # Assumed true (not checked)
+conjecture forall P. sent(P, dest(P)) -> ack_pending(P)   # Checked but not inductive
+```
+
+Axioms are unverified assumptions — minimise their use, because they weaken model soundness. Conjectures are checked by the verifier but are not used inductively in proofs.
+
 ## Before/After Monitor
 
 ```ivy
@@ -84,6 +93,32 @@ object frame = {
     relation valid(F: id)
     action create : id
     action destroy(f: id)
+}
+```
+
+Inside an object, `type this` declares the object itself as a parameterised type. Instances of the object type can then be created and passed as action parameters:
+
+```ivy
+object counter = {
+    type this
+    individual val(X: this) : nat
+    action increment(c: this) = { val(c) := val(c) + 1 }
+}
+```
+
+### Nested Objects
+
+Nested objects create hierarchical namespaces. Cross-references between nested siblings use dotted names.
+
+```ivy
+object protocol = {
+    object client = {
+        action connect(srv: server.endpoint)
+    }
+    object server = {
+        type endpoint
+        action accept(c: client)
+    }
 }
 ```
 
@@ -249,6 +284,7 @@ attribute frame.rst_stream.handle.weight = "0.02"  # Rarely generate resets
 
 ## Test Specification Template
 
+<example>
 ```ivy
 #lang ivy1.7
 include order                              # Standard library
@@ -270,6 +306,7 @@ export action _finalize = {                # End-state verification
     require conn_total_data(the_cid) > 0;
 }
 ```
+</example>
 
 **Variants** extend the base: `include {prot}_server_test` then add exports and weight attributes.
 
@@ -279,6 +316,7 @@ export action _finalize = {                # End-state verification
 
 Merge message construction and sending into one exported action so every generator selection produces a wire message:
 
+<example>
 ```ivy
 after msg_event(src:ip.endpoint, dst:ip.endpoint, msg:protocol_message) {
     if _generating {
@@ -286,19 +324,24 @@ after msg_event(src:ip.endpoint, dst:ip.endpoint, msg:protocol_message) {
     }
 }
 ```
+</example>
 
 ### Handle action `_generating` guard
 
 Export handle actions for composite message sub-elements with a generating guard:
 
+<example>
 ```ivy
 export frame.path_attribute.handle
 before frame.path_attribute.handle(f:frame.path_attribute, scid:bgp_id) {
     if _generating { require connected(the_cid); require scid = the_cid; }
 }
 ```
+</example>
 
 ### Anti-patterns
 
+<anti_pattern>
 - **Two-step message events**: Splitting message construction and sending into separate exported actions (e.g., `build_update` + `send_update`). The generator must pick both in sequence by chance, causing starvation. Merge into a single action.
 - **Timer event exports**: Exporting `timeout_event` or `keepalive_timer` lets the generator waste iterations on non-message actions. Remove timer exports from test files; handle timers internally via shim callbacks or `after init`.
+</anti_pattern>

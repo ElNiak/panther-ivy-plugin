@@ -18,6 +18,7 @@ workflow that would mutate state.
 
 ### Detection signals
 
+<plan_mode_detection_signals>
 Look for any of these in the session's system-reminder messages and
 `additionalContext` blocks accumulated since session start:
 
@@ -31,6 +32,9 @@ Look for any of these in the session's system-reminder messages and
 Any single indicator is sufficient. The three exist because Claude Code's plan-mode
 activation surfaces at different places depending on whether plan mode was set via
 CLI flag, keybinding, or `EnterPlanMode` mid-session.
+</plan_mode_detection_signals>
+
+This is the canonical `<plan_mode_detection_signals>` block. Other workflow skills (`build`, `verify`, `review`) point here rather than duplicating the list.
 
 ### Routing rule
 

@@ -5,6 +5,7 @@
 ### Test Specification Structure
 
 Every test specification follows this pattern:
+<example>
 ```ivy
 #lang ivy1.7
 
@@ -36,6 +37,7 @@ export action _finalize = {
     require conn_total_data(the_cid) > 0;
 }
 ```
+</example>
 
 ### Key Components
 
@@ -75,6 +77,7 @@ export action _finalize = {
 ### Test Variants
 
 Base test files define common structure. Variant files extend them:
+<example>
 ```ivy
 #lang ivy1.7
 include {prot}_server_test
@@ -91,6 +94,7 @@ after _finalize {
     require migration_completed;
 }
 ```
+</example>
 
 ### Weight Attributes
 

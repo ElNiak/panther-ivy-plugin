@@ -4,6 +4,8 @@ A complete worked example of reading a counterexample trace and identifying the 
 
 ---
 
+<worked_example>
+
 ## Scenario
 
 `ivy_verify` fails on `quic_server_test_stream.ivy` with this `counterexample_trace`:
@@ -55,3 +57,5 @@ before frame.stream.handle(f:frame.stream, scid:cid, dcid:cid, e:quic_packet_typ
 ```
 
 After applying the fix, re-run `ivy_verify` to confirm the counterexample is resolved.
+
+</worked_example>

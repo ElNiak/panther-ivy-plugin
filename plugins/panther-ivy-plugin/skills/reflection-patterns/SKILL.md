@@ -59,24 +59,32 @@ Dispatch 2-3 parallel agents with divergent perspectives to explore a decision p
    Each agent prompt must follow this template:
 
    ```
+   <role>
    You are the {ROLE_NAME} reviewing {CONTEXT}.
+   Your method: {METHOD_DESCRIPTION}
+   Your focus question: {FOCUS_QUESTION}
+   </role>
 
-   **Your role**: {ROLE_DESCRIPTION}
-   **Your method**: {METHOD_DESCRIPTION}
-   **Your focus question**: {FOCUS_QUESTION}
-
-   Context:
+   <artifact>
+   Context the orchestrator is providing:
    - Current workflow: {workflow}
    - Current phase: {phase}
    - Protocol: {protocol}
    - Key findings so far: {findings_summary}
    - Files involved: {file_list}
+   </artifact>
 
+   <check_procedure>
+   {ROLE_DESCRIPTION} — perform the assessment consistent with your role.
+   </check_procedure>
+
+   <output_schema>
    Produce a short analysis (under 300 words) with:
    1. **Assessment**: What do you see in the current state?
    2. **Recommendation**: What should we do next and why?
    3. **Risks**: What could go wrong with your recommendation?
    4. **Dissent**: Where might the other reviewers disagree with you?
+   </output_schema>
    ```
 
 3. **Synthesize** after all agents return:

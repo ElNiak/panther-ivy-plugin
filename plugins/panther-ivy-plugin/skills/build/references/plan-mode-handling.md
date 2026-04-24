@@ -9,11 +9,9 @@ normal build cycle.
 
 Before running any build-phase logic, inspect the session context for plan-mode indicators. Plan mode blocks `ivy_compile`, `Write`/`Edit` on `.ivy` files, and any tool that mutates state, so the normal build cycle cannot proceed.
 
-Detection signals (any one is sufficient):
+<plan_mode_detection_signals source="navigate/references/plan-mode-lifecycle.md#detection-signals" />
 
-1. The literal phrase `Plan mode is active` in a system-reminder.
-2. The edit-restriction phrase `You MUST NOT make any edits`.
-3. A plan file path of the form `/Users/*/plans/*.md` named in a plan-mode system-reminder.
+The three detection signals (plan-mode-active phrase, edit-restriction phrase, plan-file path) live canonically in `navigate/references/plan-mode-lifecycle.md`. Read that file for the full description; any single indicator is sufficient to trigger plan-authoring mode.
 
 If any indicator is present, switch to plan authoring instead of build dispatch:
 

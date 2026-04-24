@@ -6,6 +6,7 @@ Z3 solves for **exported action parameters** only. State variables (`function` a
 
 Consequence: any message context that the solver needs to choose must be an action parameter, not state.
 
+<anti_pattern>
 ```ivy
 # WRONG -- e is a state variable, Z3 cannot solve for it
 object path_attr = {
@@ -19,7 +20,11 @@ object path_attr = {
         }
     }
 }
+```
+</anti_pattern>
 
+<example>
+```ivy
 # CORRECT -- e is a parameter, Z3 can solve for it
 object path_attr = {
     object origin = {
@@ -30,6 +35,7 @@ object path_attr = {
     }
 }
 ```
+</example>
 
 QUIC uses the same pattern: `frame.*.handle` takes `e:quic_packet_type` as a parameter so Z3 can solve `require e = quic_packet_type.initial`.
 
@@ -71,6 +77,7 @@ For IUT testing, each message event's `after` block should serialize, wrap in a 
 
 ### Correct Pattern (BGP)
 
+<example>
 ```ivy
 action send_wrapped_message(src:ip.endpoint, dst:ip.endpoint) = {
     if _generating {
@@ -85,11 +92,13 @@ action send_wrapped_message(src:ip.endpoint, dst:ip.endpoint) = {
     }
 }
 ```
+</example>
 
 The `if _generating` guard ensures this only fires during test generation, not during IUT message processing.
 
 ### Anti-Pattern (Two-Step)
 
+<anti_pattern>
 ```ivy
 # BAD -- requires two consecutive picks: first pick message event, then pick header event
 export message_event       # pick 1: builds message body
@@ -98,6 +107,7 @@ export header_send_event   # pick 2: wraps and sends
 # Probability of correct sequence: 1/N * 1/N = 1/N^2
 # With 10 exported events, only 1% chance per pair of iterations
 ```
+</anti_pattern>
 
 ### Gold Standard (QUIC)
 

@@ -4,11 +4,9 @@ Full detail of Phase 0 plan-mode handling for the verify workflow. Plan mode blo
 
 ## Detection signals
 
-Before running any verify-phase logic, inspect the session context. Any one signal is sufficient:
+<plan_mode_detection_signals source="navigate/references/plan-mode-lifecycle.md#detection-signals" />
 
-1. The literal phrase `Plan mode is active` in a system-reminder.
-2. The edit-restriction phrase `You MUST NOT make any edits`.
-3. A plan file path of the form `/Users/*/plans/*.md` named in a plan-mode system-reminder.
+Before running any verify-phase logic, inspect the session context for plan-mode indicators. The three canonical detection signals (plan-mode-active phrase, edit-restriction phrase, plan-file path) live in `navigate/references/plan-mode-lifecycle.md`. Any single indicator is sufficient.
 
 ## 5-step plan-authoring procedure
 

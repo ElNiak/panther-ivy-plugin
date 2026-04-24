@@ -4,6 +4,8 @@ Concrete, file-level examples of the Add-Field and Add-Variant patterns applied 
 
 ## Add-Field: inserting `seq_num : byte` before the payload
 
+<worked_example>
+
 In `ping_ser.ivy`, the `ping_s_init` case transitions directly to `ping_s_payload` (`state = ping_s_payload`). The `ping_s_payload` state has no `set()` case — it is a sentinel for `open_tag()`/`close_tag()`.
 
 To add `seq_num : byte` between packet header and payload:
@@ -36,7 +38,11 @@ break;
 
 **Deserializer:** Mirror the above changes using `getn(res, 1)`. Also check and update `payload_length` if hardcoded (MiniP has `payload_length = 12`).
 
+</worked_example>
+
 ## Add-Variant: adding an `error` frame variant
+
+<worked_example>
 
 To add an `error` frame variant to `frame` (in `ping_frame.ivy`) with `error_code : byte`:
 
@@ -77,3 +83,5 @@ if (frame_type == 0x04) {
     return 3;
 }
 ```
+
+</worked_example>

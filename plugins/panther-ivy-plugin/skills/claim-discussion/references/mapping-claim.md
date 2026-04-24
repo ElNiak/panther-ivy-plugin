@@ -19,6 +19,9 @@ Testable: {yes|no|partial} — {reason}
 
 ### Decision Tree
 
+<decision_tree>
+The calling skill emits each `Question N` block below as an `AskUserQuestion` call; the prose inside code blocks is the template the skill substitutes into AskUserQuestion options, not text for Claude to paste into the conversation.
+
 **Question 1** (Gate): "Does this mapping match your understanding?"
 ```
 I'd map this to a {before|after} monitor on `{action_name}` in `{layer_file}`.
@@ -45,6 +48,7 @@ This is a {SHOULD|MAY} requirement. Options:
 (b) Monitored advisory — log when violated but don't fail the test
 (c) Skip — not relevant for our testing goals
 ```
+</decision_tree>
 
 ### Resolution Actions
 

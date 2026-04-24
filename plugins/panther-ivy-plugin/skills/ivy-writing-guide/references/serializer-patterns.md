@@ -113,25 +113,37 @@ class my_serializer : public ivy_binary_ser_128 {
 
 ### 1. Signature Mismatch (Most Common)
 
+<anti_pattern>
 ```cpp
 // WRONG — does NOT override base class
 virtual void set(int128_t &res) { ... }  // by-reference
+```
+</anti_pattern>
 
+<example>
+```cpp
 // CORRECT — overrides base class
 virtual void set(int128_t res) { ... }   // by-value
 ```
+</example>
 
 When both exist, C++ dispatches `set(val)` to the by-value base class version, which writes 16 bytes.
 
 ### 2. Missing open_list Override
 
+<anti_pattern>
 ```cpp
 // Base class writes 16-byte array length — WRONG for protocols
 void open_list(int len) { set((int128_t)len); }
+```
+</anti_pattern>
 
+<example>
+```cpp
 // Override with no-op — protocol handles field boundaries via state machine
 void open_list(int len) { /* suppress base */ }
 ```
+</example>
 
 ### 3. Missing open_tag(int, string) Override
 
@@ -151,13 +163,19 @@ virtual int open_tag(const std::vector<std::string> &tags) {
 
 ### 4. Uninitialized Locals in setn
 
+<anti_pattern>
 ```cpp
 int128_t len_res;
 setn(len_res, 1);  // WRONG — writes garbage from uninitialized stack
+```
+</anti_pattern>
 
+<example>
+```cpp
 int128_t len_res = computed_value;
 setn(len_res, 1);  // CORRECT — writes the computed value
 ```
+</example>
 
 ### 5. State Not Reached Before Array Elements
 
