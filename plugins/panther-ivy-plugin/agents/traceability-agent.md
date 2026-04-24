@@ -1,9 +1,9 @@
 ---
 name: traceability-agent
-description: "Internal agent — dispatched by build and review workflows for RFC requirement extraction and coverage auditing. Not user-facing."
+description: "Extracts normative requirements from RFCs and produces YAML requirement manifests; audits Ivy assertion coverage against those requirements and identifies gaps. Use when building requirement-traceability or auditing RFC compliance of protocol models."
 model: sonnet
 color: orange
-tools: ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "ToolSearch", "mcp__plugin_panther-ivy-plugin_ivy-tools__*"]
+tools: ["Bash(grep *)", "Bash(rg *)", "Bash(find *)", "Bash(ls *)", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "ToolSearch", "mcp__plugin_panther-ivy-plugin_ivy-tools__*"]
 maxTurns: 20
 skills:
   - ivy-toolkit
@@ -170,12 +170,12 @@ Before starting traceability work, check the active workspace with `ivy_workspac
 - Compound requirements (multiple MUST in one sentence) should be split
 - Cross-reference with existing bracket tags in `.ivy` files to find coverage
 
-## Anti-Patterns
+## Anti-Patterns (avoid these in extraction and review)
 
-- NEVER generate manifest entries for non-normative text (examples, notes, informational sections of RFCs).
-- NEVER mark a requirement as covered unless a bracket tag exists in an `.ivy` file — grep to confirm.
-- NEVER batch RFC mapping discussions — handle one requirement at a time per the `claim-discussion` skill.
-- NEVER overwrite an existing manifest without reading it first — update incrementally.
+1. Extracting non-normative text — only extract sentences with MUST, MUST NOT, SHOULD, SHOULD NOT, MAY, SHALL (RFC 2119). Skip examples, notes, and informational sections.
+2. Marking coverage without verification — never claim a requirement is covered unless a bracket tag `[rfcNNNN:section]` exists in an `.ivy` file. Grep to verify.
+3. Batching requirement discussions — handle one requirement at a time; present the requirement, ask for Ivy mapping, resolve before proceeding to the next.
+4. Overwriting without reading — always read an existing manifest before updating; merge new findings with existing entries.
 
 ## Phase Context (when dispatched by workflows)
 

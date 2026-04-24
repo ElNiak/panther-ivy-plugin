@@ -1,9 +1,9 @@
 ---
 name: spec-analyst
-description: "Internal agent — dispatched by verify, build, and review workflows for specification navigation and verification diagnostics. Not user-facing."
+description: "Navigates Ivy specification codebases to explain protocol layers and trace dependencies, and runs formal verification to diagnose failures. Use when exploring protocol models or interpreting ivy_verify results."
 model: sonnet
 color: blue
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "Edit", "ToolSearch"]
+tools: ["Read", "Grep", "Glob", "Bash(grep *)", "Bash(rg *)", "Bash(find *)", "Bash(ls *)", "Bash(cat *)", "ToolSearch", "mcp__plugin_panther-ivy-plugin_ivy-tools__*"]
 maxTurns: 25
 skills:
   - counterexample-guide
@@ -203,12 +203,12 @@ When a failure is hard to diagnose, isolate the problem by layer:
 - `{prot}_server_test_*.ivy` -- Server test variants
 - `{prot}_client_test_*.ivy` -- Client test variants
 
-## Anti-Patterns
+## Core Anti-Patterns (avoid these)
 
-- NEVER propose fixes without running `ivy_verify` first — diagnosis must be evidence-based.
-- NEVER diagnose based on file names alone — read the actual code before concluding.
-- NEVER skip counterexample interpretation when `ivy_verify` provides one — use the `counterexample-guide` skill.
-- NEVER assume an include path resolves correctly — verify the file exists on disk with `Glob`.
+1. Propose fixes without evidence — always run `ivy_verify` first; diagnosis must be evidence-based.
+2. Diagnose from file names alone — read the actual code before concluding.
+3. Skip counterexample interpretation — when `ivy_verify` provides a counterexample, use the `counterexample-guide` skill to interpret it.
+4. Assume include paths resolve — verify referenced files exist on disk with `Glob` before concluding.
 
 ## Phase Context (when dispatched by workflows)
 
