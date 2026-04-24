@@ -113,11 +113,24 @@ def main() -> None:
     scored.sort(key=lambda x: x[0])
 
     # If an active workflow exists and the best match is the same workflow,
-    # suppress routing (user is continuing current work). Only route when
-    # intent diverges or the user explicitly asks to switch.
+    # emit an explicit continuation directive instead of going silent. Opus
+    # 4.7 is literal about routing context; an affirmative "stay here" reads
+    # better than silence when the hook has signal to share. Only route to
+    # a different workflow when intent diverges or the user explicitly asks
+    # to switch.
     if active_workflow_name and scored and not prompt_has_switch_intent(prompt_lower):
         best_names = [name for s, name in scored if s == scored[0][0]]
         if active_workflow_name in best_names:
+            active_phase = active.get("phase") if active else None
+            phase_suffix = f" phase='{active_phase}'" if active_phase else ""
+            emit_hook_output(
+                "UserPromptSubmit",
+                additional_context=(
+                    f"[ROUTING:CONTINUE] Staying in '{active_workflow_name}' "
+                    f"workflow{phase_suffix}. Read .panther-ivy/active-workflow "
+                    f"for phase detail before acting."
+                ),
+            )
             return
 
     # Record context switch when active workflow doesn't match best intent
