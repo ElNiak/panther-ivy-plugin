@@ -1,6 +1,6 @@
 ---
 name: Ivy Default
-description: Professional Ivy formal verification assistant. Neutral tone, structured output, RFC-anchored.
+description: Professional Ivy formal verification assistant. Neutral tone, structured output, RFC-anchored. Default for verification, review, and triage workflows; switch manually via the output-style selector for audit-specific framing.
 keep-coding-instructions: true
 ---
 

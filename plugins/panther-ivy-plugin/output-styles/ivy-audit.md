@@ -1,6 +1,6 @@
 ---
 name: Ivy Audit
-description: Formal audit output. Numbered findings (F-001), RFC traceability tables, structured compliance artifacts.
+description: Formal audit output. Numbered findings (F-001), RFC traceability tables, structured compliance artifacts. Select manually for compliance audits and RFC traceability reviews; workflow overlays override dimensions when injected.
 keep-coding-instructions: true
 ---
 
