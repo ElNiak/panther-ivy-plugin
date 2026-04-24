@@ -1,6 +1,6 @@
 ---
 name: reflection-patterns
-description: "Reflection Gate, Multi-Perspective Exploration, Situation Briefing, and Completion Verification Gate templates plus the G0-G5 adversarial quality-gate discipline layer. Use at workflow phase boundaries or when dispatching gate critics."
+description: "Reflection and adversarial-gate patterns for workflow boundaries: Reflection Gate, Multi-Perspective Exploration, Situation Briefing, Completion Verification, and quality gates. Use when dispatching gate critics or at phase transitions."
 user-invocable: false
 context: fork
 ---
