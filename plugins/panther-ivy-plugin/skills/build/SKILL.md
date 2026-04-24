@@ -1,6 +1,6 @@
 ---
 name: build
-description: "Multi-session protocol model construction from RFC to formal Ivy model. Use when starting a new protocol spec, scaffolding layers, or continuing a build session."
+description: "Use when starting a new protocol spec, scaffolding a new Ivy layer, or resuming an in-progress build. Multi-session construction from an RFC to a formal Ivy model."
 ---
 
 ## Output Style
