@@ -65,3 +65,17 @@ After all layers are written and compile, update phase to `"written"` via `ivy_w
 - Save session log (observability events + digest)
 - If candidates found, classify and present for user confirmation
 - Resume workflow after gate completes
+
+---
+
+## Post-Edit Workspace-Block Recovery
+
+After every `Write` / `Edit` on a `.ivy` file during Phase 3 (layer writes), inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. If the hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file), the layer was not written to disk:
+
+1. Append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal.
+2. Present `AskUserQuestion` with three options (per `.claude/rules/mcp-tool-reliability.md`):
+   - **Switch workspace to the file's protocol** — run `/set-workspace <inferred-protocol>`, then retry the Edit. Also update `build-state.yaml`'s `decisions` block if the workspace shift reflects a scope change.
+   - **Clear workspace restrictions** — run `/clear-workspace`, then retry the Edit. Appropriate for multi-protocol builds where the layer spans protocols.
+   - **Abandon this layer** — skip the Edit, mark the layer's `build-state.yaml` status as `abandoned`, record a `decision` entry, and move to the next layer in dependency order.
+
+Platform note: if the harness does not propagate PreToolUse-hook block signals into the tool-result, this path does not fire. File a platform-level issue if observed; the recovery pattern still applies whenever the signal reaches user-space.

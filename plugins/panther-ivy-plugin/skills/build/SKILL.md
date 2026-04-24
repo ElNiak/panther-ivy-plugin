@@ -156,14 +156,15 @@ Check for existing `build-state.yaml`:
 ivy_workflow_state(action="get_build", protocol="<protocol>")
 ```
 
-### Step 3: Propose layer structure
+### Step 3: Propose layer structure (methodology-conditional)
 
-Using the 14-layer template from the `specification-patterns` skill, propose which layers apply to the target protocol and aspect:
+Branch on the methodology detected in Phase 1, per `references/blueprint-methodology-choices.md`:
 
-- Which of the 14 layers are needed
-- Dependency order for construction
-- Minimum viable set (typically 7 layers: Types, Frame, Packet, Connection, Entity Defs, Entity Behavior, Shims)
-- Which layers already exist and can be reused
+- **NCT** → the 14-layer template from `specification-patterns` (7-layer minimum viable set).
+- **NACT** → NCT 7-layer prefix + multi-select `AskUserQuestion` for APT lifecycle, cross-cutting white_noise, attack entities.
+- **NSCT** → NCT 7-layer verbatim; the Shadow-NS experiment-config sidecar is emitted at Phase 6, not Phase 2.
+
+Record the chosen layers in `build-state.yaml.layers` with `status: pending`; Phase 3 writes each.
 
 ### Situation Briefing — Blueprint Approval
 
@@ -201,27 +202,19 @@ After the phase is set to `"blueprint-done"`, the G1 exploration gate fires (eit
 
 ## Phase 3 — Write
 
-Load `references/layer-scaffolding.md` for the full per-layer scaffolding procedure. Summary:
+Load `references/layer-scaffolding.md` for the full per-layer scaffolding procedure — including the compile-attempt cap (journal-counted, 5-per-layer cumulative across sessions, soft-reset via `override_attempt_cap` decision) and the post-edit workspace-block recovery menu. Summary of the scaffolding loop:
 
-1. Load `ivy-writing-guide` skill
-2. Write ONE layer at a time in dependency order; run `ivy_compile` after each
-3. On compile error: dispatch `spec-analyst`, fix inline, recompile. The fix loop is bounded by a **journal-counted attempt cap of 5 per layer (cumulative across sessions, soft-reset via an `override_attempt_cap` decision)**. Before each compile attempt, compute the attempt key as the layer's canonical name from `build-state.yaml.layers` (e.g., `bgp_open`, not a file path). Read `ivy_workflow_state(action="get_journal", last_n=200)`, find the most recent `decision{kind: "override_attempt_cap", key: <same>}` (or `-1`), and count `progress{kind: "compile_attempt", key: <same>}` entries after that index. If the count is `>= 5`, escalate via `AskUserQuestion` with: **Continue anyway** (append `decision{kind: "override_attempt_cap", key}` and reset the cap), **Abandon this layer** (mark `build-state.yaml`'s layer status as `abandoned`, record a `decision`, move to the next layer in dependency order), or **Switch workflow** (emit `pending_dispatch(<next>, reason="Compile loop capped on <layer>")` and clear the active-workflow flag). Otherwise append `progress{kind: "compile_attempt", key: "<layer>", protocol: "<protocol>"}` and run `ivy_compile`. Silent retry past the cap without an override decision is the exact pattern `#403` (error whitelisting; see the `ivy-error-patterns` catalog) exists to discourage. `/nct-observability` surfaces per-layer attempt counts and overrides across sessions.
-4. On compile success: update `build-state.yaml` layer status
-5. Reflection Gate every 3 layers
-6. Handle type propagation via `propagation-patterns` skill if needed
-7. Knowledge Gate on completion of all layers
+1. Load `ivy-writing-guide` skill.
+2. Write ONE layer at a time in dependency order; run `ivy_compile` after each.
+3. On compile error: dispatch `spec-analyst`, fix inline, recompile. The attempt-counter gate applies before each compile (see the reference for the 5-per-layer protocol, the journal-key canonicalization rule, and the three-option escalation menu — Continue anyway / Abandon this layer / Switch workflow).
+4. On compile success: update `build-state.yaml` layer status.
+5. Reflection Gate every 3 layers.
+6. Handle type propagation via `propagation-patterns` skill if needed.
+7. Knowledge Gate on completion of all layers.
 
-### Post-Edit workspace-block recovery
+### Post-Edit Workspace-Block Recovery
 
-After every `Write` / `Edit` on a `.ivy` file during Phase 3 (layer writes), inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. If the hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file), the layer was not written to disk:
-
-1. Append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal.
-2. Present `AskUserQuestion` with three options (per `.claude/rules/mcp-tool-reliability.md`):
-   - **Switch workspace to the file's protocol** — run `/set-workspace <inferred-protocol>`, then retry the Edit. Also update `build-state.yaml`'s `decisions` block if the workspace shift reflects a scope change.
-   - **Clear workspace restrictions** — run `/clear-workspace`, then retry the Edit. Appropriate for multi-protocol builds where the layer spans protocols.
-   - **Abandon this layer** — skip the Edit, mark the layer's `build-state.yaml` status as `abandoned`, record a `decision` entry, and move to the next layer in dependency order.
-
-Platform note: if the harness does not propagate PreToolUse-hook block signals into the tool-result, this path does not fire. File a platform-level issue if observed; the SKILL.md recovery pattern still applies whenever the signal reaches user-space.
+If a `Write`/`Edit` on a `.ivy` file is blocked by the `check-workspace-scope.py` PreToolUse hook (workspace-scope violation), follow the three-option recovery menu — switch workspace / clear workspace / abandon this layer — detailed in `references/layer-scaffolding.md` under "Post-Edit Workspace-Block Recovery". Each option updates `build-state.yaml.layers` or the journal as specified there. This path only fires when the harness propagates hook-block signals into the tool-result.
 
 ### G2 / G3 Gates Fire Per-File
 
@@ -321,6 +314,10 @@ Present a summary of what was built:
 - Coverage statistics (MUST/SHOULD/MAY covered)
 - Key design decisions recorded in `build-state.yaml`
 
+### Step 1b: NSCT sidecar emission (methodology-conditional)
+
+If `build-state.yaml.methodology == "nsct"`, load `methodology-reference` skill and follow its `references/nsct-experiment-template.md` — substitute placeholders from `build-state.yaml`, `mkdir -p experiment-config/protocols/{protocol}/`, and write `experiment_config_{protocol}_shadow.yaml`. Append `progress{detail: "NSCT experiment-config scaffolded at <path>"}`. The sidecar is a scaffold, not runnable; users hand-edit topology, services, and IUT plugin names before running it. Skip entirely for `nct` or `nact`.
+
 ### Step 2: Clear state
 
 If this build run needs another workflow to run next (e.g., user explicitly asked for a review after the quality gate), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate's Phase 1 Step 2c consumes any pending dispatch on the next user turn. If no hand-off is needed, simply clear the flag — navigate re-activates on the next user turn and offers context-appropriate next steps based on the completed build.
@@ -341,52 +338,7 @@ On session resume, actual progress is inferred from the file system: which `.ivy
 
 ## Background Compilation
 
-When `ivy_compile` would block for minutes, run it in a background subagent while productive work continues in the main conversation.
-
-### When to Use
-
-- The model is large and compilation historically takes >60s
-- There are independent tasks remaining (writing the next layer's scaffold, reviewing existing layers, running diagnostics on other files)
-- The current layer's implementation is complete and the compile confirmation is pending
-
-Do NOT background when: the next step requires the compile result (e.g., diagnosing a compile error inline), or when writing a single small layer where the compile is fast.
-
-### How to Background
-
-Spawn a background subagent with a self-contained prompt:
-
-```
-Agent(
-  description: "Background ivy_compile",
-  run_in_background: true,
-  prompt: "Call the ivy_compile MCP tool with relative_path='<path>' and target='test' in workspace '<protocol>'.
-           Report the full result: success/failure, any error messages with line numbers, duration.
-           If the tool errors or times out, report that too."
-)
-```
-
-The subagent loads MCP servers independently and calls `ivy_compile`. A notification arrives when it completes.
-
-### During the Wait
-
-Continue with work that does not depend on the compilation result:
-
-- Scaffolding the next layer (if dependency order allows)
-- Reviewing or editing other existing layers
-- Running `ivy_diagnostics` or `ivy_coverage` on previously compiled files
-- Reading RFC sections for upcoming layers
-
-Avoid calling `ivy_verify` or `ivy_compile` in the main conversation while a background compilation runs — the MCP semaphore limits concurrent tool execution.
-
-### Picking Up the Result
-
-When the background agent completes, read its result and integrate into the current workflow phase:
-
-- **SUCCESS**: Update `build-state.yaml` layer status, proceed to next layer or Phase 4
-- **FAILURE**: Dispatch `spec-analyst` with the error output, fix inline, recompile (synchronously, since the feedback loop is needed)
-- **ERROR/TIMEOUT**: Report to user, offer to retry synchronously
-
-The staleness rule still applies: if the `.ivy` file was edited after the background compilation started, the result is stale and must be re-run.
+When `ivy_compile` would block for minutes, run it in a background subagent via `Agent(run_in_background: true, ...)` while productive work (next layer's scaffold, other-layer reviews, diagnostics) continues in the main conversation. On completion, integrate: SUCCESS → update `build-state.yaml` and proceed; FAILURE → dispatch `spec-analyst` synchronously. The staleness rule applies: re-run if the source `.ivy` was edited since the background run started. Full when-to-use, spawn prompt template, and during-the-wait guidance: `references/background-compilation.md`.
 
 ---
 
