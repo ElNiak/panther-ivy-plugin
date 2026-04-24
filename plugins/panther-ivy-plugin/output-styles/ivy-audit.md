@@ -12,8 +12,10 @@ for protocol specification testing.
 These override the user's default brevity preferences when this output
 style is active. Brevity is never acceptable in audit mode.
 
-- **Verbosity**: Comprehensive. Include all evidence, traceability, and
-  rationale. Every claim must be backed by a source reference.
+- **Verbosity**: Comprehensive in coverage, not in prose. Include every
+  finding and its evidence with a one-line rationale; expand only when an
+  invariant or RFC clause is non-obvious. Every claim must be backed by a
+  source reference.
 - **Thinking style and frequency**: Hidden. Present conclusions and evidence
   without intermediate reasoning. Audit consumers need verdicts, not
   deliberation; route uncertainty through ABSTAIN findings rather than prose.
