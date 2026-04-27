@@ -1,5 +1,5 @@
 ---
-name: verify
+name: workflow-verify
 description: "Runs the verify-compile-IUT cycle on an Ivy spec with failure diagnosis. You MUST use this when the user says 'check my spec', 'verify this', 'test the handshake', or hits 'counterexample found' / 'invariant violated' / 'compilation error'. Not for authoring new specs from scratch, scaffolding layers, or RFC requirement extraction — use `build` or `review` instead."
 ---
 
@@ -25,7 +25,7 @@ Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that r
 
 ## Iron Laws
 
-This skill is bound by <iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="verify" enforcement="hooks/scripts/block-direct-ivy.sh + workflow self-discipline"/> and <iron-law name="STALENESS_RULE" workflow="verify" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1, Read `.claude/rules/iron-laws.md` for the canonical wording.
+This skill is bound by <iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="workflow-verify" enforcement="hooks/scripts/block-direct-ivy.sh + workflow self-discipline"/> and <iron-law name="STALENESS_RULE" workflow="workflow-verify" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1, Read `.claude/rules/iron-laws.md` for the canonical wording.
 
 **Inline summary (binding text):**
 
@@ -128,7 +128,7 @@ These journal entries enable warm session resume and decision traceability acros
 Invoke triage in preflight mode — a read-only stack health check with no state writes:
 
 ```
-Skill(skill="panther-ivy-plugin:triage", args="preflight")
+Skill(skill="panther-ivy-plugin:workflow-triage", args="preflight")
 ```
 
 Triage runs Phase 1 only and returns to verify's current turn. `active-workflow` stays on `(workflow=verify, phase=preflight)` throughout. If the stack is healthy triage returns silently; if something is broken, triage escalates to its Phase 2–3 interactively (user sees diagnosis) and emits `pending_dispatch(verify, reason="post-triage-repair")` on completion so navigate re-activates verify on the next turn.
@@ -145,7 +145,7 @@ If the protocol is still ambiguous, ask the user: "Which protocol are you workin
 
 ### Step 3: Update state
 
-Update the active-workflow phase to `"preflight-done"` via `ivy_workflow_state(action="set", workflow="verify", phase="preflight-done", protocol="<protocol>")`.
+Update the active-workflow phase to `"preflight-done"` via `ivy_workflow_state(action="set", workflow="workflow-verify", phase="preflight-done", protocol="<protocol>")`.
 
 ---
 
@@ -178,7 +178,7 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)** a
 
 ### Step 3: Update state
 
-Update phase to `"test-selected"` via `ivy_workflow_state(action="set", workflow="verify", phase="test-selected", protocol="<protocol>")`.
+Update phase to `"test-selected"` via `ivy_workflow_state(action="set", workflow="workflow-verify", phase="test-selected", protocol="<protocol>")`.
 
 ---
 
@@ -194,7 +194,7 @@ ivy_compile(relative_path=<test_file>, target="test")
 
 ### On SUCCESS
 
-Move to Phase 4. Update phase to `"compiled"` via `ivy_workflow_state(action="set", workflow="verify", phase="compiled", protocol="<protocol>")`.
+Move to Phase 4. Update phase to `"compiled"` via `ivy_workflow_state(action="set", workflow="workflow-verify", phase="compiled", protocol="<protocol>")`.
 
 ### On compile ERROR
 
@@ -234,7 +234,7 @@ PostToolUse hook spawns G4 critics from `reflection-patterns` (catalog slices `#
    ```
    append_pending_dispatch(
      protocol="<protocol>",
-     target_workflow="review",
+     target_workflow="workflow-review",
      reason="verify Phase 4 PASS — user requested coverage/quality review"
    )
    ```
@@ -259,7 +259,7 @@ After Phase 4 completes (pass or fail), load the `reflection-patterns` skill. Ap
 
 ### On FAIL
 
-Move to Phase 6. Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="verify", phase="executed", protocol="<protocol>")`.
+Move to Phase 6. Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="workflow-verify", phase="executed", protocol="<protocol>")`.
 
 ---
 
@@ -323,7 +323,7 @@ Load `references/iut-output-analysis.md` for the full 9-step IUT failure analysi
 
 ### Step 4: Update state
 
-Update active-workflow phase to match the outcome: `ivy_workflow_state(action="set", workflow="verify", phase="iut-pass"`, `phase="iut-fail"`, or `phase="iut-error"`, `protocol="<protocol>")`.
+Update active-workflow phase to match the outcome: `ivy_workflow_state(action="set", workflow="workflow-verify", phase="iut-pass"`, `phase="iut-fail"`, or `phase="iut-error"`, `protocol="<protocol>")`.
 
 ---
 
@@ -331,7 +331,7 @@ Update active-workflow phase to match the outcome: `ivy_workflow_state(action="s
 
 ### G2/G3 scope note
 
-G2/G3 gates do NOT fire on verify Phase 7 fix edits (they are build-time only). If a fix raises structural concerns, append `pending_dispatch(target_workflow="build", phase_hint="layer-check")` and clear the active-workflow flag; navigate re-enters `build` on its next turn and the re-edit path re-engages G2 naturally. For the full rationale and re-engagement path, load the reflection-patterns skill via `Skill(skill="panther-ivy-plugin:reflection-patterns")` and consult its gates reference, "G2/G3 workflow scope" section.
+G2/G3 gates do NOT fire on verify Phase 7 fix edits (they are build-time only). If a fix raises structural concerns, append `pending_dispatch(target_workflow="workflow-build", phase_hint="layer-check")` and clear the active-workflow flag; navigate re-enters `build` on its next turn and the re-edit path re-engages G2 naturally. For the full rationale and re-engagement path, load the reflection-patterns skill via `Skill(skill="panther-ivy-plugin:reflection-patterns")` and consult its gates reference, "G2/G3 workflow scope" section.
 
 ### Post-Edit workspace-block recovery
 
@@ -361,8 +361,8 @@ The terminal state of verify is one of:
 - `append_pending_dispatch(build, phase_hint="layer-check", reason="verify diagnose surfaced structural fix")` + clear active-workflow flag.
 - `append_pending_dispatch(navigate, …)` + clear active-workflow flag (default routing).
 
-Do NOT invoke `Skill(panther-ivy-plugin:review)`,
-`Skill(panther-ivy-plugin:build)`, or any other workflow skill directly
+Do NOT invoke `Skill(panther-ivy-plugin:workflow-review)`,
+`Skill(panther-ivy-plugin:workflow-build)`, or any other workflow skill directly
 from verify. Hand-off rides on `append_pending_dispatch`. The On
 Completion gate (now `completion-gate` skill) MUST clear before any
 `pending_dispatch` is written.

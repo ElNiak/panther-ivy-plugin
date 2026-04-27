@@ -37,7 +37,7 @@ from workflow_state import (
     resolve_protocol_from_workspace,
 )
 
-_WORKFLOW_SKILLS = {"navigate", "build", "verify", "review", "triage"}
+_WORKFLOW_SKILLS = {"workflow-navigate", "workflow-build", "workflow-verify", "workflow-review", "workflow-triage"}
 _PLUGIN_PREFIX = "panther-ivy-plugin:"
 _STATE_DIR = ".panther-ivy"
 _ACTIVE_WORKFLOW_FILE = "active-workflow"

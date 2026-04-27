@@ -97,7 +97,7 @@ All five workflows (navigate, triage, verify, build, review) dispatch specialist
 5. **If retry also fails** (or was skipped), present `AskUserQuestion` with three options:
    - **Retry manually** — user re-dispatches after intervention (e.g., trimming scope, fixing the prompt, restarting tools).
    - **Skip this agent** — proceed with sibling-agent output if any. Append `decision{summary: "Skip agent <name> after dispatch failure", context: "<why>"}`.
-   - **Abandon workflow phase** — emit `append_pending_dispatch(target_workflow="navigate", reason="agent dispatch failed: <agent>")` and clear the active-workflow flag. Navigate's Phase 1 Step 2c routes the user on the next turn.
+   - **Abandon workflow phase** — emit `append_pending_dispatch(target_workflow="workflow-navigate", reason="agent dispatch failed: <agent>")` and clear the active-workflow flag. Navigate's Phase 1 Step 2c routes the user on the next turn.
 
 ### Per-tier timeout defaults
 

@@ -29,7 +29,7 @@ is approved and the workflow re-activates at Phase 1.5.
 | NO_QUALITY_WITHOUT_COVERAGE | review | ivy_coverage / ivy_quality citation at verdict time |
 | STALENESS RULE | build, verify, review | ivy_analysis(mode="includes") closure + tool timestamp |
 
-<iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="verify" enforcement="hooks/scripts/block-direct-ivy.sh">
+<iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="workflow-verify" enforcement="hooks/scripts/block-direct-ivy.sh">
 
   <instructions>
   Before proposing a *concrete code-edit fix* (an Edit/Write tool call, or a
@@ -54,7 +54,7 @@ is approved and the workflow re-activates at Phase 1.5.
 
 </iron-law>
 
-<iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="build" enforcement="ivy_diagnostics(mode=structural) precondition in build Phase 3">
+<iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="workflow-build" enforcement="ivy_diagnostics(mode=structural) precondition in build Phase 3">
 
   <instructions>
   Before writing a *net-new* layer file (e.g., creating `quic_8.ivy` when
@@ -85,7 +85,7 @@ is approved and the workflow re-activates at Phase 1.5.
 
 </iron-law>
 
-<iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="review" enforcement="ivy_coverage / ivy_quality citation at verdict emission">
+<iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="workflow-review" enforcement="ivy_coverage / ivy_quality citation at verdict emission">
 
   <instructions>
   Before stating a *formal coverage or quality verdict* — claims like "this

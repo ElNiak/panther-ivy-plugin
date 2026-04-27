@@ -33,7 +33,7 @@ given tool call succeeds.
      ```
    - Present `AskUserQuestion` with three options:
      - **Retry after fixing MCP server** — dispatch
-       `Skill(skill="panther-ivy-plugin:triage")` (direct mode, no args) so
+       `Skill(skill="panther-ivy-plugin:workflow-triage")` (direct mode, no args) so
        the user sees the full diagnose-and-repair flow; on repair
        completion triage emits `pending_dispatch(<caller>, reason="post-triage-repair")`
        to hand control back.
@@ -43,7 +43,7 @@ given tool call succeeds.
        decision{summary: "Skip <tool_name> due to unavailability", context: <why>}
        ```
      - **Abandon phase** — emit
-       `append_pending_dispatch(target_workflow="navigate", reason="MCP tool unavailable")`
+       `append_pending_dispatch(target_workflow="workflow-navigate", reason="MCP tool unavailable")`
        and clear the active-workflow flag. Navigate re-enters on the next
        turn and routes the user.
 

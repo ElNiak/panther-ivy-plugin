@@ -1,5 +1,5 @@
 ---
-name: build
+name: workflow-build
 description: "Builds protocol specification layers from RFC, methodology-aware (NCT/NACT/NSCT). You MUST use this when starting a new Ivy spec, scaffolding a layer, or resuming an in-progress build. Not for verifying existing models, debugging counterexamples, or running IUT tests — use `verify` instead."
 ---
 
@@ -26,7 +26,7 @@ Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that r
 
 ## Iron Laws
 
-This skill is bound by <iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="build" enforcement="ivy_diagnostics precondition in Phase 3"/> and <iron-law name="STALENESS_RULE" workflow="build" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording.
+This skill is bound by <iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="workflow-build" enforcement="ivy_diagnostics precondition in Phase 3"/> and <iron-law name="STALENESS_RULE" workflow="workflow-build" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording.
 
 **Inline summary (binding text):**
 
@@ -153,7 +153,7 @@ Three-agent MPE (Conservative Architect / Pragmatic Engineer / Adversarial Audit
 
 ### Step 3: Update state
 
-Update phase to `"scoped"` via `ivy_workflow_state(action="set", workflow="build", phase="scoped", protocol="<protocol>")`.
+Update phase to `"scoped"` via `ivy_workflow_state(action="set", workflow="workflow-build", phase="scoped", protocol="<protocol>")`.
 
 ---
 
@@ -213,7 +213,7 @@ decisions:
 
 ### Step 5: Update state
 
-Update phase to `"blueprint-done"` via `ivy_workflow_state(action="set", workflow="build", phase="blueprint-done", protocol="<protocol>")`.
+Update phase to `"blueprint-done"` via `ivy_workflow_state(action="set", workflow="workflow-build", phase="blueprint-done", protocol="<protocol>")`.
 
 ### G1 Exploration Gate
 
@@ -259,7 +259,7 @@ Hand control to the `verify` workflow via a `pending_dispatch` event — no in-p
    ```
    append_pending_dispatch(
      protocol="<protocol>",
-     target_workflow="verify",
+     target_workflow="workflow-verify",
      reason="build Phase 4 — post-modeling verification"
    )
    ```
@@ -330,8 +330,8 @@ The terminal state of build is one of:
 - `append_pending_dispatch(verify, reason="build Phase 4 — post-modeling verification")` + clear active-workflow flag (Phase 4 hand-off).
 - `append_pending_dispatch(navigate, …)` + clear active-workflow flag (Phase 6 completion routing).
 
-Do NOT invoke `Skill(panther-ivy-plugin:verify)`,
-`Skill(panther-ivy-plugin:review)`, or any other workflow skill directly
+Do NOT invoke `Skill(panther-ivy-plugin:workflow-verify)`,
+`Skill(panther-ivy-plugin:workflow-review)`, or any other workflow skill directly
 from build. Hand-off rides on `append_pending_dispatch` so the causal
 chain stays visible in the journal. Direct skill invocation breaks the
 workflow state machine.

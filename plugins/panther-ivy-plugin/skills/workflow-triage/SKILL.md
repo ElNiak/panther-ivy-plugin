@@ -1,5 +1,5 @@
 ---
-name: triage
+name: workflow-triage
 description: "Diagnoses and repairs MCP/LSP/Serena stack health. You MUST use this when tools time out, 'ivy_status timeout', 'MCP won't connect', stale PIDs, LSP crash, or as preflight before another workflow. Not for spec authoring, verification, or quality review — use `build`, `verify`, or `review` once the toolchain is healthy."
 context: fork
 user-invocable: false
@@ -146,7 +146,7 @@ fi
 - If invoked with `args="preflight"`: return silently to the caller's turn. Do not produce user-facing output. Do not write the active-workflow file (preflight is read-only). The caller's skill body resumes immediately.
 - If invoked directly (no `args`, or any args other than `preflight`/`full-health-check`): report "Stack is healthy. MCP, LSP [, and Serena] all responding." Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")` and return to navigate.
 
-**If something is dead:** Update phase to `"diagnose"` via `ivy_workflow_state(action="set", workflow="triage", phase="diagnose", protocol="<protocol>")` and proceed to Phase 2. Preflight callers fall through to Phase 2 too — broken tools block the caller, so the user sees the diagnose-and-fix flow regardless of invocation mode.
+**If something is dead:** Update phase to `"diagnose"` via `ivy_workflow_state(action="set", workflow="workflow-triage", phase="diagnose", protocol="<protocol>")` and proceed to Phase 2. Preflight callers fall through to Phase 2 too — broken tools block the caller, so the user sees the diagnose-and-fix flow regardless of invocation mode.
 
 ---
 
@@ -199,7 +199,7 @@ Reason: [extracted from log — last error line or traceback summary]
 Want me to restart it?
 ```
 
-Wait for user confirmation before proceeding to Phase 3. Update phase to `"fix"` via `ivy_workflow_state(action="set", workflow="triage", phase="fix", protocol="<protocol>")`.
+Wait for user confirmation before proceeding to Phase 3. Update phase to `"fix"` via `ivy_workflow_state(action="set", workflow="workflow-triage", phase="fix", protocol="<protocol>")`.
 
 ---
 
@@ -296,7 +296,7 @@ Suggested manual steps:
 Other workflows (navigate, verify, build, review) silently call triage Phase 1 before their first MCP tool invocation by invoking:
 
 ```
-Skill(skill="panther-ivy-plugin:triage", args="preflight")
+Skill(skill="panther-ivy-plugin:workflow-triage", args="preflight")
 ```
 
 When invoked this way:

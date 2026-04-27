@@ -34,7 +34,7 @@ class TestSetAndGetActiveWorkflow:
         mod.set_active_workflow(str(tmp_path), "verify", "init")
         result = mod.get_active_workflow(str(tmp_path))
         assert result is not None
-        assert result["workflow"] == "verify"
+        assert result["workflow"] == "workflow-verify"
         assert result["phase"] == "init"
         assert "started" in result
         # post-refactor: active-workflow schema is 3 fields only
@@ -282,7 +282,7 @@ class TestAppendJournalEvent:
             str(tmp_path),
             event_type="session_start",
             payload={"resumed_from": None},
-            workflow="build",
+            workflow="workflow-build",
             phase="init",
         )
         journal_path = tmp_path / ".panther-ivy" / "workflow-journal.yaml"
@@ -290,7 +290,7 @@ class TestAppendJournalEvent:
         entries = yaml.safe_load(journal_path.read_text())
         assert len(entries) == 1
         assert entries[0]["type"] == "session_start"
-        assert entries[0]["workflow"] == "build"
+        assert entries[0]["workflow"] == "workflow-build"
         assert entries[0]["phase"] == "init"
         assert entries[0]["payload"] == {"resumed_from": None}
         assert "ts" in entries[0]
@@ -358,7 +358,7 @@ class TestAppendPendingDispatch:
         assert len(entries) == 1
         entry = entries[0]
         assert entry["type"] == "pending_dispatch"
-        assert entry["workflow"] == "build"
+        assert entry["workflow"] == "workflow-build"
         assert entry["phase"] == "phase-4"
         assert entry["payload"] == {"workflow": "verify"}
 

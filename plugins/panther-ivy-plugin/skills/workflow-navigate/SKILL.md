@@ -1,5 +1,5 @@
 ---
-name: navigate
+name: workflow-navigate
 description: "You MUST use this when the next step is ambiguous, a prior workflow just completed, or starting a session. Routes to the next Ivy workflow (build / verify / review / triage); not for authoring, diagnosing, or testing directly."
 ---
 
@@ -90,7 +90,7 @@ This phase runs silently; emit no user-facing text until Phase 2's Situation Bri
 
 Resolve the protocol directory by calling `ivy_workflow_state(action="get", protocol="<protocol>")`. The `protocol_dir` field in the response gives the resolved path. If not found, fall through to the cold-start branch in Phase 2.
 
-**Note:** The PostToolUse hook on Skill automatically writes the active-workflow file with `workflow="navigate"`, `phase="init"` when this skill is invoked. Explicit `set` calls are only needed when dispatching to other workflows or updating phase.
+**Note:** The PostToolUse hook on Skill automatically writes the active-workflow file with `workflow="workflow-navigate"`, `phase="init"` when this skill is invoked. Explicit `set` calls are only needed when dispatching to other workflows or updating phase.
 
 ### Step 2: Check for active build
 
@@ -169,7 +169,7 @@ Record the results. If there are recent changes, note which files and when.
 
 ### Step 4: Run triage preflight (inline)
 
-Dispatch `triage` in preflight mode (`Skill(skill="panther-ivy-plugin:triage", args="preflight")`). Read-only health checks; no state writes; navigate stays on `phase = "context-scan"`. Full procedure with pass/fail outcomes and the preflight-to-full escalation path: `references/triage-handoff.md`.
+Dispatch `triage` in preflight mode (`Skill(skill="panther-ivy-plugin:workflow-triage", args="preflight")`). Read-only health checks; no state writes; navigate stays on `phase = "context-scan"`. Full procedure with pass/fail outcomes and the preflight-to-full escalation path: `references/triage-handoff.md`.
 
 ### Situation Briefing — Context Scan Results
 

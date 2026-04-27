@@ -65,21 +65,21 @@ def format_ivy_verify(data: dict, workflow: str | None) -> str | None:
     duration = _safe_get(data, "duration_s", "?")
     errors = data.get("errors", [])
 
-    if workflow == "triage":
+    if workflow == "workflow-triage":
         if success:
             return "ivy_verify: OK"
         return f"ivy_verify: FAIL -- {len(errors)} error(s). Run verify workflow for details."
 
-    if workflow == "build":
+    if workflow == "workflow-build":
         if success:
             return f"Layer verified: {isolate} PASS"
         return "Layer verification failed -- switching to verify workflow for diagnosis."
 
-    if workflow == "review":
+    if workflow == "workflow-review":
         status = "PASS" if success else "FAIL"
         return f"| {isolate} | {status} | {clauses} | {duration}s |"
 
-    if workflow == "verify":
+    if workflow == "workflow-verify":
         if success:
             return f"PASS: {isolate} ({clauses} clauses, {duration}s)"
         lines = []
@@ -107,13 +107,13 @@ def format_ivy_coverage(data: dict, workflow: str | None) -> str | None:
     covered = _safe_get(data, "covered", "?")
     total = _safe_get(data, "total", "?")
 
-    if workflow == "triage":
+    if workflow == "workflow-triage":
         return f"Coverage: {pct}%"
 
-    if workflow == "verify":
+    if workflow == "workflow-verify":
         return f"{pct}% ({covered}/{total})"
 
-    if workflow == "review":
+    if workflow == "workflow-review":
         sections = data.get("by_section", {})
         if sections:
             lines = ["| Section | Covered | Total | % |", "| --- | --- | --- | --- |"]
@@ -138,10 +138,10 @@ def format_ivy_diagnostics(data: dict, workflow: str | None) -> str | None:
     errors = [i for i in issues if i.get("severity") == "error"]
     warnings = [i for i in issues if i.get("severity") == "warning"]
 
-    if workflow == "triage":
+    if workflow == "workflow-triage":
         return f"{len(errors)} errors, {len(warnings)} warnings"
 
-    if workflow == "verify" or workflow == "review":
+    if workflow == "workflow-verify" or workflow == "workflow-review":
         lines = ["| Severity | File | Line | Message |", "| --- | --- | --- | --- |"]
         for issue in errors + warnings:
             sev = issue.get("severity", "?")
@@ -171,15 +171,15 @@ def format_ivy_compile(data: dict, workflow: str | None) -> str | None:
     duration = _safe_get(data, "duration_s", "?")
     err_msg = _safe_get(data, "error_message", data.get("error", "unknown error"))
 
-    if workflow == "triage":
+    if workflow == "workflow-triage":
         return "ivy_compile: OK" if success else f"ivy_compile: FAIL -- {err_msg}"
 
-    if workflow == "build":
+    if workflow == "workflow-build":
         if success:
             return f"Layer compiled: {binary}"
         return "Layer compilation failed. Fix before proceeding to next layer."
 
-    if workflow == "verify":
+    if workflow == "workflow-verify":
         if success:
             return f"Compiled: {binary} ({duration}s)"
         return f"Compilation failed: {err_msg}. Consider switching to diagnose phase."
@@ -200,15 +200,15 @@ def format_ivy_quality(data: dict, workflow: str | None) -> str | None:
         level = _safe_get(data, "gate_level", "?")
         failures = data.get("failures", [])
 
-        if workflow == "triage":
+        if workflow == "workflow-triage":
             if passed:
                 return "Quality gate: PASS"
             return f"Quality gate: FAIL ({len(failures)})"
 
-        if workflow == "verify":
+        if workflow == "workflow-verify":
             return f"Gate {level}: {'PASS' if passed else 'FAIL'}"
 
-        if workflow == "review":
+        if workflow == "workflow-review":
             lines = ["| Criterion | Status | Details |", "| --- | --- | --- |"]
             for f in failures:
                 lines.append(f"| {f.get('criterion', '?')} | FAIL | {f.get('details', '?')} |")

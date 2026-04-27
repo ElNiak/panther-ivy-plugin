@@ -1,5 +1,5 @@
 ---
-name: review
+name: workflow-review
 description: "Audits an Ivy model for RFC coverage, requirement traceability, and structural quality. You MUST use this when checking 'what MUSTs am I missing?', 'RFC coverage?', 'traceability gap?', or 'review my model'. Not for verifying spec correctness, scaffolding new layers, or running IUT tests — use `verify` or `build` instead."
 ---
 
@@ -26,7 +26,7 @@ Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that r
 
 ## Iron Laws
 
-This skill is bound by <iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="review" enforcement="ivy_coverage / ivy_quality citation at verdict emission"/> and <iron-law name="STALENESS_RULE" workflow="review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1 (Triage), Read `.claude/rules/iron-laws.md` for the canonical wording.
+This skill is bound by <iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="workflow-review" enforcement="ivy_coverage / ivy_quality citation at verdict emission"/> and <iron-law name="STALENESS_RULE" workflow="workflow-review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1 (Triage), Read `.claude/rules/iron-laws.md` for the canonical wording.
 
 **Inline summary (binding text):**
 
@@ -42,7 +42,7 @@ Full canonical wording, edge cases, and the exception cases for both rules: Read
 | "Coverage looks good, skip the citation" | `NO_QUALITY_WITHOUT_COVERAGE`: every verdict MUST cite a fresh `ivy_coverage` / `ivy_quality` tool output. Personal heuristic is not a substitute. |
 | "Findings are obvious, skip the agents" | `model-reviewer` / `traceability-agent` / `spec-analyst` dispatch is the calibrated source. Skipping bypasses the asymmetric-vote discipline and dual-context isolation. |
 | "RFC requirements feel covered" | Open the manifest. Read bracket-tag annotations (`[rfcNNNN:X.Y]`). Do not assert coverage without measurement. |
-| "Just inline-fix the structural issues here" | Review is for audit, not construction. Structural fixes belong in `build` via `pending_dispatch(target_workflow="build", phase_hint="layer-check")`. G2/G3 are build-time gates and will not fire on review-inline edits. |
+| "Just inline-fix the structural issues here" | Review is for audit, not construction. Structural fixes belong in `build` via `pending_dispatch(target_workflow="workflow-build", phase_hint="layer-check")`. G2/G3 are build-time gates and will not fire on review-inline edits. |
 | "WARNING/INFO findings can be ignored" | They surface in the `claim-discussion` lifecycle. Mark them `// DEFERRED YYYY-MM-DD: <reason>`, do not silently skip. |
 
 ## Step Tracking
@@ -145,7 +145,7 @@ If still ambiguous, ask: "Which protocol should I review?"
 Confirm MCP/LSP health before dispatching review agents. Preflight is a read-only skill call with no state writes:
 
 ```
-Skill(skill="panther-ivy-plugin:triage", args="preflight")
+Skill(skill="panther-ivy-plugin:workflow-triage", args="preflight")
 ```
 
 Triage runs Phase 1 only and returns to review's current turn. `active-workflow` stays on `(workflow=review, phase=triaged)` throughout. On healthy: triage returns silently. On failure: triage escalates to Phase 2–3 interactively; on repair completion it emits `pending_dispatch(review, reason="post-triage-repair")` so navigate re-activates review on the next turn.
@@ -160,7 +160,7 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
 
 ### Step 4: Update state
 
-Update phase to `"triaged"` via `ivy_workflow_state(action="set", workflow="review", phase="triaged", protocol="<protocol>")`.
+Update phase to `"triaged"` via `ivy_workflow_state(action="set", workflow="workflow-review", phase="triaged", protocol="<protocol>")`.
 
 ---
 
@@ -226,7 +226,7 @@ Run coverage and quality paths in parallel. Aggregate all findings into a unifie
 
 ### Update state
 
-Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="review", phase="executed", protocol="<protocol>")`.
+Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="workflow-review", phase="executed", protocol="<protocol>")`.
 
 ### Knowledge Gate: Post-Agent-Execution
 
@@ -274,7 +274,7 @@ Load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)**:
 
 **If the user wants fixes:**
 
-Adversarial gates G2 (layer modeling) and G3 (test-spec) do NOT fire on review-inline fixes — they are build-time gates by design. For structural concerns that warrant G2/G3 re-run, dispatch back to `build` via `append_pending_dispatch(target_workflow="build", phase_hint="layer-check")` and clear the active-workflow flag; review is for audit, not construction. Load `reflection-patterns` and read its `references/gates.md` "G2/G3 workflow scope" section for the canonical rationale.
+Adversarial gates G2 (layer modeling) and G3 (test-spec) do NOT fire on review-inline fixes — they are build-time gates by design. For structural concerns that warrant G2/G3 re-run, dispatch back to `build` via `append_pending_dispatch(target_workflow="workflow-build", phase_hint="layer-check")` and clear the active-workflow flag; review is for audit, not construction. Load `reflection-patterns` and read its `references/gates.md` "G2/G3 workflow scope" section for the canonical rationale.
 
 Guide fixes inline using the relevant agent's recommendations. After applying fixes, re-run the analysis that found the issue to confirm resolution.
 
@@ -287,7 +287,7 @@ Emit a `pending_dispatch` naming `verify` and let navigate route the hand-off on
 ```
 append_pending_dispatch(
   protocol="<protocol>",
-  target_workflow="verify",
+  target_workflow="workflow-verify",
   reason="review Phase 3 — user requested targeted verification of flagged findings"
 )
 ```

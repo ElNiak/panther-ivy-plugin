@@ -426,7 +426,7 @@ Manage workflow state files for multi-session tracking.
 | `workflow_resumed` | navigate Phase 1.5 after G0 SOUND verdict | `workflow` (caller), `phase_after_resume`, `g0_cycle` |
 | `knowledge_captured` | knowledge-capture skill after a capture cycle | `source`, `status` (`approved`/`user_declined`/`deferred`), `references_plan_approved_ts` |
 
-Detailed payload shapes for `gate_verdict` live in the reflection-patterns skill (load via `Skill(skill="panther-ivy-plugin:reflection-patterns")`; see "Gate verdict payload"). `plan_approved` and `workflow_resumed` are consumed by the navigate skill's Phase 1.5 (load via `Skill(skill="panther-ivy-plugin:navigate")`).
+Detailed payload shapes for `gate_verdict` live in the reflection-patterns skill (load via `Skill(skill="panther-ivy-plugin:reflection-patterns")`; see "Gate verdict payload"). `plan_approved` and `workflow_resumed` are consumed by the navigate skill's Phase 1.5 (load via `Skill(skill="panther-ivy-plugin:workflow-navigate")`).
 
 ---
 

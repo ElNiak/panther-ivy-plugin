@@ -19,5 +19,5 @@ on the argument. For quick preflight liveness checks, use the plain
           reason="/nct-health — deep 9-step health-check runbook"/>
 
 ```
-Skill(skill="panther-ivy-plugin:triage", args="full-health-check")
+Skill(skill="panther-ivy-plugin:workflow-triage", args="full-health-check")
 ```

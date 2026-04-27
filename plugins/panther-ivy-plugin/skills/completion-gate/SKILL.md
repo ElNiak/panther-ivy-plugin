@@ -123,4 +123,4 @@ rides on the calling workflow's pending_dispatch logic.
 - **Cross-references:**
   - `reflection-patterns` Pattern D (Completion Verification Gate) — the pattern this skill operationalizes.
   - `.claude/rules/iron-laws.md` — canonical NO_FIX_WITHOUT_VERIFY / NO_QUALITY_WITHOUT_COVERAGE / STALENESS_RULE wording.
-  - `verify` skill's Discipline section (RED → GREEN) — the iron-law-binding cycle this skill closes. Resolved via `Skill(skill="panther-ivy-plugin:verify")`; current location at `skills/workflow/verify/SKILL.md` after the parallel directory restructure.
+  - `workflow-verify` skill's Discipline section (RED → GREEN) — the iron-law-binding cycle this skill closes. Resolved via `Skill(skill="panther-ivy-plugin:workflow-verify")`; current location at `skills/workflow-verify/SKILL.md` (flat-with-prefix layout per the 2026-04-27 directory taxonomy restructure).

@@ -52,7 +52,7 @@ class TestWorkflowContextCurrent:
         ctx = mod.WorkflowContext.current(protocol="bgp")
         assert ctx is not None
         assert ctx.protocol_dir == str(protocol_dir)
-        assert ctx.workflow == "build"
+        assert ctx.workflow == "workflow-build"
         assert ctx.phase == "modeling"
         assert ctx.started is not None  # Set by set_active_workflow
         # post-refactor: WorkflowContext exposes only 3 state fields + protocol_dir
@@ -84,7 +84,7 @@ class TestWorkflowContextCurrent:
         mod = _import_module()
         ctx = mod.WorkflowContext.current(protocol="bgp")
         assert ctx is not None
-        assert ctx.workflow == "verify"
+        assert ctx.workflow == "workflow-verify"
         assert ctx.phase == "exec"
         assert not hasattr(ctx, "invocation_depth")
         assert not hasattr(ctx, "caller")
@@ -133,5 +133,5 @@ class TestWorkflowContextCurrent:
         mod = _import_module()
         ctx = mod.WorkflowContext.current(protocol="bgp")
         assert ctx is not None
-        assert ctx.workflow == "verify"
+        assert ctx.workflow == "workflow-verify"
         assert ctx.phase is None

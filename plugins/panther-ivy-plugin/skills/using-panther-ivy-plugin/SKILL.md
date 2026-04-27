@@ -14,7 +14,7 @@ user-invocable: false
 
 If you think there is even a 1% chance that a panther-ivy-plugin skill might apply to your task, you ABSOLUTELY MUST invoke it via the `Skill` tool. The `routing-rules.json` matchers are the precision layer; this rule is the catch-all backup for inputs the matchers miss.
 
-When no panther-ivy-plugin skill applies, default to `Skill(skill="panther-ivy-plugin:navigate")` — it is the routing hub and will choose the right workflow or none.
+When no panther-ivy-plugin skill applies, default to `Skill(skill="panther-ivy-plugin:workflow-navigate")` — it is the routing hub and will choose the right workflow or none.
 
 User instructions override skills; skills override default behavior. Iron laws override all three (see `.claude/rules/iron-laws.md`).
 

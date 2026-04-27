@@ -162,11 +162,11 @@ except: print('unknown')
 
     # Build suggestion by priority
     if [ -n "$BUILD_PROTO" ]; then
-        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] Build-state found for $BUILD_PROTO (phase: $BUILD_PHASE). Resume with Skill(skill=\"panther-ivy-plugin:build\"). Or invoke a different workflow if the user's intent differs."
+        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] Build-state found for $BUILD_PROTO (phase: $BUILD_PHASE). Resume with Skill(skill=\"panther-ivy-plugin:workflow-build\"). Or invoke a different workflow if the user's intent differs."
     elif [ -n "$RECENT_IVY" ]; then
-        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] Recent .ivy changes detected. Consider Skill(skill=\"panther-ivy-plugin:verify\") to validate changes, or match to the user's stated intent."
+        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] Recent .ivy changes detected. Consider Skill(skill=\"panther-ivy-plugin:workflow-verify\") to validate changes, or match to the user's stated intent."
     elif [ "$MCP_STATUS" != "ready" ]; then
-        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] MCP server not ready ($MCP_STATUS). If Ivy tools are needed, invoke Skill(skill=\"panther-ivy-plugin:triage\") first."
+        WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] MCP server not ready ($MCP_STATUS). If Ivy tools are needed, invoke Skill(skill=\"panther-ivy-plugin:workflow-triage\") first."
     else
         WORKFLOW_SUGGESTION="[WORKFLOW-SUGGESTION] Ivy workspace active. Available workflow skills: verify (test/debug), build (create/extend model), review (coverage/quality), triage (fix tools), navigate (guided routing). Invoke the one matching the user's intent."
     fi

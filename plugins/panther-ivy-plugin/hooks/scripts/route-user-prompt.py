@@ -196,7 +196,7 @@ def main() -> None:
     # idempotency mechanism — after Claude runs the gate and moves phase
     # forward, subsequent UserPromptSubmit turns will not re-emit the
     # directive.
-    if active_workflow_name == "build" and active and active.get("phase") == "blueprint-done":
+    if active_workflow_name == "workflow-build" and active and active.get("phase") == "blueprint-done":
         if protocol_dir:
             append_journal_event(
                 protocol_dir,
@@ -205,7 +205,7 @@ def main() -> None:
                     "gate": "g1",
                     "trigger": "route-user-prompt.py",
                 },
-                workflow="build",
+                workflow="workflow-build",
                 phase=active.get("phase"),
             )
         parts.append(

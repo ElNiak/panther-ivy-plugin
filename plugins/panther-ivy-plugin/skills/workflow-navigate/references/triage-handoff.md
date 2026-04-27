@@ -7,7 +7,7 @@ Cold-path content extracted from `navigate/SKILL.md` so the hub skill stays lean
 Confirm stack health before proceeding. Preflight is loaded inline as a skill call with `args="preflight"` — no state writes, no workflow dispatch:
 
 ```
-Skill(skill="panther-ivy-plugin:triage", args="preflight")
+Skill(skill="panther-ivy-plugin:workflow-triage", args="preflight")
 ```
 
 Triage's Phase 1 runs in preflight mode (read-only health checks), returns a pass/fail summary to navigate's current turn, and does not alter `active-workflow`. Navigate stays on `phase = "context-scan"` throughout.

@@ -60,7 +60,7 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
 
 ### Step 4: Update state
 
-Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="build", phase="quality-passed", protocol="<protocol>")`.
+Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="workflow-build", phase="quality-passed", protocol="<protocol>")`.
 
 ### Knowledge Gate: Post-Quality-Gate
 

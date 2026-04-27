@@ -20,7 +20,7 @@ gaps relative to the target RFC's MUST requirements, generator over-
 constraint that silently skips test cases, and the structural pathologies
 in ``*_test_*.ivy`` that matter most when a test spec is being written
 for the first time. The filter line below (``if ctx is None or
-ctx.workflow != "build": return``) is intentional scoping.
+ctx.workflow != "workflow-build": return``) is intentional scoping.
 
 Verify's Phase 7 fix loop and review's Phase 3 inline fixes, under the
 cluster 1 design, either stay small or dispatch back to ``build`` via
@@ -28,7 +28,7 @@ cluster 1 design, either stay small or dispatch back to ``build`` via
 re-engagement path — users write in ``build``, G3 fires.
 
 Users who want an adversarial audit of a test spec outside ``build``
-emit ``append_pending_dispatch(target_workflow="build",
+emit ``append_pending_dispatch(target_workflow="workflow-build",
 phase_hint="layer-check")`` and let navigate re-engage ``build``.
 """
 
@@ -98,7 +98,7 @@ def main() -> None:
     ctx = WorkflowContext.current()
     # G3 is build-only by design — see "Why build-only?" in the module
     # docstring for the rationale.
-    if ctx is None or ctx.workflow != "build":
+    if ctx is None or ctx.workflow != "workflow-build":
         return
 
     build_state = get_build_state_safe(ctx.protocol_dir) or {}
@@ -114,7 +114,7 @@ def main() -> None:
             "artifact": file_path,
             "methodology": methodology,
         },
-        workflow="build",
+        workflow="workflow-build",
         phase=ctx.phase,
     )
 

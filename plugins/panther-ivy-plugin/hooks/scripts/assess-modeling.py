@@ -37,7 +37,7 @@ rethink. Either way, any .ivy write that warrants G2 re-runs G2 naturally
 by re-entering ``build``.
 
 Users who want an adversarial audit outside build emit
-``append_pending_dispatch(target_workflow="build",
+``append_pending_dispatch(target_workflow="workflow-build",
 phase_hint="layer-check")`` from the current workflow and let navigate
 re-engage ``build``.
 """
@@ -129,7 +129,7 @@ def main() -> None:
     ctx = WorkflowContext.current()
     # G2 is build-only by design — see "Why build-only?" in the module
     # docstring for the rationale.
-    if ctx is None or ctx.workflow != "build":
+    if ctx is None or ctx.workflow != "workflow-build":
         return
 
     build_state = get_build_state_safe(ctx.protocol_dir) or {}
@@ -147,7 +147,7 @@ def main() -> None:
             "layer": layer_name,
             "methodology": methodology,
         },
-        workflow="build",
+        workflow="workflow-build",
         phase=ctx.phase,
     )
 

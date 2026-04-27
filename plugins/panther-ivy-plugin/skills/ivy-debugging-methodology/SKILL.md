@@ -96,4 +96,4 @@ load the `ivy-writing-guide` skill and read `references/serializer-patterns.md`.
 - **`ivy-toolkit`** — MCP tool inventory consulted in Step 4.
 
 **References:**
-- `references/debugging-environment.md` — Self-evaluation protocol (anti-pattern checklist), debug environment variables, LSP indexing awareness. For the full 9-step health-check runbook (log paths, common failures, process liveness), dispatch the triage skill via `Skill(skill="panther-ivy-plugin:triage")`.
+- `references/debugging-environment.md` — Self-evaluation protocol (anti-pattern checklist), debug environment variables, LSP indexing awareness. For the full 9-step health-check runbook (log paths, common failures, process liveness), dispatch the triage skill via `Skill(skill="panther-ivy-plugin:workflow-triage")`.

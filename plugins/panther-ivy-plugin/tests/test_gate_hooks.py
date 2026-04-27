@@ -107,7 +107,7 @@ def _read_journal(path: str) -> "list[dict[str, Any]]":
 
 def test_g2_emits_on_layer_edit_during_build():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="build", phase="write")
+        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="write")
         out = _run(
             ASSESS_MODELING,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["layer_file"]}},
@@ -123,7 +123,7 @@ def test_g2_emits_on_layer_edit_during_build():
 
 def test_g2_silent_on_test_spec_edit():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="build", phase="write")
+        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="write")
         out = _run(
             ASSESS_MODELING,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["test_file"]}},
@@ -150,7 +150,7 @@ def test_g2_silent_when_no_workflow():
 
 def test_g3_emits_on_test_spec_edit_during_build():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="build", phase="write")
+        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="write")
         out = _run(
             ASSESS_TESTSPEC,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["test_file"]}},
@@ -166,7 +166,7 @@ def test_g3_emits_on_test_spec_edit_during_build():
 
 def test_g3_silent_on_layer_edit():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="build", phase="write")
+        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="write")
         out = _run(
             ASSESS_TESTSPEC,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["layer_file"]}},
@@ -179,7 +179,7 @@ def test_g3_silent_on_layer_edit():
 
 def test_g5_emits_on_iut_test_completion():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="verify", phase="iut-pass")
+        ws = _make_workspace(tmpdir, workflow="workflow-verify", phase="iut-pass")
         tool_result = {
             "output_dir": str(Path(tmpdir) / "outputs" / "run-001"),
             "logs_path": str(Path(tmpdir) / "outputs" / "run-001" / "logs"),
@@ -219,7 +219,7 @@ def test_g5_silent_on_other_tools():
 
 def test_g1_emits_at_blueprint_done_phase():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="build", phase="blueprint-done")
+        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="blueprint-done")
         out = _run(
             ROUTE_USER_PROMPT,
             {"prompt": "what's next?"},
@@ -234,7 +234,7 @@ def test_g1_emits_at_blueprint_done_phase():
 
 def test_g1_silent_at_other_build_phases():
     with tempfile.TemporaryDirectory() as tmpdir:
-        _make_workspace(tmpdir, workflow="build", phase="write")
+        _make_workspace(tmpdir, workflow="workflow-build", phase="write")
         out = _run(
             ROUTE_USER_PROMPT,
             {"prompt": "continue building"},
@@ -251,7 +251,7 @@ def test_g1_silent_at_other_build_phases():
 
 def test_g4_emits_on_ivy_verify_completion_during_workflow():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="verify", phase="executed")
+        ws = _make_workspace(tmpdir, workflow="workflow-verify", phase="executed")
         out = _run(
             RECORD_WORKFLOW_ERROR,
             {"tool_name": "ivy_verify",
@@ -281,7 +281,7 @@ def test_g4_silent_when_no_workflow():
 
 def test_g4_silent_on_other_tools():
     with tempfile.TemporaryDirectory() as tmpdir:
-        _make_workspace(tmpdir, workflow="verify", phase="compiled")
+        _make_workspace(tmpdir, workflow="workflow-verify", phase="compiled")
         out = _run(
             RECORD_WORKFLOW_ERROR,
             {"tool_name": "ivy_compile",
