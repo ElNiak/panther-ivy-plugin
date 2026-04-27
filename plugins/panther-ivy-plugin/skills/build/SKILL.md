@@ -1,6 +1,6 @@
 ---
 name: build
-description: "Build protocol specification layers from RFC. Use when starting a new spec, scaffolding an Ivy layer, or resuming an in-progress build."
+description: "You MUST use this when starting a new Ivy spec, scaffolding a layer, or resuming an in-progress build. Builds protocol specification layers from RFC, methodology-aware (NCT/NACT/NSCT)."
 ---
 
 <role>
@@ -12,6 +12,8 @@ quality and coverage audits, and MPE Explore agents at Phase 1 for
 architectural-approach exploration. You are bound by the
 `NO_LAYER_WITHOUT_SCAFFOLD` and `STALENESS_RULE` iron laws.
 </role>
+
+**Type:** rigid — follow exactly, do not adapt away discipline.
 
 ## Phase 0 — Plan-mode option framings
 
@@ -25,6 +27,16 @@ Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that r
 ## Iron Laws
 
 This skill is bound by <iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="build" enforcement="ivy_diagnostics precondition in Phase 3"/> and <iron-law name="STALENESS_RULE" workflow="build" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "Layer compiles cleanly, structural check is overkill" | `NO_LAYER_WITHOUT_SCAFFOLD` binds `ivy_diagnostics(mode=structural)` on the predecessor layer before any Write/Edit on layer N. Compile success is necessary but not sufficient. |
+| "I can guess which layers from the 14-template" | The methodology branch (NCT / NACT / NSCT) selects layer order. Load `specification-patterns` and `methodology-reference` rather than guessing. |
+| "G1 ABSTAIN means proceed cautiously" | `ABSTAIN` is not a synonym for `SOUND`. Resolve the evidence gap or escalate to Opus tier; do not enter Phase 3 on ABSTAIN. |
+| "I'll fix the [GAP] marker later, layer N+1 first" | Resolve every open `[GAP: #NN]` marker across the current Phase 3 lifecycle BEFORE starting the next layer. Each marker is fixed in place or promoted to `// DEFERRED YYYY-MM-DD`. |
+| "The RFC quote feels right from memory" | Always Read the RFC source via the `spec-analyst` agent or the `methodology-reference` skill. Never paraphrase or quote normative text from memory. |
 
 ## Step Tracking
 
@@ -128,15 +140,7 @@ Wait for explicit confirmation.
 
 ### Multi-Perspective Exploration — Architectural Approach
 
-After the user confirms the scope, load the `reflection-patterns` skill. Apply **Pattern B (Multi-Perspective Exploration)**:
-
-- **Exploration question:** "What architectural approach should we use for this [protocol] model?"
-- **Agents:**
-  - **Conservative Architect** (Explore): Propose a comprehensive model covering all RFC MUST requirements with full invariant coverage. Prioritize correctness over speed.
-  - **Pragmatic Engineer** (Explore): Propose a minimal viable model — only the layers needed for the first end-to-end test. Build incrementally.
-  - **Adversarial Auditor** (Explore): Propose a security-focused model prioritizing attack surface coverage (NACT-relevant layers, edge cases, error paths).
-
-The user's choice shapes the blueprint in Phase 2.
+Three-agent MPE (Conservative Architect / Pragmatic Engineer / Adversarial Auditor) on "What architectural approach for this protocol?". The user's choice shapes the Phase 2 blueprint. Full template with per-agent framings: `references/mpe-architectural-approach.md`.
 
 ### Step 3: Update state
 
@@ -210,6 +214,14 @@ After the phase is set to `"blueprint-done"`, the G1 exploration gate fires (eit
 
 ## Phase 3 — Write
 
+<HARD-GATE>
+Do NOT proceed if G1 verdict is not SOUND. NO_LAYER_WITHOUT_SCAFFOLD binds:
+ivy_diagnostics(mode=structural) MUST be SOUND on the predecessor layer
+before Write/Edit on layer N. On UNSOUND, fix or DEFERRED-promote every
+[GAP: #NN] marker first; on ABSTAIN, gather evidence or escalate Opus
+tier — do not enter Phase 3 on either.
+</HARD-GATE>
+
 Load `references/layer-scaffolding.md` for the full per-layer scaffolding procedure, compile-attempt cap, and post-edit workspace-block recovery menu. Summary of the scaffolding loop:
 
 1. Load `ivy-writing-guide` skill.
@@ -218,7 +230,7 @@ Load `references/layer-scaffolding.md` for the full per-layer scaffolding proced
 4. On compile success: update `build-state.yaml` layer status.
 5. Reflection Gate every 3 layers.
 6. Handle type propagation via `propagation-patterns` skill if needed.
-7. Knowledge Gate on completion of all layers.
+7. **Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
 
 ### Post-Edit Workspace-Block Recovery
 
@@ -226,11 +238,7 @@ For the workspace-block recovery menu, see `references/layer-scaffolding.md` (Po
 
 ### G2 / G3 Gates Fire Per-File
 
-After each `Write`/`Edit` on a `.ivy` file, a PostToolUse hook spawns critics from the `reflection-patterns` skill:
-- `*.ivy` (non-test): G2 modeling critics (catalog slice `#200-249` + `#250-299` + NSCT `#260-289`).
-- `*_test_*.ivy`: G3 test-spec critics (catalog slice `#200-208` + `#256-259` + `#300-399`).
-
-On `VERDICT_UNSOUND`, the orchestrator writes `[GAP: #NN <reason>]` markers inline at the cited locations. Before starting the next layer, resolve every `[GAP:]` marker open across the current Phase 3 lifecycle — not just markers from the most recent write. Each marker is either fixed in place or deliberately promoted to `// DEFERRED YYYY-MM-DD: …` per `.claude/rules/gap-markers.md`. On `VERDICT_ABSTAIN`, the verdict lands silently in the workflow journal; read it at the next Reflection Gate.
+After each `Write`/`Edit` on a `.ivy` file the PostToolUse hook spawns G2 (model) or G3 (test-spec) critics. UNSOUND verdicts emit `[GAP: #NN]` markers; resolve every open marker before starting the next layer per `.claude/rules/gap-markers.md`. Full critic-slice mapping and ABSTAIN handling: `references/phase-5-quality-gate.md`.
 
 ---
 
@@ -257,67 +265,11 @@ Build's Phase 5 reads the most recent `gate_verdict` (G4, G5) and `progress` jou
 
 ## Phase 5 — Quality Gate
 
-### Step 1: Dispatch review agents in parallel
+Step 1: Dispatch `model-reviewer` and `traceability-agent` in parallel via two `Agent` calls in one message. Step 2: Aggregate findings by ERROR/WARNING/INFO severity per `.claude/rules/ivy-formatting.md`. Step 3: On ERROR findings, ask user fix-now-or-accept (gate checkpoint); loop to Phase 3 for structural fixes, Phase 4 for verification, or fix coverage gaps inline. Step 4: Update phase to `"quality-passed"` via `ivy_workflow_state`.
 
-Dispatch both agents in a single message using two Agent tool calls:
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
 
-<dispatch target="model-reviewer" via="agent" phase="5"
-          reason="Phase 5 quality audit — structural correctness, type safety, invariant completeness, action well-formedness, initialization, organization"/>
-
-<dispatch target="traceability-agent" via="agent" phase="5"
-          reason="Phase 5 coverage audit — RFC coverage check against the blueprint's target RFC(s)"/>
-
-Sequencing: the `Agent(...)` calls go in a single message so the two
-agents run in parallel. Classify their combined findings per Step 2.
-
-### Step 2: Aggregate findings
-
-Collect findings from both agents. Classify by severity per
-`.claude/rules/ivy-formatting.md` Severity Systems ("Finding severity"):
-<severity class="finding" value="ERROR"/> /
-<severity class="finding" value="WARNING"/> /
-<severity class="finding" value="INFO"/>.
-
-### Gate checkpoint on ERROR findings
-
-<checkpoint type="gate" id="phase-5-error-findings">
-If any <severity class="finding" value="ERROR"/> findings are produced,
-present them to the user: "These ERRORs were found: [list]. Fix them now?
-Or accept and move on?" Wait for explicit confirmation.
-</checkpoint>
-
-### Step 3: Handle fixes
-
-If the user wants fixes:
-
-- For structural issues (type safety, invariants, initialization): loop back to Phase 3 to fix the affected layers.
-- For verification issues (failed properties, counterexamples): loop back to Phase 4 to re-verify.
-- For coverage gaps: add missing monitors inline, then re-run the traceability check.
-
-### Situation Briefing — Quality Gate Results
-
-Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
-
-- **What happened:** Summarize the quality gate results: how many findings by severity (critical/important/suggestion), which agents found what, overall model health.
-- **What it means:** Are ERROR-severity findings blocking? Is coverage sufficient for the target methodology?
-- **Options:**
-  - "Fix ERROR findings now" (if any exist)
-  - "Proceed to wrap-up — accept current quality level"
-  - "Run full verification before wrapping up"
-  - "Review coverage gaps in detail"
-
-### Step 4: Update state
-
-Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="build", phase="quality-passed", protocol="<protocol>")`.
-
-### Knowledge Gate: Post-Quality-Gate
-
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
-- Reflect on architecture decisions solidified during quality review
-- Capture model-reviewer and traceability-agent findings worth remembering
-- Save session log (observability events + digest)
-- If candidates found, classify and present for user confirmation
-- Resume workflow after gate completes
+Full procedure including dispatch payloads, gate-checkpoint phrasing, and the Situation Briefing template: `references/phase-5-quality-gate.md`.
 
 ---
 

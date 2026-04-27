@@ -1,6 +1,6 @@
 ---
 name: verify
-description: "Run the verify-compile-IUT cycle on an Ivy spec with failure diagnosis. Use when the user says 'check my spec', 'verify this', 'test the handshake', or hits 'counterexample found'/'invariant violated'/'compilation error'."
+description: "You MUST use this when the user says 'check my spec', 'verify this', 'test the handshake', or hits 'counterexample found' / 'invariant violated' / 'compilation error'. Runs the verify-compile-IUT cycle on an Ivy spec with failure diagnosis."
 ---
 
 <role>
@@ -11,6 +11,8 @@ counterexample diagnosis and MPE Explore agents at Phase 6 for
 Multi-Perspective Diagnosis. You are bound by the
 `NO_FIX_WITHOUT_VERIFY` and `STALENESS_RULE` iron laws.
 </role>
+
+**Type:** rigid — follow exactly, do not adapt away discipline.
 
 ## Phase 0 — Plan-mode option framings
 
@@ -24,6 +26,16 @@ Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that r
 ## Iron Laws
 
 This skill is bound by <iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="verify" enforcement="hooks/scripts/block-direct-ivy.sh + workflow self-discipline"/> and <iron-law name="STALENESS_RULE" workflow="verify" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1, Read `.claude/rules/iron-laws.md` for the canonical wording.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "ivy_verify returned SOUND, we're done" | G4 critic verdict required before any claim. SOUND alone is necessary but not sufficient — whitelisted `assume`, trusted-isolate leak, or solver-wall-timeout masquerade can produce false SOUND. |
+| "The IUT trace matches the Ivy log, skip pcap" | Ivy log events do not guarantee wire transmission. Always cross-validate via pcap (G5 catalog `#501`). |
+| "This counterexample is a model bug, not the IUT" | Distinguish IUT bug vs. model bug via G5 trace gate (`#505`). Do not classify without the gate. |
+| "ABSTAIN means proceed cautiously" | ABSTAIN is inconclusive. Proceed to Phase 6 Diagnose using `abstain_reason` as the starting hypothesis; do NOT treat the upstream `ivy_verify` result as authoritative. |
+| "I can fix the failure without re-verifying" | `NO_FIX_WITHOUT_VERIFY`: every fix loops back through Phase 3 (compile) and Phase 4 (verify). No claim of resolution without fresh tool output. |
 
 ## Step Tracking
 
@@ -179,6 +191,14 @@ Move to Phase 4. Update phase to `"compiled"` via `ivy_workflow_state(action="se
 
 ## Phase 4 — Execute
 
+<HARD-GATE>
+Do NOT proceed to ivy_verify if Phase 3 (Compile) did not return success
+on the target file. Do NOT skip the G4 verification gate after ivy_verify
+returns — the gate dispatch is what catches false SOUND. Do NOT claim
+verification complete until the gate emits SOUND (or UNSOUND has been
+resolved via [GAP: #NN] fix-or-DEFERRED-promotion).
+</HARD-GATE>
+
 Run the compiled test:
 
 ```
@@ -187,15 +207,7 @@ ivy_verify(relative_path=<test_file>)
 
 ### G4 Verification Gate Fires After `ivy_verify` Returns
 
-Regardless of `ivy_verify` pass/fail, a PostToolUse hook spawns G4 critics from `reflection-patterns` with catalog slice `#200-249` + `#250-299` + `#400-499`. Critics audit whether the reported status reflects genuine soundness (whitelisted errors #403, unsound `assume` #401, trusted-isolate leaks #402/#207, solver-wall-timeout masquerade #404).
-
-Gate verdict handling:
-
-- **SOUND** → treat `ivy_verify` result as authoritative; advance.
-- **UNSOUND** → orchestrator writes `[GAP: #NN]` markers at cited sites; must be fixed-and-re-verified or promoted to `// DEFERRED YYYY-MM-DD:` before the workflow treats the verification as conclusive.
-- **ABSTAIN** → inconclusive. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not accept the upstream `ivy_verify` result.
-
-Discipline contracts, verbatim prompts, catalog slices: `references/failure-diagnosis.md` section "G4 Verification Gate".
+PostToolUse hook spawns G4 critics from `reflection-patterns` (catalog slices `#200-249`, `#250-299`, `#400-499`). Verdict actions: SOUND advances; UNSOUND writes `[GAP: #NN]` markers and blocks until fixed-and-re-verified or promoted to `// DEFERRED YYYY-MM-DD:`; ABSTAIN proceeds to Phase 6 with `abstain_reason` as starting hypothesis. Full discipline contracts, verbatim critic prompts, and catalog details: `references/failure-diagnosis.md` section "G4 Verification Gate".
 
 ### On PASS
 
@@ -226,11 +238,7 @@ After Phase 4 completes (pass or fail), load the `reflection-patterns` skill. Ap
 
 ### Knowledge Gate: Post-Execution
 
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
-- Reflect on verification outcome — what patterns led to pass or fail?
-- Save session log (observability events + digest)
-- If candidates found, classify and present for user confirmation
-- Resume workflow after gate completes
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
 
 ### On FAIL
 
@@ -312,37 +320,9 @@ Short form for this skill: if a Phase 7 fix raises structural concerns the count
 
 ### Post-Edit workspace-block recovery
 
-After every `Write` / `Edit` on a `.ivy` file during Phase 7 (fix application), inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. The hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file) when the target `.ivy` is outside the active workspace.
+If a Phase 7 `Edit` on a `.ivy` file is blocked by the `check-workspace-scope.py` PreToolUse hook, append a `progress` journal entry (`{kind: "workspace_edit_blocked"}`) and present `AskUserQuestion` with three options: switch workspace, clear workspace restrictions, or abandon the edit. Full journal payload, AskUserQuestion phrasing, and the platform-limitation note: `references/workspace-block-recovery.md`.
 
-If the Edit was blocked:
-
-1. Append a structured `progress` journal entry:
-   ```
-   ivy_workflow_state(
-     action="append_journal",
-     protocol="<protocol>",
-     event_type="progress",
-     state='{"kind": "workspace_edit_blocked", "file": "<path>", "workspace_active": "<current>"}'
-   )
-   ```
-2. Present `AskUserQuestion` with three options (per `.claude/rules/mcp-tool-reliability.md`'s escalation pattern):
-   - **Switch workspace to the file's protocol** — run `/set-workspace <inferred-protocol>` (infer from the file's path relative to `protocol-testing/`), then retry the Edit.
-   - **Clear workspace restrictions** — run `/clear-workspace`, then retry the Edit.
-   - **Abandon this edit** — skip the edit; the fix loop continues with the change unapplied. Record a `decision` entry:
-     ```
-     decision{summary: "Edit skipped: workspace-blocked", context: "<file> outside <workspace>"}
-     ```
-
-If the harness does not surface workspace-scope-violation errors in the tool-result (platform limitation), this recovery path never fires — the Edit silently succeeds or silently fails at the filesystem layer. That case is a platform-level deficiency tracked as an upstream issue; the SKILL.md body's recovery pattern remains correct for when the signal does reach user-space.
-
-Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures. Summary:
-
-1. Load `ivy-debugging-methodology` first — its six mandatory pre-fix research steps must complete before any fix is proposed (G4 pattern `#405` fires otherwise)
-2. Load `counterexample-guide` for trace interpretation if a counterexample is present
-3. Multi-Perspective Diagnosis (dispatch spec-analyst + 2 Explore agents)
-4. Classify failure: invariant violation, type error, structural issue, or abstention from the upstream gate
-5. Present diagnosis and ask user: fix or manual?
-6. If fix accepted: apply, re-verify (loop back to Phase 3), knowledge gate on completion
+Full Phase 6/7 procedure (six pre-fix research steps from `ivy-debugging-methodology` → counterexample-guide trace interpretation if present → MPE diagnosis dispatching `spec-analyst` + 2 Explore agents → classify failure → user fix-or-manual gate → apply-and-re-verify → knowledge gate): `references/failure-diagnosis.md`.
 
 ### Iteration cap
 

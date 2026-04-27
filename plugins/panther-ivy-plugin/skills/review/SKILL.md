@@ -1,6 +1,6 @@
 ---
 name: review
-description: "Audit Ivy model for RFC coverage, requirement traceability, and quality. Use when checking 'what MUSTs am I missing?', 'RFC coverage?', 'traceability gap?', or 'review my model'."
+description: "You MUST use this when checking 'what MUSTs am I missing?', 'RFC coverage?', 'traceability gap?', or 'review my model'. Audits an Ivy model for RFC coverage, requirement traceability, and structural quality."
 ---
 
 <role>
@@ -12,6 +12,8 @@ and `model-reviewer` + `spec-analyst` + an adversarial `Explore` agent
 on the Quality path. You are bound by the `NO_QUALITY_WITHOUT_COVERAGE`
 and `STALENESS_RULE` iron laws.
 </role>
+
+**Type:** rigid — follow exactly, do not adapt away discipline.
 
 ## Phase 0 — Plan-mode option framings
 
@@ -25,6 +27,16 @@ Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that r
 ## Iron Laws
 
 This skill is bound by <iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="review" enforcement="ivy_coverage / ivy_quality citation at verdict emission"/> and <iron-law name="STALENESS_RULE" workflow="review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1 (Triage), Read `.claude/rules/iron-laws.md` for the canonical wording.
+
+## Red Flags
+
+| Thought | Reality |
+|---|---|
+| "Coverage looks good, skip the citation" | `NO_QUALITY_WITHOUT_COVERAGE`: every verdict MUST cite a fresh `ivy_coverage` / `ivy_quality` tool output. Personal heuristic is not a substitute. |
+| "Findings are obvious, skip the agents" | `model-reviewer` / `traceability-agent` / `spec-analyst` dispatch is the calibrated source. Skipping bypasses the asymmetric-vote discipline and dual-context isolation. |
+| "RFC requirements feel covered" | Open the manifest. Read bracket-tag annotations (`[rfcNNNN:X.Y]`). Do not assert coverage without measurement. |
+| "Just inline-fix the structural issues here" | Review is for audit, not construction. Structural fixes belong in `build` via `pending_dispatch(target_workflow="build", phase_hint="layer-check")`. G2/G3 are build-time gates and will not fire on review-inline edits. |
+| "WARNING/INFO findings can be ignored" | They surface in the `claim-discussion` lifecycle. Mark them `// DEFERRED YYYY-MM-DD: <reason>`, do not silently skip. |
 
 ## Step Tracking
 
@@ -52,6 +64,34 @@ TaskCreate(subject="Run Completion Verification Gate", activeForm="Running compl
 ```
 
 Do not skip marking tasks as `completed`.
+
+## Process Flow
+
+```dot
+digraph review_flow {
+  start [shape=doublecircle];
+  preflight [shape=box];
+  classify [shape=diamond];
+  coverage [shape=box];
+  quality [shape=box];
+  both [shape=box];
+  findings [shape=box];
+  errors [shape=diamond];
+  fix [shape=box];
+  done [shape=doublecircle];
+  start -> preflight -> classify;
+  classify -> coverage [label="Coverage"];
+  classify -> quality [label="Quality"];
+  classify -> both [label="Both"];
+  coverage -> findings;
+  quality -> findings;
+  both -> findings;
+  findings -> errors;
+  errors -> fix [label="ERROR + user fixes"];
+  errors -> done [label="accept / DEFERRED"];
+  fix -> findings;
+}
+```
 
 # Review Workflow
 
@@ -181,16 +221,18 @@ Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="rev
 
 ### Knowledge Gate: Post-Agent-Execution
 
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
-- Reflect on cross-model patterns identified by model-reviewer and traceability-agent
-- Capture any recurring quality findings worth remembering
-- Save session log (observability events + digest)
-- If candidates found, classify and present for user confirmation
-- Resume workflow after gate completes
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
 
 ---
 
 ## Phase 3 — Findings
+
+<HARD-GATE>
+Do NOT emit a finding-severity verdict without a fresh ivy_coverage /
+ivy_quality citation per NO_QUALITY_WITHOUT_COVERAGE. Do NOT mark a
+WARNING / INFO finding silently resolved — every finding either gets
+fixed (with re-run citation) or DEFERRED-promoted with date + reason.
+</HARD-GATE>
 
 ### Step 1: Present findings
 
@@ -249,12 +291,7 @@ Proceed to completion.
 
 ### Knowledge Gate: Post-Findings-Resolution
 
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
-- Reflect on workflow refinements from the resolution process
-- Capture fix strategies that worked or didn't work
-- Save session log (observability events + digest)
-- If candidates found, classify and present for user confirmation
-- Resume workflow after gate completes
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
 
 ---
 
