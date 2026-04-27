@@ -13,13 +13,18 @@ architectural-approach exploration. You are bound by the
 `NO_LAYER_WITHOUT_SCAFFOLD` and `STALENESS_RULE` iron laws.
 </role>
 
-## Phase 0 — Plan-mode preamble
+## Phase 0 — Plan-mode option framings
 
-If the session is in plan mode, follow the 5-step authoring procedure in `.claude/rules/plan-mode.md`. Build-specific `AskUserQuestion` option framings for Step 2 (situation briefing): "draft a plan for the new layer we need", "draft a plan to restructure the blueprint", "clarify the modeling scope before writing", "learn the 14-layer template first".
+Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that rule activates for this skill. `AskUserQuestion` options:
+
+- "draft a plan for the new layer we need"
+- "draft a plan to restructure the blueprint"
+- "clarify the modeling scope before writing"
+- "learn the 14-layer template first"
 
 ## Iron Laws
 
-This skill is bound by <iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="build" enforcement="ivy_diagnostics precondition in Phase 3"/> and <iron-law name="STALENESS_RULE" workflow="build" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording, the explicit "Out of scope" carve-outs (patches to existing layers, files outside `{prot}_stack/`, drafts outside discovery path), and the plan-mode exemption clause. Summary for this skill: ground each net-new layer file in a passing `ivy_diagnostics(mode="structural")` for the prior layer; treat any tool result older than the most recent edit to a file in the include closure as stale.
+This skill is bound by <iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="build" enforcement="ivy_diagnostics precondition in Phase 3"/> and <iron-law name="STALENESS_RULE" workflow="build" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording, the explicit "Out of scope" carve-outs (patches to existing layers, files outside `{prot}_stack/`, drafts outside discovery path), and the plan-mode exemption clause.
 
 ## Step Tracking
 
@@ -205,11 +210,11 @@ After the phase is set to `"blueprint-done"`, the G1 exploration gate fires (eit
 
 ## Phase 3 — Write
 
-Load `references/layer-scaffolding.md` for the full per-layer scaffolding procedure — including the compile-attempt cap (journal-counted, 5-per-layer cumulative across sessions, soft-reset via `override_attempt_cap` decision) and the post-edit workspace-block recovery menu. Summary of the scaffolding loop:
+Load `references/layer-scaffolding.md` for the full per-layer scaffolding procedure, the compile-attempt cap (journal-counted, 5-per-layer cumulative, soft-reset via `override_attempt_cap`), and the post-edit workspace-block recovery menu. Summary of the scaffolding loop:
 
 1. Load `ivy-writing-guide` skill.
 2. Write ONE layer at a time in dependency order; run `ivy_compile` after each.
-3. On compile error: dispatch `spec-analyst`, fix inline, recompile. The attempt-counter gate applies before each compile (see the reference for the 5-per-layer protocol, the journal-key canonicalization rule, and the three-option escalation menu — Continue anyway / Abandon this layer / Switch workflow).
+3. On compile error: dispatch `spec-analyst`, fix inline, recompile. The attempt-counter gate applies before each compile — see `references/layer-scaffolding.md` for the protocol and escalation menu.
 4. On compile success: update `build-state.yaml` layer status.
 5. Reflection Gate every 3 layers.
 6. Handle type propagation via `propagation-patterns` skill if needed.
@@ -217,7 +222,7 @@ Load `references/layer-scaffolding.md` for the full per-layer scaffolding proced
 
 ### Post-Edit Workspace-Block Recovery
 
-If a `Write`/`Edit` on a `.ivy` file is blocked by the `check-workspace-scope.py` PreToolUse hook (workspace-scope violation), follow the three-option recovery menu — switch workspace / clear workspace / abandon this layer — detailed in `references/layer-scaffolding.md` under "Post-Edit Workspace-Block Recovery". Each option updates `build-state.yaml.layers` or the journal as specified there. This path only fires when the harness propagates hook-block signals into the tool-result.
+If a `Write`/`Edit` on a `.ivy` file is blocked by the `check-workspace-scope.py` PreToolUse hook, follow the three-option recovery menu in `references/layer-scaffolding.md` under "Post-Edit Workspace-Block Recovery". This path only fires when the harness propagates hook-block signals into the tool-result.
 
 ### G2 / G3 Gates Fire Per-File
 

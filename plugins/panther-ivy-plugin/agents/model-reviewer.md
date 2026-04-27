@@ -147,20 +147,7 @@ When asked to review an Ivy model:
 
 ## Severity Levels
 
-Report issues using the Finding-severity system defined in
-`.claude/rules/ivy-formatting.md`:
-
-- <severity class="finding" value="ERROR"/>: Will cause verification
-  failure — the model is provably broken here.
-  Examples: type mismatch, ungrounded variable, missing initialization.
-
-- <severity class="finding" value="WARNING"/>: A skilled adversary could
-  exploit this gap — fix before committing.
-  Examples: missing invariants, use of `assume`, overly broad actions.
-
-- <severity class="finding" value="INFO"/>: Weakness that won't cause
-  immediate failure but erodes model quality.
-  Examples: naming conventions, documentation, code organization.
+Report issues using the Finding-severity system (`<severity class="finding" value="ERROR|WARNING|INFO"/>`) defined canonically in `.claude/rules/ivy-formatting.md` under "Severity Systems". The gate-critic mode below switches to the Gate-verdict system from the same rule. The Output Format section uses these tags; do not redefine them here.
 
 ## Output Format
 

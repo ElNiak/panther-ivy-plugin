@@ -1,6 +1,6 @@
 ---
 name: navigate
-description: "Primary routing hub for Ivy protocol work. Invoked at session start, after every workflow completes, and whenever the user's next step is ambiguous — picks between build, verify, review, triage."
+description: "Routing hub that picks the next Ivy workflow (build, verify, review, triage). Use when the next step is ambiguous or a prior workflow just completed. Not for authoring specs, diagnosing failures, or running tests directly."
 ---
 
 <role>

@@ -10,10 +10,7 @@ Use this skill when propagating an Ivy type change to serializer/deserializer st
 
 ## Authority Rule
 
-The `ivy_propagation(mode="impact", ...)` tool output is the **single source of truth** for which files to edit. This skill does not independently classify files. Follow these rules:
-- Only edit files listed in `auto_propagate`. Never edit `manual_review` or `unaffected` files.
-- For each `manual_review` file, present its `reason` string to the user.
-- For hardcoded constants found during editing, always warn the user even if the file is in `auto_propagate`.
+The `ivy_propagation(mode="impact", ...)` tool output is the **single source of truth** for which files to edit; see `.claude/rules/propagation-authority.md` for the full rule set. This skill does not independently classify files.
 
 ## Ivy Type-to-C++ Encoding Table
 

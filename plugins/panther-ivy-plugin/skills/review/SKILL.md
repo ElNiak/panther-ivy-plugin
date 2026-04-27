@@ -13,13 +13,18 @@ on the Quality path. You are bound by the `NO_QUALITY_WITHOUT_COVERAGE`
 and `STALENESS_RULE` iron laws.
 </role>
 
-## Phase 0 — Plan-mode preamble
+## Phase 0 — Plan-mode option framings
 
-If the session is in plan mode, follow the 5-step authoring procedure in `.claude/rules/plan-mode.md`. Review-specific `AskUserQuestion` option framings for Step 2 (situation briefing): "draft a plan to close specific RFC coverage gaps", "draft a plan to refactor the model quality issues we found", "clarify the review scope before writing", "learn the coverage/traceability conventions first".
+Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that rule activates for this skill. `AskUserQuestion` options:
+
+- "draft a plan to close specific RFC coverage gaps"
+- "draft a plan to refactor the model quality issues we found"
+- "clarify the review scope before writing"
+- "learn the coverage/traceability conventions first"
 
 ## Iron Laws
 
-This skill is bound by <iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="review" enforcement="ivy_coverage / ivy_quality citation at verdict emission"/> and <iron-law name="STALENESS_RULE" workflow="review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1 (Triage), Read `.claude/rules/iron-laws.md` for the canonical wording and the explicit non-targets (style/naming feedback, readability comments, design alternatives are allowed without tool citations — they are not "quality verdicts"). Summary for this skill: before stating a formal coverage or quality verdict, cite `ivy_coverage` and/or `ivy_quality` output from the current turn inline.
+This skill is bound by <iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="review" enforcement="ivy_coverage / ivy_quality citation at verdict emission"/> and <iron-law name="STALENESS_RULE" workflow="review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1 (Triage), Read `.claude/rules/iron-laws.md` for the canonical wording and the explicit non-targets (style/naming feedback, readability comments, design alternatives are allowed without tool citations — they are not "quality verdicts").
 
 ## Step Tracking
 

@@ -6,10 +6,11 @@ user-invocable: false
 
 # Ivy Error Patterns & Verifier Catalog
 
-This skill owns two related reference files:
+This skill owns three related reference files:
 
 - **`references/verifier_patterns.md`** — the numbered, append-only catalog cited by adversarial quality gates G1–G5. Each entry carries a sparse ID preserving source provenance, a trigger condition, a check procedure, a source citation, and a methodology tag (`NCT` | `NACT` | `NSCT` | `Ivy` | `Plugin-Memory`).
-- **`references/error-table.md`** — the legacy 12-entry quick-lookup table for cryptic Ivy error messages, kept for fast-path debugging.
+- **`references/error-table.md`** — the legacy quick-lookup table for cryptic Ivy error messages, kept for fast-path debugging.
+- **`references/generator-patterns.md`** — pattern guide for Ivy test-traffic generators; anti-patterns (timer competition, two-step message construction, missing handle exports, over-constrained guards) and the correct patterns (auto-send, handle exports).
 
 ## How to Use
 

@@ -12,13 +12,18 @@ Multi-Perspective Diagnosis. You are bound by the
 `NO_FIX_WITHOUT_VERIFY` and `STALENESS_RULE` iron laws.
 </role>
 
-## Phase 0 — Plan-mode preamble
+## Phase 0 — Plan-mode option framings
 
-If the session is in plan mode, follow the 5-step authoring procedure in `.claude/rules/plan-mode.md`. Verify-specific `AskUserQuestion` option framings for Step 2 (situation briefing): "Draft a plan for the verify failure we hit", "Draft a plan to restructure the verification approach", "Clarify the verification scope before writing", "Learn the Ivy verification model first".
+Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that rule activates for this skill. `AskUserQuestion` options:
+
+- "Draft a plan for the verify failure we hit"
+- "Draft a plan to restructure the verification approach"
+- "Clarify the verification scope before writing"
+- "Learn the Ivy verification model first"
 
 ## Iron Laws
 
-This skill is bound by <iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="verify" enforcement="hooks/scripts/block-direct-ivy.sh + workflow self-discipline"/> and <iron-law name="STALENESS_RULE" workflow="verify" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1, Read `.claude/rules/iron-laws.md` for the canonical wording and the four allowed-without-prior-verify carve-outs (debugging-methodology research, hypothesis generation, diagnostic exploration, comment-only edits). Summary for this skill: before proposing a concrete code-edit fix, ground it in either `ivy_verify` (end-of-phase) or `ivy_compile` + IUT (dev iteration loop) from the current turn, and cite which check ran.
+This skill is bound by <iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="verify" enforcement="hooks/scripts/block-direct-ivy.sh + workflow self-discipline"/> and <iron-law name="STALENESS_RULE" workflow="verify" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before exiting Phase 0 (Plan-mode preamble) and entering Phase 1, Read `.claude/rules/iron-laws.md` for the canonical wording and the four allowed-without-prior-verify carve-outs (debugging-methodology research, hypothesis generation, diagnostic exploration, comment-only edits).
 
 ## Step Tracking
 
@@ -341,9 +346,7 @@ Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures
 
 ### Iteration cap
 
-The fix-and-re-verify loop is bounded by a journal-counted cap of **5 per test file, cumulative across sessions, soft-reset via an `override_attempt_cap` decision**. Before each fix iteration: compute the attempt key (the `<test_file>` path relative to the protocol directory — canonicalization is load-bearing), read the journal (`last_n=200`), count `progress{kind: "fix_attempt", key: <test_file>}` entries since the most recent matching `override_attempt_cap` decision. If `count >= 5`, escalate via `AskUserQuestion`: Continue anyway / Abandon this file / Switch workflow. Otherwise append the `fix_attempt` and proceed.
-
-Silent retry past the cap without an override is pattern `#405` / `#403`. Full attempt-counter protocol, key-canonicalization rule, the escalation menu with exact journal payloads, and the workspace-block recovery pattern: `references/failure-diagnosis.md`.
+The fix-and-re-verify loop is bounded by a journal-counted cap of **5 per test file, cumulative across sessions, soft-reset via an `override_attempt_cap` decision**. Silent retry past the cap without an override is pattern `#405` / `#403`. Full attempt-counter protocol (attempt-key canonicalization, journal-read semantics, escalation payloads) and the workspace-block recovery pattern: `references/failure-diagnosis.md`.
 
 **On VERDICT_ABSTAIN from G4**: treat as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not treat the upstream `ivy_verify` result as authoritative.
 

@@ -159,7 +159,7 @@ ensure stream_data_delivered;               # [rfc9000:2.2]
 Create `{rfc}_requirements.yaml` files for full traceability:
 
 ```yaml
-rfc: "RFC9000"
+rfc: "rfc9000"
 requirements:
   rfc9000:4.1:
     text: "A sender MUST NOT send data on a stream beyond the current limit"

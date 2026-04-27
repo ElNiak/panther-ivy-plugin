@@ -85,7 +85,7 @@ Use the `ivy_extract_requirements` MCP tool or parse text directly:
 Create or update a `*_requirements.yaml` file with this structure:
 
 ```yaml
-rfc: "RFC9000"
+rfc: "rfc9000"
 requirements:
   rfc9000:4.1:
     text: "A sender MUST NOT send data beyond the current stream limit"
