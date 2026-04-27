@@ -288,7 +288,7 @@ Callers follow `.claude/rules/agent-dispatch.md` on dispatch failure. Per-agent 
    <severity class="gate" value="ABSTAIN"/>). Missing section headers means
   the agent misunderstood its prompt. Retry with the caller restating the
   expected format.
-- **Tool-not-found** — indicates ivy-tools MCP server is unavailable. Escalate directly without retry; recovery lives in `.claude/rules/mcp-tool-reliability.md`.
+- **Tool-not-found** — indicates ivy-tools MCP server is unavailable. Escalate directly without retry. For MCP-tool retry/timeout policy, see `.claude/rules/mcp-tool-reliability.md`.
 - **Explicit error** — no auto-retry. Surface immediately.
 
 <integration
