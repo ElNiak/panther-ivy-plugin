@@ -9,7 +9,7 @@
       ],
       "env": {
         "CLAUDE_SESSION_ID": "",
-        "IVY_LSP_LOG_LEVEL": "${user_config.log_level:DEBUG}",
+        "IVY_LSP_LOG_LEVEL": "${user_config.log_level}",
         "IVY_LSP_DEBUG_LOG": "1",
         "IVY_LSP_MAX_CONCURRENT_TOOLS": "4",
         "IVY_LSP_FAST_INDEX_WORKERS": "4",
@@ -27,8 +27,8 @@
       ],
       "env": {
         "CLAUDE_SESSION_ID": "",
-        "IVY_LSP_LOG_LEVEL": "${user_config.log_level:DEBUG}",
-        "PANTHER_IVY_ENABLE_SERENA": "${user_config.enable_serena:0}"
+        "IVY_LSP_LOG_LEVEL": "${user_config.log_level}",
+        "PANTHER_IVY_ENABLE_SERENA": "${user_config.enable_serena}"
       }
     }
   }
