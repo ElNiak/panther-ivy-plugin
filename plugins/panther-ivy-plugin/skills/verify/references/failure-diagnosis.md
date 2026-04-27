@@ -97,7 +97,7 @@ Load the `reflection-patterns` skill. Apply **Pattern C (Situation Briefing)**:
 
 ### Step 1: Apply the fix
 
-Before applying the fix, evaluate the attempt-counter gate (per the SKILL.md "Iteration cap" block):
+Before applying the fix, evaluate the attempt-counter gate:
 
 1. Compute the attempt key as the test file path relative to the protocol directory.
 2. Read the journal (`ivy_workflow_state(action="get_journal", last_n=200)`), walk backward to the most recent `decision{kind: "override_attempt_cap", key: <same>}` entry (`override_idx`), then count `progress{kind: "fix_attempt", key: <same>}` entries after `override_idx`.

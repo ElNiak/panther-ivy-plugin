@@ -346,7 +346,7 @@ Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures
 
 ### Iteration cap
 
-For the attempt-counter recovery protocol, see `references/failure-diagnosis.md` (Step 1: Apply the fix section).
+For the attempt-counter recovery protocol, see `references/failure-diagnosis.md` (Steps 1–2: gate evaluation and cap value).
 
 **On VERDICT_ABSTAIN from G4**: treat as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not treat the upstream `ivy_verify` result as authoritative.
 
