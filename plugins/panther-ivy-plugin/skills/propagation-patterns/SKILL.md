@@ -1,10 +1,12 @@
 ---
 name: propagation-patterns
-description: "Type change impact analysis patterns and encoding tables. Use when propagating field or variant changes across Ivy spec layers."
+description: "Use when propagating field or variant changes across Ivy spec layers. Provides type-change impact analysis patterns and Ivy-to-C++ encoding tables."
 user-invocable: false
 ---
 
 # Propagation Patterns
+
+**Type:** flexible — adapt principles to context.
 
 Use this skill when propagating an Ivy type change to serializer/deserializer state machines. It provides the exact C++ patterns, encoding conventions, and asymmetry warnings needed to generate correct edits.
 
@@ -77,7 +79,7 @@ These asymmetries apply across all protocols. Always check for them:
 ## Integration
 
 - **LOADED BY:** build workflow (Phase 3 Write when a type change affects serializers across layers), verify workflow (Phase 6 Diagnose when a failure traces to an asymmetry between ser and deser).
-- **CALLS:** `ivy_propagation(mode="impact", type_name=<name>, change_type=<add_field|add_variant>)` as the authoritative impact source.
+- **CALLS:** `ivy_propagation` (impact mode) as the authoritative impact source — for the invocation shape, load the ivy-toolkit skill via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult its tool-invocation-examples reference.
 
 **Related skills:**
 - **`specification-patterns`** — 14-layer template and where serializer files sit in it.

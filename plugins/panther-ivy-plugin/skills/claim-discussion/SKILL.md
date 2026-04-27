@@ -1,11 +1,13 @@
 ---
 name: claim-discussion
-description: "Decision trees for resolving verification and coverage claims. Use when ivy_verify returns FAIL, ivy_coverage shows gaps, or model-reviewer reports issues."
+description: "Use when ivy_verify returns FAIL, ivy_coverage shows gaps, or model-reviewer reports issues. Provides decision trees for resolving verification and coverage claims."
 user-invocable: false
 context: fork
 ---
 
 # Claim Discussion
+
+**Type:** flexible — adapt principles to context.
 
 > **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
 

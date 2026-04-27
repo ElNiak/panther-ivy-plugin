@@ -1,10 +1,12 @@
 ---
 name: ivy-toolkit
-description: "18-tool ivy-tools MCP catalog plus Serena semantic tools, with parameter matrix, mode map, and selection guide. Use when choosing or invoking MCP tools for Ivy operations."
+description: "Use when choosing or invoking MCP tools for Ivy operations. Provides the 18-tool ivy-tools catalog plus Serena semantic tools, with parameter matrix, mode map, and selection guide."
 user-invocable: false
 ---
 
 # Ivy Toolkit
+
+**Type:** flexible — adapt principles to context.
 
 Single source of truth for Ivy tool operations. All skills and commands reference this
 skill instead of maintaining their own tool documentation.
@@ -172,6 +174,7 @@ Load `references/lsp-patterns.md` for LSP invocation patterns and coordination e
 - `references/timing-and-concurrency.md` — performance tiers, timeouts, concurrency model
 - `references/hook-lifecycle.md` — tool invocation pipeline and rendering rules
 - `references/lsp-patterns.md` — LSP operations, scoping policy, coordination examples
+- `references/tool-invocation-examples.md` — canonical multi-line invocation shapes for `ivy_diagnostics`, `ivy_verify`, `ivy_propagation`, `ivy_iut_test`, `ivy_compile`
 
 ## Integration
 

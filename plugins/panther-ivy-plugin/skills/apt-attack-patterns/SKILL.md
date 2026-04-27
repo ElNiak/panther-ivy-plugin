@@ -1,11 +1,13 @@
 ---
 name: apt-attack-patterns
-description: "Author or extend attack specifications under `protocol-testing/apt/`. Use when modeling the NACT 6-stage attack lifecycle, attacker entities, or around-block monitors."
+description: "Use when modeling the NACT 6-stage attack lifecycle, attacker entities, or around-block monitors. Authors or extends attack specifications under `protocol-testing/apt/`."
 user-invocable: false
 context: fork
 ---
 
 # APT Attack Patterns
+
+**Type:** flexible — adapt principles to context.
 
 NACT (Network-Attack Compositional Testing) extends NCT with attacker perspective. The APT workspace at `protocol-testing/apt/` mirrors the 14-layer NCT template and adds four attack-specific layers. This skill catalogues the reusable structural patterns across those layers; the canonical methodology overview lives in `methodology-reference` and in the project auto-memory at `~/.claude/projects/<project>/memory/reference_nct_methodology.md` (the `.claude/rules/nct-methodology.md` stub points there).
 
@@ -43,6 +45,8 @@ The APT lifecycle in `~/.claude/projects/<project>/memory/reference_nct_methodol
 
 **Rule.** When adding a new attack-stage file, follow the existing pattern: include `#lang ivy1.7`, include any required apt-layer files at the top, define action stubs with one-line docstrings, and leave protocol-specific implementation to the per-protocol bindings. See `references/attack-stage-examples.md` for verbatim excerpts.
 
+**Why:** Thin stage files keep per-protocol attack variants composable; if stages held protocol logic, adding a new protocol would force edits across every stage and break the lifecycle aggregator's contract.
+
 ## Pattern 2 — Per-protocol lifecycle binding
 
 `apt_lifecycle/apt_attack_connection.ivy` is a one-file aggregator that includes the per-protocol lifecycle files:
@@ -57,6 +61,8 @@ include malicious_stream_data
 Each protocol-specific subdirectory (`quic_apt_lifecycle/`, `minip_apt_lifecycle/`, `udp_apt_lifecycle/`, `stream_data_apt_lifecycle/`) contains malicious variants of that protocol's packets, frames, and connection layer. For example, `quic_apt_lifecycle/` holds `malicious_quic_packet.ivy`, `malicious_quic_frame.ivy`, `encrypted_quic_packet.ivy`, `encrypted_short_quic_packet.ivy`, `random_padding_encrypted_quic_packet.ivy`, `quic_attack_connection.ivy`.
 
 **Rule.** When adding a new protocol to the APT workspace, create an `apt_lifecycle/{prot}_apt_lifecycle/` directory, mirror the required variants (packet, frame, connection), and include the new aggregate in `apt_attack_connection.ivy`. See `references/apt-protocol-binding.md` for the full step-by-step.
+
+**Why:** Mirroring the variant set per protocol lets the test generator reuse a single scaffolding strategy across protocols; the aggregate include in `apt_attack_connection.ivy` is the only hook the lifecycle orchestrator needs to consume the new protocol.
 
 ## Pattern 3 — Attack around-block monitors
 
@@ -86,6 +92,8 @@ around forward_to_client(src:ip.endpoint, dst:ip.endpoint, pkt:packet.quic_packe
 
 **Rule.** Attack monitors never modify the underlying type (a `quic_packet` stays a `quic_packet`). They add `_generating`-gated `require` clauses that encode attacker knowledge, entity role (`mim_agent`, `ep_client`, `ep_server`), and attack-specific invariants (NAT spoofing, packet coalescing, MIM positioning). Actions are typically structured as pairs (`forward_to_client` / `forward_to_server`) to let the test generator pick the attacker's direction.
 
+**Why:** Reusing the underlying type means the existing serializer, monitors, and verification machinery accept malicious instances unchanged; redefining types would force a parallel verification stack and would break the assume-guarantee boundary that NCT compliance relies on.
+
 ## Pattern 4 — Attack entities and parameters
 
 `apt_entities/` has a root file per core entity and per-protocol variant subdirectories:
@@ -105,11 +113,15 @@ Per-protocol directories under `apt_entities/` (e.g. `apt_entities/quic/`, `apt_
 
 **Rule.** When introducing a new attack knob (e.g. a timing-based attack parameter), add the `parameter` to the most-specific entity that owns it. Avoid sprinkling parameters across multiple entities unless the knob is genuinely cross-cutting.
 
+**Why:** Localising knobs to the entity that owns the behaviour keeps attack invariants adjacent to the state they constrain. Cross-entity sprinkling complicates G2 modeling-gate verdicts and forces reviewers to chase the same parameter across multiple files when reasoning about a single attack mode.
+
 ## Pattern 5 — Application-layer attack bindings
 
 `apt_protocols/` contains attack-context bindings for application-layer protocols that ride over the primary transport: `tls/`, `http/`, `smtp/`, `dns/`, `quic/`, `minip/`. A binding provides monitor hooks for the application protocol's behavior under attacker perspective (e.g. DNS tunneling for exfiltration, HTTP covert channels for C2).
 
 **Rule.** When modeling a new exfiltration or C2 channel on a new application protocol, add `apt_protocols/{new_prot}/` with the same shape as an existing binding. Do not modify the base application-protocol stack; all attack awareness lives under `apt_protocols/`.
+
+**Why:** Keeping attack awareness above the base stack means the same compliance model verifies both attacker-context and benign-context invariants without forcing a NACT/NCT branch into the layer graph; the base stack stays reusable for pure NCT.
 
 ## How NACT diverges from NCT
 

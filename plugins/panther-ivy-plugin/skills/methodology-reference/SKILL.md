@@ -1,10 +1,12 @@
 ---
 name: methodology-reference
-description: "NCT (compliance) / NACT (security) / NSCT (simulation) methodology selection and workflow guidance. Use when choosing a testing methodology, starting model construction, or mapping RFC requirements to an Ivy testing strategy."
+description: "Use when choosing a testing methodology, starting model construction, or mapping RFC requirements to an Ivy testing strategy. Provides NCT (compliance) / NACT (security) / NSCT (simulation) selection and workflow guidance."
 user-invocable: false
 ---
 
 # Formal Testing Methodologies
+
+**Type:** flexible — adapt principles to context.
 
 ## Methodology Selection
 

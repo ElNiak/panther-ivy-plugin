@@ -1,10 +1,12 @@
 ---
 name: specification-patterns
-description: "14-layer template reference and pattern scaffolding guide. Use when designing layer structure or scaffolding a new protocol model."
+description: "Use when designing layer structure or scaffolding a new protocol model. Provides the 14-layer template reference and the formal-model pattern scaffolding guide."
 user-invocable: false
 ---
 
 # Specification Patterns: Formal Model Pattern Library
+
+**Type:** flexible — adapt principles to context.
 
 > **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
 

@@ -1,10 +1,12 @@
 ---
 name: ivy-error-patterns
-description: "Numbered verifier-patterns catalog and Ivy error lookup. Use when encountering Ivy errors (\"not found\", \"ungrounded\", \"invariant failed\", \"type mismatch\") or when an adversarial gate cites a catalog pattern #NN that needs interpretation."
+description: "Use when hitting Ivy errors ('not found', 'ungrounded', 'invariant failed', 'type mismatch') or when an adversarial gate cites catalog pattern #NN. Numbered verifier-patterns catalog plus error lookup."
 user-invocable: false
 ---
 
 # Ivy Error Patterns & Verifier Catalog
+
+**Type:** flexible — adapt principles to context.
 
 This skill owns three related reference files:
 

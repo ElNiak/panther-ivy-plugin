@@ -38,7 +38,7 @@ The entry's content clusters with 3+ other entries on the same theme, and the cl
 
 | Cluster theme | Target |
 |:--|:--|
-| Ivy language patterns (QUIC / BGP generators, serializers, solver mechanics) | `skills/ivy-writing-guide/references/ivy-patterns.md` (or `.claude/rules/ivy-patterns.md` if the content is primitive syntax) |
+| Ivy language patterns (QUIC / BGP generators, serializers, solver mechanics) | `skills/ivy-writing-guide/references/ivy-1.7-patterns-reference.md` (or `.claude/rules/ivy-patterns.md` if the content is primitive syntax) |
 | Tool invocation discipline (ivyc vs panther run, compile-first, background verification) | `skills/ivy-toolkit/references/tool-catalog.md` |
 | IUT output analysis (pcap cross-validation, 9-step analysis) | `skills/verify/references/iut-output-analysis.md` or `skills/ivy-debugging-methodology/references/debugging-environment.md` |
 | Adversarial-gate lifecycle (gates at exploration/blueprint/etc.) | `.claude/rules/iron-laws.md` or `skills/reflection-patterns/references/gates.md` |

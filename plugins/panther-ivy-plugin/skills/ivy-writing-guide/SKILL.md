@@ -1,12 +1,14 @@
 ---
 name: ivy-writing-guide
-description: "Ivy syntax reference: declarations, module system, RFC annotations, test spec patterns. Use when writing or editing .ivy files."
+description: "Use when writing or editing .ivy files. Provides Ivy 1.7 syntax reference, module system, RFC annotation conventions, test-spec patterns, and search-before-write practice."
 user-invocable: false
 context: fork
 paths: "**/*.ivy"
 ---
 
 # Ivy Writing Guide
+
+**Type:** flexible — adapt principles to context.
 
 > **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
 

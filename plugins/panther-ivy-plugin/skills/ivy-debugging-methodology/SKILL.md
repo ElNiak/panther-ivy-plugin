@@ -1,10 +1,12 @@
 ---
 name: ivy-debugging-methodology
-description: "Mandatory pre-fix research workflow for Ivy errors. Use when debugging Ivy compilation or verification failures, \"ivy_check failed\", or \"verification failed\"."
+description: "Use when debugging Ivy compilation or verification failures, 'ivy_check failed', or 'verification failed'. Mandatory pre-fix research workflow for Ivy errors."
 user-invocable: false
 ---
 
 # Ivy Debugging Methodology
+
+**Type:** flexible — adapt principles to context.
 
 ## Hard Rule
 
@@ -48,11 +50,7 @@ Load and check these skills for the failing construct:
 
 ### Step 4: Run Structural Check
 
-Call `ivy_diagnostics` in structural mode via MCP before running full verification:
-```
-mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics(relative_path="<file>", mode="structural")
-```
-This runs in milliseconds and catches structural issues (missing `#lang`, unmatched braces, unresolved includes, parameter name collisions, missing init) without the cost of full `ivy_verify`.
+Call `ivy_diagnostics` in structural mode before full verification. It runs in milliseconds and catches structural issues (missing `#lang`, unmatched braces, unresolved includes, parameter name collisions, missing `init`) without the cost of `ivy_verify`. Canonical invocation shape: load `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult `references/tool-invocation-examples.md`.
 
 ### Step 5: Search Existing Models for Working Examples
 
@@ -79,11 +77,7 @@ Only now propose a change. Make it minimal — change only what's needed to fix 
 
 ### Step 8: Verify
 
-Run verification to confirm the fix:
-```
-mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify(relative_path="<file>")
-```
-If the fix introduces new errors, return to Step 1 for the new error.
+Run verification to confirm the fix. For the canonical invocation shape, load the ivy-toolkit skill via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult its tool-invocation-examples reference. If the fix introduces new errors, return to Step 1 for the new error.
 
 ### Serializer/Deserializer Debugging
 
@@ -102,4 +96,4 @@ load the `ivy-writing-guide` skill and read `references/serializer-patterns.md`.
 - **`ivy-toolkit`** — MCP tool inventory consulted in Step 4.
 
 **References:**
-- `references/debugging-environment.md` — Self-evaluation protocol (anti-pattern checklist), debug environment variables, LSP indexing awareness. For the full 9-step health-check runbook (log paths, common failures, process liveness), see `skills/triage/references/full-health-check.md`.
+- `references/debugging-environment.md` — Self-evaluation protocol (anti-pattern checklist), debug environment variables, LSP indexing awareness. For the full 9-step health-check runbook (log paths, common failures, process liveness), dispatch the triage skill via `Skill(skill="panther-ivy-plugin:triage")`.

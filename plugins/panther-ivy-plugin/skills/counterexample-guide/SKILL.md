@@ -1,11 +1,13 @@
 ---
 name: counterexample-guide
-description: "Trace interpretation and fix strategies for verification failures. Use when counterexample or counterexample_trace appears in ivy_verify output."
+description: "Use when 'counterexample' or 'counterexample_trace' appears in ivy_verify output. Provides trace interpretation and fix strategies for verification failures."
 user-invocable: false
 context: fork
 ---
 
 # Counterexample Interpretation Guide
+
+**Type:** flexible — adapt principles to context.
 
 When `ivy_verify` returns a verification failure, it may include structured counterexample data that shows exactly how the property was violated. This skill provides a systematic workflow for reading counterexample traces, diagnosing the root cause, and applying the correct fix.
 

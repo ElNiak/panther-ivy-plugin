@@ -6,10 +6,10 @@ debug environment variables, and LSP indexing awareness.
 ## Canonical 9-step runbook
 
 The full 9-step Ivy LSP + MCP health-check runbook (log file paths, common failures,
-process liveness, workspace access, cross-file resolution) lives in
-`skills/triage/references/full-health-check.md`. When a debugging session needs a full
-diagnostic, invoke the `triage` skill or `Read` that reference directly. This file does
-not duplicate that runbook.
+process liveness, workspace access, cross-file resolution) lives in the triage skill.
+When a debugging session needs a full diagnostic, dispatch the triage skill via
+`Skill(skill="panther-ivy-plugin:triage")` (direct mode) — it owns the canonical
+runbook. This file does not duplicate that runbook.
 
 ## Agent Self-Evaluation Protocol
 
