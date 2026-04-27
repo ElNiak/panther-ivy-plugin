@@ -221,7 +221,7 @@ def format_ivy_quality(data: dict, workflow: str | None) -> str | None:
 
     # Suggestions mode
     suggestions = data.get("suggestions", [])
-    if workflow in ("triage", "verify"):
+    if workflow in ("workflow-triage", "workflow-verify"):
         return None  # suppress suggestions in triage/verify
 
     lines = []

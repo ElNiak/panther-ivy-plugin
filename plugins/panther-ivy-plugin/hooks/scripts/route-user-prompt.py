@@ -168,9 +168,9 @@ def main() -> None:
                 "UserPromptSubmit",
                 additional_context=(
                     "[ROUTING:AVAILABLE] Ivy workspace detected. "
-                    "Available workflow skills: verify (test/debug), "
-                    "build (create/extend model), review (coverage/quality), "
-                    "triage (fix tools), navigate (guided routing). "
+                    "Available workflow skills: workflow-verify (test/debug), "
+                    "workflow-build (create/extend model), workflow-review (coverage/quality), "
+                    "workflow-triage (fix tools), workflow-navigate (guided routing). "
                     "Invoke the one matching the user's intent, or proceed without a workflow for simple tasks."
                 ),
             )

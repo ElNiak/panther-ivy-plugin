@@ -32,7 +32,7 @@ def _make_workflow_env(tmpdir: str) -> dict:
     with open(os.path.join(state_dir, "active-workflow"), "w") as f:
         yaml.safe_dump(
             {
-                "workflow": "review",
+                "workflow": "workflow-review",
                 "phase": "analyze",
                 "invocation_depth": 0,
                 "started": "2026-01-01T00:00:00+00:00",

@@ -188,7 +188,7 @@ Populate `review_scope` when dispatching for targeted review (review workflow or
 
 > **Gate-critic discipline check**: before any tool call, run the Tools-Contract Self-Check below — emit the mode preamble, refuse forbidden tools, and return `ABSTAIN` rather than widening the allowlist.
 
-When the dispatching hook is a gate hook (`assess-modeling.py` for G2, or the G4 extension of `record-workflow-error.py`), the agent operates as a context-isolated critic instead of running the full interactive checklist. In this mode the dispatching prompt provides the verbatim critic template from `skills/reflection-patterns/references/critic_prompts/g{2,4}_*.md`, which itself uses `<role>`, `<discipline_contract>`, `<allowed_tools>`, `<forbidden_tools>`, `<catalog_slice>`, and `<output_schema>` tags — treat the template as the operating contract.
+When the dispatching hook is a gate hook (`assess-modeling.py` for G2, or the G4 extension of `record-workflow-error.py`), the agent operates as a context-isolated critic instead of running the full interactive checklist. In this mode the dispatching prompt provides the verbatim critic template from `skills/cross-cutting-reflection-patterns/references/critic_prompts/g{2,4}_*.md`, which itself uses `<role>`, `<discipline_contract>`, `<allowed_tools>`, `<forbidden_tools>`, `<catalog_slice>`, and `<output_schema>` tags — treat the template as the operating contract.
 
 <discipline_contract>
 The three load-bearing paragraphs of the critic template (role, dual-isolation, abstention) override the interactive review flow. Its `<output_schema>` is the only valid verdict shape; do not synthesize alternatives.

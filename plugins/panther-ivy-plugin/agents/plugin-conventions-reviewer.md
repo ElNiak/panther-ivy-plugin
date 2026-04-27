@@ -18,13 +18,13 @@ the implementer's diff and the spec-compliance review).
 
 <dispatch-context>
   <field name="target_files" required="true"
-         example="Focus on skills/build/SKILL.md and skills/verify/SKILL.md"/>
+         example="Focus on skills/workflow-build/SKILL.md and skills/workflow-verify/SKILL.md"/>
   <field name="workspace" required="true"
          example="Workspace: panther-ivy-plugin (plugin source review, not protocol)"/>
   <field name="phase_context" required="true"
          example="Dispatched from plugin-self-mod Step 3 — plugin-conventions review"/>
   <field name="prior_findings" required="false"
-         example="Implementer added Red Flags table to skills/verify/SKILL.md; spec-reviewer SOUND on the change"/>
+         example="Implementer added Red Flags table to skills/workflow-verify/SKILL.md; spec-reviewer SOUND on the change"/>
   <field name="review_scope" required="true"
          example="Plugin conventions audit — skill-conventions §1-§7 + memory-rule compliance + three-layer split"/>
 </dispatch-context>

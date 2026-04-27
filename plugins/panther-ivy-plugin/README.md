@@ -1,12 +1,12 @@
 # panther-ivy-plugin — Ivy Formal Protocol Testing
 
-> **Developer reference.** This README is for contributors reading the source; it is not auto-loaded by Claude Code. Runtime content lives in `skills/*/SKILL.md`, `.claude-plugin/plugin.json`, and `.claude/rules/*.md` — all auto-discovered. The agent-facing "Specification Engineer" framing lives canonically in `skills/navigate/SKILL.md`.
+> **Developer reference.** This README is for contributors reading the source; it is not auto-loaded by Claude Code. Runtime content lives in `skills/*/SKILL.md`, `.claude-plugin/plugin.json`, and `.claude/rules/*.md` — all auto-discovered. The agent-facing "Specification Engineer" framing lives canonically in `skills/workflow-navigate/SKILL.md`.
 
 Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation, analysis), agents, and skills.
 
 ## Workflow Routing
 
-Runtime routing is driven by `routing-rules.json`, which is authoritative: it defines the keyword, regex, file-trigger, and priority entries the `route-user-prompt.py` hook consults on every `UserPromptSubmit`. The five user-facing workflows (`verify`, `build`, `review`, `triage`, `navigate`) and one learning-injection bucket are declared there; refer to that file directly for the matching vocabulary, do not maintain a parallel table here.
+Runtime routing is driven by `routing-rules.json`, which is authoritative: it defines the keyword, regex, file-trigger, and priority entries the `route-user-prompt.py` hook consults on every `UserPromptSubmit`. The five user-facing workflows (`workflow-verify`, `workflow-build`, `workflow-review`, `workflow-triage`, `workflow-navigate`) and one learning-injection bucket are declared there; refer to that file directly for the matching vocabulary, do not maintain a parallel table here.
 
 ### Routing Rules
 1. If a workflow is already active (check `<protocol-directory>/.panther-ivy/active-workflow`), stay in it unless the user explicitly asks to switch.
@@ -20,14 +20,14 @@ Read `.panther-ivy/active-workflow` on every turn to know your current workflow 
 
 **Active-workflow flag** (`<protocol-dir>/.panther-ivy/active-workflow`):
 ```yaml
-workflow: verify
+workflow: workflow-verify
 phase: compile
 started: "2026-04-07T14:30:00Z"
 ```
 
 **Build-state file** (`<protocol-dir>/.panther-ivy/build-state.yaml`): Multi-session build progress. Written by the build workflow at Phase 2. Read by navigate for warm session resume.
 
-**Workflow composition:** Workflows compose via `pending_dispatch` journal events, not via a caller chain. When a workflow needs another workflow to run next (e.g., build → verify after Phase 4), it appends `pending_dispatch(target_workflow=<next>, reason=<why>)` and clears its own active-workflow flag. Navigate's Phase 1 Step 2c consumes the event on the next turn (or same-turn if the harness routes in-line), writes a paired `workflow_resumed` marker for idempotency, and dispatches the target.
+**Workflow composition:** Workflows compose via `pending_dispatch` journal events, not via a caller chain. When a workflow needs another workflow to run next (e.g., workflow-build → workflow-verify after Phase 4), it appends `pending_dispatch(target_workflow=<next>, reason=<why>)` and clears its own active-workflow flag. Navigate's Phase 1 Step 2c consumes the event on the next turn (or same-turn if the harness routes in-line), writes a paired `workflow_resumed` marker for idempotency, and dispatches the target.
 
 ## Tool Rules — CRITICAL
 
@@ -50,9 +50,9 @@ started: "2026-04-07T14:30:00Z"
 **Propagation**: ivy_propagation (modes: variants/serdes/impact)
 **Testing**: ivy_iut_test
 
-For parameters, timeouts, error handling, and rendering details, see the **ivy-toolkit** skill.
+For parameters, timeouts, error handling, and rendering details, see the **knowledge-ivy-toolkit** skill.
 
-**LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted when dispatched by workflow skills. See the `ivy-toolkit` skill for invocation patterns.
+**LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted when dispatched by workflow skills. See the `knowledge-ivy-toolkit` skill for invocation patterns.
 
 **Note**: The LSP server pushes structural diagnostics on file edits. The PostToolUse hook runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes.
 
@@ -61,7 +61,7 @@ For parameters, timeouts, error handling, and rendering details, see the **ivy-t
 ### Available Workflows
 
 **User-facing entry points** (activated by routing or natural language):
-`navigate`, `verify`, `build`, `review`, `triage`
+`workflow-navigate`, `workflow-verify`, `workflow-build`, `workflow-review`, `workflow-triage`
 
 ### Shortcut Commands
 
@@ -80,10 +80,10 @@ Direct tool access (bypass workflows):
 `spec-analyst`, `model-reviewer`, `traceability-agent`
 
 **Knowledge skills** (loaded by workflows, not user-facing):
-`counterexample-guide`, `specification-patterns`, `propagation-patterns`, `apt-attack-patterns`, `ivy-writing-guide`, `ivy-toolkit`, `claim-discussion`, `methodology-reference`, `ivy-debugging-methodology`, `ivy-error-patterns`, `reflection-patterns`
+`knowledge-counterexample-guide`, `knowledge-specification-patterns`, `knowledge-propagation-patterns`, `knowledge-apt-attack-patterns`, `knowledge-ivy-writing-guide`, `knowledge-ivy-toolkit`, `knowledge-claim-discussion`, `knowledge-methodology-reference`, `knowledge-ivy-debugging-methodology`, `knowledge-ivy-error-patterns`, `cross-cutting-reflection-patterns`
 
 **User-invocable skills** (triggered by user intent or natural-language phrases, not workflow dispatch):
-`knowledge-capture` — review session learnings and audit plugin skills/references; also loaded by workflow knowledge gates and `/nct-learn` (`user-invocable: true`)
+`cross-cutting-knowledge-capture` — review session learnings and audit plugin skills/references; also loaded by workflow knowledge gates and `/nct-learn` (`user-invocable: true`)
 
 ## Workspace Awareness
 
@@ -138,7 +138,7 @@ Tool result formatting is handled programmatically by `render-tool-result.py`
 Two subdirectories of `styles/` carry per-artifact templates consumed by the hooks:
 
 - `styles/tool-renderers/` — one file per rendered MCP tool (`ivy_verify.md`, `ivy_coverage.md`, `ivy_diagnostics.md`, `ivy_compile.md`, `ivy_quality.md`, `ivy_verdict.md`). Each file specifies the output phrasing per workflow / phase; `render-tool-result.py` selects the right section at runtime.
-- `styles/summaries/` — one file per workflow (`build.md`, `navigate.md`, `review.md`, `triage.md`, `verify.md`). These are summary templates loaded by `render-summary.py` (Stop hook) to produce the end-of-session recap.
+- `styles/summaries/` — one file per workflow (`workflow-build.md`, `workflow-navigate.md`, `workflow-review.md`, `workflow-triage.md`, `workflow-verify.md`). These are summary templates loaded by `render-summary.py` (Stop hook) to produce the end-of-session recap.
 
 Neither directory is user-facing; changes there propagate through hooks only.
 

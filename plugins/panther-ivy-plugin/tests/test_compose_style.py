@@ -58,7 +58,7 @@ class TestWithActiveWorkflow:
         state_dir = proto_dir / ".panther-ivy"
         state_dir.mkdir()
         (state_dir / "active-workflow").write_text(
-            yaml.safe_dump({"workflow": "verify", "phase": "compile"})
+            yaml.safe_dump({"workflow": "workflow-verify", "phase": "compile"})
         )
         output = run_hook(env_overrides={"IVY_WORKSPACE_ROOT": str(tmp_path)})
         if output is None:
@@ -73,7 +73,7 @@ class TestWithActiveWorkflow:
         state_dir = proto_dir / ".panther-ivy"
         state_dir.mkdir()
         (state_dir / "active-workflow").write_text(
-            yaml.safe_dump({"workflow": "verify", "phase": "compile"})
+            yaml.safe_dump({"workflow": "workflow-verify", "phase": "compile"})
         )
         output = run_hook(env_overrides={"IVY_WORKSPACE_ROOT": str(tmp_path)})
         if output is None:

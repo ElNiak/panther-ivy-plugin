@@ -23,6 +23,11 @@ def run_hook(prompt: str, env_overrides: dict | None = None) -> dict | None:
     if env_overrides:
         env.update(env_overrides)
     input_data = json.dumps({"prompt": prompt})
+    # Run from a tmp cwd unless a workspace was explicitly requested via
+    # env_overrides; otherwise route-user-prompt.py's CWD-walk fallback
+    # finds the test repo's protocol-testing/ tree and fires routing when
+    # the test expects silence.
+    cwd = env.get("IVY_WORKSPACE_ROOT") or tempfile.gettempdir()
     result = subprocess.run(
         [sys.executable, SCRIPT],
         input=input_data,
@@ -30,6 +35,7 @@ def run_hook(prompt: str, env_overrides: dict | None = None) -> dict | None:
         text=True,
         timeout=5,
         env=env,
+        cwd=cwd,
     )
     assert result.returncode == 0, f"Hook exited {result.returncode}: {result.stderr}"
     if result.stdout.strip():
@@ -46,21 +52,21 @@ def test_keyword_match():
     assert output is not None
     ctx = _extract_context(output)
     assert "[ROUTING]" in ctx
-    assert "'verify'" in ctx
+    assert "'workflow-verify'" in ctx
 
 
 def test_intent_pattern_match():
     output = run_hook("why did it fail?")
     assert output is not None
     ctx = _extract_context(output)
-    assert "'verify'" in ctx
+    assert "'workflow-verify'" in ctx
 
 
 def test_priority_resolution():
     output = run_hook("something is broken, check the spec")
     assert output is not None
     ctx = _extract_context(output)
-    assert "'triage'" in ctx
+    assert "'workflow-triage'" in ctx
 
 
 def test_no_match_fallthrough():
@@ -83,7 +89,7 @@ def test_active_workflow_suppression():
         os.makedirs(state_dir)
         with open(os.path.join(state_dir, "active-workflow"), "w") as f:
             yaml.safe_dump(
-                {"workflow": "build", "phase": "scaffold", "invocation_depth": 0,
+                {"workflow": "workflow-build", "phase": "scaffold", "invocation_depth": 0,
                  "started": "2026-01-01T00:00:00+00:00"},
                 f,
             )
@@ -91,7 +97,13 @@ def test_active_workflow_suppression():
             "check my spec",
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
-        assert output is None, "Should suppress routing when active workflow exists"
+        # When the active workflow ("workflow-build") differs from the best-
+        # matching intent ("workflow-verify" via "check.*spec"), routing emits
+        # a switch suggestion rather than suppressing — the user gets explicit
+        # guidance that intent has diverged. context_switch is journaled too.
+        assert output is not None
+        ctx = _extract_context(output)
+        assert "'workflow-verify'" in ctx
 
 
 def test_explicit_switch_override():
@@ -101,7 +113,7 @@ def test_explicit_switch_override():
         os.makedirs(state_dir)
         with open(os.path.join(state_dir, "active-workflow"), "w") as f:
             yaml.safe_dump(
-                {"workflow": "build", "phase": "scaffold", "invocation_depth": 0,
+                {"workflow": "workflow-build", "phase": "scaffold", "invocation_depth": 0,
                  "started": "2026-01-01T00:00:00+00:00"},
                 f,
             )
@@ -111,14 +123,14 @@ def test_explicit_switch_override():
         )
         assert output is not None, "Should route when prompt contains switch keyword"
         ctx = _extract_context(output)
-        assert "'review'" in ctx
+        assert "'workflow-review'" in ctx
 
 
 def test_file_trigger_matching():
     output = run_hook("open quic_frame.ivy and look at it")
     assert output is not None
     ctx = _extract_context(output)
-    assert "'verify'" in ctx
+    assert "'workflow-verify'" in ctx
 
 
 def test_learning_suppresses_workflow():

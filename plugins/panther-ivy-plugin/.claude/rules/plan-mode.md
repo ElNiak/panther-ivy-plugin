@@ -52,4 +52,4 @@ During plan mode, restrict yourself to read-only MCP tools and plan-file edits. 
 
 Navigate's Phase 1.5 handles re-entry on the invocation after `ExitPlanMode`. The `plan_approved` journal entry is the hand-off signal; Phase 1.5 dispatches the G0 plan-gate and, on SOUND, emits `pending_dispatch(<caller>, phase_hint)` so navigate re-activates the caller workflow on the following turn.
 
-Full Phase 1.5 procedure (G0 dispatch, asymmetric-vote aggregation, `pending_dispatch` emission, UNSOUND/ABSTAIN handling) lives in `skills/navigate/references/plan-mode-lifecycle.md`.
+Full Phase 1.5 procedure (G0 dispatch, asymmetric-vote aggregation, `pending_dispatch` emission, UNSOUND/ABSTAIN handling) lives in `skills/workflow-navigate/references/plan-mode-lifecycle.md`.

@@ -48,7 +48,7 @@ class TestWorkflowContextCurrent:
         monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path))
         monkeypatch.chdir(tmp_path)
         mod = _import_module()
-        mod.set_active_workflow(str(protocol_dir), "build", "modeling")
+        mod.set_active_workflow(str(protocol_dir), "workflow-build", "modeling")
         ctx = mod.WorkflowContext.current(protocol="bgp")
         assert ctx is not None
         assert ctx.protocol_dir == str(protocol_dir)
@@ -70,7 +70,7 @@ class TestWorkflowContextCurrent:
         with open(state_dir / "active-workflow", "w") as f:
             yaml.safe_dump(
                 {
-                    "workflow": "verify",
+                    "workflow": "workflow-verify",
                     "phase": "exec",
                     "invocation_depth": 2,
                     "caller": "build",
@@ -127,7 +127,7 @@ class TestWorkflowContextCurrent:
         state_dir = protocol_dir / ".panther-ivy"
         state_dir.mkdir(parents=True)
         with open(state_dir / "active-workflow", "w") as f:
-            yaml.safe_dump({"workflow": "verify"}, f)
+            yaml.safe_dump({"workflow": "workflow-verify"}, f)
         monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path))
         monkeypatch.chdir(tmp_path)
         mod = _import_module()

@@ -8,7 +8,7 @@ arguments: []
 Run the deep 9-step health-check runbook for the Ivy LSP + MCP
 integration stack by dispatching the triage skill in its
 `full-health-check` mode. The runbook lives at
-`skills/triage/references/full-health-check.md`; the skill body branches
+`skills/workflow-triage/references/full-health-check.md`; the skill body branches
 on the argument. For quick preflight liveness checks, use the plain
 `triage` workflow instead.
 </purpose>
