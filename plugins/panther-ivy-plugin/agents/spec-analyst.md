@@ -306,10 +306,9 @@ Callers follow `.claude/rules/agent-dispatch.md` on dispatch failure. Per-agent 
 - **Timeout (90 s, Sonnet tier)** — default Sonnet budget; no per-agent deviation.
 - **Context exhaustion (maxTurns ≈ 25)** — if hit, retry with a narrower `target_files` scope; the original scope is unlikely to fit in 25 turns either.
 - **Partial output** — if the structured PASS/FAIL block is truncated mid-table, treat as partial and retry.
+- **Tool-not-found** — rare given spec-analyst's broad tool allowlist; indicates an ivy-tools MCP or LSP infrastructure issue. Escalate directly to the user without the canonical auto-retry step (the rule's retry policy does not apply to infra failures).
+- **Explicit error** — see canonical rule for recovery (no auto-retry).
 
 ### Output structure (caller validation)
 
 The PASS/FAIL block has a fixed structure (header, Result, Issues Found, Next Steps sections). Missing headers or disordered sections indicate the agent misunderstood the prompt; retry with the expected format restated.
-
-- **Tool-not-found** — rare given spec-analyst's broad tool allowlist; indicates an ivy-tools MCP or LSP infrastructure issue rather than a dispatch error.
-- **Explicit error** — see canonical rule for recovery (no auto-retry).
