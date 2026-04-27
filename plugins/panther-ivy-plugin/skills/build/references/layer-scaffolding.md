@@ -16,7 +16,7 @@ Write spec files ONE layer at a time, in dependency order (Types first, then Fra
 
 After writing EACH layer:
 
-1. **Attempt-counter gate** (before each compile attempt — per the SKILL.md "compile-attempt cap" block):
+1. **Attempt-counter gate** (before each compile attempt):
    - Compute the attempt key as the layer's canonical name from `build-state.yaml.layers` (e.g., `bgp_open`, not the file path).
    - Read the journal: `ivy_workflow_state(action="get_journal", protocol="<protocol>", last_n=200)`.
    - Walk backward to the most recent `decision{kind: "override_attempt_cap", key: <same layer>}` (index `override_idx`, or `-1` if absent).
