@@ -92,7 +92,7 @@ All five workflows (navigate, triage, verify, build, review) dispatch specialist
    progress{kind: "agent_dispatch_failure", agent: "<name>", reason: "timeout" | "context_exhaustion" | "partial" | "malformed" | "tool_not_found" | "explicit_error"}
    ```
 
-4. **Auto-retry once** if the failure is transient (`timeout`, `context_exhaustion`, `partial`, `malformed`). Append `progress{kind: "agent_dispatch_retry", agent: "<name>"}` before the retry. Do NOT auto-retry for `tool_not_found` or `explicit_error` — those need user input.
+4. **Auto-retry once** if the failure is transient (`timeout`, `context_exhaustion`, `partial`, `malformed`). Append `progress{kind: "agent_dispatch_retry", agent: "<name>"}` before the retry. Do NOT auto-retry for `tool_not_found` or `explicit_error` — those need user input. Per-agent Failure Modes sections may narrow the transient set (e.g., `model-reviewer` disables auto-retry on `context_exhaustion` — prefer partial output rather than re-dispatch).
 
 5. **If retry also fails** (or was skipped), present `AskUserQuestion` with three options:
    - **Retry manually** — user re-dispatches after intervention (e.g., trimming scope, fixing the prompt, restarting tools).

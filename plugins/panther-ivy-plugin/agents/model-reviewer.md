@@ -278,20 +278,21 @@ Never combine ERROR discussion with WARNING discussion or summary. Handle each p
 
 Callers follow `.claude/rules/agent-dispatch.md` on dispatch failure. Per-agent overrides of the canonical timeouts and retry policy:
 
-- **Timeout (180 s, Opus tier)** — default Opus budget is longer because Opus is slower per-turn; allow the full budget before escalating. Retry once on timeout.
-- **Context exhaustion (maxTurns ≈ 15)** — expected on large models. Output is usually partial but structurally valid (top-N findings enumerated, trailing sections truncated). **Do NOT auto-retry** on context exhaustion — prefer using the partial output unless the caller explicitly needs full enumeration. A second dispatch with the same prompt hits the same limit.
-- **Partial output** — accept and continue. Model-reviewer's structured severity sections are ordered by importance, so a partial read surfaces the critical findings first.
-- **Malformed output** — the severity-section structure is fixed
-  (<severity class="finding" value="ERROR"/> /
-   <severity class="finding" value="WARNING"/> /
-   <severity class="finding" value="INFO"/> blocks; or, in gate-critic mode,
-   <severity class="gate" value="SOUND"/> /
-   <severity class="gate" value="UNSOUND"/>(#NN, ...) /
-   <severity class="gate" value="ABSTAIN"/>). Missing section headers means
-  the agent misunderstood its prompt. Retry with the caller restating the
-  expected format.
-- **Tool-not-found** — indicates ivy-tools MCP server is unavailable. Escalate directly without retry. For MCP-tool retry/timeout policy, see `.claude/rules/mcp-tool-reliability.md`.
-- **Explicit error** — no auto-retry. Surface immediately.
+- **Timeout (180 s, Opus tier)** — default Opus budget; no per-agent deviation.
+- **Context exhaustion (maxTurns ≈ 15)** — **overrides canonical auto-retry**: do NOT auto-retry on context exhaustion. Output is usually partial but structurally valid (top-N findings enumerated, trailing sections truncated); prefer using the partial output unless full enumeration is required. A second dispatch with the same prompt hits the same limit.
+- **Partial output** — accept and continue. Severity sections are ordered by importance, so a partial read surfaces the critical findings first.
+- **Tool-not-found** — indicates ivy-tools MCP server is unavailable; see `.claude/rules/mcp-tool-reliability.md` for MCP-tool retry policy.
+- **Explicit error** — see canonical rule for recovery (no auto-retry).
+
+### Output structure (caller validation)
+
+The severity-section structure is fixed. Missing section headers means the agent misunderstood its prompt; retry with the expected format restated.
+
+Interactive mode emits finding-severity blocks:
+- `<severity class="finding" value="ERROR"/>` / `<severity class="finding" value="WARNING"/>` / `<severity class="finding" value="INFO"/>`
+
+Gate-critic mode emits gate-verdict blocks:
+- `<severity class="gate" value="SOUND"/>` / `<severity class="gate" value="UNSOUND"/>(#NN, ...)` / `<severity class="gate" value="ABSTAIN"/>`
 
 <integration
   dispatched-by="build Phase 5, review workflow, direct user request, G2/G4 gate hooks"
