@@ -1,3 +1,8 @@
+---
+description: "Recovery pattern for ivy-tools MCP failures (schema not loaded via InputValidationError, server dead, tool-specific error). Differentiates reliability failures from verification findings; specifies the ToolSearch retry + AskUserQuestion fallback chain."
+# Loaded on demand by name from workflow skills (called out as 'cluster 12' from agent-dispatch.md); not auto-injected on file edits.
+---
+
 # MCP Tool Reliability
 
 The plugin's ivy-tools MCP server exposes ~18 tools. Schemas for deferred
@@ -56,6 +61,12 @@ class differently:
   verification / compilation finding, not a reliability issue. Handle per
   the owning workflow's failure-diagnosis procedure; do not apply this
   rule's recovery pattern.
+
+## Automated retry for read-only tools
+
+Read-only ivy_* MCP tools (`ivy_status`, `ivy_diagnostics`, `ivy_model_info`, `ivy_coverage`) trigger an automated retry once via the `retry-ivy-mcp.py` PostToolUseFailure hook. The hook emits a `progress{kind: "mcp_retry", tool: "..."}` journal entry regardless of retry outcome, so retried failures are visible in `ivy_observability(action="get_journal")`.
+
+Write-side tools (`ivy_compile`, `ivy_verify`, `ivy_iut_test`) are NOT auto-retried (not idempotent); their failures surface immediately to the agent, which falls back to the manual retry + AskUserQuestion pattern documented above.
 
 ## Relationship to other rules
 

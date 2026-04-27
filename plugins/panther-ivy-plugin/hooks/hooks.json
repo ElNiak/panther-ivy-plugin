@@ -166,6 +166,17 @@
     ],
     "PostToolUseFailure": [
       {
+        "_ordering": "PostToolUseFailure runs in array order: (1) retry-ivy-mcp fires for read-only idempotent ivy_* tools and prompts the agent to retry once + journals the attempt; (2) observe.py records the failure event regardless of retry outcome.",
+        "matcher": "mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_(status|diagnostics|model_info|coverage)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/retry-ivy-mcp.py",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "",
         "hooks": [
           {
@@ -178,7 +189,7 @@
     ],
     "SessionStart": [
       {
-        "_ordering": "SessionStart runs in array order: (1) cleanup-stale-pids clears stale MCP/LSP PIDs before anything checks liveness (reads IVY_WORKSPACE_ROOT as fallback for detection, no hard dep on prior hooks); (2) cleanup-stale-workflow clears orphaned active-workflow flags (no env-var deps); (3) detect-ivy-workspace writes IVY_WORKSPACE_ROOT, IVY_LSP_LOG_PATH, IVY_MCP_LOG_PATH, IVY_SESSION_ID, IVY_MCP_PID_FILE, and conditionally IVY_ACTIVE_WORKSPACE to CLAUDE_ENV_FILE — these are consumed by wait-for-indexing and MCP servers; (4) observe.py records SessionStart (no env-var deps on prior hooks); (5) wait-for-indexing reads IVY_MCP_LOG_PATH, IVY_LSP_LOG_PATH, IVY_WORKSPACE_ROOT, and IVY_ACTIVE_WORKSPACE exported by step 3 — must run last. Reordering steps 3 and 5 breaks env-var propagation: wait-for-indexing falls back to /tmp defaults and loses workspace context.",
+        "_ordering": "SessionStart runs in array order: (1) cleanup-stale-pids clears stale MCP/LSP PIDs before anything checks liveness (reads IVY_WORKSPACE_ROOT as fallback for detection, no hard dep on prior hooks); (2) cleanup-stale-workflow clears orphaned active-workflow flags (no env-var deps); (3) detect-ivy-workspace writes IVY_WORKSPACE_ROOT, IVY_LSP_LOG_PATH, IVY_MCP_LOG_PATH, IVY_SESSION_ID, IVY_MCP_PID_FILE, and conditionally IVY_ACTIVE_WORKSPACE to CLAUDE_ENV_FILE — these are consumed by wait-for-indexing and MCP servers; (4) observe.py records SessionStart (no env-var deps on prior hooks); (5) inject-using-plugin emits the using-panther-ivy-plugin priority overview (1% rule, iron-law primer, methodology routing) as additionalContext (no env-var deps; reads skills/using-panther-ivy-plugin/SKILL.md); (6) wait-for-indexing reads IVY_MCP_LOG_PATH, IVY_LSP_LOG_PATH, IVY_WORKSPACE_ROOT, and IVY_ACTIVE_WORKSPACE exported by step 3 — must run last. Reordering steps 3 and 6 breaks env-var propagation: wait-for-indexing falls back to /tmp defaults and loses workspace context.",
         "hooks": [
           {
             "type": "command",
@@ -210,6 +221,15 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/observability/observe.py --event SessionStart",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/inject-using-plugin.sh",
             "timeout": 5
           }
         ]

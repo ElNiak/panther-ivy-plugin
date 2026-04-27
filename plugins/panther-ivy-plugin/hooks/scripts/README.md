@@ -8,6 +8,13 @@
 
 This matches the Claude Code plugin convention (kebab-case for user-facing components) while following Python packaging norms for importable modules.
 
+## File Mode Convention
+
+- **Python scripts**: kept non-executable (`chmod 644`). `hooks.json` invokes them as `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.py`. Any shebang line at the top of a Python script is documentary only.
+- **Shell scripts**: executable (`chmod 755`) with `#!/usr/bin/env bash` shebangs. `hooks.json` invokes them directly.
+
+The Python-non-executable convention is intentional: it keeps `hooks.json` as the single source of truth for invocation (one `python3` interpreter is used everywhere), and avoids stale `+x` bits on files that get edited but no longer run as scripts.
+
 ## Purpose Index
 
 One line per script and the event that triggers it. Multi-handler events run in `hooks.json` array order; see `hooks.json` for the canonical ordering comments.
@@ -16,9 +23,9 @@ One line per script and the event that triggers it. Multi-handler events run in 
 - `check-workspace-scope.py` — `Write|Edit` — blocks writes outside the active workspace
 - `block-direct-ivy.sh` — `Bash` — warns when `ivyc`, `ivy_check`, `ivy_show`, `ivy_to_cpp` are invoked directly instead of via MCP
 - `tip-shown.py` — `ivy_verify`, `ivy_coverage` — shows a one-time tip on first use
-- `check-mcp-health.py` — `mcp__.*ivy` — verifies MCP server liveness before the call
-- `observability/check_lsp_log.py` — `mcp__.*ivy` — tails the LSP log for diagnostic context
-- `check-indexing-ready.sh` — `mcp__.*ivy` — blocks until the indexer is ready
+- `check-mcp-health.py` — `mcp__.*ivy` — *Is the MCP server process alive?* Two-tier check (PID file then TCP sidecar fallback). After 3 consecutive failures, BLOCKS the call.
+- `observability/check_lsp_log.py` — `mcp__.*ivy` — tails the LSP log for diagnostic context (does not block).
+- `check-indexing-ready.sh` — `mcp__.*ivy` — *Has the LSP/MCP finished indexing the workspace?* 4 readiness signals; after 6 denials (~60 s) degrades to WARN. Orthogonal to `check-mcp-health.py`: a server can be alive but mid-indexing, or finished indexing then crash. Both checks are needed.
 - `observability/observe.py --event PreToolUse` — `mcp__|Bash|Write|Edit|Agent` — emits a JSONL observability event
 
 ### PostToolUse
@@ -35,6 +42,7 @@ One line per script and the event that triggers it. Multi-handler events run in 
 - `observability/observe.py --event PostToolUse` — `mcp__|Bash|Write|Edit|Agent` — emits a JSONL observability event
 
 ### PostToolUseFailure
+- `retry-ivy-mcp.py` — `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_(status|diagnostics|model_info|coverage)` — prompts the agent to retry once when a read-only idempotent ivy_* tool fails; appends a `progress{kind: "mcp_retry"}` journal entry.
 - `observability/observe.py --event PostToolUseFailure` — `*` — records tool-call failures
 
 ### SessionStart (runs in array order)
