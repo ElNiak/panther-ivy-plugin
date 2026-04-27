@@ -1,5 +1,5 @@
 ---
-name: using-panther-ivy-plugin
+name: meta-using-panther-ivy-plugin
 description: "You MUST consult this on starting any panther-ivy-plugin session. Establishes the 1% rule, iron-law primer, methodology routing (NCT/NACT/NSCT), and workspace awareness. Injected at SessionStart as EXTREMELY_IMPORTANT context."
 user-invocable: false
 ---

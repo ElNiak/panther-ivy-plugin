@@ -31,7 +31,7 @@
       "fileTriggers": [],
       "priority": "low"
     },
-    "plugin-self-mod": {
+    "meta-plugin-self-mod": {
       "_comment": "Activates the 3-agent loop (implementer + spec-reviewer + plugin-conventions-reviewer) when modifying panther-ivy-plugin source. Scoped via fileTriggers to plugin paths only; does not fire on Ivy spec edits.",
       "keywords": ["modify plugin", "edit skill", "edit agent", "edit hook", "plugin convention", "skill-conventions"],
       "intentPatterns": ["(modify|edit|update|refactor).*(skill|agent|hook|rule|command|output-style)", "(audit|review).*plugin.*(source|conventions)"],

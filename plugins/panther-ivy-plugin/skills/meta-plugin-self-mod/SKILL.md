@@ -1,5 +1,5 @@
 ---
-name: plugin-self-mod
+name: meta-plugin-self-mod
 description: "You MUST use this when modifying panther-ivy-plugin source (skills, agents, hooks, .claude/rules, commands, output-styles, routing-rules.json). Subagent-driven 3-loop: implementer → spec-compliance-reviewer → plugin-conventions-reviewer per task."
 user-invocable: false
 ---
@@ -16,7 +16,7 @@ Does NOT apply to Ivy spec authoring (use `build` / `verify` / `review`), plugin
 
 ## Iron Law
 
-<iron-law name="PLUGIN_3LOOP" workflow="plugin-self-mod" enforcement="implementer / spec-reviewer / plugin-conventions-reviewer dispatch per task; all three SOUND before ship"/>
+<iron-law name="PLUGIN_3LOOP" workflow="meta-plugin-self-mod" enforcement="implementer / spec-reviewer / plugin-conventions-reviewer dispatch per task; all three SOUND before ship"/>
 
 No plugin-source change ships without all three loops returning SOUND on the change.
 
