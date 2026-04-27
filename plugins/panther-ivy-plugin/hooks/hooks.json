@@ -178,7 +178,7 @@
     ],
     "SessionStart": [
       {
-        "_ordering": "SessionStart runs in array order: (1) cleanup-stale-pids clears stale MCP/LSP PIDs before anything checks liveness; (2) cleanup-stale-workflow clears orphaned active-workflow flags; (3) detect-ivy-workspace exports IVY_* env vars consumed by subsequent hooks and MCP servers; (4) observe.py records SessionStart; (5) wait-for-indexing blocks until the indexer is ready (up to 30s).",
+        "_ordering": "SessionStart runs in array order: (1) cleanup-stale-pids clears stale MCP/LSP PIDs before anything checks liveness (reads IVY_WORKSPACE_ROOT as fallback for detection, no hard dep on prior hooks); (2) cleanup-stale-workflow clears orphaned active-workflow flags (no env-var deps); (3) detect-ivy-workspace writes IVY_WORKSPACE_ROOT, IVY_LSP_LOG_PATH, IVY_MCP_LOG_PATH, IVY_SESSION_ID, IVY_MCP_PID_FILE, and conditionally IVY_ACTIVE_WORKSPACE to CLAUDE_ENV_FILE — these are consumed by wait-for-indexing and MCP servers; (4) observe.py records SessionStart (no env-var deps on prior hooks); (5) wait-for-indexing reads IVY_MCP_LOG_PATH, IVY_LSP_LOG_PATH, IVY_WORKSPACE_ROOT, and IVY_ACTIVE_WORKSPACE exported by step 3 — must run last. Reordering steps 3 and 5 breaks env-var propagation: wait-for-indexing falls back to /tmp defaults and loses workspace context.",
         "hooks": [
           {
             "type": "command",
