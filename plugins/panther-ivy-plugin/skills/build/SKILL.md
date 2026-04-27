@@ -210,11 +210,11 @@ After the phase is set to `"blueprint-done"`, the G1 exploration gate fires (eit
 
 ## Phase 3 — Write
 
-Load `references/layer-scaffolding.md` for the full per-layer scaffolding procedure, the compile-attempt cap (journal-counted, 5-per-layer cumulative, soft-reset via `override_attempt_cap`), and the post-edit workspace-block recovery menu. Summary of the scaffolding loop:
+Load `references/layer-scaffolding.md` for the full per-layer scaffolding procedure, compile-attempt cap, and post-edit workspace-block recovery menu. Summary of the scaffolding loop:
 
 1. Load `ivy-writing-guide` skill.
 2. Write ONE layer at a time in dependency order; run `ivy_compile` after each.
-3. On compile error: dispatch `spec-analyst`, fix inline, recompile. The attempt-counter gate applies before each compile — see `references/layer-scaffolding.md` for the protocol and escalation menu.
+3. On compile error: dispatch `spec-analyst`, fix inline, recompile. For the attempt-counter recovery protocol, see `references/layer-scaffolding.md` (Step 2: Generate specs incrementally section).
 4. On compile success: update `build-state.yaml` layer status.
 5. Reflection Gate every 3 layers.
 6. Handle type propagation via `propagation-patterns` skill if needed.

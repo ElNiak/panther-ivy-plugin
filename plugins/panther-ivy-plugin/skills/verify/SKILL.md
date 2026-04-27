@@ -346,7 +346,7 @@ Load `references/failure-diagnosis.md` for the full diagnosis and fix procedures
 
 ### Iteration cap
 
-The fix-and-re-verify loop is bounded by a journal-counted cap of **5 per test file, cumulative across sessions, soft-reset via an `override_attempt_cap` decision**. Silent retry past the cap without an override is pattern `#405` / `#403`. Full attempt-counter protocol (attempt-key canonicalization, journal-read semantics, escalation payloads) and the workspace-block recovery pattern: `references/failure-diagnosis.md`.
+For the attempt-counter recovery protocol, see `references/failure-diagnosis.md` (Step 1: Apply the fix section).
 
 **On VERDICT_ABSTAIN from G4**: treat as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not treat the upstream `ivy_verify` result as authoritative.
 
