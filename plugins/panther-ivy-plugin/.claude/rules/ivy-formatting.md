@@ -1,3 +1,8 @@
+---
+description: "RFC citation format ([rfcNNNN:X.Y]), error/warning formatting, the three orthogonal severity systems (Tool-outcome PASS/FAIL/WARN, Gate-verdict SOUND/UNSOUND/ABSTAIN, Finding ERROR/WARNING/INFO), and the Considerations self-review block."
+# Loaded on demand by name from output styles, workflow skills, and agents; not auto-injected on file edits.
+---
+
 ## Ivy Formatting Conventions
 
 - Cite RFC sections as `[rfcNNNN:X.Y]` inline, never as footnotes. Always include

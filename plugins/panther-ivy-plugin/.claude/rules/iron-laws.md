@@ -61,7 +61,9 @@ is approved and the workflow re-activates at Phase 1.5.
   `quic_7.ivy` is the latest layer in `{prot}_stack/`), ground the decision
   in `ivy_diagnostics(mode="structural")` returning no
   <severity class="finding" value="ERROR"/>-severity diagnostics for the
-  prior layer.
+  prior layer. Reason: stacking a new layer on top of a structurally broken
+  predecessor compounds the breakage and makes the structural diagnostics
+  ambiguous about which layer to fix.
   </instructions>
 
   <branch condition="out of scope — no structural pass required" name="non-layer-writes">
@@ -90,7 +92,9 @@ is approved and the workflow re-activates at Phase 1.5.
   model is X% complete", "this isolate has insufficient guards", "the
   requirement set is fully covered", or any pass/fail judgment on a coverage
   or quality dimension — cite `ivy_coverage` and/or `ivy_quality` output
-  from the current turn inline.
+  from the current turn inline. Reason: coverage verdicts that are not
+  grounded in a fresh tool result drift quickly as the spec evolves; an
+  unscoped claim becomes an opinion that consumers cannot verify or audit.
   </instructions>
 
   <branch condition="not a quality verdict — judgment space, no tool citation required" name="qualitative-feedback">
