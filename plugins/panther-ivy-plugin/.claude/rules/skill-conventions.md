@@ -173,3 +173,16 @@ chars, synonyms covered.
 Body length cap from the worktree-level rule still applies: SKILL.md
 under 500 lines, aim for under 300 for frequently-loaded skills. Move
 heavy reference material to `references/` subdirectory.
+
+## 8. Common violations (red flags)
+
+Modeled on the per-skill Red Flags table that the rules in §4 prescribe. Six recognisable convention breaches and their fixes — readers diagnose drift here before re-reading §1-§7.
+
+| Symptom | Section breached | Fix |
+|---|---|---|
+| `name: workflow/verify` (slash in name) | §"Frontmatter" | Flatten to `workflow-verify` (hyphenated). Slashes are NOT supported by the harness — verified empirically 2026-04-27. |
+| Description starts with "Analyzes counterexamples…" (verb without trigger) | §"Description Format" | Lead with "Use when…" trigger phrases ("Use when ivy_verify FAIL, …"). Front-load the key trigger in the first 250 chars. |
+| Rigid workflow SKILL with no Red Flags table | §"Body Rules" | Add a 5-row Red Flags table; move overflow to `references/`. |
+| Rigid workflow SKILL with no `## Process Flow` digraph | §"Body Rules" | Add a Graphviz `digraph` block matching the convention used by every other workflow SKILL. |
+| SKILL.md body > 500 LOC | §"Body Rules" | Move heavy reference material (worked examples, catalogs, walkthroughs) to `references/`; cite from SKILL.md via short Read pointers. |
+| Description mentions "do not invoke directly" | §"Frontmatter" (`user-invocable`) | Set `user-invocable: false` in frontmatter; do not waste description characters on routing metadata. |

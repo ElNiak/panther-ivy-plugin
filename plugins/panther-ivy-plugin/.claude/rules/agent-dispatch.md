@@ -112,6 +112,31 @@ Per-agent Failure Modes sections may override these defaults.
 
 Claude Code's `Agent` tool does not expose a hard wall-clock timeout. The "timeout" above is a caller patience threshold: use the Background Verification pattern (already documented in `verify/SKILL.md`) to run long dispatches in a background agent with completion notification, or monitor your own wait time before falling through to step 5.
 
+### Worked recovery — spec-analyst timeout at verify Phase 6
+
+A concrete sequence of journal events showing the recovery pattern in flight, so the abstract steps above have a recognisable shape.
+
+```text
+ivy_workflow_state(append_journal, progress,
+  '{"kind":"agent_dispatch_start","agent":"spec-analyst",
+    "workflow":"workflow-verify","phase":"diagnose"}')
+
+Agent.spec-analyst(<dispatch-context>…</dispatch-context>)   # 90 s budget
+[no return at 95 s — caller patience exceeded]
+
+ivy_workflow_state(append_journal, progress,
+  '{"kind":"agent_dispatch_failure","agent":"spec-analyst",
+    "reason":"timeout"}')
+ivy_workflow_state(append_journal, progress,
+  '{"kind":"agent_dispatch_retry","agent":"spec-analyst"}')
+
+Agent.spec-analyst(...)   # retry; returns at 62 s with diagnosis.
+
+→ continue verify Phase 6 with the diagnosis.
+```
+
+If the retry also fails, the workflow falls through to `AskUserQuestion(retry-manually | skip | abandon)`. The "abandon" branch emits `append_pending_dispatch(workflow-navigate, reason="agent dispatch failed: spec-analyst")` and clears the active-workflow flag, so navigate routes the user on the next turn.
+
 ### Relationship to other rules
 
 - **Cluster 1** (`pending_dispatch` journal event): the abandonment path emits `pending_dispatch(navigate, …)` so the causal chain is visible in the journal.

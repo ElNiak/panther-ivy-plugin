@@ -33,6 +33,21 @@ All three methodologies share:
 
 For tool usage across all methodologies, see `ivy-toolkit`.
 
+### Dispatch decision table
+
+Once the methodology is chosen, this table maps the user's situation to the first skill and workflow to load. Use it as a one-step routing aid before invoking `workflow-build` or `workflow-verify`.
+
+| Situation | Methodology | First skill to load | First workflow |
+|---|---|---|---|
+| RFC compliance test, IUT exists | NCT | `knowledge-specification-patterns` | `workflow-build` |
+| Attack / security test, attacker model needed | NACT | `knowledge-apt-attack-patterns` | `workflow-build` |
+| Network-condition / replay tests (Shadow simulator) | NSCT | `knowledge-methodology-reference` (this file) | `workflow-build` |
+| Existing spec, want to verify | (any) | `knowledge-verification-failures` | `workflow-verify` |
+| Existing spec, want coverage / quality verdict | (any) | `knowledge-verification-failures` | `workflow-review` |
+| Tools timing out / MCP errors | (any) | (none — direct invocation) | `workflow-triage` |
+
+For an end-to-end NCT walkthrough on a QUIC server IUT (workspace setup, methodology detection, layer scaffolding, role inversion, G3/G4/G5 gates, and the build ↔ verify hand-off via `pending_dispatch`), Read `references/walkthrough-nct-quic-server.md`. For the calibrated meanings of NCT / NACT / NSCT / isolate / monitor / `_finalize` / role inversion / `export`/`import`, Read `references/glossary.md`.
+
 ---
 
 ## NCT

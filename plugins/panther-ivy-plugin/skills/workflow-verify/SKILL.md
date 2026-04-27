@@ -14,6 +14,8 @@ Multi-Perspective Diagnosis. You are bound by the
 
 **Type:** rigid — follow exactly, do not adapt away discipline.
 
+For the calibrated meanings of `SOUND`, `ABSTAIN`, MPE, "iron law", "knowledge gate", and `pending_dispatch` as used below, Read `references/glossary.md` once — these terms have fixed definitions and are not paraphrased here.
+
 ## Phase 0 — Plan-mode option framings
 
 Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that rule activates for this skill. `AskUserQuestion` options:
@@ -85,7 +87,10 @@ digraph verify_flow {
   "Fix structural" -> "Structural check";
   "Structural check" -> "ivy_verify" [label="PASS"];
   "ivy_verify" -> "Diagnose failure" [label="FAIL"];
-  "Diagnose failure" -> "Fix + re-verify";
+  "Diagnose failure" -> "spec-analyst" [label="counterexample present"];
+  "Diagnose failure" -> "MPE Explore" [label="solver wall-timeout / no counterexample"];
+  "spec-analyst" -> "Fix + re-verify";
+  "MPE Explore" -> "Fix + re-verify";
   "Fix + re-verify" -> "ivy_verify";
   "ivy_verify" -> "Completion Verification Gate" [label="PASS"];
   "Completion Verification Gate" -> "Return to navigate";
@@ -225,6 +230,8 @@ ivy_verify(relative_path=<test_file>)
 ### G4 Verification Gate Fires After `ivy_verify` Returns
 
 PostToolUse hook spawns G4 critics from `reflection-patterns` (catalog slices `#200-249`, `#250-299`, `#400-499`). Verdict actions: SOUND advances; UNSOUND writes `[GAP: #NN]` markers and blocks until fixed-and-re-verified or promoted to `// DEFERRED YYYY-MM-DD:`; ABSTAIN proceeds to Phase 6 with `abstain_reason` as starting hypothesis. Full discipline contracts, verbatim critic prompts, and catalog details: `references/failure-diagnosis.md` section "G4 Verification Gate".
+
+For an end-to-end walkthrough of one verify cycle (compile → FAIL with counterexample → spec-analyst diagnosis → fix → re-verify → SOUND → completion-gate) showing the verbatim `ivy_verify` JSON, the `#410` catalog application, and the unified diff, Read `references/worked-example-quic-handshake.md`.
 
 ### On PASS
 

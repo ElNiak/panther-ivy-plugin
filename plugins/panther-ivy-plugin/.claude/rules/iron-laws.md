@@ -160,3 +160,57 @@ is approved and the workflow re-activates at Phase 1.5.
   enforcement-hook="hooks/scripts/block-direct-ivy.sh"
   suspended-during="plan mode (navigate Phase 0)"
   re-checked-at="G0 plan-gate on plan approval (navigate Phase 1.5)"/>
+
+## Worked application
+
+Each iron law applied to a real artifact, so the abstract `<instructions>` blocks above have a concrete shape readers can recognise on sight. The canonical wording is unchanged; the examples below are illustrative.
+
+### NO_FIX_WITHOUT_VERIFY in flight
+
+```text
+Turn N    : ivy_verify(quic_server_test_handshake.ivy)
+            → {"status":"FAIL","counterexample":{...},"started_at":"…14:02Z"}
+Turn N+1  : spec-analyst proposes  + require initial_received(scid);
+            (allowed — upstream activity, not a claim)
+Turn N+2  : Edit applied. Iron law BINDS — no resolution claim yet.
+Turn N+3  : ivy_verify rerun → {"status":"OK","started_at":"…14:08Z"}
+            → "verification passed" claim is now licensed.
+```
+
+Direct CLI alternative `ivy_check quic_server_test_handshake.ivy` is warned by `hooks/scripts/block-direct-ivy.sh` (PreToolUse, exit 0 advisory).
+
+### NO_LAYER_WITHOUT_SCAFFOLD in flight
+
+```text
+Author wants: Write quic_8.ivy (a new layer on top of quic_7.ivy).
+Iron law:     Run ivy_diagnostics(mode=structural) on quic_7.ivy first.
+              → SOUND. Write quic_8.ivy is licensed.
+              → ERROR diagnostics. Fix quic_7.ivy or DEFERRED-promote
+                each finding before authoring quic_8.ivy.
+```
+
+Patches to existing layer files (bug fixes, refactors) are out of scope — the rule binds new-layer authoring only.
+
+### NO_QUALITY_WITHOUT_COVERAGE in flight
+
+```text
+Reviewer wants to claim: "Coverage looks good for RFC 9000 §17.2".
+Iron law:                cite a fresh ivy_coverage / ivy_quality output.
+            → ivy_coverage(test_file=…) returns {gaps:[], covered:42/42}.
+            → "Coverage SOUND for §17.2" claim now licensed; cite the
+              tool result by timestamp.
+```
+
+Personal heuristic ("looks fine") does NOT discharge the rule.
+
+### STALENESS_RULE in flight
+
+```text
+Turn N    : ivy_verify returns OK at 09:14:02Z.
+Turn N+5  : Edit on quic_packet.ivy (in the include closure).
+Turn N+6  : Reviewer wants to cite "verify is SOUND".
+Iron law  : the OK from Turn N is stale — its include closure changed.
+            Re-run ivy_verify before citing.
+```
+
+`ivy_analysis(mode="includes")` returns the closure that defines whether a result is stale. Workspace-wide invalidation is the conservative fallback.
