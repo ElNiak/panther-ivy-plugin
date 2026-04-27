@@ -30,6 +30,23 @@
       "intentPatterns": ["(what|where).*(next|start|do)", "^(bgp|quic|coap|minip)$"],
       "fileTriggers": [],
       "priority": "low"
+    },
+    "plugin-self-mod": {
+      "_comment": "Activates the 3-agent loop (implementer + spec-reviewer + plugin-conventions-reviewer) when modifying panther-ivy-plugin source. Scoped via fileTriggers to plugin paths only; does not fire on Ivy spec edits.",
+      "keywords": ["modify plugin", "edit skill", "edit agent", "edit hook", "plugin convention", "skill-conventions"],
+      "intentPatterns": ["(modify|edit|update|refactor).*(skill|agent|hook|rule|command|output-style)", "(audit|review).*plugin.*(source|conventions)"],
+      "fileTriggers": [
+        "skills/**/SKILL.md",
+        "skills/**/references/**/*.md",
+        "agents/**/*.md",
+        "hooks/**/*",
+        ".claude/rules/**/*.md",
+        "commands/**/*.md",
+        "output-styles/**/*.md",
+        "styles/**/*.md",
+        "routing-rules.json"
+      ],
+      "priority": "high"
     }
   },
   "learning_injection": {
