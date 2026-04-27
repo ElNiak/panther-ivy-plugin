@@ -74,12 +74,13 @@ or:
 `knowledge-capture`. These are workflow skills bound by iron laws and
 adversarial gates; deviation is a soundness risk.
 
-**Flexible (11):** `ivy-writing-guide`, `ivy-error-patterns`,
+**Flexible (8):** `ivy-writing-guide`, `verification-failures`,
 `methodology-reference`, `specification-patterns`, `apt-attack-patterns`,
-`ivy-toolkit`, `propagation-patterns`, `counterexample-guide`,
-`claim-discussion`, `ivy-debugging-methodology`, `reflection-patterns`.
-These are pattern/reference skills consumed by the rigid workflows and by
-the user.
+`ivy-toolkit`, `propagation-patterns`, `reflection-patterns`. These are
+pattern/reference skills consumed by the rigid workflows and by the
+user. (Roster updated 2026-04-27: the four prior `claim-discussion`,
+`counterexample-guide`, `ivy-debugging-methodology`, and `ivy-error-patterns`
+skills consolidated into `verification-failures`.)
 
 ## 3. HARD-GATE markup — pre-action enforcement directives
 
