@@ -1,6 +1,6 @@
 ---
 name: review
-description: "Audits an Ivy model for RFC coverage, requirement traceability, and structural quality. You MUST use this when checking 'what MUSTs am I missing?', 'RFC coverage?', 'traceability gap?', or 'review my model'. Not for verifying spec correctness, scaffolding new layers, or running IUT tests — use `verify` or `build` instead."
+description: "You MUST use this when checking 'what MUSTs am I missing?', 'RFC coverage?', 'traceability gap?', or 'review my model'. Audits an Ivy model for RFC coverage, requirement traceability, and structural quality."
 ---
 
 <role>

@@ -1,6 +1,6 @@
 ---
 name: build
-description: "Builds protocol specification layers from RFC, methodology-aware (NCT/NACT/NSCT). You MUST use this when starting a new Ivy spec, scaffolding a layer, or resuming an in-progress build. Not for verifying existing models, debugging counterexamples, or running IUT tests — use `verify` instead."
+description: "You MUST use this when starting a new Ivy spec, scaffolding a layer, or resuming an in-progress build. Builds protocol specification layers from RFC, methodology-aware (NCT/NACT/NSCT)."
 ---
 
 <role>
