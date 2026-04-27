@@ -1,7 +1,7 @@
 #!/bin/bash
 # inject-using-plugin.sh — SessionStart hook for panther-ivy-plugin
 #
-# Emits the body of skills/using-panther-ivy-plugin/SKILL.md as
+# Emits the body of skills/meta-using-panther-ivy-plugin/SKILL.md as
 # `additionalContext` wrapped in <EXTREMELY_IMPORTANT> markers, so Claude
 # loads the 1% rule, iron-law primer, methodology routing, and workspace
 # awareness primer at the start of every session.
@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-SKILL_FILE="${CLAUDE_PLUGIN_ROOT}/skills/using-panther-ivy-plugin/SKILL.md"
+SKILL_FILE="${CLAUDE_PLUGIN_ROOT}/skills/meta-using-panther-ivy-plugin/SKILL.md"
 
 if [ ! -r "$SKILL_FILE" ]; then
   exit 0
