@@ -122,7 +122,7 @@ These journal entries enable warm session resume and decision traceability acros
 
 Look for NCT/NACT/NSCT keywords in the user's request. If none found, ask: "Which testing methodology? NCT (compliance), NACT (security), or NSCT (simulation)."
 
-Load the `methodology-reference` knowledge skill via the Skill tool for methodology details.
+Load the `methodology-reference` knowledge skill via the Skill tool for methodology details. Also load `ivy-toolkit` (`Skill(skill="panther-ivy-plugin:ivy-toolkit")`) for the canonical tool catalog and parameter matrix — consult it before each ivy-tools call rather than relying on memory for tool flags.
 
 ### Step 2: Identify target
 
@@ -267,7 +267,7 @@ Build's Phase 5 reads the most recent `gate_verdict` (G4, G5) and `progress` jou
 
 Step 1: Dispatch `model-reviewer` and `traceability-agent` in parallel via two `Agent` calls in one message. Step 2: Aggregate findings by ERROR/WARNING/INFO severity per `.claude/rules/ivy-formatting.md`. Step 3: On ERROR findings, ask user fix-now-or-accept (gate checkpoint); loop to Phase 3 for structural fixes, Phase 4 for verification, or fix coverage gaps inline. Step 4: Update phase to `"quality-passed"` via `ivy_workflow_state`.
 
-**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: architecture decisions solidified during quality review and model-reviewer / traceability-agent findings worth remembering.
 
 Full procedure including dispatch payloads, gate-checkpoint phrasing, and the Situation Briefing template: `references/phase-5-quality-gate.md`.
 

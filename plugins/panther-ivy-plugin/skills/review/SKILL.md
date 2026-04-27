@@ -159,6 +159,8 @@ Update phase to `"triaged"` via `ivy_workflow_state(action="set", workflow="revi
 
 ## Phase 2 — Execute
 
+**Tool selection.** Before dispatching agents in this phase, load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` so dispatched agents inherit the canonical tool catalog. Coverage Path uses `ivy_coverage`/`ivy_extract_requirements`; Quality Path uses `ivy_quality`. Pass the relevant catalog section to each agent's `<dispatch-context>` rather than letting agents guess tool flags from memory.
+
 Branch by the review type detected in Phase 1.
 
 ### Coverage Path
@@ -221,7 +223,7 @@ Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="rev
 
 ### Knowledge Gate: Post-Agent-Execution
 
-**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: cross-model patterns identified by model-reviewer and traceability-agent, plus any recurring quality findings worth remembering.
 
 ---
 
@@ -291,7 +293,7 @@ Proceed to completion.
 
 ### Knowledge Gate: Post-Findings-Resolution
 
-**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: workflow refinements from the resolution process and fix strategies that worked or did not.
 
 ---
 

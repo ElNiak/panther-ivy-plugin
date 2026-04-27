@@ -169,6 +169,8 @@ Update phase to `"test-selected"` via `ivy_workflow_state(action="set", workflow
 
 ## Phase 3 — Compile
 
+**Tool selection.** Before the first tool call in this phase, load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult its parameter matrix for `ivy_compile`. The toolkit skill owns the canonical tool taxonomy; do not rely on memory for tool flags or modes.
+
 For each selected test file, call:
 
 ```
@@ -238,7 +240,7 @@ After Phase 4 completes (pass or fail), load the `reflection-patterns` skill. Ap
 
 ### Knowledge Gate: Post-Execution
 
-**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: verification pass/fail patterns and what drove the outcome.
 
 ### On FAIL
 
@@ -314,9 +316,7 @@ Update active-workflow phase to match the outcome: `ivy_workflow_state(action="s
 
 ### G2/G3 scope note
 
-Adversarial gates G2 (layer modeling) and G3 (test-spec) do NOT fire on fix edits made inside the verify workflow; they are build-time gates by design. Load `reflection-patterns` and read its `references/gates.md` "G2/G3 workflow scope" section for the canonical rationale and re-engagement path.
-
-Short form for this skill: if a Phase 7 fix raises structural concerns the counterexample diagnosis did not catch, return to `build` via `append_pending_dispatch(target_workflow="build", phase_hint="layer-check")` and clear the active-workflow flag. Navigate re-enters `build` on its next turn; the re-edit path re-engages G2 naturally.
+G2/G3 gates do NOT fire on verify Phase 7 fix edits (they are build-time only). If a fix raises structural concerns, append `pending_dispatch(target_workflow="build", phase_hint="layer-check")` and clear the active-workflow flag; navigate re-enters `build` on its next turn and the re-edit path re-engages G2 naturally. Full rationale and re-engagement path: `reflection-patterns/references/gates.md` "G2/G3 workflow scope".
 
 ### Post-Edit workspace-block recovery
 
@@ -326,9 +326,7 @@ Full Phase 6/7 procedure (six pre-fix research steps from `ivy-debugging-methodo
 
 ### Iteration cap
 
-For the attempt-counter recovery protocol, see `references/failure-diagnosis.md` (Steps 1–2: gate evaluation and cap value).
-
-**On VERDICT_ABSTAIN from G4**: treat as inconclusive — not a pass, not a fail. Proceed to Phase 6 Diagnose using the abstain_reason as the starting hypothesis; do not treat the upstream `ivy_verify` result as authoritative.
+Attempt-counter recovery protocol (gate evaluation, cap value) and VERDICT_ABSTAIN handling (treat as inconclusive — proceed to Phase 6 with `abstain_reason` as starting hypothesis): `references/failure-diagnosis.md` Steps 1–2.
 
 ---
 
