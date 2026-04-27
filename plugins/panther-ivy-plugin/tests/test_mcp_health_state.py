@@ -23,7 +23,7 @@ from typing import Any
 
 import pytest
 
-HOOKS_SCRIPTS = Path(__file__).resolve().parent.parent
+HOOKS_SCRIPTS = Path(__file__).resolve().parent.parent / "hooks" / "scripts"
 sys.path.insert(0, str(HOOKS_SCRIPTS))
 
 

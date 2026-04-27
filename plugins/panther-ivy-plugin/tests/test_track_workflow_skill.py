@@ -21,7 +21,7 @@ from typing import Any
 import pytest
 import yaml
 
-HOOKS_SCRIPTS = Path(__file__).resolve().parent.parent
+HOOKS_SCRIPTS = Path(__file__).resolve().parent.parent / "hooks" / "scripts"
 sys.path.insert(0, str(HOOKS_SCRIPTS))
 
 
