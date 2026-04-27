@@ -87,10 +87,8 @@ digraph verify_flow {
   "Fix structural" -> "Structural check";
   "Structural check" -> "ivy_verify" [label="PASS"];
   "ivy_verify" -> "Diagnose failure" [label="FAIL"];
-  "Diagnose failure" -> "spec-analyst" [label="counterexample present"];
-  "Diagnose failure" -> "MPE Explore" [label="solver wall-timeout / no counterexample"];
-  "spec-analyst" -> "Fix + re-verify";
-  "MPE Explore" -> "Fix + re-verify";
+  "Diagnose failure" -> "MPE diagnosis\n(spec-analyst +\n2 Explore agents,\nparallel dispatch)" [label="all three in parallel"];
+  "MPE diagnosis\n(spec-analyst +\n2 Explore agents,\nparallel dispatch)" -> "Fix + re-verify" [label="aggregated diagnosis"];
   "Fix + re-verify" -> "ivy_verify";
   "ivy_verify" -> "Completion Verification Gate" [label="PASS"];
   "Completion Verification Gate" -> "Return to navigate";
