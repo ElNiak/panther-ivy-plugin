@@ -271,7 +271,7 @@ If this review run needs another workflow to run next (e.g., the user asked for 
 - **Called by:** `navigate` (dispatch), `build` (quality gate — though build dispatches agents directly), `verify` (follow-up coverage), user directly ("review my model", "check coverage")
 - **Calls:** `triage` (preflight), `traceability-agent` agent (coverage), `model-reviewer` agent (quality), `spec-analyst` agent (quality), `verify` workflow (optional follow-up)
 - **Knowledge skills loaded:** `reflection-patterns` (SB Phase 1, MPE Phase 2, RG Phase 3), `claim-discussion` (Phase 3 for contested findings), `knowledge-capture` (KG Phase 2, KG Phase 3)
-- **MCP tools used:** `ivy_workspace` (protocol detection)
+- **MCP tools used:** `ivy_workspace` (protocol detection), `ivy_coverage`, `ivy_quality`, `ivy_extract_requirements` (dispatched via traceability-agent / model-reviewer)
 - **State files:** `.panther-ivy/active-workflow`
 - **MCP tool reliability:** For MCP-tool retry/timeout policy, see `.claude/rules/mcp-tool-reliability.md`.
 - **Agent dispatch:** review dispatches `traceability-agent` (Phase 2 coverage path), `model-reviewer` + `spec-analyst` + MPE Explore agents (Phase 2 quality path). On dispatch failure follow `.claude/rules/agent-dispatch.md`. Per-agent Failure Modes sections override default budgets.
