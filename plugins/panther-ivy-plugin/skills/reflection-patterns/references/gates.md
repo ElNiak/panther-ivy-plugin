@@ -153,7 +153,7 @@ See `references/critic_prompts/g5_trace.md`.
 
 See `references/critic_prompts/g6_knowledge.md`.
 
-- **Trigger:** before any `knowledge-capture` Step 5 write to `.claude/rules/`, `MEMORY.md`, or a `feedback_*.md` file. Fires on every candidate; there is no skip path.
+- **Trigger:** before any `knowledge-capture` Step 4c write to `.claude/rules/`, `MEMORY.md`, or a `feedback_*.md` file. Fires on every candidate; there is no skip path.
 - **Scope:** the candidate knowledge entry + the current content of the target file + the session digest grounding the candidate.
 - **Default tier:** Sonnet × 3, `≥2 SOUND` / `≥2 UNSOUND`.
 - **Catalog slice:** `#601-605` (knowledge-graduation patterns — defined in the G6 critic prompt).

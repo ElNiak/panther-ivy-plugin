@@ -198,7 +198,7 @@ Pattern B (MPE) and Pattern D (CVG) provide the dispatch substrate for the plugi
 | G3 | test-spec | each test-spec write | `build` Phase 3 (test sub-step) |
 | G4 | verification | after `ivy_verify` returns | `verify` Phase 4 |
 | G5 | trace analysis | after `ivy_iut_test` returns | `verify` Phase 5 |
-| G6 | knowledge graduation | before persistence write | `knowledge-capture` Step 5, before any Write to `.claude/rules/`, `MEMORY.md`, or `feedback_*.md` |
+| G6 | knowledge graduation | before persistence write | `knowledge-capture` Step 4c, before any Write to `.claude/rules/`, `MEMORY.md`, or `feedback_*.md` |
 
 **Full gate specifications — discipline contracts, per-gate critic templates, tier configuration, verdict persistence schema, GAP-marker conventions, and catalog-slice routing — live in `references/gates.md`.** Load that reference when dispatching any gate (G0, G0b, G1–G6). Tier defaults and thresholds live in `references/model_tier_defaults.md`.
 
