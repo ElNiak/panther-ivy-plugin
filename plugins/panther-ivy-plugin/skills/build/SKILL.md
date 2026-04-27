@@ -24,7 +24,7 @@ Consumed by `.claude/rules/plan-mode.md` Step 2 (situation briefing) when that r
 
 ## Iron Laws
 
-This skill is bound by <iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="build" enforcement="ivy_diagnostics precondition in Phase 3"/> and <iron-law name="STALENESS_RULE" workflow="build" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording, the explicit "Out of scope" carve-outs (patches to existing layers, files outside `{prot}_stack/`, drafts outside discovery path), and the plan-mode exemption clause.
+This skill is bound by <iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="build" enforcement="ivy_diagnostics precondition in Phase 3"/> and <iron-law name="STALENESS_RULE" workflow="build" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp"/>. Before starting Phase 3 (Implement), Read `.claude/rules/iron-laws.md` for the canonical wording.
 
 ## Step Tracking
 
@@ -222,7 +222,7 @@ Load `references/layer-scaffolding.md` for the full per-layer scaffolding proced
 
 ### Post-Edit Workspace-Block Recovery
 
-If a `Write`/`Edit` on a `.ivy` file is blocked by the `check-workspace-scope.py` PreToolUse hook, follow the three-option recovery menu in `references/layer-scaffolding.md` under "Post-Edit Workspace-Block Recovery". This path only fires when the harness propagates hook-block signals into the tool-result.
+For the workspace-block recovery menu, see `references/layer-scaffolding.md` (Post-Edit Workspace-Block Recovery section).
 
 ### G2 / G3 Gates Fire Per-File
 
