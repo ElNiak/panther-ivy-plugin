@@ -22,7 +22,7 @@ COMMAND=$(printf '%s' "$INPUT" | python3 -c "import sys,json; d=json.load(sys.st
 
 # Check if the command contains direct Ivy CLI tool invocations
 if echo "$COMMAND" | grep -qE '\bivy_check\b|\bivyc\b|\bivy_show\b|\bivy_to_cpp\b'; then
-    echo "NOTE: Consider using ivy-tools MCP tools instead of direct CLI:"
+    echo "Use ivy-tools MCP tools for Ivy operations:"
     echo "  ivy_check  -> ivy_verify MCP tool     (or /nct-check)"
     echo "  ivyc       -> ivy_compile MCP tool    (or /nct-compile)"
     echo "  ivy_show   -> ivy_model_info MCP tool (or /nct-model-info)"

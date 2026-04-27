@@ -55,10 +55,8 @@ def main():
         "Notification",
         additional_context=(
             "[ivy-health] The Ivy MCP server has disconnected. "
-            "Run /mcp to reconnect, or type 'reconnect mcp' to trigger "
-            "a manual reconnection. MCP-dependent tools (ivy_verify, "
-            "ivy_coverage, ivy_diagnostics, etc.) will not work until "
-            "the server is back."
+            "Run /mcp to reconnect before calling ivy_verify, "
+            "ivy_coverage, ivy_diagnostics, or other MCP-dependent tools."
         ),
     )
 

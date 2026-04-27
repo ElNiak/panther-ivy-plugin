@@ -127,7 +127,7 @@ elif [ "$MCP_READY" = "1" ]; then
     if [ "$LSP_INDEXED" = "1" ] && [ -n "$LSP_STATUS" ]; then
         MSG="${BASE_MSG}${MODEL_MSG} LSP: $LSP_STATUS."
     elif [ "$LSP_STATUS" = "still indexing" ]; then
-        MSG="${BASE_MSG}${MODEL_MSG} LSP: still indexing. WAIT 10 seconds before calling MCP tools — results will be incomplete until indexing finishes."
+        MSG="${BASE_MSG}${MODEL_MSG} LSP: still indexing. Wait 10 seconds for indexing to finish before calling MCP tools."
     else
         MSG="${BASE_MSG}${MODEL_MSG}"
     fi
@@ -138,7 +138,7 @@ elif [ "$MCP_READY" = "1" ]; then
     # Append soft retry guidance for edge cases
     MSG="${MSG} Note: If an ivy MCP tool fails unexpectedly, wait 5 seconds and retry once — the server may be recovering."
 else
-    MSG="[ivy-indexing] WARNING: MCP server did not start within ${MAX_WAIT}s. MCP tools may be unavailable. IMPORTANT: If any ivy MCP tool call fails with a server error, wait 10 seconds and retry the same call up to 3 times before reporting failure to the user."
+    MSG="[ivy-indexing] WARNING: MCP server did not start within ${MAX_WAIT}s. If an ivy MCP tool call fails with a server error, wait 10 seconds and retry the same call up to 3 times before reporting failure to the user."
 fi
 
 # --- Statusline cache update ---
