@@ -80,7 +80,7 @@ Direct tool access (bypass workflows):
 `spec-analyst`, `model-reviewer`, `traceability-agent`
 
 **Knowledge skills** (loaded by workflows, not user-facing):
-`knowledge-counterexample-guide`, `knowledge-specification-patterns`, `knowledge-propagation-patterns`, `knowledge-apt-attack-patterns`, `knowledge-ivy-writing-guide`, `knowledge-ivy-toolkit`, `knowledge-claim-discussion`, `knowledge-methodology-reference`, `knowledge-ivy-debugging-methodology`, `knowledge-ivy-error-patterns`, `cross-cutting-reflection-patterns`
+`knowledge-verification-failures`, `knowledge-specification-patterns`, `knowledge-propagation-patterns`, `knowledge-apt-attack-patterns`, `knowledge-ivy-writing-guide`, `knowledge-ivy-toolkit`, `knowledge-methodology-reference`, `cross-cutting-reflection-patterns`
 
 **User-invocable skills** (triggered by user intent or natural-language phrases, not workflow dispatch):
 `cross-cutting-knowledge-capture` — review session learnings and audit plugin skills/references; also loaded by workflow knowledge gates and `/nct-learn` (`user-invocable: true`)
@@ -145,10 +145,11 @@ Neither directory is user-facing; changes there propagate through hooks only.
 ### Style Precedence Rules
 
 - Workflow overlays override output style dimensions for the active phase.
-- Skills that define fixed output formats (claim-discussion resolution comments,
-  counterexample-guide trace format, finding IDs) override the output style's
-  structure dimension for those specific artifacts. The style applies to
-  surrounding prose, not to structured artifacts with fixed schemas.
+- Skills that define fixed output formats (the `knowledge-verification-failures`
+  resolution-comment prefixes and counterexample trace format, finding IDs)
+  override the output style's structure dimension for those specific artifacts.
+  The style applies to surrounding prose, not to structured artifacts with
+  fixed schemas.
 - Memory and persistence artifacts (build-state.yaml, session logs, workflow
   journal, knowledge-capture entries) are never styled. They use the shared
   rules citation format but not style dimensions.
@@ -232,4 +233,4 @@ Set these in your shell environment before starting Claude Code if you need to o
 **Workflows**: navigate, verify, build, review, triage
 **Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-iut-test, /nct-health, /nct-observability, /nct-learn
 **Internal agents**: spec-analyst, model-reviewer, traceability-agent
-**Internal knowledge**: counterexample-guide, specification-patterns, propagation-patterns, apt-attack-patterns, ivy-writing-guide, ivy-toolkit, claim-discussion, methodology-reference, ivy-debugging-methodology, ivy-error-patterns, reflection-patterns, knowledge-capture
+**Internal knowledge**: verification-failures, specification-patterns, propagation-patterns, apt-attack-patterns, ivy-writing-guide, ivy-toolkit, methodology-reference, reflection-patterns, knowledge-capture

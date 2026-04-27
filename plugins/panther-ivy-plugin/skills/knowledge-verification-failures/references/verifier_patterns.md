@@ -2,7 +2,7 @@
 
 Numbered, append-only catalog of failure patterns that adversarial quality gates cite by ID. Sparse IDs preserve source-section provenance; do not renumber. Each `[GAP: #NN]` marker refers to an entry here.
 
-Owned by the `ivy-error-patterns` skill. The orchestrator and critics access this catalog via that skill — either by loading it through the Skill tool or by having the orchestrator read it and embed relevant slices into spawned-critic prompts.
+Owned by the `knowledge-verification-failures` skill (Error-pattern catalog section). The orchestrator and critics access this catalog via that skill — either by loading it through the Skill tool or by having the orchestrator read it and embed relevant slices into spawned-critic prompts.
 
 ## Entry format
 
@@ -536,9 +536,9 @@ Gates load only their range slice plus the active methodology overlay. The activ
 
 <catalog_entry>
 ### #405: Pre-fix research skipped
-- **Trigger:** A proposed fix for a verification failure is presented without the 6 mandatory research steps from `ivy-debugging-methodology` (diagnostics by source layer, skill consultation, linter run, working-example search, theory formulation, minimal-fix selection).
+- **Trigger:** A proposed fix for a verification failure is presented without the 6 mandatory research steps from the Debugging methodology section of `knowledge-verification-failures` (diagnostics by source layer, skill consultation, linter run, working-example search, theory formulation, minimal-fix selection).
 - **What to check:** The preceding conversation or workflow journal contains completed steps 1-6 before any `Edit`/`Write` on the verified file.
-- **Source:** `skills/knowledge-ivy-debugging-methodology/SKILL.md` steps 1-6.
+- **Source:** `skills/knowledge-verification-failures/SKILL.md` §Debugging methodology, steps 1-6.
 - **Methodology tag:** `Plugin-Memory`
 
 </catalog_entry>
@@ -547,7 +547,7 @@ Gates load only their range slice plus the active methodology overlay. The activ
 ### #406: Missing four-layer diagnostic cascade
 - **Trigger:** A failure was diagnosed by reading only the `ivy_verify` output without consulting `ivy-lint`, `ivy-lsp`, `ivy-lsp-semantic`, or `ivy-lsp-coverage` layers.
 - **What to check:** The diagnostic record names the layer that produced each finding; omitted layers suggest the root cause is in a layer the critic did not read.
-- **Source:** `skills/knowledge-ivy-debugging-methodology/SKILL.md`.
+- **Source:** `skills/knowledge-verification-failures/SKILL.md` §Debugging methodology.
 - **Methodology tag:** `Plugin-Memory`
 
 </catalog_entry>
@@ -556,7 +556,7 @@ Gates load only their range slice plus the active methodology overlay. The activ
 ### #410: Missing guard (counterexample classification)
 - **Trigger:** Counterexample reaches an action without a required precondition being true; a state variable the assertion depends on is never set.
 - **What to check:** The trace's first step shows an action firing without a `require` in its `before` clause that should be present; e.g., `stream.send` fires while `connected = false`.
-- **Source:** `skills/knowledge-counterexample-guide/SKILL.md` §Common Failure Patterns: Missing Guard.
+- **Source:** `skills/knowledge-verification-failures/SKILL.md` §Counterexample interpretation, Pattern 1 (Missing guard).
 - **Methodology tag:** `Plugin-Memory`
 
 </catalog_entry>
@@ -565,7 +565,7 @@ Gates load only their range slice plus the active methodology overlay. The activ
 ### #411: Uninitialized state (counterexample classification)
 - **Trigger:** Counterexample shows a state variable with an unexpected value at Step 1, before any action has modified it; no `after init` block sets it.
 - **What to check:** Grep the spec for `after init` blocks; every relation/function used in an assertion must have an explicit initialization.
-- **Source:** `skills/knowledge-counterexample-guide/SKILL.md` §Common Failure Patterns: Uninitialized State.
+- **Source:** `skills/knowledge-verification-failures/SKILL.md` §Counterexample interpretation, Pattern 2 (Uninitialized state).
 - **Methodology tag:** `Plugin-Memory`
 
 </catalog_entry>
@@ -574,7 +574,7 @@ Gates load only their range slice plus the active methodology overlay. The activ
 ### #412: Incorrect monitor scope (counterexample classification)
 - **Trigger:** A monitor (`before`/`after` block) is attached to the wrong action, so the constraint never fires when the action it should protect runs; counterexample shows the unconstrained action.
 - **What to check:** For each constraint cited in the counterexample, confirm the monitored action name matches the action firing in the trace. Wrong action attachment or wrong `mixin_kind` (`before` vs `after`) is the fix site.
-- **Source:** `skills/knowledge-counterexample-guide/SKILL.md` §Common Failure Patterns: Incorrect Monitor Scope.
+- **Source:** `skills/knowledge-verification-failures/SKILL.md` §Counterexample interpretation, Pattern 3 (Incorrect monitor scope).
 - **Methodology tag:** `Plugin-Memory`
 
 </catalog_entry>
@@ -583,7 +583,7 @@ Gates load only their range slice plus the active methodology overlay. The activ
 ### #413: Invariant too strong (counterexample classification)
 - **Trigger:** Invariant fires during an intermediate step of a multi-step transition; the state is correct at start and end but transient state violates the invariant.
 - **What to check:** Counterexample steps show the invariant holds at Step N-1 and Step N+1 but breaks at Step N; the invariant does not account for a legitimate transition phase. Weaken or move check to `_finalize`.
-- **Source:** `skills/knowledge-counterexample-guide/SKILL.md` §Common Failure Patterns: Invariant Too Strong.
+- **Source:** `skills/knowledge-verification-failures/SKILL.md` §Counterexample interpretation, Pattern 4 (Invariant too strong).
 - **Methodology tag:** `Plugin-Memory`
 
 ---
@@ -641,7 +641,7 @@ Gates load only their range slice plus the active methodology overlay. The activ
 ### #505: Model bug attributed to IUT
 - **Trigger:** A counterexample is explained as an IUT violation without first ruling out a model bug.
 - **What to check:** The diagnostic procedure explicitly considered "model bug" as a hypothesis and checked the spec for each candidate pattern (e.g., #250, #251, #255, #306) before concluding IUT fault.
-- **Source:** `skills/counterexample-guide`.
+- **Source:** `skills/knowledge-verification-failures/SKILL.md` §Counterexample interpretation.
 - **Methodology tag:** `Plugin-Memory`
 
 ---

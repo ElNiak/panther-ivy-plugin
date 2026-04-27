@@ -2,10 +2,10 @@
 
 ## Overview
 
-Skills provide reference material and domain knowledge for Ivy protocol testing within the PANTHER framework. The 21 skills use the **flat-with-prefix layout** — each skill lives at `skills/<category>-<name>/SKILL.md` with `name: <category>-<leaf>` matching the leaf directory. Categories are encoded as the prefix:
+Skills provide reference material and domain knowledge for Ivy protocol testing within the PANTHER framework. The 18 skills use the **flat-with-prefix layout** — each skill lives at `skills/<category>-<name>/SKILL.md` with `name: <category>-<leaf>` matching the leaf directory. Categories are encoded as the prefix:
 
 - **workflow-*** (5) — User-facing entry points; activated by routing or explicit invocation.
-- **knowledge-*** (10) — Reference material loaded by workflows and agents on demand.
+- **knowledge-*** (7) — Reference material loaded by workflows and agents on demand.
 - **cross-cutting-*** (4) — Patterns and gates invoked by multiple workflows.
 - **meta-*** (2) — Plugin-internal; not user-invocable directly.
 
@@ -19,20 +19,17 @@ Skills provide reference material and domain knowledge for Ivy protocol testing 
 | [workflow-review](workflow-review/) | Audit quality, check RFC coverage, run multi-agent review |
 | [workflow-triage](workflow-triage/) | Diagnose toolchain issues, health check LSP + MCP stack |
 
-## Knowledge Skills (10)
+## Knowledge Skills (7)
 
 | Skill | Purpose |
 |-------|---------|
 | [knowledge-apt-attack-patterns](knowledge-apt-attack-patterns/) | APT-layer pattern library for NACT |
-| [knowledge-counterexample-guide](knowledge-counterexample-guide/) | Interpreting `ivy_verify` counterexample traces |
-| [knowledge-ivy-debugging-methodology](knowledge-ivy-debugging-methodology/) | Pre-fix research workflow for Ivy compilation/verification errors |
-| [knowledge-ivy-error-patterns](knowledge-ivy-error-patterns/) | Numbered verifier-patterns catalog and Ivy error lookup |
 | [knowledge-ivy-toolkit](knowledge-ivy-toolkit/) | MCP tool documentation and tool selection guidance |
 | [knowledge-ivy-writing-guide](knowledge-ivy-writing-guide/) | Ivy 1.7 syntax reference and RFC annotation conventions |
 | [knowledge-methodology-reference](knowledge-methodology-reference/) | NCT, NACT, NSCT methodology reference + 14-layer template |
 | [knowledge-propagation-patterns](knowledge-propagation-patterns/) | Patterns for propagating type changes across spec layers |
 | [knowledge-specification-patterns](knowledge-specification-patterns/) | 14-layer structural template and formal model patterns |
-| [knowledge-claim-discussion](knowledge-claim-discussion/) | Decision trees for verification claim resolution |
+| [knowledge-verification-failures](knowledge-verification-failures/) | Error-pattern catalog, debugging methodology, counterexample interpretation, and claim-discussion gate (consolidates the four prior `claim-discussion`, `counterexample-guide`, `ivy-debugging-methodology`, `ivy-error-patterns` skills) |
 
 ## Cross-cutting Skills (4)
 

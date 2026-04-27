@@ -10,7 +10,7 @@ Reference for the `knowledge-capture` skill. Defines 5 knowledge categories with
 - Detectable when: `ivy_verify` or `ivy_compile` failed, then succeeded after changes; or MCP/LSP errors were diagnosed and resolved
 
 **Persistence targets:**
-- Generic (protocol-agnostic, recurring): `skills/knowledge-ivy-debugging-methodology/references/debugging-environment.md` — append under "Common failures" or create a new subsection
+- Generic (protocol-agnostic, recurring): `skills/knowledge-verification-failures/references/debugging-environment.md` — append under "Common failures" or create a new subsection
 - Specific (one-off, project-scoped): User memory (`~/.claude/projects/.../memory/`)
 
 **Entry format:** One-liner: problem statement, root cause, fix.
@@ -68,7 +68,7 @@ Shim isolates must re-export all actions from the entity layer — direct includ
 - A tool ordering was discovered to be important
 - Detectable when: the same tool was called multiple times with different parameters, or workflow phases were revisited
 
-**Persistence targets:** `skills/knowledge-ivy-toolkit/references/tool-catalog.md` (tool-specific, including the journal event types subsection added 2026-04-22) or `skills/knowledge-ivy-debugging-methodology/references/debugging-environment.md` (triage-specific).
+**Persistence targets:** `skills/knowledge-ivy-toolkit/references/tool-catalog.md` (tool-specific, including the journal event types subsection added 2026-04-22) or `skills/knowledge-verification-failures/references/debugging-environment.md` (triage-specific).
 
 **Entry format:** Sequence description with ordering rationale.
 
