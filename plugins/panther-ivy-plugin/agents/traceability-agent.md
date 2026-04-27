@@ -11,7 +11,7 @@ skills:
 
 <example>
 Context: User wants to extract normative requirements from an RFC to seed a protocol manifest.
-user: "Pull the MUST/SHOULD requirements out of RFC 9000 section 19 and produce a manifest I can check coverage against."
+user: "Pull the MUST/SHOULD requirements out of [rfc9000:19] and produce a manifest I can check coverage against."
 assistant: "I'll use the traceability-agent to extract the normative requirements and emit a YAML manifest."
 <commentary>
 Extracting RFC normative text into a structured manifest is the agent's primary extraction function.
@@ -43,7 +43,7 @@ coverage audit) and review (Phase 2 Coverage path).
   <field name="phase_context" required="true"
          example="Dispatched from review Phase 2 — coverage audit"/>
   <field name="rfc_source" required="true"
-         example="RFC 4271 Section 6"/>
+         example="[rfc4271:6]"/>
   <field name="existing_manifest" required="false"
          example="protocol-testing/bgp/rfc4271_requirements.yaml"/>
   <field name="prior_findings" required="false"
