@@ -149,7 +149,7 @@ Wait for explicit confirmation.
 
 ### Multi-Perspective Exploration — Architectural Approach
 
-Three-agent MPE (Conservative Architect / Pragmatic Engineer / Adversarial Auditor) on "What architectural approach for this protocol?". The user's choice shapes the Phase 2 blueprint. Full template with per-agent framings: `references/mpe-architectural-approach.md`. Dispatch shape: see `Skill(skill="panther-ivy-plugin:parallel-dispatch")` (single-message multi-Agent-call composition; MPE vs role-split heuristics).
+Three-agent MPE (Conservative Architect / Pragmatic Engineer / Adversarial Auditor) on "What architectural approach for this protocol?". The user's choice shapes the Phase 2 blueprint. Full template with per-agent framings: `references/mpe-architectural-approach.md`. Dispatch shape: see `Skill(skill="panther-ivy-plugin:cross-cutting-parallel-dispatch")` (single-message multi-Agent-call composition; MPE vs role-split heuristics).
 
 ### Step 3: Update state
 
@@ -239,7 +239,7 @@ Load `references/layer-scaffolding.md` for the full per-layer scaffolding proced
 4. On compile success: update `build-state.yaml` layer status.
 5. Reflection Gate every 3 layers.
 6. Handle type propagation via `propagation-patterns` skill if needed.
-7. **Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
+7. **Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:cross-cutting-knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only.
 
 ### Post-Edit Workspace-Block Recovery
 
@@ -276,7 +276,7 @@ Build's Phase 5 reads the most recent `gate_verdict` (G4, G5) and `progress` jou
 
 Step 1: Dispatch `model-reviewer` and `traceability-agent` in parallel via two `Agent` calls in one message. Step 2: Aggregate findings by ERROR/WARNING/INFO severity per `.claude/rules/ivy-formatting.md`. Step 3: On ERROR findings, ask user fix-now-or-accept (gate checkpoint); loop to Phase 3 for structural fixes, Phase 4 for verification, or fix coverage gaps inline. Step 4: Update phase to `"quality-passed"` via `ivy_workflow_state`.
 
-**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: architecture decisions solidified during quality review and model-reviewer / traceability-agent findings worth remembering.
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:cross-cutting-knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: architecture decisions solidified during quality review and model-reviewer / traceability-agent findings worth remembering.
 
 Full procedure including dispatch payloads, gate-checkpoint phrasing, and the Situation Briefing template: `references/phase-5-quality-gate.md`.
 
@@ -284,7 +284,7 @@ Full procedure including dispatch payloads, gate-checkpoint phrasing, and the Si
 
 ## Phase 6 — Wrap-up
 
-Before completing, invoke `Skill(skill="panther-ivy-plugin:completion-gate")`. This operationalizes reflection-patterns Pattern D as a top-level rigid skill via the IDENTIFY → RUN → READ → VERIFY → THEN-claim 5-step gate.
+Before completing, invoke `Skill(skill="panther-ivy-plugin:cross-cutting-completion-gate")`. This operationalizes reflection-patterns Pattern D as a top-level rigid skill via the IDENTIFY → RUN → READ → VERIFY → THEN-claim 5-step gate.
 
 ### Step 1: Summarize
 

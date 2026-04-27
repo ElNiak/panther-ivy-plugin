@@ -20,7 +20,7 @@ in workflow skills.
           reason="manual knowledge capture trigger (/nct-learn)"/>
 
 ```
-Skill(skill="panther-ivy-plugin:knowledge-capture")
+Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture")
 ```
 
 The skill runs the full 5-step knowledge capture flow: scan existing rules, reflect on the current session, classify learnings, spawn the classification reviewer agent, and present candidates for user confirmation.

@@ -39,7 +39,7 @@ Full canonical wording, edge cases, and the exception cases for both rules: Read
 verify operates on a RED → GREEN cycle binding `NO_FIX_WITHOUT_VERIFY`:
 
 1. **RED**: Phase 3 `ivy_compile` produces a runnable test binary; the test asserts a property the spec MUST satisfy. Until Phase 4 `ivy_verify` returns SOUND with G4 critic confirmation, the property is RED.
-2. **GREEN**: Phase 4 SOUND + G4 SOUND. Only then can a "verification passed" claim be made — gated by `Skill(skill="panther-ivy-plugin:completion-gate")`.
+2. **GREEN**: Phase 4 SOUND + G4 SOUND. Only then can a "verification passed" claim be made — gated by `Skill(skill="panther-ivy-plugin:cross-cutting-completion-gate")`.
 3. **REFACTOR**: any fix loops back to Phase 3 (compile) and Phase 4 (verify). `NO_FIX_WITHOUT_VERIFY` — no claim without fresh tool output.
 
 ## Red Flags
@@ -255,7 +255,7 @@ After Phase 4 completes (pass or fail), load the `reflection-patterns` skill. Ap
 
 ### Knowledge Gate: Post-Execution
 
-**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: verification pass/fail patterns and what drove the outcome.
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:cross-cutting-knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: verification pass/fail patterns and what drove the outcome.
 
 ### On FAIL
 
@@ -331,7 +331,7 @@ Update active-workflow phase to match the outcome: `ivy_workflow_state(action="s
 
 ### G2/G3 scope note
 
-G2/G3 gates do NOT fire on verify Phase 7 fix edits (they are build-time only). If a fix raises structural concerns, append `pending_dispatch(target_workflow="workflow-build", phase_hint="layer-check")` and clear the active-workflow flag; navigate re-enters `build` on its next turn and the re-edit path re-engages G2 naturally. For the full rationale and re-engagement path, load the reflection-patterns skill via `Skill(skill="panther-ivy-plugin:reflection-patterns")` and consult its gates reference, "G2/G3 workflow scope" section.
+G2/G3 gates do NOT fire on verify Phase 7 fix edits (they are build-time only). If a fix raises structural concerns, append `pending_dispatch(target_workflow="workflow-build", phase_hint="layer-check")` and clear the active-workflow flag; navigate re-enters `build` on its next turn and the re-edit path re-engages G2 naturally. For the full rationale and re-engagement path, load the reflection-patterns skill via `Skill(skill="panther-ivy-plugin:cross-cutting-reflection-patterns")` and consult its gates reference, "G2/G3 workflow scope" section.
 
 ### Post-Edit workspace-block recovery
 
@@ -347,7 +347,7 @@ Attempt-counter recovery protocol (gate evaluation, cap value) and VERDICT_ABSTA
 
 ## On Completion
 
-Before completing, invoke `Skill(skill="panther-ivy-plugin:completion-gate")`. This operationalizes reflection-patterns Pattern D as a top-level rigid skill via the IDENTIFY → RUN → READ → VERIFY → THEN-claim 5-step gate.
+Before completing, invoke `Skill(skill="panther-ivy-plugin:cross-cutting-completion-gate")`. This operationalizes reflection-patterns Pattern D as a top-level rigid skill via the IDENTIFY → RUN → READ → VERIFY → THEN-claim 5-step gate.
 
 If this verify run needs another workflow to run next (e.g., the user picked "review coverage" on Phase 4 PASS), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate's Phase 1 Step 2c consumes any pending dispatch on the next user turn (or same-turn if the harness routes in-line). If no hand-off is needed, simply clear the flag — navigate re-activates on the next user turn.
 
@@ -383,4 +383,4 @@ When `ivy_verify` would block for minutes, run it in a background subagent via `
 - **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_iut_test`
 - **State files:** `.panther-ivy/active-workflow`
 - **MCP tool reliability:** For MCP-tool retry/timeout policy, see `.claude/rules/mcp-tool-reliability.md`.
-- **Agent dispatch:** verify dispatches `spec-analyst` (Phase 6 diagnosis) and MPE Explore agents (Phase 6 Multi-Perspective Diagnosis; see `Skill(skill="panther-ivy-plugin:parallel-dispatch")` for the single-message multi-Agent-call composition shape). On dispatch failure follow `.claude/rules/agent-dispatch.md`.
+- **Agent dispatch:** verify dispatches `spec-analyst` (Phase 6 diagnosis) and MPE Explore agents (Phase 6 Multi-Perspective Diagnosis; see `Skill(skill="panther-ivy-plugin:cross-cutting-parallel-dispatch")` for the single-message multi-Agent-call composition shape). On dispatch failure follow `.claude/rules/agent-dispatch.md`.

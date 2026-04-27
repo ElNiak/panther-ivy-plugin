@@ -1,5 +1,5 @@
 ---
-name: knowledge-capture
+name: cross-cutting-knowledge-capture
 description: "You MUST use this when /nct-learn fires, a workflow phase hits a knowledge gate, or after a session ends with material worth capturing. Captures session learnings into plugin rules; audits skill/reference quality."
 user-invocable: true
 context: fork
@@ -214,7 +214,7 @@ For each candidate from Step 4b:
 </dispatch>
 ```
 
-Load the critic prompt verbatim from `Skill(skill="panther-ivy-plugin:reflection-patterns")` → `references/critic_prompts/g6_knowledge.md`. Default tier: Sonnet × 3, `≥2 SOUND` / `≥2 UNSOUND`.
+Load the critic prompt verbatim from `Skill(skill="panther-ivy-plugin:cross-cutting-reflection-patterns")` → `references/critic_prompts/g6_knowledge.md`. Default tier: Sonnet × 3, `≥2 SOUND` / `≥2 UNSOUND`.
 
 After collecting verdicts:
 
@@ -284,7 +284,7 @@ For coverage gaps approved as new skills, create a stub `SKILL.md` with the agre
 
 After all Section B writes, run `git diff --stat` and summarise files changed.
 
-**Success criteria**: Every Section A and Section B item has a user verdict, and every approved item is written to disk. Before emitting the user-facing "knowledge captured" claim, invoke `Skill(skill="panther-ivy-plugin:completion-gate")` with IDENTIFY claim = "N learnings approved + M skill-audit fixes applied; digest written to .panther-ivy/session-logs/{timestamp}.digest.yaml".
+**Success criteria**: Every Section A and Section B item has a user verdict, and every approved item is written to disk. Before emitting the user-facing "knowledge captured" claim, invoke `Skill(skill="panther-ivy-plugin:cross-cutting-completion-gate")` with IDENTIFY claim = "N learnings approved + M skill-audit fixes applied; digest written to .panther-ivy/session-logs/{timestamp}.digest.yaml".
 
 ## Deferred Candidate Handling
 

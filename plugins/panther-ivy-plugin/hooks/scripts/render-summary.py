@@ -251,7 +251,7 @@ def build_summary(
     # Knowledge gate prompt
     parts.append(
         "[KNOWLEDGE GATE] Before ending this session, invoke "
-        'Skill(skill="panther-ivy-plugin:knowledge-capture") to capture '
+        'Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture") to capture '
         "any learnings from this session. If no learnable patterns are "
         "found, the skill exits silently."
     )

@@ -111,7 +111,7 @@ convention evolves (e.g., a YAML front-matter block), this step extends.
 Load `reflection-patterns` and dispatch the G0 variant:
 
 ```
-Skill(skill="panther-ivy-plugin:reflection-patterns")
+Skill(skill="panther-ivy-plugin:cross-cutting-reflection-patterns")
 ```
 
 Then, following the discipline contracts from the loaded `reflection-patterns`

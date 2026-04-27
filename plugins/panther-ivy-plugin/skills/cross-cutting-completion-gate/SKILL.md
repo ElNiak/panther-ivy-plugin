@@ -1,5 +1,5 @@
 ---
-name: completion-gate
+name: cross-cutting-completion-gate
 description: "You MUST use this before any workflow-completion claim ('verification passed', 'quality SOUND', 'review complete', 'build done'). Five-step IDENTIFY → RUN → READ → VERIFY → THEN-claim gate enforcing NO_FIX_WITHOUT_VERIFY."
 user-invocable: false
 ---

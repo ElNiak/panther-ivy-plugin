@@ -1,5 +1,5 @@
 ---
-name: parallel-dispatch
+name: cross-cutting-parallel-dispatch
 description: "Use when facing 2+ independent agent dispatches with no shared state or sequential dependencies. Provides the single-message multi-Agent-call composition pattern, MPE vs role-split heuristics, and context-isolation invariants."
 user-invocable: false
 ---

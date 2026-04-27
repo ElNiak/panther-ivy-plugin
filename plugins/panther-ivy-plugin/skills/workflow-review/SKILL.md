@@ -201,7 +201,7 @@ Load the `reflection-patterns` skill. Apply **Pattern B (Multi-Perspective Explo
 
 Exploration question: "What are the quality issues in this protocol model?"
 
-Synthesize findings from all 3 agents before presenting. Dispatch all three agents IN PARALLEL (three Agent tool calls in one message — see `Skill(skill="panther-ivy-plugin:parallel-dispatch")` for the role-split shape and context-isolation invariants):
+Synthesize findings from all 3 agents before presenting. Dispatch all three agents IN PARALLEL (three Agent tool calls in one message — see `Skill(skill="panther-ivy-plugin:cross-cutting-parallel-dispatch")` for the role-split shape and context-isolation invariants):
 
 **model-reviewer** runs a 6-category structural audit:
 
@@ -230,7 +230,7 @@ Update phase to `"executed"` via `ivy_workflow_state(action="set", workflow="wor
 
 ### Knowledge Gate: Post-Agent-Execution
 
-**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: cross-model patterns identified by model-reviewer and traceability-agent, plus any recurring quality findings worth remembering.
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:cross-cutting-knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: cross-model patterns identified by model-reviewer and traceability-agent, plus any recurring quality findings worth remembering.
 
 ---
 
@@ -300,13 +300,13 @@ Proceed to completion.
 
 ### Knowledge Gate: Post-Findings-Resolution
 
-**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: workflow refinements from the resolution process and fix strategies that worked or did not.
+**Knowledge Gate.** Before exiting this phase, invoke `Skill(panther-ivy-plugin:cross-cutting-knowledge-capture)` to surface session learnings (rules / references / feedback) worth persisting. The skill audits the session and writes to its allowlisted destinations only. Focus areas for this gate: workflow refinements from the resolution process and fix strategies that worked or did not.
 
 ---
 
 ## On Completion
 
-Before completing, invoke `Skill(skill="panther-ivy-plugin:completion-gate")`. This operationalizes reflection-patterns Pattern D as a top-level rigid skill via the IDENTIFY → RUN → READ → VERIFY → THEN-claim 5-step gate.
+Before completing, invoke `Skill(skill="panther-ivy-plugin:cross-cutting-completion-gate")`. This operationalizes reflection-patterns Pattern D as a top-level rigid skill via the IDENTIFY → RUN → READ → VERIFY → THEN-claim 5-step gate.
 
 If this review run needs another workflow to run next (e.g., the user asked for targeted verification on a flagged finding), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Navigate's Phase 1 Step 2c consumes any pending dispatch on the next user turn. If no hand-off is needed, simply clear the flag — navigate re-activates on the next user turn.
 

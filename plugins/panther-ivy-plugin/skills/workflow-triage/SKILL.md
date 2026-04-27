@@ -282,7 +282,7 @@ Suggested manual steps:
 
 ### Knowledge Gate: Post-Fix
 
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture")`
 - Reflect on debugging patterns from infrastructure troubleshooting
 - Capture the diagnosis-to-fix sequence for future triage sessions
 - Save session log (observability events + digest)
@@ -308,7 +308,7 @@ When invoked this way:
 
 ## On Completion
 
-Before completing, invoke `Skill(skill="panther-ivy-plugin:completion-gate")`. For triage, the IDENTIFY claim is "stack health restored" and only the structural check (Step 1) of completion-gate is required — skip the anti-pattern checklist and coverage delta. The 5-step gate is otherwise unchanged.
+Before completing, invoke `Skill(skill="panther-ivy-plugin:cross-cutting-completion-gate")`. For triage, the IDENTIFY claim is "stack health restored" and only the structural check (Step 1) of completion-gate is required — skip the anti-pattern checklist and coverage delta. The 5-step gate is otherwise unchanged.
 
 Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. If triage was reached via the preflight-failure escalation path (see Preflight Export), emit a paired `pending_dispatch` naming the original caller workflow before clearing, so navigate's Phase 1 Step 2c re-activates the caller on its next turn. Otherwise, simply clear the flag — navigate re-activates on the next user turn.
 

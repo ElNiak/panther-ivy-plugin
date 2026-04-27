@@ -59,7 +59,7 @@ After all layers are written and compile, update phase to `"written"` via `ivy_w
 
 ### Knowledge Gate: Post-Write
 
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture")`
 - Reflect on Ivy patterns discovered while writing layers
 - Capture any non-obvious constructs, anti-patterns, or verification feedback
 - Save session log (observability events + digest)

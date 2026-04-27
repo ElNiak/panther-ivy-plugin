@@ -64,7 +64,7 @@ Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflo
 
 ### Knowledge Gate: Post-Quality-Gate
 
-**KNOWLEDGE GATE (KG)**: Pause and invoke `Skill(skill="panther-ivy-plugin:knowledge-capture")`.
+**KNOWLEDGE GATE (KG)**: Pause and invoke `Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture")`.
 
 - Reflect on architecture decisions solidified during quality review.
 - Capture model-reviewer and traceability-agent findings worth remembering.

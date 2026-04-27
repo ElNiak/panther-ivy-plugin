@@ -126,7 +126,7 @@ Update phase to `"stopped"` and proceed to completion.
 
 ### Knowledge Gate: Post-Fix
 
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture")`
 - Reflect on the bug that was diagnosed and fixed — what was non-obvious?
 - Capture the error-to-fix pattern for future sessions
 - Save session log (observability events + digest)

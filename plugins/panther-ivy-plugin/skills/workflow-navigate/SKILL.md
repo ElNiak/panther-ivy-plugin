@@ -185,7 +185,7 @@ The user's choice determines which Phase 2 branch to take.
 
 ### Knowledge Gate: Session Resume Check
 
-**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:knowledge-capture")`
+**KNOWLEDGE GATE (KG)**: Pause and invoke: `Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture")`
 - Check if the most recent session digest has deferred candidates to re-present
 - On warm resume: review the previous session's learnings that were deferred
 - Save session log (observability events + digest)
@@ -366,7 +366,7 @@ Do NOT dispatch a workflow without: (1) a confirmed Reflection Gate
 active-workflow flag write naming the target, (3) a user-visible
 Situation Briefing summarizing context (cold-start / warm-resume /
 activity-summary branch). Before emitting any user-facing routing
-claim, optionally invoke `Skill(skill="panther-ivy-plugin:completion-gate")`
+claim, optionally invoke `Skill(skill="panther-ivy-plugin:cross-cutting-completion-gate")`
 to verify the dispatch decision matches current state — required when
 the decision overrides a prior journal `decision` event.
 </HARD-GATE>
@@ -383,4 +383,4 @@ the decision overrides a prior journal `decision` event.
 
 ### Journal entry types this skill produces or consumes
 
-Produces/consumes matrix and gate-verdict payload schema: `references/journal-events.md`. For the full `gate_verdict` payload, load the reflection-patterns skill via `Skill(skill="panther-ivy-plugin:reflection-patterns")` and consult its gates reference.
+Produces/consumes matrix and gate-verdict payload schema: `references/journal-events.md`. For the full `gate_verdict` payload, load the reflection-patterns skill via `Skill(skill="panther-ivy-plugin:cross-cutting-reflection-patterns")` and consult its gates reference.

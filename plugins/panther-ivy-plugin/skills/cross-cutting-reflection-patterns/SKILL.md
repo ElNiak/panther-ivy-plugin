@@ -1,5 +1,5 @@
 ---
-name: reflection-patterns
+name: cross-cutting-reflection-patterns
 description: "Reflection Gate, Multi-Perspective Exploration, Situation Briefing, Completion Verification, and G0/G0b/G1-G6 quality-gate patterns. Use when dispatching gate critics or at phase transitions."
 user-invocable: false
 context: fork
