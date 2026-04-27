@@ -246,10 +246,16 @@ mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_analysis
 </allowed_tools>
 
 <forbidden_tools>
-Bash(ivyc *), Bash(ivy_check *), Bash(ivy_show *), Bash(ivy_to_cpp *),
-mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify,
-mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile,
-mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_iut_test
+  <tool name="Bash" reason="RFC parsing and coverage auditing require no shell execution; only scoped Bash variants listed in frontmatter (grep, rg, find, ls) are permitted"/>
+  <tool name="Bash(rm *)" reason="must not delete files"/>
+  <tool name="Bash(git *)" reason="must not modify version control state"/>
+  <tool name="Bash(ivyc *)" reason="must not invoke Ivy compiler directly; use MCP ivy_compile"/>
+  <tool name="Bash(ivy_check *)" reason="must not invoke Ivy checker directly; use MCP ivy_diagnostics"/>
+  <tool name="Bash(ivy_show *)" reason="must not invoke ivy_show directly; use MCP ivy_model_info"/>
+  <tool name="Bash(ivy_to_cpp *)" reason="must not invoke ivy_to_cpp directly"/>
+  <tool name="mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify" reason="traceability agent extracts requirements and audits coverage; it must not run formal verification"/>
+  <tool name="mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile" reason="traceability agent does not compile Ivy models; use spec-analyst or verify workflow"/>
+  <tool name="mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_iut_test" reason="traceability agent does not run IUT tests"/>
 </forbidden_tools>
 
 <output_schema>

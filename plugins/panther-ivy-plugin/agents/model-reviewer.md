@@ -294,6 +294,28 @@ Interactive mode emits finding-severity blocks:
 Gate-critic mode emits gate-verdict blocks:
 - `<severity class="gate" value="SOUND"/>` / `<severity class="gate" value="UNSOUND"/>(#NN, ...)` / `<severity class="gate" value="ABSTAIN"/>`
 
+## Capability Contract
+
+<allowed_tools>
+Read, Grep, Glob, ToolSearch,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_status,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_rfc,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_workspace,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_workflow_state,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_visualize,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info
+</allowed_tools>
+
+<forbidden_tools>
+  <tool name="Write" reason="reviewer emits structured findings; it must never modify specification files"/>
+  <tool name="Edit" reason="reviewer emits structured findings; it must never modify specification files"/>
+  <tool name="Bash" reason="adversarial review requires only read-only analysis; no shell execution needed"/>
+</forbidden_tools>
+
 <integration
   dispatched-by="build Phase 5, review workflow, direct user request, G2/G4 gate hooks"
   calls="ivy-toolkit skill, claim-discussion skill, ivy-error-patterns skill"
