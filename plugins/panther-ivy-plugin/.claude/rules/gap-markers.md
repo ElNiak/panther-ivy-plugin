@@ -97,7 +97,7 @@ GAP markers should never appear in a trigger-eval dispatch test (`evals/g*_trigg
 
 ## Anti-patterns
 
-- **Do not delete `[GAP:]` without a fix.** Removing the marker without addressing the underlying issue trips `#403 error whitelisted via comment-out` on the next G4 run.
-- **Do not write `[GAP:]` from a critic prompt.** Critics return verdict records; only the orchestrator writes to the file.
-- **Do not use `[GAP:]` for design intent or TODO-like notes.** Those belong in `// TODO` or in an issue tracker. `[GAP:]` is reserved for adversarial-gate output.
+- **Remove a `[GAP:]` marker only after committing the fix and re-running the gate to confirm SOUND.** Removing the marker without addressing the underlying issue trips `#403 error whitelisted via comment-out` on the next G4 run.
+- **Return a verdict record `UNSOUND(#NN, reason, file:line)` from the critic; the orchestrator writes `[GAP:]` markers via Edit.** Critics return verdict records; only the orchestrator writes to the file.
+- **Use `[GAP:]` exclusively for adversarial-gate unsound-specification markers. Use `// TODO` or GitHub issues for design intent.** Those belong in `// TODO` or in an issue tracker. `[GAP:]` is reserved for adversarial-gate output.
 - **Do not stack multiple `[GAP:]` markers on the same line.** If a single line triggers multiple patterns, use one marker per pattern on consecutive lines above the code, or merge the reasons into one marker that cites the lowest-numbered pattern and mentions the others in the reason text.

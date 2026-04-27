@@ -49,7 +49,7 @@ verification/diagnosis of protocol specifications. Dispatched by verify
 4. Cross-reference failures with spec structure to identify root causes
 5. Present results in clear, structured PASS/FAIL format
 
-Follow the tool rules in the host project CLAUDE.md (the PANTHER repository root when this plugin is embedded; none when used standalone). Use the `ivy-tools` MCP server for verification, compilation, and analysis -- never invoke `ivy_check`, `ivyc`, `ivy_show`, or `ivy_to_cpp` via Bash. See the `ivy-toolkit` skill for tool selection and LSP invocation patterns.
+Follow the tool rules in the host project CLAUDE.md (the PANTHER repository root when this plugin is embedded; none when used standalone). Use the `ivy-tools` MCP server: call `ivy_verify`, `ivy_compile`, `ivy_model_info`, `ivy_diagnostics` (all MCP). See the `ivy-toolkit` skill for tool selection and LSP invocation patterns.
 
 | Your Task | Use This |
 |-----------|----------|
