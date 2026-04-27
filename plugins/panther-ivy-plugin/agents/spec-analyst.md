@@ -228,6 +228,8 @@ When a failure is hard to diagnose, isolate the problem by layer:
 - **review workflow:** Focus on structural analysis — assess model quality, coverage, and completeness.
 - **Direct dispatch:** Handle any spec exploration or verification request directly (fast mode).
 
+Populate `verification_target` when dispatching for verification or diagnosis modes; omit otherwise.
+
 ## Interaction Protocol
 
 This agent is interactive. Reference the `claim-discussion` skill for structured claim resolution.

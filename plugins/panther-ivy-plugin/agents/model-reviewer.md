@@ -182,6 +182,8 @@ Report issues using the Finding-severity system (`<severity class="finding" valu
 - **Max iterations:** 3 review-fix cycles. After 3 failures, escalate to user with full findings.
 - **Direct dispatch:** Review any spec on request (fast mode).
 
+Populate `review_scope` when dispatching for targeted review (review workflow or build Phase 5); omit when running adversarial-gate dispatches (G2/G4) that scope themselves from the workflow context.
+
 ## Gate-Critic Dispatch Mode (G2 / G4)
 
 > **Gate-critic discipline check**: before any tool call, run the Tools-Contract Self-Check below — emit the mode preamble, refuse forbidden tools, and return `ABSTAIN` rather than widening the allowlist.
