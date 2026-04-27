@@ -4,7 +4,6 @@ description: "Navigates Ivy specification codebases to explain protocol layers a
 model: sonnet
 color: blue
 tools: ["Read", "Grep", "Glob", "Bash(grep *)", "Bash(rg *)", "Bash(find *)", "Bash(ls *)", "Bash(cat *)", "ToolSearch", "mcp__plugin_panther-ivy-plugin_ivy-tools__*"]
-maxTurns: 25
 skills:
   - counterexample-guide
   - ivy-toolkit

@@ -2,7 +2,7 @@
 
 NCT/NACT/NSCT methodology guidance for Ivy protocol testing via native Ivy LSP and ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.
 
-**Version:** 0.9.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
+**Version:** 0.10.0 | **License:** MIT | **Author:** [ElNiak](https://github.com/ElNiak)
 
 ## Overview
 
