@@ -236,6 +236,26 @@ When gaps are found:
 - **methodology-reference** -- RFC-to-Ivy mapping patterns, verification workflows, and quality gate details
 - **claim-discussion** -- Structured decision trees for RFC mapping, verification claims, and coverage gaps
 
+## Capability Contract
+
+<allowed_tools>
+Read, Write, Edit, Grep, Glob, WebFetch,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_extract_requirements,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_analysis
+</allowed_tools>
+
+<forbidden_tools>
+Bash(ivyc *), Bash(ivy_check *), Bash(ivy_show *), Bash(ivy_to_cpp *),
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_iut_test
+</forbidden_tools>
+
+<output_schema>
+Emit one YAML requirement manifest per RFC covered, plus a coverage-audit table. Manifest schema: `requirement_id: str`, `rfc_section: str`, `normative_level: MUST|SHOULD|MAY`, `quote: str` (verbatim, no truncation per `feedback_rfc_quotes_complete`), `direction: generate|receive|both` (per `feedback_requirement_side_evaluation`), `coverage: covered|partial|uncovered`, `assertion_refs: [file:line]`. Return a single final message; no streaming.
+</output_schema>
+
 <integration
   dispatched-by="build Phase 5 (coverage audit), review Phase 2 (Coverage path), direct user request"
   calls="ivy-toolkit skill, methodology-reference skill, claim-discussion skill"
