@@ -1,6 +1,6 @@
 ---
 name: verify
-description: "Verify-compile-IUT test cycle with failure diagnosis. Use when user says \"check my spec\", \"verify this\", \"test the handshake\", or encounters counterexample found, invariant violated, compilation error, or verification failed."
+description: "Run the verify-compile-IUT cycle on an Ivy spec with failure diagnosis. Use when the user says 'check my spec', 'verify this', 'test the handshake', or hits 'counterexample found'/'invariant violated'/'compilation error'."
 ---
 
 <role>

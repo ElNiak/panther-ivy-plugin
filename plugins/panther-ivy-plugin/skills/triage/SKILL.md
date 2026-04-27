@@ -1,6 +1,6 @@
 ---
 name: triage
-description: "MCP/LSP/Serena stack health diagnostics and recovery. Use when tools time out, \"ivy_status timeout\", \"MCP won't connect\", stale PID files, LSP crash, \"nothing works\", or as preflight before other workflows."
+description: "Diagnose and repair MCP/LSP/Serena stack health. Use when tools time out, 'ivy_status timeout', 'MCP won't connect', stale PIDs, LSP crash, or as preflight before another workflow."
 ---
 
 <role>

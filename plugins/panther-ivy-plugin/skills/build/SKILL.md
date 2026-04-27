@@ -1,6 +1,6 @@
 ---
 name: build
-description: "Use when starting a new protocol spec, scaffolding a new Ivy layer, or resuming an in-progress build. Multi-session construction from an RFC to a formal Ivy model."
+description: "Build protocol specification layers from RFC. Use when starting a new spec, scaffolding an Ivy layer, or resuming an in-progress build."
 ---
 
 <role>

@@ -1,6 +1,6 @@
 ---
 name: apt-attack-patterns
-description: "APT-layer pattern library for NACT attack lifecycle, entities, and protocol bindings. Use when authoring or extending attack specifications under protocol-testing/apt/ (6-stage lifecycle, Attacker/Bot/C2/Target/MIM entities, around-block monitors)."
+description: "Author or extend attack specifications under `protocol-testing/apt/`. Use when modeling the NACT 6-stage attack lifecycle, attacker entities, or around-block monitors."
 user-invocable: false
 context: fork
 ---

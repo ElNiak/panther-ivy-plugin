@@ -1,6 +1,6 @@
 ---
 name: review
-description: "RFC requirement-to-monitor traceability, coverage audits, and model quality review for Ivy specs. Use when user asks \"what MUSTs am I missing?\", \"RFC coverage?\", \"traceability gap?\", or \"review my model\"."
+description: "Audit Ivy model for RFC coverage, requirement traceability, and quality. Use when checking 'what MUSTs am I missing?', 'RFC coverage?', 'traceability gap?', or 'review my model'."
 ---
 
 <role>
