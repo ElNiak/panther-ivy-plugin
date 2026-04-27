@@ -1,13 +1,9 @@
 ---
-paths: ["**/*.ivy", "**/*.spec"]
+paths:
+  - "**/*.ivy"
+  - "**/skills/*/SKILL.md"
 ---
 
-# Canonical 14-layer methodology table
+# NCT/NACT/NSCT Methodology
 
-The 14-layer NCT/NACT/NSCT methodology table lives in user auto-memory:
-
-    ~/.claude/projects/<project>/memory/reference_nct_methodology.md
-
-It holds the authoritative 14-layer template (Types / Application / Security / Frame / Packet / Protection / Connection / Transport Params / Error / Entity Defs / Entity Behavior / Shims / Serialization / Utilities), the optional-layer catalog, and the template-selection decision matrix. This file is maintained out-of-band by the graduation-sweep process; do not edit under `.claude/rules/`.
-
-The comprehensive NCT 10-step workflow, NACT 6-stage attack lifecycle, and NSCT simulation workflow live in the plugin for every install at `skills/methodology-reference/references/comprehensive-methodology-detail.md`; the `methodology-reference` skill loads it on demand during build and review workflows. Use the Skill tool rather than hardcoding paths into other skills' references.
+When designing protocol test architecture, choosing a testing methodology, or mapping RFC requirements to an Ivy testing strategy on files matching the paths above, invoke `Skill(panther-ivy-plugin:methodology-reference)` to load the canonical NCT (compliance) / NACT (security) / NSCT (simulation) framework and the 14-layer template.
