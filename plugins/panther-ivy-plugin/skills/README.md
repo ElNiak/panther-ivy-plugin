@@ -2,35 +2,57 @@
 
 ## Overview
 
-Skills provide reference material and domain knowledge for Ivy protocol testing within the PANTHER framework. They are loaded by workflow skills and agents as needed -- not invoked directly by users.
+Skills provide reference material and domain knowledge for Ivy protocol testing within the PANTHER framework. The 21 skills use the **flat-with-prefix layout** — each skill lives at `skills/<category>-<name>/SKILL.md` with `name: <category>-<leaf>` matching the leaf directory. Categories are encoded as the prefix:
+
+- **workflow-*** (5) — User-facing entry points; activated by routing or explicit invocation.
+- **knowledge-*** (10) — Reference material loaded by workflows and agents on demand.
+- **cross-cutting-*** (4) — Patterns and gates invoked by multiple workflows.
+- **meta-*** (2) — Plugin-internal; not user-invocable directly.
 
 ## Workflow Skills (5)
 
-User-facing entry points activated by the routing system or natural language.
+| Skill | Purpose |
+|-------|---------|
+| [workflow-navigate](workflow-navigate/) | Session entry point — detect intent, resume context, route to the right workflow |
+| [workflow-verify](workflow-verify/) | Verify, compile, diagnose failures in Ivy specifications |
+| [workflow-build](workflow-build/) | Create models, add layers, propagate type changes |
+| [workflow-review](workflow-review/) | Audit quality, check RFC coverage, run multi-agent review |
+| [workflow-triage](workflow-triage/) | Diagnose toolchain issues, health check LSP + MCP stack |
+
+## Knowledge Skills (10)
 
 | Skill | Purpose |
 |-------|---------|
-| [navigate](navigate/) | Session entry point -- detect intent, resume context, route to the right workflow |
-| [verify](verify/) | Verify, compile, diagnose failures in Ivy specifications |
-| [build](build/) | Create models, add layers, propagate type changes |
-| [review](review/) | Audit quality, check RFC coverage, run multi-agent review |
-| [triage](triage/) | Diagnose toolchain issues, health check LSP + MCP stack |
+| [knowledge-apt-attack-patterns](knowledge-apt-attack-patterns/) | APT-layer pattern library for NACT |
+| [knowledge-counterexample-guide](knowledge-counterexample-guide/) | Interpreting `ivy_verify` counterexample traces |
+| [knowledge-ivy-debugging-methodology](knowledge-ivy-debugging-methodology/) | Pre-fix research workflow for Ivy compilation/verification errors |
+| [knowledge-ivy-error-patterns](knowledge-ivy-error-patterns/) | Numbered verifier-patterns catalog and Ivy error lookup |
+| [knowledge-ivy-toolkit](knowledge-ivy-toolkit/) | MCP tool documentation and tool selection guidance |
+| [knowledge-ivy-writing-guide](knowledge-ivy-writing-guide/) | Ivy 1.7 syntax reference and RFC annotation conventions |
+| [knowledge-methodology-reference](knowledge-methodology-reference/) | NCT, NACT, NSCT methodology reference + 14-layer template |
+| [knowledge-propagation-patterns](knowledge-propagation-patterns/) | Patterns for propagating type changes across spec layers |
+| [knowledge-specification-patterns](knowledge-specification-patterns/) | 14-layer structural template and formal model patterns |
+| [knowledge-claim-discussion](knowledge-claim-discussion/) | Decision trees for verification claim resolution |
 
-## Knowledge Skills (12)
-
-Reference material loaded by workflows and agents on demand.
+## Cross-cutting Skills (4)
 
 | Skill | Purpose |
 |-------|---------|
-| [counterexample-guide](counterexample-guide/) | Interpreting ivy_verify counterexample traces and identifying fixes |
-| [specification-patterns](specification-patterns/) | 14-layer structural template and formal model pattern library |
-| [propagation-patterns](propagation-patterns/) | Patterns for propagating type changes across ser/deser state machines |
-| [apt-attack-patterns](apt-attack-patterns/) | APT-layer pattern library for NACT: 8-stage lifecycle, attack entities, protocol bindings, around-block monitors |
-| [ivy-writing-guide](ivy-writing-guide/) | Ivy language syntax, test spec patterns, RFC bracket-tag annotations |
-| [ivy-toolkit](ivy-toolkit/) | Single source of truth for all MCP tool documentation and tool selection guidance |
-| [claim-discussion](claim-discussion/) | Structured decision trees for verification claim resolution and coverage gap prioritization |
-| [methodology-reference](methodology-reference/) | Comprehensive reference for NCT, NACT, NSCT methodologies |
-| [ivy-debugging-methodology](ivy-debugging-methodology/) | Mandatory pre-fix research workflow for Ivy compilation and verification errors |
-| [ivy-error-patterns](ivy-error-patterns/) | Numbered verifier-patterns catalog and Ivy error lookup |
-| [reflection-patterns](reflection-patterns/) | Reusable reflection gate, multi-perspective exploration, and situation briefing patterns for workflows |
-| [knowledge-capture](knowledge-capture/) | Session knowledge extraction and persistence to plugin rules at workflow phase boundaries |
+| [cross-cutting-completion-gate](cross-cutting-completion-gate/) | 5-step IDENTIFY → RUN → READ → VERIFY → THEN-claim gate |
+| [cross-cutting-reflection-patterns](cross-cutting-reflection-patterns/) | Reflection Gate, MPE, Situation Briefing, G0–G6 patterns |
+| [cross-cutting-parallel-dispatch](cross-cutting-parallel-dispatch/) | Multi-Agent dispatch composition pattern |
+| [cross-cutting-knowledge-capture](cross-cutting-knowledge-capture/) | Session learnings extraction at workflow phase boundaries |
+
+## Meta Skills (2)
+
+Plugin-internal: not user-invocable.
+
+| Skill | Purpose |
+|-------|---------|
+| [meta-plugin-self-mod](meta-plugin-self-mod/) | 3-agent loop for plugin source modifications |
+
+Plus 1 SessionStart-injected meta-skill: see [meta-using-panther-ivy-plugin/SKILL.md](meta-using-panther-ivy-plugin/SKILL.md). Not indexed as a peer because it is auto-injected at SessionStart by `hooks/scripts/inject-using-plugin.sh`, not user-invocable.
+
+## Naming convention
+
+The flat-with-prefix layout (`skills/<category>-<name>/`) was chosen after the 2026-04-27 migration confirmed empirically that nested layouts with slash-named skills (`skills/<category>/<name>/` with `name: <category>/<name>`) are not registered by the Claude Code harness. See `.claude/rules/skill-conventions.md` for the canonical rule and `docs/skill-audit-2026-04-27.md` for the original audit findings.
