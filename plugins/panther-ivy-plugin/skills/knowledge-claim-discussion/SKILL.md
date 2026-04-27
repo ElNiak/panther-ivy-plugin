@@ -1,5 +1,5 @@
 ---
-name: claim-discussion
+name: knowledge-claim-discussion
 description: "Use when ivy_verify returns FAIL, ivy_coverage shows gaps, or model-reviewer reports issues. Provides decision trees for resolving verification and coverage claims."
 user-invocable: false
 context: fork

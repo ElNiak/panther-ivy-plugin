@@ -124,9 +124,9 @@ above).
 
 Read all target files to understand what is already documented:
 
-- Canonical Ivy 1.7 syntax reference (owned by ivy-writing-guide skill; load via `Skill(skill="panther-ivy-plugin:ivy-writing-guide")`). The pointer rule `.claude/rules/ivy-patterns.md` is reference-only (loaded by name, not auto-injected on `.ivy` edits).
+- Canonical Ivy 1.7 syntax reference (owned by ivy-writing-guide skill; load via `Skill(skill="panther-ivy-plugin:knowledge-ivy-writing-guide")`). The pointer rule `.claude/rules/ivy-patterns.md` is reference-only (loaded by name, not auto-injected on `.ivy` edits).
 - `.claude/rules/iron-laws.md`
-- NCT/NACT/NSCT methodology reference (owned by methodology-reference skill; load via `Skill(skill="panther-ivy-plugin:methodology-reference")`). The pointer rule `.claude/rules/nct-methodology.md` is reference-only (loaded by name, not auto-injected on `.ivy`/`.spec` edits).
+- NCT/NACT/NSCT methodology reference (owned by methodology-reference skill; load via `Skill(skill="panther-ivy-plugin:knowledge-methodology-reference")`). The pointer rule `.claude/rules/nct-methodology.md` is reference-only (loaded by name, not auto-injected on `.ivy`/`.spec` edits).
 - `.claude/rules/insights.md`
 - Self-evaluation protocol (owned by ivy-debugging-methodology skill).
 - Tool catalog (owned by ivy-toolkit skill).

@@ -1,5 +1,5 @@
 ---
-name: ivy-error-patterns
+name: knowledge-ivy-error-patterns
 description: "Use when hitting Ivy errors ('not found', 'ungrounded', 'invariant failed', 'type mismatch') or when an adversarial gate cites catalog pattern #NN. Numbered verifier-patterns catalog plus error lookup."
 user-invocable: false
 ---

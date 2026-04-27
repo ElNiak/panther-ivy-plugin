@@ -1,5 +1,5 @@
 ---
-name: counterexample-guide
+name: knowledge-counterexample-guide
 description: "Use when 'counterexample' or 'counterexample_trace' appears in ivy_verify output. Provides trace interpretation and fix strategies for verification failures."
 user-invocable: false
 context: fork

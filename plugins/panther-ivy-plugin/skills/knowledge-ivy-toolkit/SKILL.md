@@ -1,5 +1,5 @@
 ---
-name: ivy-toolkit
+name: knowledge-ivy-toolkit
 description: "Use when choosing or invoking MCP tools for Ivy operations. Provides the 18-tool ivy-tools catalog plus Serena semantic tools, with parameter matrix, mode map, and selection guide."
 user-invocable: false
 ---

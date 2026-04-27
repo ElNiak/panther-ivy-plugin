@@ -1,5 +1,5 @@
 ---
-name: methodology-reference
+name: knowledge-methodology-reference
 description: "Use when choosing a testing methodology, starting model construction, or mapping RFC requirements to an Ivy testing strategy. Provides NCT (compliance) / NACT (security) / NSCT (simulation) selection and workflow guidance."
 user-invocable: false
 ---

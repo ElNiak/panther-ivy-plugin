@@ -1,5 +1,5 @@
 ---
-name: specification-patterns
+name: knowledge-specification-patterns
 description: "Use when designing layer structure or scaffolding a new protocol model. Provides the 14-layer template reference and the formal-model pattern scaffolding guide."
 user-invocable: false
 ---

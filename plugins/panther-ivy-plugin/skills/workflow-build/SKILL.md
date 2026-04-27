@@ -131,7 +131,7 @@ Look for NCT/NACT/NSCT keywords in the user's request. If none found, ask: "Whic
 
 Load the `methodology-reference` knowledge skill via the Skill tool for methodology details.
 
-**Tool selection.** Load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult its parameter matrix and mode map before each ivy-tools call. The toolkit skill owns the canonical tool taxonomy; do not rely on memory for tool flags.
+**Tool selection.** Load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:knowledge-ivy-toolkit")` and consult its parameter matrix and mode map before each ivy-tools call. The toolkit skill owns the canonical tool taxonomy; do not rely on memory for tool flags.
 
 ### Step 2: Identify target
 

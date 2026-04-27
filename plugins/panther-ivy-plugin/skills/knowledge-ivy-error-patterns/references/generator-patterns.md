@@ -30,4 +30,4 @@ Protocol test generators (Ivy's `_generating` mode plus exported actions) need c
 
 **Diagnosis:** Run wire validation after IUT test (see `verify` workflow, Post-IUT Wire Validation). Use tshark to count messages per direction and compare against iteration count.
 
-**Related:** ivy-writing-guide skill (load via `Skill(skill="panther-ivy-plugin:ivy-writing-guide")`), generator-mechanics reference; `verify` workflow > Post-IUT Wire Validation.
+**Related:** ivy-writing-guide skill (load via `Skill(skill="panther-ivy-plugin:knowledge-ivy-writing-guide")`), generator-mechanics reference; `verify` workflow > Post-IUT Wire Validation.

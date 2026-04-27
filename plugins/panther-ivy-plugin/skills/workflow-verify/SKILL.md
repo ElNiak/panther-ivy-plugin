@@ -184,7 +184,7 @@ Update phase to `"test-selected"` via `ivy_workflow_state(action="set", workflow
 
 ## Phase 3 — Compile
 
-**Tool selection.** Before the first tool call in this phase, load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult its parameter matrix for `ivy_compile`. The toolkit skill owns the canonical tool taxonomy; do not rely on memory for tool flags or modes.
+**Tool selection.** Before the first tool call in this phase, load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:knowledge-ivy-toolkit")` and consult its parameter matrix for `ivy_compile`. The toolkit skill owns the canonical tool taxonomy; do not rely on memory for tool flags or modes.
 
 For each selected test file, call:
 

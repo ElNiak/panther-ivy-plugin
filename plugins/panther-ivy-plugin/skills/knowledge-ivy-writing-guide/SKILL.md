@@ -1,5 +1,5 @@
 ---
-name: ivy-writing-guide
+name: knowledge-ivy-writing-guide
 description: "Use when writing or editing .ivy files. Provides Ivy 1.7 syntax reference, module system, RFC annotation conventions, test-spec patterns, and search-before-write practice."
 user-invocable: false
 context: fork

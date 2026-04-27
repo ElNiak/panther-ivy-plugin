@@ -1,5 +1,5 @@
 ---
-name: apt-attack-patterns
+name: knowledge-apt-attack-patterns
 description: "Use when modeling the NACT 6-stage attack lifecycle, attacker entities, or around-block monitors. Authors or extends attack specifications under `protocol-testing/apt/`."
 user-invocable: false
 context: fork

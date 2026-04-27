@@ -1,5 +1,5 @@
 ---
-name: ivy-debugging-methodology
+name: knowledge-ivy-debugging-methodology
 description: "Use when debugging Ivy compilation or verification failures, 'ivy_check failed', or 'verification failed'. Mandatory pre-fix research workflow for Ivy errors."
 user-invocable: false
 ---
@@ -50,7 +50,7 @@ Load and check these skills for the failing construct:
 
 ### Step 4: Run Structural Check
 
-Call `ivy_diagnostics` in structural mode before full verification. It runs in milliseconds and catches structural issues (missing `#lang`, unmatched braces, unresolved includes, parameter name collisions, missing `init`) without the cost of `ivy_verify`. Canonical invocation shape: load `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult `references/tool-invocation-examples.md`.
+Call `ivy_diagnostics` in structural mode before full verification. It runs in milliseconds and catches structural issues (missing `#lang`, unmatched braces, unresolved includes, parameter name collisions, missing `init`) without the cost of `ivy_verify`. Canonical invocation shape: load `Skill(skill="panther-ivy-plugin:knowledge-ivy-toolkit")` and consult `references/tool-invocation-examples.md`.
 
 ### Step 5: Search Existing Models for Working Examples
 
@@ -77,7 +77,7 @@ Only now propose a change. Make it minimal — change only what's needed to fix 
 
 ### Step 8: Verify
 
-Run verification to confirm the fix. For the canonical invocation shape, load the ivy-toolkit skill via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult its tool-invocation-examples reference. If the fix introduces new errors, return to Step 1 for the new error.
+Run verification to confirm the fix. For the canonical invocation shape, load the ivy-toolkit skill via `Skill(skill="panther-ivy-plugin:knowledge-ivy-toolkit")` and consult its tool-invocation-examples reference. If the fix introduces new errors, return to Step 1 for the new error.
 
 ### Serializer/Deserializer Debugging
 

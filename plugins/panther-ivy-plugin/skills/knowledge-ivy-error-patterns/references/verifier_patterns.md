@@ -462,7 +462,7 @@ Gates load only their range slice plus the active methodology overlay. The activ
 ### #303: `_finalize` omitted for terminal state
 - **Trigger:** Test spec declares exports for the happy path but no `_finalize` to check the end state.
 - **What to check:** Every `*_test_*.ivy` has exactly one `_finalize` body; that body contains at least one `require` on each terminal relation.
-- **Source:** Plugin convention; ivy-writing-guide skill (load via `Skill(skill="panther-ivy-plugin:ivy-writing-guide")`), syntax-examples reference.
+- **Source:** Plugin convention; ivy-writing-guide skill (load via `Skill(skill="panther-ivy-plugin:knowledge-ivy-writing-guide")`), syntax-examples reference.
 - **Methodology tag:** `Plugin-Memory`
 
 </catalog_entry>
