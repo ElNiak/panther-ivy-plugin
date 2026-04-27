@@ -25,12 +25,12 @@ verification/diagnosis of protocol specifications. Dispatched by verify
          example="Workspace: bgp  (from ivy_workspace(action=&quot;get&quot;))"/>
   <field name="phase_context" required="true"
          example="Dispatched from verify Phase 4 — diagnosis"/>
-  <field name="verification_target" required="true"
+  <field name="prior_findings" required="false"
+         example="G2 flagged missing invariant on quic_frame.ivy:78"/>
+  <field name="verification_target" required="false"
          example="Verify protocol-testing/bgp/bgp_stack/bgp_connection.ivy"/>
   <field name="failure_context" required="false"
          example="ivy_verify returned: invariant conn_established failed at line 45"/>
-  <field name="prior_findings" required="false"
-         example="G2 flagged missing invariant on quic_frame.ivy:78"/>
 </dispatch-context>
 
 ## Core Responsibilities

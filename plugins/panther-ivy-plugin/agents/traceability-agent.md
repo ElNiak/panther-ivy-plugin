@@ -42,12 +42,12 @@ coverage audit) and review (Phase 2 Coverage path).
          example="Workspace: bgp  (from ivy_workspace(action=&quot;get&quot;))"/>
   <field name="phase_context" required="true"
          example="Dispatched from review Phase 2 — coverage audit"/>
-  <field name="rfc_source" required="true"
+  <field name="prior_findings" required="false"
+         example="build Phase 5 flagged uncovered MUSTs in UPDATE message handling"/>
+  <field name="rfc_source" required="false"
          example="[rfc4271:6]"/>
   <field name="existing_manifest" required="false"
          example="protocol-testing/bgp/rfc4271_requirements.yaml"/>
-  <field name="prior_findings" required="false"
-         example="build Phase 5 flagged uncovered MUSTs in UPDATE message handling"/>
 </dispatch-context>
 
 # Traceability Agent

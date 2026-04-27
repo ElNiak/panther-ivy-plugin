@@ -28,10 +28,10 @@ prompts verbatim).
          example="Workspace: bgp  (from ivy_workspace(action=&quot;get&quot;))"/>
   <field name="phase_context" required="true"
          example="Dispatched from build Phase 3 — post-layer review"/>
-  <field name="review_scope" required="true"
-         example="Targeted review of layer 7 (connection)"/>
   <field name="prior_findings" required="false"
          example="G2 flagged missing invariant on quic_frame.ivy:78 — focus Type Safety and Invariant Quality checks on that file first"/>
+  <field name="review_scope" required="false"
+         example="Targeted review of layer 7 (connection)"/>
 </dispatch-context>
 
 <example>
