@@ -268,6 +268,28 @@ When coverage analysis reveals gaps:
 - For verification: provide structured PASS/FAIL with details
 - For errors: identify the failing isolate/invariant/property, the source location, and the likely cause
 
+## Capability Contract
+
+<allowed_tools>
+Read, Grep, Glob,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_model_info,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_diagnostics,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_analysis,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_index
+</allowed_tools>
+
+<forbidden_tools>
+Write, Edit,
+Bash(ivyc *), Bash(ivy_check *), Bash(ivy_show *), Bash(ivy_to_cpp *),
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_verify,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_compile,
+mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_iut_test
+</forbidden_tools>
+
+<output_schema>
+Emit a diagnostic report with three sections: (1) **Layer summary** — bullet list per isolate with `name`, `size_loc`, `relations_count`; (2) **Dependency trace** — DAG edges `caller → callee` with `file:line`; (3) **Finding list** — `severity: ERROR|WARNING|INFO` per `ivy-formatting.md §Severity Systems` with `file:line -- message`. Return a single final message; no edits.
+</output_schema>
+
 <integration
   dispatched-by="verify Phase 6 (diagnosis), build Phase 3 (compile-error diagnosis), review Phase 2 (Quality path), direct user request"
   calls="ivy-toolkit skill, counterexample-guide skill, claim-discussion skill"
