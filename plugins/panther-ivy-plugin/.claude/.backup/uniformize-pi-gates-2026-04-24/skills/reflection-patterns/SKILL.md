@@ -1,6 +1,6 @@
 ---
 name: reflection-patterns
-description: "Reflection Gate, Multi-Perspective Exploration, Situation Briefing, Completion Verification, and G0-G6 quality-gate patterns. Use when dispatching gate critics or at phase transitions."
+description: "Reflection Gate, Multi-Perspective Exploration, Situation Briefing, Completion Verification, and G0-G5 quality-gate patterns. Use when dispatching gate critics or at phase transitions."
 user-invocable: false
 context: fork
 ---
@@ -15,14 +15,14 @@ references a specific pattern at designated points — Pattern A
 (Multi-Perspective Exploration) at decision points, Pattern C
 (Situation Briefing) on context-scan completion, Pattern D
 (Completion Verification Gate) before workflow wrap-up. Quality gates
-G0–G6 use the verbatim critic templates under `references/critic_prompts/`.
+G0–G5 use the verbatim critic templates under `references/critic_prompts/`.
 </role>
 
 **Type:** flexible — adapt principles to context.
 
 ## Persisting gate verdicts
 
-Every gate (G0–G6) must persist its calibrated verdict as a
+Every gate (G0–G5) must persist its calibrated verdict as a
 `gate_verdict` journal entry before the orchestrator re-activates the
 caller. The full payload schema (including vote tally, pattern-ID list,
 tier, duration, cycle counter) lives at
@@ -35,7 +35,7 @@ ivy_workflow_state(
   phase=<gate insertion phase>,
   event_type="gate_verdict",
   payload={
-    "gate": "g{0..6}",
+    "gate": "g{0..5}",
     "verdict": "SOUND" | "UNSOUND" | "ABSTAIN",
     "vote": {"sound": int, "unsound": int, "abstain": int},
     "patterns": [{"id": "#NN", "file": "...", "line": int, "reason": "..."}],
@@ -197,11 +197,10 @@ Pattern B (MPE) and Pattern D (CVG) provide the dispatch substrate for the plugi
 | G3 | test-spec | each test-spec write | `build` Phase 3 (test sub-step) |
 | G4 | verification | after `ivy_verify` returns | `verify` Phase 4 |
 | G5 | trace analysis | after `ivy_iut_test` returns | `verify` Phase 5 |
-| G6 | knowledge graduation | before persistence write | `knowledge-capture` Step 5, before any Write to `.claude/rules/`, `MEMORY.md`, or `feedback_*.md` |
 
-**Full gate specifications — discipline contracts, per-gate critic templates, tier configuration, verdict persistence schema, GAP-marker conventions, and catalog-slice routing — live in `references/gates.md`.** Load that reference when dispatching any gate (G0–G6). Tier defaults and thresholds live in `references/model_tier_defaults.md`.
+**Full gate specifications — discipline contracts, per-gate critic templates, tier configuration, verdict persistence schema, GAP-marker conventions, and catalog-slice routing — live in `references/gates.md`.** Load that reference when dispatching any gate. Tier defaults and thresholds live in `references/model_tier_defaults.md`.
 
-Per-gate critic prompts live under `references/critic_prompts/`: `g0_plan.md`, `g1_exploration.md`, `g2_modeling.md`, `g3_testspec.md`, `g4_verification.md`, `g5_trace.md`, `g6_knowledge.md`. Load the relevant template verbatim when spawning a critic — the first three paragraphs of every template are load-bearing.
+Per-gate critic prompts live under `references/critic_prompts/`: `g0_plan.md`, `g1_exploration.md`, `g2_modeling.md`, `g3_testspec.md`, `g4_verification.md`, `g5_trace.md`. Load the relevant template verbatim when spawning a critic — the first three paragraphs of every template are load-bearing.
 
 ---
 

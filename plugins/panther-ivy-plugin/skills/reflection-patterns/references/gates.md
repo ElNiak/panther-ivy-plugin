@@ -14,6 +14,7 @@ This is the plugin's adversarial-review convention. It is not an iron rule — o
 | G3 | test-spec | each test-spec write | `build` Phase 3 (test sub-step) | PostToolUse on `Write\|Edit` of `*_test_*.ivy` |
 | G4 | verification | after `ivy_verify` returns | `verify` Phase 4 | PostToolUse on `ivy_verify` |
 | G5 | trace analysis | after `ivy_iut_test` returns | `verify` Phase 5 | PostToolUse on `ivy_iut_test` |
+| G6 | knowledge graduation | before persistence write | `knowledge-capture` Step 4c, before any Write to `.claude/rules/`, `MEMORY.md`, or `feedback_*.md` | skill-driven (no hook) |
 
 ## The four discipline contracts
 
@@ -114,6 +115,15 @@ See `references/critic_prompts/g5_trace.md`.
 - **Scope:** IUT run artifacts (analysis JSON, Ivy trace, IUT log, pcap).
 - **Catalog slice:** `#100-107` + `#500-559` + (`#560-589` if NSCT).
 
+## G6 — Knowledge graduation
+
+See `references/critic_prompts/g6_knowledge.md`.
+
+- **Trigger:** before any `knowledge-capture` Step 5 write to `.claude/rules/`, `MEMORY.md`, or a `feedback_*.md` file. Fires on every candidate; there is no skip path.
+- **Scope:** the candidate knowledge entry + the current content of the target file + the session digest grounding the candidate.
+- **Default tier:** Sonnet × 3, `≥2 SOUND` / `≥2 UNSOUND`.
+- **Catalog slice:** `#601-605` (knowledge-graduation patterns — defined in the G6 critic prompt).
+
 ## Tier configuration
 
 `model_tier_defaults.md` holds the per-tier and per-gate critic counts and thresholds. The orchestrator reads `CLAUDE_MODEL_TIER` (`haiku` | `sonnet` | `opus`); if unset, defaults to Sonnet. G0 overrides the default to Opus × 3 regardless of `CLAUDE_MODEL_TIER`, because plan-artifact soundness has historically been the highest-value gate for Opus-tier review.
@@ -133,7 +143,7 @@ ivy_workflow_state(
   phase=<gate insertion phase>,
   event_type="gate_verdict",
   payload={
-    "gate": "g{0..5}",
+    "gate": "g{0..6}",
     "verdict": "SOUND" | "UNSOUND" | "ABSTAIN",
     "vote": {"sound": int, "unsound": int, "abstain": int},
     "patterns": [{"id": "#NN", "file": "...", "line": int, "reason": "..."}],

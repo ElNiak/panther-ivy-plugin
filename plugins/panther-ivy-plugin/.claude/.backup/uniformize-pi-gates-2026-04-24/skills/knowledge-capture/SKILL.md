@@ -39,7 +39,6 @@ TaskCreate(subject="Save session log + digest", activeForm="Saving log")
 TaskCreate(subject="Classify candidates via taxonomy", activeForm="Classifying")
 TaskCreate(subject="Diff against existing entries", activeForm="Diffing")
 TaskCreate(subject="Spawn classification reviewer agent", activeForm="Spawning reviewer")
-TaskCreate(subject="Fire G6 knowledge-graduation gate", activeForm="Running G6 gate")
 ```
 
 Top-level invocation only — additional tasks:
@@ -59,8 +58,6 @@ digraph knowledge_capture_flow {
   start [shape=doublecircle];
   invocation [shape=diamond, label="Invocation\ncontext?"];
   steps_a [shape=box, label="Steps 1-3 + 4 + 4b"];
-  step_4c [shape=box, label="Step 4c\nG6 gate per candidate"];
-  g6_verdict [shape=diamond, label="G6 verdict?"];
   step_45 [shape=box, label="Step 4.5\nskill/reference audit"];
   step_5a [shape=box, label="Step 5 Section A\n(new learnings)"];
   step_5b [shape=box, label="Step 5 Section B\n(audit improvements)"];
@@ -70,11 +67,8 @@ digraph knowledge_capture_flow {
   start -> invocation;
   invocation -> steps_a [label="workflow-gate"];
   invocation -> steps_a [label="top-level"];
-  steps_a -> step_4c;
-  step_4c -> g6_verdict;
-  g6_verdict -> step_5a [label="SOUND / user-confirmed ABSTAIN\n(workflow-gate)"];
-  g6_verdict -> step_45 [label="SOUND / user-confirmed ABSTAIN\n(top-level)"];
-  g6_verdict -> done [label="UNSOUND (discarded)"];
+  steps_a -> step_5a [label="workflow-gate"];
+  steps_a -> step_45 [label="top-level"];
   step_45 -> step_5b;
   step_5b -> user_verdict;
   step_5a -> user_verdict;
@@ -200,30 +194,6 @@ Incorporate the agent's recommendations into the presentation.
 
 Walk through the 5-item audit checklist in `references/skill-audit.md` — description accuracy, step accuracy, cross-reference validity, reference currency, and coverage gaps. Dispatch parallel agents for independent audit tasks when the knowledge base is large. Produce a list of improvement recommendations (target file, line/section, what's wrong, proposed fix) that feeds Section B of Step 5.
 
-## Step 4c — Fire G6 (Knowledge-Graduation Gate)
-
-Before presenting any candidate to the user for approval, dispatch the G6 adversarial gate. G6 challenges whether the candidate knowledge is durable, general, surprising, citable, and non-duplicated. This step runs on every candidate regardless of invocation mode — there is no skip path.
-
-For each candidate from Step 4b:
-
-```
-<dispatch target="model-reviewer" mode="gate-critic" critic="g6_knowledge">
-  <candidate_knowledge>{type: "rule"|"feedback"|"memory", target_path: "...", content: "..."}</candidate_knowledge>
-  <session_digest_path>.panther-ivy/session-logs/{timestamp}.digest.yaml</session_digest_path>
-  <target_file_content>{current content of the target file, read in Step 1}</target_file_content>
-</dispatch>
-```
-
-Load the critic prompt verbatim from `Skill(skill="panther-ivy-plugin:reflection-patterns")` → `references/critic_prompts/g6_knowledge.md`. Default tier: Sonnet × 3, `≥2 SOUND` / `≥2 UNSOUND`.
-
-After collecting verdicts:
-
-- **`SOUND`**: include the candidate in Step 5's presentation with its G6 verdict attached.
-- **`UNSOUND(#NN, ...)`**: do NOT surface the candidate to the user for approval. Surface the gate failure reason instead, giving the user one option: (a) revise the candidate, (b) discard it. If the user revises, re-run G6 on the revised text before re-presenting.
-- **`ABSTAIN`**: surface the candidate to the user with the abstain reason attached and ask the user to confirm before writing.
-
-Persist the G6 gate result as a `gate_verdict` journal entry with `gate: "g6"` before proceeding to Step 5.
-
 ## Step 5 — Draft and Confirm
 
 <HARD-GATE>
@@ -231,9 +201,7 @@ Do NOT write any target file (plugin rule, skill, reference, user-memory)
 without explicit user approval per candidate via AskUserQuestion. Step 4b
 (classification reviewer agent) MUST run on top-level invocation. Step 4
 (Diff Against Existing) MUST run before any new-entry write — duplication
-of existing guidance is a soundness regression. Step 4c (G6 gate) MUST
-run before any candidate is presented for user approval — a candidate that
-did not pass G6 SOUND or user-confirmed ABSTAIN must not reach the write step.
+of existing guidance is a soundness regression.
 </HARD-GATE>
 
 ### Section A — New Learnings (from Step 3)
