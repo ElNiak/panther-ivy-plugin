@@ -325,6 +325,8 @@ rides on `append_pending_dispatch`. G2/G3 build-time gates DO NOT fire
 on review-inline edits — structural fixes belong in `build`, not here.
 </HARD-GATE>
 
+Hand-off mechanism rationale, lifecycle diagram, and the "no direct cross-workflow `Skill()`" rule live in `skills/workflow-navigate/references/control-flow.md`. Read that file before changing any `append_pending_dispatch` site or the routing hook.
+
 ## Integration
 
 - **Called by:** `navigate` (dispatch), `build` (quality gate — though build dispatches agents directly), `verify` (follow-up coverage), user directly ("review my model", "check coverage")

@@ -1,5 +1,6 @@
 {
   "_comment": "Authoritative routing table for panther-ivy-plugin. The README's Workflow Routing section points at this file; do not maintain a parallel table in README.md. Runtime consumer: hooks/scripts/route-user-prompt.py on UserPromptSubmit.",
+  "_comment_control_flow": "This file is one of three coexisting control-flow mechanisms (routing-rules.json + in-skill Skill() + pending_dispatch journal events). Each owns a unique capability; none is redundant. See skills/workflow-navigate/references/control-flow.md for the lifecycle diagram, decision table, and the audit conclusion that no entry here is safe to drop.",
   "workflows": {
     "workflow-verify": {
       "keywords": ["verify", "check", "test", "pass", "fail", "debug", "counterexample", "invariant violation", "ivy_check", "ivy_verify", "compile error", "verification", "unsatisfied", "safety property", "is this sound", "real verify", "adversarial check", "interpret this counterexample", "audit verification", "false sound", "spurious pass"],

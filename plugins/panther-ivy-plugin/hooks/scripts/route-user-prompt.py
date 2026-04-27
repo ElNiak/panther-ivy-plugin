@@ -5,11 +5,17 @@ import json
 import os
 import re
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, read_stdin
-from workflow_state import append_journal_event, find_protocol_dir, get_active_workflow
+from workflow_state import (
+    append_journal_event,
+    find_protocol_dir,
+    get_active_workflow,
+    get_journal_entries,
+)
 
 PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 SWITCH_KEYWORDS = ("switch to", "cancel", "stop this", "something else")
@@ -70,6 +76,41 @@ def score_workflow(prompt: str, prompt_lower: str, config: dict) -> tuple[int, i
     return (priority, best_quality)
 
 
+def find_fresh_pending_dispatch(protocol_dir: str, max_age_h: int = 2) -> dict | None:
+    """Return the newest pending_dispatch journal entry younger than max_age_h, or None.
+
+    Walks the recent journal newest-first and returns the first entry whose
+    ``type`` is ``"pending_dispatch"`` and whose ``ts`` (ISO-8601 UTC) is
+    within ``max_age_h`` hours of now. The 2-hour default mirrors
+    ``workflow_state.is_workflow_stale``'s default and the
+    ``feedback_no_relocate_backup_files`` retention norm.
+
+    The returned dict carries top-level ``ts`` / ``type`` / ``workflow`` /
+    ``phase`` and a ``payload`` dict whose ``workflow`` key names the target
+    workflow that navigate Phase 1 Step 2c will dispatch on consumption.
+    """
+    entries = get_journal_entries(protocol_dir, last_n=20)
+    if not entries:
+        return None
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=max_age_h)
+    for entry in reversed(entries):
+        if entry.get("type") != "pending_dispatch":
+            continue
+        ts_str = entry.get("ts")
+        if not ts_str:
+            continue
+        try:
+            entry_ts = datetime.fromisoformat(ts_str)
+        except ValueError:
+            continue
+        # Newest-first walk: the first pending_dispatch we encounter is the
+        # freshest. Either it is within the cutoff (return it) or it is
+        # stale (return None — older entries in this scan can only be older
+        # still).
+        return entry if entry_ts >= cutoff else None
+    return None
+
+
 def check_learning_injection(prompt: str, prompt_lower: str, config: dict) -> list[str] | None:
     for kw in config.get("keywords", []):
         if kw.lower() in prompt_lower:
@@ -102,6 +143,33 @@ def main() -> None:
         active = get_active_workflow(protocol_dir)
         if active:
             active_workflow_name = active.get("workflow")
+
+    # Pending-dispatch suppression. When a workflow has just emitted
+    # append_pending_dispatch and cleared its active-workflow flag, the
+    # next-turn user prose may still match the previous workflow's keywords.
+    # Emitting a [ROUTING] hint for the prose-scored workflow would
+    # contradict navigate Phase 1 Step 2c's actual hand-off to the queued
+    # target. Detect a fresh hand-off and emit [ROUTING:CONTINUE] for the
+    # queued target instead. The user's explicit switch intent overrides
+    # the hand-off — they may be cancelling it.
+    if protocol_dir and not prompt_has_switch_intent(prompt_lower):
+        pending = find_fresh_pending_dispatch(protocol_dir, max_age_h=2)
+        if pending is not None:
+            target = pending.get("payload", {}).get("workflow")
+            reason = pending.get("payload", {}).get("reason")
+            if target:
+                reason_suffix = f" (reason: {reason})" if reason else ""
+                emit_hook_output(
+                    "UserPromptSubmit",
+                    additional_context=(
+                        f"[ROUTING:CONTINUE] Pending dispatch to '{target}' queued"
+                        f"{reason_suffix}. Invoke "
+                        f"Skill(skill=\"panther-ivy-plugin:workflow-navigate\") "
+                        f"so navigate Phase 1 Step 2c consumes the journal entry "
+                        f"and dispatches '{target}'."
+                    ),
+                )
+                return
 
     workflows = rules.get("workflows", {})
     scored: list[tuple[tuple[int, int], str]] = []

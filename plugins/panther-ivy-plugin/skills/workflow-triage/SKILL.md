@@ -329,6 +329,8 @@ escalation options gated by user confirmation in Phase 3, not default
 behavior.
 </HARD-GATE>
 
+Hand-off mechanism rationale, lifecycle diagram, and the "no direct cross-workflow `Skill()`" rule live in `skills/workflow-navigate/references/control-flow.md`. Read that file before changing any `append_pending_dispatch` site or the routing hook.
+
 ## Integration
 
 - **Called by:** `navigate` (preflight), `build`/`verify`/`review` (preflight), user directly ("things are broken")

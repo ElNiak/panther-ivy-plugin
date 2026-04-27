@@ -337,6 +337,8 @@ chain stays visible in the journal. Direct skill invocation breaks the
 workflow state machine.
 </HARD-GATE>
 
+Hand-off mechanism rationale, lifecycle diagram, and the "no direct cross-workflow `Skill()`" rule live in `skills/workflow-navigate/references/control-flow.md`. Read that file before changing any `append_pending_dispatch` site or the routing hook.
+
 ## Integration
 
 - **Called by:** `navigate` (dispatch), user directly ("build a model", "scaffold a protocol")

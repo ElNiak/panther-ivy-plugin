@@ -6,6 +6,7 @@ import os
 import subprocess
 import sys
 import tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import yaml
@@ -142,6 +143,98 @@ def test_learning_suppresses_workflow():
     assert "[ROUTING] Activate" not in ctx, "Learning should suppress workflow activation"
 
 
+def _seed_pending_dispatch(
+    tmpdir: str, target: str, reason: str, age_hours: float = 0
+) -> None:
+    """Write a workflow-journal.yaml with one pending_dispatch entry.
+
+    `age_hours` controls the timestamp: 0 means now (fresh), >2 means stale.
+    The journal lives at <tmpdir>/protocol-testing/.panther-ivy/workflow-journal.yaml
+    matching workflow_state._JOURNAL_FILE and the protocol-testing layout.
+    """
+    state_dir = os.path.join(tmpdir, "protocol-testing", ".panther-ivy")
+    os.makedirs(state_dir, exist_ok=True)
+    ts = (datetime.now(timezone.utc) - timedelta(hours=age_hours)).isoformat()
+    entry = {
+        "ts": ts,
+        "type": "pending_dispatch",
+        "workflow": "workflow-build",
+        "phase": "verify",
+        "payload": {"workflow": target, "reason": reason},
+    }
+    journal_path = os.path.join(state_dir, "workflow-journal.yaml")
+    with open(journal_path, "w") as f:
+        yaml.safe_dump([entry], f, default_flow_style=False)
+
+
+def test_fresh_pending_dispatch_emits_continue():
+    """A fresh pending_dispatch suppresses prose-scored [ROUTING] and emits
+    [ROUTING:CONTINUE] for the queued target so the routing hint matches
+    navigate Phase 1 Step 2c's actual hand-off (control-flow.md race fix)."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        _seed_pending_dispatch(
+            tmpdir,
+            target="workflow-verify",
+            reason="build Phase 4 — post-modeling verification",
+            age_hours=0,
+        )
+        # Prompt matches build keywords; without the fix this would emit
+        # [ROUTING] for build and contradict the queued verify hand-off.
+        output = run_hook(
+            "scaffold the next layer for me",
+            env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
+        )
+        assert output is not None
+        ctx = _extract_context(output)
+        assert "[ROUTING:CONTINUE]" in ctx, ctx
+        assert "'workflow-verify'" in ctx, ctx
+        assert "[ROUTING] Activate" not in ctx, ctx
+        assert "workflow-navigate" in ctx, ctx
+
+
+def test_stale_pending_dispatch_ignored():
+    """A pending_dispatch older than 2 hours is treated as expired; the
+    prose-scored [ROUTING] path runs normally."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        _seed_pending_dispatch(
+            tmpdir,
+            target="workflow-verify",
+            reason="stale hand-off from a previous session",
+            age_hours=3,
+        )
+        output = run_hook(
+            "scaffold the next layer for me",
+            env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
+        )
+        assert output is not None
+        ctx = _extract_context(output)
+        # No CONTINUE — falls through to standard prose-scored routing.
+        assert "[ROUTING:CONTINUE]" not in ctx, ctx
+        # Prose-scored target ("scaffold" → workflow-build).
+        assert "'workflow-build'" in ctx, ctx
+
+
+def test_pending_dispatch_overridden_by_switch_intent():
+    """An explicit switch keyword cancels the pending_dispatch suppression
+    so the user can override a queued hand-off."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        _seed_pending_dispatch(
+            tmpdir,
+            target="workflow-verify",
+            reason="build Phase 4 — post-modeling verification",
+            age_hours=0,
+        )
+        output = run_hook(
+            "switch to review workflow",
+            env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
+        )
+        assert output is not None
+        ctx = _extract_context(output)
+        # Switch keyword wins — no CONTINUE, normal routing.
+        assert "[ROUTING:CONTINUE]" not in ctx, ctx
+        assert "'workflow-review'" in ctx, ctx
+
+
 if __name__ == "__main__":
     tests = [
         test_keyword_match,
@@ -153,6 +246,9 @@ if __name__ == "__main__":
         test_explicit_switch_override,
         test_file_trigger_matching,
         test_learning_suppresses_workflow,
+        test_fresh_pending_dispatch_emits_continue,
+        test_stale_pending_dispatch_ignored,
+        test_pending_dispatch_overridden_by_switch_intent,
     ]
     passed = 0
     failed = 0
