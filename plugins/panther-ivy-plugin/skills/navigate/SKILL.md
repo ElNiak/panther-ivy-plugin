@@ -1,6 +1,6 @@
 ---
 name: navigate
-description: "Routing hub that picks the next Ivy workflow (build, verify, review, triage). Use when the next step is ambiguous or a prior workflow just completed. Not for authoring specs, diagnosing failures, or running tests directly."
+description: "You MUST use this when the next step is ambiguous, a prior workflow just completed, or starting a session. Routes to the next Ivy workflow (build / verify / review / triage); not for authoring, diagnosing, or testing directly."
 ---
 
 <role>
@@ -12,13 +12,25 @@ is the routing hub; other skills provide supplementary detail for complex
 tasks.
 </role>
 
+**Type:** rigid — follow exactly, do not adapt away discipline.
+
 ### Mindset (always active)
 
-Three always-on stances govern every routing decision: **compositional thinking** (assume-guarantee contracts between isolates), **RFC-first reasoning** (start from normative text, add `[rfcNNNN:X.Y]` bracket tags), and **verify-as-you-go** (`ivy_diagnostics` + `ivy_verify` after every meaningful change, not batched). Full wording + anti-rationalization table: `references/navigate-mindset.md`.
+Three always-on stances govern every routing decision: 
+1. **compositional thinking** (assume-guarantee contracts between isolates), 
+2. **RFC-first reasoning** (start from normative text, add `[rfcNNNN:X.Y]` bracket tags), and 
+3.  **verify-as-you-go** (`ivy_diagnostics` + `ivy_verify` after every meaningful change, not batched). Full wording + anti-rationalization table: `references/navigate-mindset.md`.
 
-## Anti-Rationalization
+## Red Flags
 
-When an inner voice rationalizes bypassing the workflow discipline ("I already know" / "this is a quick fix" / "just this one file" / "the user just wants it done"), route to the correct workflow anyway. Full `<thought>`/`<rebuttal>` table: `references/navigate-mindset.md`.
+| Thought | Reality |
+|---|---|
+| "User said 'verify', just dispatch verify directly" | Phase 1 Situation Briefing + Phase 2 branch-by-context + the pre-dispatch Reflection Gate are non-skippable. Never bypass routing discipline on a single keyword match. |
+| "I already know the right workflow / quick fix / just this one file / user just wants it done" | Anti-Rationalization rule: route to the correct workflow anyway. Full `<thought>`/`<rebuttal>` table in `references/navigate-mindset.md`. |
+| "build-state.yaml exists, resume build silently" | Branch A always offers "do something else" alongside resume. Skip-questions discipline applies only to journal `decision` events that are already confirmed; never assume resume intent. |
+| "Preflight passed, no need to surface anything" | Silent pass-through is correct for preflight-pass. On preflight-fail, the `AskUserQuestion` options (run triage / continue anyway) are mandatory — never silently skip the diagnose-and-fix flow. |
+| "G0 ABSTAIN means proceed cautiously" | ABSTAIN is inconclusive. Present abstain reasons; offer evidence gathering and re-run. ABSTAIN does NOT consume a cycle from the 3-cycle budget — re-run is free. |
+| "Pending_dispatch is old, skip it" | Phase 1 Step 2c logic: `pending_dispatch` older than the active-workflow staleness threshold (2 h) is stale; otherwise consume it. Do not silently skip a fresh hand-off. |
 
 ## Step Tracking
 
@@ -121,6 +133,30 @@ Scan the recent journal entries for a `pending_dispatch` whose target workflow h
 2. Skip Phase 2's branch-by-context and the Plan-Author Branch; proceed directly to the Dispatch section.
 3. The Dispatch section sets `active-workflow` to `(workflow=<target>, phase=<phase_hint or "init">)` and invokes `Skill(skill="panther-ivy-plugin:<target>")` in the same turn.
 
+After writing the `workflow_resumed` entry and before invoking `Skill(skill="panther-ivy-plugin:<target>")`, check whether this `pending_dispatch` originated from a G0 SOUND verdict. If the recent journal contains a `gate_verdict{gate: "g0", verdict: "SOUND"}` entry that precedes the consumed `pending_dispatch`, fire the G0b plan-fidelity gate:
+
+<checkpoint type="gate" id="G0b" blocks-dispatch="true"
+            criteria="Sonnet 3-critic asymmetric vote"
+            critic-template-id="g0b_plan_fidelity">
+
+  G0b validates that the agent's first intended action is faithful to the approved plan before the caller workflow takes any substantive step. Provide each critic with: the approved plan file path and contents, the `plan_approved` journal entry, the `gate_verdict{g0, SOUND}` entry, and a description of the first intended action (action type, target files, phase label).
+
+  <outcome verdict="SOUND">
+    <severity class="gate" value="SOUND"/>. Write the `gate_verdict{gate: "g0b"}` journal entry, then invoke `Skill(skill="panther-ivy-plugin:<target>")`.
+  </outcome>
+
+  <outcome verdict="UNSOUND">
+    <severity class="gate" value="UNSOUND"/>. Present the citing tests and the specific deviation (wrong files, wrong phase, out-of-scope action) via `AskUserQuestion`. Do NOT invoke the target workflow. User picks one of: Correct the first action (re-describe, then re-run G0b), Proceed with stated justification (record `decision{override_reason}`), or Re-enter plan mode to revise the plan.
+  </outcome>
+
+  <outcome verdict="ABSTAIN">
+    <severity class="gate" value="ABSTAIN"/>. Present the abstain reason (typically: plan file unreadable, first-action description too vague, or no scope section). Ask the user to clarify before proceeding.
+  </outcome>
+
+</checkpoint>
+
+If the `pending_dispatch` does NOT originate from a G0 SOUND verdict (normal workflow-to-workflow hand-off), skip G0b and invoke `Skill(skill="panther-ivy-plugin:<target>")` directly.
+
 A `pending_dispatch` with a `workflow_resumed` already paired against it is stale and is ignored; Phase 1 proceeds to Step 3. Pending dispatches older than the `active-workflow` staleness threshold (2 h) are treated as stale regardless of the pairing — a stalled chain left over from a prior session should not be resumed silently.
 
 ### Step 3: Check recent Ivy changes
@@ -133,38 +169,7 @@ Record the results. If there are recent changes, note which files and when.
 
 ### Step 4: Run triage preflight (inline)
 
-Confirm stack health before proceeding. Preflight is loaded inline as a skill call with `args="preflight"` — no state writes, no workflow dispatch:
-
-```
-Skill(skill="panther-ivy-plugin:triage", args="preflight")
-```
-
-Triage's Phase 1 runs in preflight mode (read-only health checks), returns a pass/fail summary to navigate's current turn, and does not alter `active-workflow`. Navigate stays on `phase = "context-scan"` throughout.
-
-<outcome verdict="preflight-pass">
-  Proceed to Step 5 (Situation Briefing).
-</outcome>
-
-<outcome verdict="preflight-fail">
-  Surface the failing checks to the user via `AskUserQuestion`. Offer these options:
-
-  - **Run triage interactively to diagnose and repair** — dispatch `triage` as a full workflow.
-    <dispatch target="triage" via="pending_dispatch" reason="preflight failed"/>
-    Triage Phase 2–3 runs interactively. On repair completion triage emits
-    `pending_dispatch(<caller>, reason="post-triage-repair")` handing control
-    back, so navigate re-enters on the next turn via Phase 1 Step 2c and
-    picks up where it left off. **This is a blocking escalation** — the user
-    will complete a full triage cycle before navigate resumes, so announce
-    that explicitly in the `AskUserQuestion` option description.
-
-  - **Continue anyway** — record the failure in a `progress` journal entry
-    (`{kind: "preflight_skipped", reason: "<user chose continue"}`) and
-    proceed to Step 5. Downstream workflows (`build`, `verify`, `review`)
-    may still fail on the underlying issue, but the user has explicitly
-    chosen to defer the fix.
-</outcome>
-
-Users who type "things are broken" or similar still dispatch triage as a full workflow via Phase 2's routing table — the preflight-to-full escalation path documented above is a separate branch triggered by a failed preflight check, not by the user's direct request.
+Dispatch `triage` in preflight mode (`Skill(skill="panther-ivy-plugin:triage", args="preflight")`). Read-only health checks; no state writes; navigate stays on `phase = "context-scan"`. Full procedure with pass/fail outcomes and the preflight-to-full escalation path: `references/triage-handoff.md`.
 
 ### Situation Briefing — Context Scan Results
 
@@ -191,6 +196,8 @@ The user's choice determines which Phase 2 branch to take.
 
 ## Phase 1.5 — Post-plan-approval handoff
 
+Phase 0 fires only on plan-mode entry; Phase 1.5 fires only on plan-mode exit; Phase 1 and Phase 2 are unaffected by either. The "1.5" half-step number signals the conditional position between Phase 1 and Phase 2.
+
 Fires on the turn after `ExitPlanMode` when plan mode is no longer active AND the journal shows a recent `plan_approved` entry without a paired `workflow_resumed` entry. Otherwise proceed to Phase 2. Phases 0 and 1.5 are mutually exclusive.
 
 **Purpose**: re-activate the caller workflow after the G0 plan-gate audits the approved plan against current `build-state.yaml` decisions and journal history.
@@ -199,7 +206,7 @@ Fires on the turn after `ExitPlanMode` when plan mode is no longer active AND th
 
 <checkpoint type="gate" id="G0" blocks-dispatch="true"
             criteria="Opus 3-critic asymmetric vote"
-            critic-template="skills/reflection-patterns/references/critic_prompts/g0_plan.md">
+            critic-template-id="g0_plan">
 
   <outcome verdict="SOUND">
     <severity class="gate" value="SOUND"/>. Merge committed decisions into
@@ -313,6 +320,14 @@ shapes and re-entry semantics: `references/plan-mode-lifecycle.md#plan-author-br
 
 ## Dispatch
 
+<HARD-GATE>
+Do NOT dispatch a workflow before Phase 1 Situation Briefing has run AND
+the Reflection Gate has been confirmed below. Do NOT bypass the Routing
+Table on ambiguous intent — ask one clarifying question instead. Direct
+Skill(<workflow>) without these gates is the bypass-the-discipline
+anti-pattern the Red Flags table flags.
+</HARD-GATE>
+
 ### Reflection Gate — Pre-Dispatch Check
 
 Load the `reflection-patterns` skill. Apply **Pattern A (Reflection Gate)** with this context:
@@ -330,31 +345,31 @@ When dispatching to a workflow:
 
 ### Routing Table
 
-Human-readable summary:
-
-| Goal | Dispatch Target |
-|------|----------------|
-| Build or scaffold a protocol model | `build` workflow |
-| Verify or debug a specification | `verify` workflow |
-| Review quality or coverage | `review` workflow |
-| Diagnose broken tools | `triage` workflow |
-| Learn methodology | `methodology-reference` skill |
-| Extract RFC requirements | `traceability-agent` agent |
-
-Machine-readable call graph:
-
-<dispatch target="build" via="skill" trigger="build or scaffold a protocol model"/>
-<dispatch target="verify" via="skill" trigger="verify or debug a specification"/>
-<dispatch target="review" via="skill" trigger="review quality or coverage"/>
-<dispatch target="triage" via="skill" trigger="diagnose broken tools"/>
-<dispatch target="methodology-reference" via="skill" trigger="learn methodology"/>
-<dispatch target="traceability-agent" via="agent" trigger="extract RFC requirements"/>
-
-<branch condition="user's goal does not clearly map to any target above" name="clarify">
-  Ask one clarifying question before dispatching.
-</branch>
+Human-readable summary, machine-readable `<dispatch>` call graph, and clarify-branch fallback live in `references/routing-catalog.md`. Runtime source of truth for keywords/regex is `routing-rules.json` (consumed by `route-user-prompt.py` on `UserPromptSubmit`).
 
 ---
+
+## Terminal state
+
+<HARD-GATE>
+The terminal state of navigate is one of:
+- `Skill(skill="panther-ivy-plugin:<target>")` invocation after the
+  Reflection Gate's user confirmation (Phase 2 Branch dispatch or
+  Phase 1 Step 2c pending_dispatch consumption).
+- `ExitPlanMode` after writing a `plan_approved` journal entry
+  (Plan-Author Branch only — Phase 0 detection of plan mode).
+- Silent return on Phase 1 preflight pass (no state mutation, no
+  dispatch).
+
+Do NOT dispatch a workflow without: (1) a confirmed Reflection Gate
+(or pending_dispatch consumption that already passed G0), (2) a clean
+active-workflow flag write naming the target, (3) a user-visible
+Situation Briefing summarizing context (cold-start / warm-resume /
+activity-summary branch). Before emitting any user-facing routing
+claim, optionally invoke `Skill(skill="panther-ivy-plugin:completion-gate")`
+to verify the dispatch decision matches current state — required when
+the decision overrides a prior journal `decision` event.
+</HARD-GATE>
 
 ## Integration
 
@@ -368,13 +383,4 @@ Machine-readable call graph:
 
 ### Journal entry types this skill produces or consumes
 
-| Type | Direction | Introduced by |
-|------|-----------|---------------|
-| `context_switch` | produces (Phase 0 detection) | Phase 0 |
-| `plan_approved` | produces (Plan-Author Step 4) | Plan-Author Branch |
-| `pending_dispatch` | consumes (Phase 1 Step 2c) | Any workflow emitting a hand-off |
-| `workflow_resumed` | produces (Phase 1 Step 2c + Phase 1.5 Step 5) | Pending-dispatch consumption + post-plan-approval handoff |
-| `gate_verdict` with `gate: "g0"` | produces (Phase 1.5, via `reflection-patterns` G0 dispatch) | Post-plan-approval handoff |
-| `decision`, `phase_transition`, `session_start`, `session_end`, `error`, `progress` | both | Existing schema (unchanged) |
-
-Full schema for each type lives in the `reflection-patterns` skill's `references/gates.md` (gate_verdict payload) and in `superpowers:writing-plans` (plan file conventions consumed by the `supersedes` extraction, when that plugin is installed).
+Produces/consumes matrix and gate-verdict payload schema: `references/journal-events.md`. For the full `gate_verdict` payload, load the reflection-patterns skill via `Skill(skill="panther-ivy-plugin:reflection-patterns")` and consult its gates reference.

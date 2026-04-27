@@ -8,7 +8,8 @@ This is the plugin's adversarial-review convention. It is not an iron rule — o
 
 | # | Gate | Lifecycle step | Workflow + insertion | Hook event |
 |---|---|---|---|---|
-| G0 | plan | post-ExitPlanMode, pre-workflow-resume | `navigate` post-plan-approval handoff / `build` parallel entry | PostToolUse on ExitPlanMode (future; currently skill-driven) |
+| G0 | plan | post-ExitPlanMode, pre-workflow-resume | `navigate` Phase 1.5 post-plan-approval handoff | PostToolUse on ExitPlanMode (future; currently skill-driven) |
+| G0b | plan-fidelity | post-workflow-resume, pre-first-substantive-action | `navigate` Phase 1 Step 2c, after `workflow_resumed` write, before `Skill(<target>)` | skill-driven (no hook); fires only when `pending_dispatch` originates from a G0 SOUND verdict |
 | G1 | exploration | scope + blueprint | `build` after Phase 2, before Phase 3 | UserPromptSubmit + post-blueprint |
 | G2 | per-layer modeling | each `.ivy` layer write | `build` Phase 3 | PostToolUse on `Write\|Edit` of `*.ivy` |
 | G3 | test-spec | each test-spec write | `build` Phase 3 (test sub-step) | PostToolUse on `Write\|Edit` of `*_test_*.ivy` |
@@ -60,6 +61,39 @@ Distinct from G1 (blueprint gate). G0 fires on plan artifacts — a plan file co
 
 **Output:**
 - `gate_verdict` journal entry with `gate: "g0"` (matching the existing lowercase convention for `g1..g5`).
+
+## G0b — Plan-fidelity (post-workflow-resume, pre-first-action)
+
+Pairs with G0. G0 audits the plan file itself (is the plan sound?). G0b audits the agent's first substantive action after the plan clears (is the agent doing what the plan says?). Both fire post-ExitPlanMode; G0 fires at Phase 1.5 before the `pending_dispatch`; G0b fires at Phase 1 Step 2c after `workflow_resumed` is written and before `Skill(<target>)` is invoked.
+
+**Trigger:**
+- Phase 1 Step 2c has consumed a `pending_dispatch` entry.
+- That `pending_dispatch` was emitted by Phase 1.5's G0 SOUND path — confirmed by a preceding `gate_verdict{gate: "g0", verdict: "SOUND"}` journal entry.
+- No `gate_verdict{gate: "g0b"}` entry already exists paired against this `workflow_resumed`.
+
+If the `pending_dispatch` did not originate from a G0 SOUND verdict (e.g., it is a normal workflow-to-workflow hand-off), G0b does NOT fire. This is a trigger condition, not a skip exception — non-plan-mode dispatches never qualify.
+
+**Scope:**
+- The approved plan file (path from the `plan_approved` entry).
+- The `gate_verdict{gate: "g0", verdict: "SOUND"}` entry (authorization evidence).
+- A description of the agent's first intended action: action type, target files, and phase label.
+
+**Critics:**
+- Default tier: Sonnet × 3, confirmer-threshold 2, refute-threshold 1.
+- Each critic independently reads the plan file and the first-action description — no shared context between critics.
+- Verdict format: `SOUND` / `UNSOUND(#0bNN, …)` / `ABSTAIN`.
+
+**Budget:**
+- 1 G0b cycle per plan execution. No re-run budget — G0b is a one-time pre-action check. On UNSOUND, the orchestrator halts, surfaces the deviation, and requires the user to decide (proceed with stated justification, revise the action, or re-enter plan mode).
+
+**Template:**
+- `references/critic_prompts/g0b_plan_fidelity.md`
+
+**Catalog slice:**
+- Inline (`#0b1-#0b5`, defined in the G0b critic prompt). No shared catalog slice — fidelity patterns are G0b-specific.
+
+**Output:**
+- `gate_verdict` journal entry with `gate: "g0b"`.
 
 ## G1 — Exploration (scope + blueprint)
 
@@ -143,7 +177,7 @@ ivy_workflow_state(
   phase=<gate insertion phase>,
   event_type="gate_verdict",
   payload={
-    "gate": "g{0..6}",
+    "gate": "g0" | "g0b" | "g1" | "g2" | "g3" | "g4" | "g5" | "g6",
     "verdict": "SOUND" | "UNSOUND" | "ABSTAIN",
     "vote": {"sound": int, "unsound": int, "abstain": int},
     "patterns": [{"id": "#NN", "file": "...", "line": int, "reason": "..."}],
