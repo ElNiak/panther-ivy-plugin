@@ -22,7 +22,7 @@ plugin-local directives below are **authoritative** for paths under
 where this rule is silent — specifically: the SKILL.md body length cap
 (under 500 lines, aim for 300), the per-skill `references/` placement
 of heavy material, and the CSO checklist's mechanical-checks portion
-(§7 below). On any contradicting directive — most notably the
+(§8 below). On any contradicting directive — most notably the
 description format (§1 below directly contradicts the worktree-level
 "what it does + Use when…" template) — this rule wins.
 
@@ -70,19 +70,17 @@ or:
 **Type:** flexible — adapt principles to context.
 ```
 
-**Rigid (6):** `build`, `verify`, `review`, `triage`, `navigate`,
-`knowledge-capture`. These are workflow skills bound by iron laws and
-adversarial gates; deviation is a soundness risk.
+**Rigid (6):** `ivy` (orchestrator), `triage-ops`, `build-ops`, `verify-ops`, `review-ops`, `meta-self-mod-ops`. These are workflow / orchestration skills bound by iron laws and adversarial gates.
 
-**Flexible (8):** `ivy-syntax`, `verification-failures`,
-`methodology`, `specification-patterns`, `apt-attack-patterns`,
-`ivy-toolkit`, `propagation-patterns`, `reflection-patterns`. These are
-pattern/reference skills consumed by the rigid workflows and by the
-user. (Roster updated 2026-04-27: the four prior `claim-discussion`,
-`counterexample-guide`, `ivy-debugging-methodology`, and `ivy-error-patterns`
-skills consolidated into `verification-failures`.)
+**Flexible (6):** `verification-failures`, `specification-patterns`, `propagation-patterns`, `apt-attack-patterns`, `ivy-toolkit`, `ivy-syntax`. These are pattern / reference skills consumed by the rigid skills + agents and by the user.
 
-## 3. HARD-GATE markup — pre-action enforcement directives
+## 3. Agent conventions
+
+**Workflow specialist agents (5):** `ivy-triage-agent`, `ivy-builder-agent`, `ivy-verifier-agent`, `ivy-reviewer-agent`, `ivy-meta-agent`. Each MUST declare a `skills: [...]` entry in its frontmatter that preloads its operating-procedure SKILL (e.g., `skills: ["panther-ivy-plugin:triage-ops"]`) — the preload chain is mandatory because the rigid `*-ops` skill carries the iron-law-bound discipline the agent enforces in flight. Each agent body MUST also include a `<dispatch-context>` block conforming to the canonical schema in `.claude/rules/agent-dispatch.md`; the block is the agent's capability contract, populated by the dispatching orchestrator. Default `model: opus` because the workload (verifier counterexample diagnosis, reviewer adversarial verdicts, builder cross-layer propagation) is heavy-reasoning rather than mechanical.
+
+**Gate critic agents (3):** `g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`. These are self-contained — NO `skills: [...]` preload — and the verbatim critic-prompt template lives inline in the agent body so the critic's verdict is reproducible from the agent file alone. Use `model: sonnet` for fast 3-of-3 asymmetric votes (`g-fidelity-critic`, `g-knowledge-critic`) where the gate runs many parallel votes per session; use `model: opus` for `g-plan-critic` where the slower plan-understanding workload justifies the deeper-reasoning cost. Per the three-layer split, structural conventions live here while fault-handling (timeout, retry, AskUserQuestion fallback) lives in `agent-dispatch.md` — do not duplicate.
+
+## 4. HARD-GATE markup — pre-action enforcement directives
 
 Where a workflow skill needs to halt action until a precondition is cleared,
 wrap the directive in a `<HARD-GATE>` block at the top of the relevant
@@ -110,7 +108,7 @@ before Write/Edit on layer N.
 Place HARD-GATEs at action-decision boundaries (entering a new phase,
 dispatching a critic, claiming completion), not at informational headings.
 
-## 4. Red Flags rationalization tables — required for rigid workflow skills
+## 5. Red Flags rationalization tables — required for rigid workflow skills
 
 Every rigid workflow `SKILL.md` includes a `## Red Flags` section mapping
 plausible-but-wrong rationalizations to their reality. The table targets
@@ -132,7 +130,7 @@ in `SKILL.md` with a Read pointer to the references file.
 Flexible pattern skills do not need a Red Flags table; their reference
 nature is self-disciplining.
 
-## 5. Process diagrams — required for rigid workflow skills
+## 6. Process diagrams — required for rigid workflow skills
 
 Every rigid workflow `SKILL.md` includes a `## Process Flow` section with a
 Graphviz `digraph` block diagramming the phase decision flow. Diamonds for
@@ -143,7 +141,7 @@ descriptions.
 Flexible pattern skills do not need a `## Process Flow`; their structure
 is reference-driven, not flow-driven.
 
-## 6. Step Tracking — required for rigid workflow skills
+## 7. Step Tracking — required for rigid workflow skills
 
 Every rigid workflow `SKILL.md` includes a `## Step Tracking` section
 showing the exact `TaskCreate` calls to issue at the start of each phase.
@@ -164,7 +162,7 @@ TaskCreate(subject="Identify target protocol and RFC", activeForm="Identifying t
 \```
 ```
 
-## 7. CSO checklist (carry-over from worktree-level rule)
+## 8. CSO checklist (carry-over from worktree-level rule)
 
 Before finalizing a SKILL.md description: contains concrete trigger
 phrases, exact error strings for error-handling skills, third person
@@ -175,9 +173,9 @@ Body length cap from the worktree-level rule still applies: SKILL.md
 under 500 lines, aim for under 300 for frequently-loaded skills. Move
 heavy reference material to `references/` subdirectory.
 
-## 8. Common violations (red flags)
+## 9. Common violations (red flags)
 
-Modeled on the per-skill Red Flags table that the rules in §4 prescribe. Six recognisable convention breaches and their fixes — readers diagnose drift here before re-reading §1-§7.
+Modeled on the per-skill Red Flags table that the rules in §5 prescribe. Recognisable convention breaches and their fixes — readers diagnose drift here before re-reading §1-§8.
 
 | Symptom | Section breached | Fix |
 |---|---|---|
@@ -187,3 +185,6 @@ Modeled on the per-skill Red Flags table that the rules in §4 prescribe. Six re
 | Rigid workflow SKILL with no `## Process Flow` digraph | §"Body Rules" | Add a Graphviz `digraph` block matching the convention used by every other workflow SKILL. |
 | SKILL.md body > 500 LOC | §"Body Rules" | Move heavy reference material (worked examples, catalogs, walkthroughs) to `references/`; cite from SKILL.md via short Read pointers. |
 | Description mentions "do not invoke directly" | §"Frontmatter" (`user-invocable`) | Set `user-invocable: false` in frontmatter; do not waste description characters on routing metadata. |
+| Workflow specialist agent missing `skills: [...]` preload | §3 "Agent conventions" | Add `skills: ["panther-ivy-plugin:<role>-ops"]` to the agent's frontmatter so the rigid operating-procedure SKILL preloads at spawn. The preload chain is mandatory. |
+| Gate critic agent declares `skills: [...]` preload | §3 "Agent conventions" | Drop the preload entry; gate critics are self-contained. Inline the verbatim critic-prompt template in the agent body so the verdict is reproducible from the file alone. |
+| Specialist agent body missing `<dispatch-context>` block | §3 "Agent conventions" | Add the schema-conformant `<dispatch-context>` block per `.claude/rules/agent-dispatch.md`; the block is the agent's capability contract. |

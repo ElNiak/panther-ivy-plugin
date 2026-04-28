@@ -9,6 +9,13 @@ rather than duplicating the wording.
 </purpose>
 
 <context>
+The orchestrator's `skills/ivy/SKILL.md` body inlines a short iron-law
+primer for main-thread visibility on every dispatch decision. This rule
+auto-loads the full `<iron-law>` block detail on `.ivy`/`.spec` edits via
+the `paths:` glob. Both surfaces stay in sync via this rule being the
+canonical source — the primer is a summary derived from the rule body.
+Edits here propagate to the orchestrator on the next refactor pass.
+
 The deterministic enforcement layer is the project-scoped `PreToolUse` hook
 at `hooks/scripts/block-direct-ivy.sh` (registered in `hooks/hooks.json` for
 the `Bash` matcher), which warns (exit 0) about direct CLI invocations of

@@ -49,30 +49,6 @@ layers:
 
 Only the **orchestrator** (the workflow phase code that fans out critics and aggregates verdicts) writes GAP markers to a file. A critic returns a verdict record `UNSOUND(#NN, "<reason>", "<file:line>")` but does not perform `Edit` operations itself. This keeps the write surface small and auditable, and it ensures every GAP is traceable to a specific gate invocation via the journal.
 
-## Relationship to claim-discussion prefixes
-
-The `claim-discussion` skill already defines a set of inline resolution prefixes. A GAP marker is a **new** state that precedes them; it is not a replacement. Lifecycle:
-
-| Marker | Meaning | Written by | Removed when |
-|---|---|---|---|
-| `[GAP: #NN <reason>]` | Adversarial gate found an unsound spot; not yet resolved | Orchestrator | The next `Edit` at that location fixes the issue and the gate re-runs returning `SOUND` (orchestrator removes the marker) |
-| `// RESOLVED YYYY-MM-DD: …` | A claim discussion concluded the spec is correct as-is | Author | Permanent unless the code it annotates changes |
-| `// IUT_FINDING YYYY-MM-DD: …` | Verification failure was an IUT bug, not a model bug | Author | Permanent; tracked separately |
-| `// DEFERRED YYYY-MM-DD: …` | Known gap, deliberately deferred with rationale | Author (user decision) | Permanent until author removes it |
-| `// GUARD_ADDED YYYY-MM-DD: …` | A `require` was added to address a gap | Author | Permanent |
-| `// KNOWN_DEVIATION YYYY-MM-DD: …` | Spec deliberately diverges from RFC; rationale recorded | Author | Permanent |
-| `// N/A YYYY-MM-DD: …` | Discussion does not apply | Author | Permanent |
-
-## Promotion rules
-
-A `[GAP:]` marker may be promoted to a `claim-discussion` prefix by a deliberate author action:
-
-- **To `// DEFERRED YYYY-MM-DD:`** — author accepts the gap and records why a fix is deferred. Remove the `[GAP:]` token, add a `// DEFERRED` line with rationale, commit. The orchestrator will not re-raise the same pattern at this location.
-- **To `// RESOLVED YYYY-MM-DD:`** — the code has been fixed. Re-run the gate; on `VERDICT_SOUND` the orchestrator removes the `[GAP:]` automatically. If the author adds an explanatory `// RESOLVED` comment describing the fix, that is preserved.
-- **To `// IUT_FINDING YYYY-MM-DD:`** — trace analysis concluded the issue is an IUT bug, not a spec bug. Author writes the `// IUT_FINDING` comment citing the pattern ID and removes the `[GAP:]`. The IUT finding is tracked in the run's `analysis_results.json` but the spec is considered correct at that location.
-
-**Promotion is always a user action.** Gates never promote markers automatically. A `[GAP:]` that has been sitting on a line for multiple cycles is information — the orchestrator reports it but does not decide its fate.
-
 ## Listing GAP markers
 
 Greppable across a workspace:
