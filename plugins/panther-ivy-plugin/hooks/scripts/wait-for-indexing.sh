@@ -5,11 +5,14 @@
 # registration completes. Surfaces status as additionalContext for Claude.
 set -euo pipefail
 
+START=$(date +%s)
+
 # Emit partial status if killed by hook timeout
 trap '_emit_timeout_msg' TERM INT
 _emit_timeout_msg() {
-    cat <<'EOFT'
-{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"[ivy-indexing] Readiness check timed out. MCP tools may still be starting — retry after 10 seconds if a tool call fails."}}
+    local elapsed=$(( $(date +%s) - START ))
+    cat <<EOFT
+{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"[ivy-indexing] Readiness check timed out. MCP tools may still be starting — retry after 10 seconds if a tool call fails."},"systemMessage":"[ivy-indexing] timed out after ${elapsed}s"}
 EOFT
     exit 0
 }
@@ -36,7 +39,8 @@ if [ -z "${IVY_MCP_LOG_PATH+x}" ] && [ ! -f "/tmp/ivy-mcp-latest.log" ]; then
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
     "additionalContext": "$SKIP_ESCAPED"
-  }
+  },
+  "systemMessage": "[ivy-indexing] skipped (MCP log unavailable)"
 }
 EOFSKIP
     exit 0
@@ -159,11 +163,19 @@ if [ -z "$ESCAPED" ]; then
     ESCAPED="[ivy-indexing] Status message could not be JSON-escaped"
 fi
 
+ELAPSED=$(( $(date +%s) - START ))
+if [ "$MCP_READY" = "1" ]; then
+    SYS_MSG="[ivy-indexing] indexed (${ELAPSED}s)"
+else
+    SYS_MSG="[ivy-indexing] timed out after ${ELAPSED}s"
+fi
+
 cat <<EOFJ
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
     "additionalContext": "$ESCAPED"
-  }
+  },
+  "systemMessage": "$SYS_MSG"
 }
 EOFJ

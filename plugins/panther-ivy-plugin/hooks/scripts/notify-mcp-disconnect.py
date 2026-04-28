@@ -8,6 +8,7 @@ run /mcp to reconnect.
 
 import os
 import sys
+from typing import Any
 
 sys.path.insert(0, os.path.dirname(__file__))
 from hook_utils import emit_hook_output, read_stdin
@@ -27,7 +28,25 @@ _DISCONNECT_SIGNALS = (
 _IVY_SERVER_NAMES = ("ivy-tools", "ivy_tools", "panther-ivy", "serena")
 
 
-def _is_ivy_mcp_disconnect(data: dict) -> bool:
+def _identify_server(data: dict[str, Any]) -> str:
+    """Return the first matching ivy server name found in the notification text.
+
+    Args:
+        data: Notification payload from stdin.
+
+    Returns:
+        The matched server name, or ``"ivy-mcp"`` as a generic fallback.
+    """
+    message = str(data.get("message", "")).lower()
+    title = str(data.get("title", "")).lower()
+    combined = f"{title} {message}"
+    for name in _IVY_SERVER_NAMES:
+        if name in combined:
+            return name
+    return "ivy-mcp"
+
+
+def _is_ivy_mcp_disconnect(data: dict[str, Any]) -> bool:
     """Check if this notification is about an Ivy MCP server disconnecting."""
     message = str(data.get("message", "")).lower()
     title = str(data.get("title", "")).lower()
@@ -51,6 +70,7 @@ def main():
 
     _statusline_update("mcp", {"status": "down", "last_error": "notification"})
 
+    server_name = _identify_server(data)
     emit_hook_output(
         "Notification",
         additional_context=(
@@ -58,6 +78,7 @@ def main():
             "Run /mcp to reconnect before calling ivy_verify, "
             "ivy_coverage, ivy_diagnostics, or other MCP-dependent tools."
         ),
+        system_message=f"[ivy-mcp] disconnected from {server_name}",
     )
 
 

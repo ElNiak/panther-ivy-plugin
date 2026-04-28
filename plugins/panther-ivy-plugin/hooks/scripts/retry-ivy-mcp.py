@@ -54,6 +54,7 @@ def main() -> None:
             "a single retry is safe. If the retry also fails, apply the manual "
             "recovery pattern from the mcp-tool-reliability rule."
         ),
+        system_message=f"[ivy-retry] retried {short_name} after failure",
     )
 
 

@@ -3,8 +3,8 @@
 
 Fires after Edit|Write on an Ivy test spec file (name contains `_test_`).
 When the active workflow is `build`, emits an additionalContext directive
-instructing Claude to dispatch G3 test-spec critics via the reflection-patterns
-skill.
+instructing Claude to dispatch G3 test-spec critics (your preloaded
+`verification-failures` skill provides the catalog).
 
 The hook itself does NOT spawn critics — it is a subprocess and cannot invoke
 the Agent tool. Claude reads the additionalContext on the next turn and runs
@@ -20,7 +20,7 @@ gaps relative to the target RFC's MUST requirements, generator over-
 constraint that silently skips test cases, and the structural pathologies
 in ``*_test_*.ivy`` that matter most when a test spec is being written
 for the first time. The filter line below (``if ctx is None or
-ctx.workflow != "workflow-build": return``) is intentional scoping.
+ctx.workflow != "build": return``) is intentional scoping.
 
 Verify's Phase 7 fix loop and review's Phase 3 inline fixes, under the
 cluster 1 design, either stay small or dispatch back to ``build`` via
@@ -28,7 +28,7 @@ cluster 1 design, either stay small or dispatch back to ``build`` via
 re-engagement path — users write in ``build``, G3 fires.
 
 Users who want an adversarial audit of a test spec outside ``build``
-emit ``append_pending_dispatch(target_workflow="workflow-build",
+emit ``append_pending_dispatch(target_workflow="build",
 phase_hint="layer-check")`` and let navigate re-engage ``build``.
 """
 
@@ -68,15 +68,14 @@ def _build_directive(*, file_path: str, protocol: str, methodology: str | None) 
         f"Artifact under audit: `{file_path}` (protocol: {protocol}).\n"
         f"{methodology_line}{nsct_note}\n\n"
         "To dispatch:\n"
-        "1. Load the `reflection-patterns` skill via the Skill tool.\n"
-        "2. Read the G3 verbatim critic template at `critic_prompts/g3_testspec.md` within that skill's references.\n"
-        "3. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
-        "4. Each critic must load the `ivy-error-patterns` skill to access the numbered catalog and apply only ID ranges #200-208 + #256-259 + #300-399.\n"
-        "5. Before spawning critics, gather inputs the template expects: the test file contents, the RFC requirement manifest (typically `{protocol}_requirements.yaml`), and the output of `ivy_coverage(mode=\"matrix\", test_file=<file_path>)`.\n"
-        "6. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
-        "7. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only).\n"
-        "8. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
-        "9. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the build-overlay format.\n\n"
+        "1. Read the G3 verbatim critic template at `critic_prompts/g3_testspec.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
+        "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #200-208 + #256-259 + #300-399.\n"
+        "4. Before spawning critics, gather inputs the template expects: the test file contents, the RFC requirement manifest (typically `{protocol}_requirements.yaml`), and the output of `ivy_coverage(mode=\"matrix\", test_file=<file_path>)`.\n"
+        "5. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
+        "6. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only).\n"
+        "7. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
+        "8. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the build-overlay format.\n\n"
         "A test spec that looks clean but silently fails to cover a MUST requirement or over-constrains the generator is the exact failure mode G3 exists to catch — read the coverage matrix carefully."
     )
 
@@ -98,7 +97,7 @@ def main() -> None:
     ctx = WorkflowContext.current()
     # G3 is build-only by design — see "Why build-only?" in the module
     # docstring for the rationale.
-    if ctx is None or ctx.workflow != "workflow-build":
+    if ctx is None or ctx.workflow != "build":
         return
 
     build_state = get_build_state_safe(ctx.protocol_dir) or {}
@@ -114,12 +113,13 @@ def main() -> None:
             "artifact": file_path,
             "methodology": methodology,
         },
-        workflow="workflow-build",
+        workflow="build",
         phase=ctx.phase,
     )
 
     emit_hook_output(
         "PostToolUse",
+        system_message=f"[G3 test-spec gate] dispatched on {os.path.basename(file_path)}",
         additional_context=_build_directive(
             file_path=file_path,
             protocol=protocol,

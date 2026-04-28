@@ -7,11 +7,14 @@ PID_DIR="/tmp/ivy-lsp-pids"
 [ -d "$PID_DIR" ] || { mkdir -p "$PID_DIR"; exit 0; }
 
 # Phase 1: Remove dead PID files (existing logic)
+CLEARED=0
 for pidfile in "$PID_DIR"/*.pid; do
     [ -f "$pidfile" ] || continue
     pid="$(cat "$pidfile" 2>/dev/null)" || continue
     if [ -n "$pid" ] && ! ps -p "$pid" > /dev/null 2>&1; then
-        rm -f "$pidfile" 2>/dev/null || true
+        if rm -f "$pidfile" 2>/dev/null; then
+            CLEARED=$((CLEARED + 1))
+        fi
     fi
 done
 
@@ -54,5 +57,18 @@ done
 
 # Clean indexing denial counter
 rm -f /tmp/ivy-lsp-pids/indexing-deny-count
+
+# Emit a top-level systemMessage only when we actually cleared dead PID files
+# in Phase 1. Orphan kills in Phase 2 are intentionally not counted.
+if [ "$CLEARED" -gt 0 ]; then
+    cat <<EOFCSP
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart"
+  },
+  "systemMessage": "[ivy-cleanup] ${CLEARED} stale PIDs cleared"
+}
+EOFCSP
+fi
 
 exit 0

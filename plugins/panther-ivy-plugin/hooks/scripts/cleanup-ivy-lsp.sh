@@ -25,4 +25,13 @@ done
 # Clean up health state file
 rm -f /tmp/ivy-mcp-health-state.json 2>/dev/null || true
 
+cat <<'EOFCIL'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionEnd"
+  },
+  "systemMessage": "[ivy-cleanup] LSP processes terminated"
+}
+EOFCIL
+
 exit 0

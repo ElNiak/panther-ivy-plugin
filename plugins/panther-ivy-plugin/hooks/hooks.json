@@ -2,31 +2,11 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-workspace-scope.py",
-            "timeout": 5
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-direct-ivy.sh",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "ivy_verify",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/tip-shown.py",
             "timeout": 5
           }
         ]
@@ -41,22 +21,17 @@
           },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/observability/check_lsp_log.py",
-            "timeout": 5
-          },
-          {
-            "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-indexing-ready.sh",
             "timeout": 5
           }
         ]
       },
       {
-        "matcher": "ivy_coverage",
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/tip-shown.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-workspace-scope.py",
             "timeout": 5
           }
         ]
@@ -74,16 +49,11 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Skill",
+        "matcher": "Write|Edit|Agent",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/track-workflow-skill.py",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/auto-load-skill-references.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-write-workflow-aware.py",
             "timeout": 5
           }
         ]
@@ -95,11 +65,6 @@
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-write-ivy-lint.sh",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-write-workflow-aware.py",
-            "timeout": 5
           },
           {
             "type": "command",
@@ -124,32 +89,17 @@
         ]
       },
       {
-        "matcher": "ivy_verify|ivy_coverage|ivy_extract_requirements|ivy_quality",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/interaction-checkpoint.py",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "ivy_verify|ivy_coverage|ivy_diagnostics|ivy_compile|ivy_quality",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render-tool-result.py",
-            "timeout": 10
-          }
-        ]
-      },
-      {
         "matcher": "ivy_verify|ivy_compile|ivy_diagnostics|ivy_coverage|ivy_iut_test|ivy_quality",
         "hooks": [
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record-workflow-error.py",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render-tool-result.py",
+            "timeout": 10
           }
         ]
       },
@@ -166,7 +116,6 @@
     ],
     "PostToolUseFailure": [
       {
-        "_ordering": "PostToolUseFailure runs in array order: (1) retry-ivy-mcp fires for read-only idempotent ivy_* tools and prompts the agent to retry once + journals the attempt; (2) observe.py records the failure event regardless of retry outcome.",
         "matcher": "mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_(status|diagnostics|model_info|coverage)",
         "hooks": [
           {
@@ -189,7 +138,6 @@
     ],
     "SessionStart": [
       {
-        "_ordering": "SessionStart runs in array order: (1) cleanup-stale-pids clears stale MCP/LSP PIDs before anything checks liveness (reads IVY_WORKSPACE_ROOT as fallback for detection, no hard dep on prior hooks); (2) cleanup-stale-workflow clears orphaned active-workflow flags (no env-var deps); (3) detect-ivy-workspace writes IVY_WORKSPACE_ROOT, IVY_LSP_LOG_PATH, IVY_MCP_LOG_PATH, IVY_SESSION_ID, IVY_MCP_PID_FILE, and conditionally IVY_ACTIVE_WORKSPACE to CLAUDE_ENV_FILE — these are consumed by wait-for-indexing and MCP servers; (4) observe.py records SessionStart (no env-var deps on prior hooks); (5) inject-using-plugin emits the using-panther-ivy-plugin priority overview (1% rule, iron-law primer, methodology routing) as additionalContext (no env-var deps; reads skills/meta-using-panther-ivy-plugin/SKILL.md); (6) wait-for-indexing reads IVY_MCP_LOG_PATH, IVY_LSP_LOG_PATH, IVY_WORKSPACE_ROOT, and IVY_ACTIVE_WORKSPACE exported by step 3 — must run last. Reordering steps 3 and 6 breaks env-var propagation: wait-for-indexing falls back to /tmp defaults and loses workspace context.",
         "hooks": [
           {
             "type": "command",
@@ -220,15 +168,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/observability/observe.py --event SessionStart",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/inject-using-plugin.sh",
             "timeout": 5
           }
@@ -242,11 +181,19 @@
             "timeout": 30
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/observability/observe.py --event SessionStart",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "SessionEnd": [
       {
-        "_ordering": "SessionEnd runs in array order: (1) cleanup-ivy-lsp terminates LSP/MCP processes (must run before any hook that would try to call them); (2) observe.py flushes the SessionEnd JSONL event last, so the log captures the teardown.",
         "hooks": [
           {
             "type": "command",
@@ -267,7 +214,6 @@
     ],
     "Stop": [
       {
-        "_ordering": "Stop runs in array order: (1) record-session-end writes end-of-turn workflow-journal state; (2) render-summary reads the journal to produce the recap using styles/summaries/; (3) observe.py records the Stop event.",
         "hooks": [
           {
             "type": "command",
@@ -333,25 +279,6 @@
     ],
     "UserPromptSubmit": [
       {
-        "_ordering": "UserPromptSubmit runs in array order: (1) compose-style injects the active output-style overlay BEFORE routing so the routed workflow inherits the right style; (2) route-user-prompt consults routing-rules.json and activates the matching workflow; (3) observe.py records the prompt event.",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/compose-style.py",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/route-user-prompt.py",
-            "timeout": 5
-          }
-        ]
-      },
-      {
         "hooks": [
           {
             "type": "command",
@@ -363,7 +290,6 @@
     ],
     "Notification": [
       {
-        "_ordering": "Notification runs in array order: (1) notify-mcp-disconnect handles MCP-disconnect notifications first so the user sees them promptly; (2) observe.py records the Notification event for the session log.",
         "matcher": "",
         "hooks": [
           {

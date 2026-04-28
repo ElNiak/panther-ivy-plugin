@@ -3,7 +3,8 @@
 
 Fires after Edit|Write on a .ivy file (excluding *_test_*.ivy). When the
 active workflow is `build`, emits an additionalContext directive instructing
-Claude to dispatch G2 modeling critics via the reflection-patterns skill.
+Claude to dispatch G2 modeling critics (your preloaded `verification-failures`
+skill provides the catalog).
 
 The hook itself does NOT spawn critics — it is a subprocess and cannot invoke
 the Agent tool. Claude reads the additionalContext on the next turn and runs
@@ -37,7 +38,7 @@ rethink. Either way, any .ivy write that warrants G2 re-runs G2 naturally
 by re-entering ``build``.
 
 Users who want an adversarial audit outside build emit
-``append_pending_dispatch(target_workflow="workflow-build",
+``append_pending_dispatch(target_workflow="build",
 phase_hint="layer-check")`` from the current workflow and let navigate
 re-engage ``build``.
 """
@@ -100,14 +101,13 @@ def _build_directive(
         f"{layer_line}\n"
         f"{methodology_line}{nsct_note}\n\n"
         "To dispatch:\n"
-        "1. Load the `reflection-patterns` skill via the Skill tool.\n"
-        "2. Read the G2 verbatim critic template at `critic_prompts/g2_modeling.md` within that skill's references.\n"
-        "3. Apply the Adversarial Quality Gates discipline-layer rules from `reflection-patterns`: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
-        "4. Each critic must load the `ivy-error-patterns` skill to access the numbered catalog and apply only ID ranges #200-249 + #250-299 (+ #260-289 if NSCT).\n"
-        "5. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
-        "6. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only — never let a critic edit the file).\n"
-        "7. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
-        "8. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the build-overlay format.\n\n"
+        "1. Read the G2 verbatim critic template at `critic_prompts/g2_modeling.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
+        "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #200-249 + #250-299 (+ #260-289 if NSCT).\n"
+        "4. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
+        "5. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only — never let a critic edit the file).\n"
+        "6. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
+        "7. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the build-overlay format.\n\n"
         "Do not proceed to the next layer until each `[GAP:]` is either resolved or deliberately promoted to `// DEFERRED YYYY-MM-DD: …`."
     )
 
@@ -129,7 +129,7 @@ def main() -> None:
     ctx = WorkflowContext.current()
     # G2 is build-only by design — see "Why build-only?" in the module
     # docstring for the rationale.
-    if ctx is None or ctx.workflow != "workflow-build":
+    if ctx is None or ctx.workflow != "build":
         return
 
     build_state = get_build_state_safe(ctx.protocol_dir) or {}
@@ -147,12 +147,13 @@ def main() -> None:
             "layer": layer_name,
             "methodology": methodology,
         },
-        workflow="workflow-build",
+        workflow="build",
         phase=ctx.phase,
     )
 
     emit_hook_output(
         "PostToolUse",
+        system_message=f"[G2 modeling gate] dispatched on {os.path.basename(file_path)}",
         additional_context=_build_directive(
             file_path=file_path,
             protocol=protocol,

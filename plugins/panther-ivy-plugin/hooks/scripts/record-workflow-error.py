@@ -60,15 +60,14 @@ def _build_g4_directive(tool_result: str, protocol: str, methodology: str | None
         f"Protocol: {protocol}\n"
         f"{methodology_line}\n\n"
         "To dispatch:\n"
-        "1. Load the `reflection-patterns` skill via the Skill tool.\n"
-        "2. Read the G4 verbatim critic template at `critic_prompts/g4_verification.md` within that skill's references.\n"
-        "3. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
-        "4. Each critic must load the `ivy-error-patterns` skill to access the numbered catalog and apply only ID ranges #200-249 + #250-299 + #400-499.\n"
-        "5. Critics treat `status: OK` as a hypothesis to falsify, not a conclusion. Check for #401 (unsound `assume`), #402 (trusted-isolate NativeAction leak), #403 (error whitelisted), #404 (solver wall claimed sound — duration_s near timeout), #405 (pre-fix research skipped), #406 (missing four-layer diagnostic cascade).\n"
-        "6. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
-        "7. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only).\n"
-        "8. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
-        "9. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the verify-overlay format.\n\n"
+        "1. Read the G4 verbatim critic template at `critic_prompts/g4_verification.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
+        "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #200-249 + #250-299 + #400-499.\n"
+        "4. Critics treat `status: OK` as a hypothesis to falsify, not a conclusion. Check for #401 (unsound `assume`), #402 (trusted-isolate NativeAction leak), #403 (error whitelisted), #404 (solver wall claimed sound — duration_s near timeout), #405 (pre-fix research skipped), #406 (missing four-layer diagnostic cascade).\n"
+        "5. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
+        "6. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only).\n"
+        "7. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
+        "8. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the verify-overlay format.\n\n"
         "A false SOUND here is the exact failure mode this gate exists to prevent — when any catalog entry fires, lean against SOUND."
     )
 
@@ -122,8 +121,10 @@ def main() -> None:
             phase=ctx.phase,
         )
 
+        status_hint = "OK" if '"status":"OK"' in tool_result.replace(" ", "") else "FAIL"
         emit_hook_output(
             "PostToolUse",
+            system_message=f"[G4 verification gate] dispatched after ivy_verify ({status_hint}) on protocol={protocol}",
             additional_context=_build_g4_directive(tool_result, protocol, methodology),
         )
 

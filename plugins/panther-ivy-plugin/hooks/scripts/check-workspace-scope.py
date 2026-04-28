@@ -72,11 +72,14 @@ def main():
 
     emit_hook_output(
         "PreToolUse",
+        system_message=f"[ivy-workspace-scope] BLOCKED: {os.path.basename(file_path)}",
         deny_reason=(
             f"BLOCKED: '{os.path.basename(file_path)}' is in layer '{file_layer}' "
             f"(workspace group: {file_group or 'unknown'}).\n"
             f"Active workspace: '{active_group}' (set by: {set_by}).\n"
-            f"To allow: /set-workspace {file_group or file_layer} | /clear-workspace"
+            f"To allow, invoke the ivy_workspace MCP tool: "
+            f"ivy_workspace(action='set', target='{file_group or file_layer}') "
+            f"or ivy_workspace(action='clear')."
         ),
     )
 

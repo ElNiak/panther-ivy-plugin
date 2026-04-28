@@ -2,9 +2,9 @@
 """PostToolUse hook: trigger G5 trace-analysis gate on ivy_iut_test results.
 
 Fires after the `ivy_iut_test` MCP tool returns. Emits an additionalContext
-directive instructing Claude to dispatch G5 trace-analysis critics via the
-reflection-patterns skill. Extracts artifact paths from the tool result so the
-directive names them exactly.
+directive instructing Claude to dispatch G5 trace-analysis critics (your
+preloaded `verification-failures` skill provides the catalog). Extracts
+artifact paths from the tool result so the directive names them exactly.
 
 The hook itself does NOT spawn critics — it is a subprocess and cannot invoke
 the Agent tool. Critics must NOT invoke `ivy_iut_test` themselves; they analyze
@@ -69,15 +69,14 @@ def _build_directive(*, artifacts: "dict[str, Any]", methodology: str | None) ->
         f"- `ivy_trace_path`: {ivy_trace_path}\n"
         f"{methodology_line}{nsct_note}\n\n"
         "To dispatch:\n"
-        "1. Load the `reflection-patterns` skill via the Skill tool.\n"
-        "2. Read the G5 verbatim critic template at `critic_prompts/g5_trace.md` within that skill's references.\n"
-        "3. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
-        "4. Each critic must load the `ivy-error-patterns` skill to access the numbered catalog and apply only ID ranges #100-107 + #500-559 (+ #560-589 if NSCT).\n"
-        "5. CRITICAL constraint: critics must read the run output directory in the mandatory order (analysis_results.json → compile log if compilation suspect → ivy_tester.log → IUT log → pcaps via tshark). They must NOT invoke `ivy_iut_test` themselves — spawning a new run is forbidden.\n"
-        "6. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
-        "7. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited spec file:line locations (not at artifact paths — the spec is the mutable target) per `.claude/rules/gap-markers.md`.\n"
-        "8. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
-        "9. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the verify-overlay format.\n\n"
+        "1. Read the G5 verbatim critic template at `critic_prompts/g5_trace.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
+        "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #100-107 + #500-559 (+ #560-589 if NSCT).\n"
+        "4. CRITICAL constraint: critics must read the run output directory in the mandatory order (analysis_results.json → compile log if compilation suspect → ivy_tester.log → IUT log → pcaps via tshark). They must NOT invoke `ivy_iut_test` themselves — spawning a new run is forbidden.\n"
+        "5. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
+        "6. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited spec file:line locations (not at artifact paths — the spec is the mutable target) per `.claude/rules/gap-markers.md`.\n"
+        "7. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
+        "8. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the verify-overlay format.\n\n"
         "The hardest G5 call is distinguishing a real IUT bug from a model bug misattributed to the IUT. When in doubt about attribution, critics return UNSURE rather than bless an incorrect story."
     )
 
@@ -131,6 +130,7 @@ def main() -> None:
 
     emit_hook_output(
         "PostToolUse",
+        system_message=f"[G5 trace-analysis gate] dispatched on run_id={artifacts.get('run_id', '<unknown>')}",
         additional_context=_build_directive(
             artifacts=artifacts,
             methodology=methodology,

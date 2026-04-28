@@ -45,11 +45,17 @@ def main() -> None:
             phase=active.get("phase"),
         )
         clear_active_workflow(protocol_dir)
+        workflow_name = active.get("workflow", "?")
+        phase_name = active.get("phase", "?")
         emit_hook_output(
             "SessionStart",
             additional_context=(
-                f"Cleared stale workflow '{active.get('workflow', '?')}' "
-                f"(phase: {active.get('phase', '?')}) from a previous session."
+                f"Cleared stale workflow '{workflow_name}' "
+                f"(phase: {phase_name}) from a previous session."
+            ),
+            system_message=(
+                f"[ivy-cleanup] cleared stale workflow '{workflow_name}' "
+                f"(phase: {phase_name})"
             ),
         )
     else:

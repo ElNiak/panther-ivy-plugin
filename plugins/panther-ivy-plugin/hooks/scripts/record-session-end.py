@@ -14,7 +14,7 @@ sys.path.insert(
         os.environ.get("CLAUDE_PLUGIN_ROOT", "."), "hooks", "scripts"
     ),
 )
-from hook_utils import read_stdin
+from hook_utils import emit_hook_output, read_stdin
 from workflow_state import (
     WorkflowContext,
     append_journal_event,
@@ -29,11 +29,12 @@ def main() -> None:
     if ctx is None:
         return
 
+    clean = True
     append_journal_event(
         ctx.protocol_dir,
         event_type="session_end",
         payload={
-            "clean": True,
+            "clean": clean,
             "phase_at_exit": ctx.phase or "unknown",
         },
         workflow=ctx.workflow,
@@ -41,6 +42,11 @@ def main() -> None:
     )
 
     rotate_journal(ctx.protocol_dir)
+
+    emit_hook_output(
+        "Stop",
+        system_message=f"[ivy-session] recorded clean={str(clean).lower()}",
+    )
 
 
 if __name__ == "__main__":

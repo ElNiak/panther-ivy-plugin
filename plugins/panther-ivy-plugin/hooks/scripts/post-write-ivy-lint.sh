@@ -60,8 +60,11 @@ if [ -n "$ERRORS" ]; then
   # Escape for JSON safety using proper JSON escaping
   REL_PATH=$(basename "$FILE_PATH" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])")
   ERRORS_ESCAPED=$(printf '%s' "$ERRORS" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read())[1:-1])")
-  # Return additionalContext so Claude sees the issues (non-blocking)
-  printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"[IVY-LINT] Structural issues in %s:\\n%sRun ivy_diagnostics(mode=\\\"structural\\\") MCP tool for full diagnostics."}}' "$REL_PATH" "$ERRORS_ESCAPED"
+  # Count bullet lines (each finding starts with "- ")
+  N_FINDINGS=$(printf '%s' "$ERRORS" | grep -c '^- ' || true)
+  # Return additionalContext so Claude sees the issues (non-blocking).
+  # Top-level systemMessage gives the user a one-line summary alongside.
+  printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"[IVY-LINT] Structural issues in %s:\\n%sRun ivy_diagnostics(mode=\\\"structural\\\") MCP tool for full diagnostics."},"systemMessage":"[ivy-lint] %d warnings in %s"}' "$REL_PATH" "$ERRORS_ESCAPED" "$N_FINDINGS" "$REL_PATH"
 fi
 
 exit 0

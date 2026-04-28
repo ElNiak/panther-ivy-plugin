@@ -85,7 +85,7 @@ ENDJSON
             fi
             _update_statusline lsp '{"status":"indexing"}'
             cat <<ENDJSON
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"[ivy-indexing] LSP is still indexing the workspace (${AGE}s elapsed, attempt ${DENY_COUNT}/6). Wait 10 seconds and retry.","additionalContext":"The LSP workspace index is not yet complete. Retry this tool call after a short wait."}}
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"[ivy-indexing] LSP is still indexing the workspace (${AGE}s elapsed, attempt ${DENY_COUNT}/6). Wait 10 seconds and retry.","additionalContext":"The LSP workspace index is not yet complete. Retry this tool call after a short wait."},"systemMessage":"[ivy-indexing] not ready (attempt ${DENY_COUNT}/6)"}
 ENDJSON
             exit 0
         fi
