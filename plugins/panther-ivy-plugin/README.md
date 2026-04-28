@@ -4,7 +4,7 @@
 
 Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation, analysis), specialist agents, gate-critic agents, and skills.
 
-## Layout (post-Phase-E)
+## Layout (post-F.1, v0.11.0)
 
 | Component | Count | Location |
 |---|---|---|
