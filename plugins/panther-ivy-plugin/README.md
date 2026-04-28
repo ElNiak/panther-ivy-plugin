@@ -1,18 +1,32 @@
 # panther-ivy-plugin — Ivy Formal Protocol Testing
 
-> **Developer reference.** This README is for contributors reading the source; it is not auto-loaded by Claude Code. Runtime content lives in `skills/*/SKILL.md`, `.claude-plugin/plugin.json`, and `.claude/rules/*.md` — all auto-discovered. The agent-facing "Specification Engineer" framing lives canonically in `skills/workflow-navigate/SKILL.md`.
+> **Developer reference.** This README is for contributors reading the source; it is not auto-loaded by Claude Code. Runtime content lives in `skills/*/SKILL.md`, `.claude-plugin/plugin.json`, and `.claude/rules/*.md` — all auto-discovered. The agent-facing "Specification Engineer" framing lives canonically in `skills/ivy/SKILL.md` (the orchestrator skill).
 
-Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation, analysis), agents, and skills.
+Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation, analysis), specialist agents, gate-critic agents, and skills.
+
+## Layout (post-Phase-E)
+
+| Component | Count | Location |
+|---|---|---|
+| Orchestrator skill (single entry point) | 1 | `skills/ivy/` |
+| Workflow ops-skills (preloaded by specialist agents) | 5 | `skills/{triage,build,verify,review,meta-self-mod}-ops/` |
+| Cross-cutting knowledge skills (thin SKILL.md + on-demand `references/`) | 7 | `skills/{ivy-toolkit,ivy-syntax,methodology,verification-failures,specification-patterns,propagation-patterns,apt-attack-patterns}/` |
+| Workflow specialist agents | 5 | `agents/ivy-{triage,builder,verifier,reviewer,meta}-agent.md` |
+| Gate-critic agents | 3 | `agents/g-{plan,fidelity,knowledge}-critic.md` |
+| Hook scripts | 28 | `hooks/scripts/` |
+| Slash commands | 2 | `commands/{nct-iut-test,nct-health}.md` |
+| Output style | 1 | `output-styles/ivy-guided.md` |
+| `.claude/rules/` files | 13 | `.claude/rules/*.md` |
 
 ## Workflow Routing
 
-Runtime routing is driven by `routing-rules.json`, which is authoritative: it defines the keyword, regex, file-trigger, and priority entries the `route-user-prompt.py` hook consults on every `UserPromptSubmit`. The five user-facing workflows (`workflow-verify`, `workflow-build`, `workflow-review`, `workflow-triage`, `workflow-navigate`) and one learning-injection bucket are declared there; refer to that file directly for the matching vocabulary, do not maintain a parallel table here.
+Runtime routing lives in the orchestrator skill at `skills/ivy/SKILL.md`. The orchestrator is the single entry point: every panther-ivy-plugin session loads it first, and it routes to one of the five specialist agents (verifier, builder, reviewer, triage, meta) or reads its own `references/` for knowledge questions. There is no `routing-rules.json` and no `route-user-prompt.py` hook anymore; activation is driven by the orchestrator's description matching the user's request.
 
 ### Routing Rules
 1. If a workflow is already active (check `<protocol-directory>/.panther-ivy/active-workflow`), stay in it unless the user explicitly asks to switch.
 2. Direct tool requests ("call ivy_verify on X") use shortcut commands, not workflows.
 3. Learning questions ("how does NCT work?") are answered using loaded knowledge skills, no workflow activation.
-4. Every workflow returns to navigate on completion.
+4. Every workflow returns to the orchestrator on completion.
 
 ## State Management
 
@@ -20,14 +34,14 @@ Read `.panther-ivy/active-workflow` on every turn to know your current workflow 
 
 **Active-workflow flag** (`<protocol-dir>/.panther-ivy/active-workflow`):
 ```yaml
-workflow: workflow-verify
+workflow: verify
 phase: compile
-started: "2026-04-07T14:30:00Z"
+started: "2026-04-28T14:30:00Z"
 ```
 
-**Build-state file** (`<protocol-dir>/.panther-ivy/build-state.yaml`): Multi-session build progress. Written by the build workflow at Phase 2. Read by navigate for warm session resume.
+**Build-state file** (`<protocol-dir>/.panther-ivy/build-state.yaml`): Multi-session build progress. Written by the builder agent at Phase 2. Read by the orchestrator for warm session resume.
 
-**Workflow composition:** Workflows compose via `pending_dispatch` journal events, not via a caller chain. When a workflow needs another workflow to run next (e.g., workflow-build → workflow-verify after Phase 4), it appends `pending_dispatch(target_workflow=<next>, reason=<why>)` and clears its own active-workflow flag. Navigate's Phase 1 Step 2c consumes the event on the next turn (or same-turn if the harness routes in-line), writes a paired `workflow_resumed` marker for idempotency, and dispatches the target.
+**Workflow composition:** Workflows compose via `pending_dispatch` journal events on the orchestrator (`skills/ivy/SKILL.md`), not via a caller chain. When a workflow needs another workflow to run next (e.g., build → verify after Phase 4), it appends `pending_dispatch(target_workflow=<next>, reason=<why>)` and clears its own active-workflow flag. The orchestrator's Phase 1 Step 2c consumes the event on the next turn (or same-turn if the harness routes in-line), writes a paired `workflow_resumed` marker for idempotency, and dispatches the target.
 
 ## Tool Rules — CRITICAL
 
@@ -60,40 +74,42 @@ For parameters, timeouts, error handling, and rendering details, see the **ivy-t
 
 ### Available Workflows
 
-**User-facing entry points** (activated by routing or natural language):
-`workflow-navigate`, `workflow-verify`, `workflow-build`, `workflow-review`, `workflow-triage`
+The orchestrator (`skills/ivy/SKILL.md`) is the single user-facing entry point. It routes natural-language requests to one of five specialist agents, each preloaded with its matching ops-skill:
+
+| Specialist agent | Ops-skill | Purpose |
+|---|---|---|
+| `ivy-verifier-agent` | `verify-ops` | Run `ivy_verify` / `ivy_compile`, diagnose counterexamples |
+| `ivy-builder-agent` | `build-ops` | Construct or extend protocol models (NCT/NACT/NSCT) |
+| `ivy-reviewer-agent` | `review-ops` | RFC coverage audit, quality scoring, traceability, IUT trace analysis |
+| `ivy-triage-agent` | `triage-ops` | MCP/LSP/Serena health repair, 9-step diagnostic runbook |
+| `ivy-meta-agent` | `meta-self-mod-ops` | Plugin source modifications (skills, agents, hooks, rules, commands) |
 
 ### Shortcut Commands
 
-Direct tool access (bypass workflows):
+Direct tool access (bypass orchestrator):
 
-- `/nct-check <file.ivy>` — runs `ivy_verify` on the given file
-- `/nct-compile <file.ivy>` — runs `ivy_compile` to produce a test binary
-- `/nct-model-info <file.ivy>` — runs `ivy_model_info` (types, relations, actions)
 - `/nct-iut-test <protocol> <test> <iut>` — runs an IUT test via `panther run`
 - `/nct-health` — 9-step MCP/LSP diagnostic runbook
-- `/nct-observability` — query JSONL session logs
 
 ### Internal Components
 
-**Agents** (dispatched by workflows, not user-facing):
-`spec-analyst`, `model-reviewer`, `traceability-agent`
+**Specialist agents** (dispatched by the orchestrator) — see the Available Workflows table above.
+
+**Gate-critic agents** (dispatched at adversarial quality gates, not user-facing):
+`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`.
 
 **Knowledge skills** (loaded by workflows, not user-facing):
-`verification-failures`, `specification-patterns`, `propagation-patterns`, `apt-attack-patterns`, `ivy-syntax`, `ivy-toolkit`, `methodology`, `cross-cutting-reflection-patterns`
+`verification-failures`, `specification-patterns`, `propagation-patterns`, `apt-attack-patterns`, `ivy-syntax`, `ivy-toolkit`, `methodology`.
 
-**User-invocable skills** (triggered by user intent or natural-language phrases, not workflow dispatch):
-`cross-cutting-knowledge-capture` — review session learnings and audit plugin skills/references; also loaded by workflow knowledge gates and `/nct-learn` (`user-invocable: true`)
+Knowledge capture (review session learnings, audit plugin skills/references) is now handled by the orchestrator's G6 Knowledge Gate (see `skills/ivy/SKILL.md`), which dispatches `g-knowledge-critic`. There is no separate user-invocable knowledge-capture skill.
 
 ## Workspace Awareness
 
 The plugin supports active workspace scoping to prevent cross-protocol collisions in Ivy formal models.
 
-### Commands
-- `/set-workspace <protocol>` — activate workspace (e.g., `/set-workspace quic`, `/set-workspace apt`)
-- `/set-workspace <protocol> <roles>` — activate with role filter (e.g., `/set-workspace quic client+server`)
-- `/clear-workspace` — remove workspace restrictions
-- `/set-workspace` (no args) — show current workspace and available groups
+### Management
+
+Workspace management is exclusively via the `ivy_workspace` MCP tool (the table below documents its actions). The previous `/set-workspace` and `/clear-workspace` slash commands were removed in Phase E of the orchestrator refactor; use the MCP tool instead.
 
 ### How It Works
 - **Edit isolation**: When a workspace is active, writes to `.ivy` files outside the active protocol are **blocked** by a PreToolUse hook
@@ -107,7 +123,7 @@ The plugin supports active workspace scoping to prevent cross-protocol collision
 - Use `test_file` parameter for NCT-aligned coverage scoping
 - Reads across protocols are always allowed (only writes are constrained)
 - Stdlib files (`ivy/include/1.7/`) are always accessible regardless of workspace
-- Setting `/clear-workspace` removes all restrictions
+- Calling `ivy_workspace(action='clear')` removes all restrictions
 
 ### Available Workspaces
 `quic`, `apt`, `apt_quic`, `minip`, `bgp`, `coap`, `scaffolds`
@@ -123,28 +139,27 @@ The plugin supports active workspace scoping to prevent cross-protocol collision
 
 ## Style System
 
-Output formatting is a 3-layer stack. Each layer overrides the one below it:
+Output formatting is a 2-layer stack:
 
-1. **Shared rules** (`.claude/rules/ivy-formatting.md`) -- citation format, error format,
+1. **Shared rules** (`.claude/rules/ivy-formatting.md`) — citation format, error format,
    self-review. Always loaded. Also loaded by subagents via CLAUDE.md inheritance.
-2. **Output style** (`output-styles/`) -- dimension defaults (verbosity, tone, structure).
+2. **Output style** (`output-styles/ivy-guided.md`) — dimension defaults (verbosity, tone, structure).
    User-selected at session level. NOT inherited by subagents.
-3. **Workflow overlay** (`styles/overlays/`) -- per-workflow and per-phase dimension
-   overrides. Injected by `compose-style.py` hook on each user prompt.
 
 Tool result formatting is handled programmatically by `render-tool-result.py`
-(PostToolUse hook). Do not duplicate tool formatting rules in output styles or overlays.
+(PostToolUse hook). Do not duplicate tool formatting rules in the output style.
 
 Two subdirectories of `styles/` carry per-artifact templates consumed by the hooks:
 
-- `styles/tool-renderers/` — one file per rendered MCP tool (`ivy_verify.md`, `ivy_coverage.md`, `ivy_diagnostics.md`, `ivy_compile.md`, `ivy_quality.md`, `ivy_verdict.md`). Each file specifies the output phrasing per workflow / phase; `render-tool-result.py` selects the right section at runtime.
-- `styles/summaries/` — one file per workflow (`workflow-build.md`, `workflow-navigate.md`, `workflow-review.md`, `workflow-triage.md`, `workflow-verify.md`). These are summary templates loaded by `render-summary.py` (Stop hook) to produce the end-of-session recap.
+- `styles/tool-renderers/` — one file per rendered MCP tool (e.g. `ivy_verify.md`, `ivy_coverage.md`). Each file specifies the output phrasing per workflow / phase; `render-tool-result.py` selects the right section at runtime.
+- `styles/summaries/` — one summary template per workflow, loaded by `render-summary.py` (Stop hook) to produce the end-of-session recap.
 
 Neither directory is user-facing; changes there propagate through hooks only.
 
+A third subdirectory, `styles/overlays/`, contains workflow-overlay templates referenced by `hooks/scripts/style_utils.py` but no longer wired into any kept hook (Phase D archived `compose-style.py`, the prior consumer). It is legacy infrastructure pending cleanup; runtime behaviour is unaffected.
+
 ### Style Precedence Rules
 
-- Workflow overlays override output style dimensions for the active phase.
 - Skills that define fixed output formats (the `verification-failures`
   resolution-comment prefixes and counterexample trace format, finding IDs)
   override the output style's structure dimension for those specific artifacts.
@@ -207,7 +222,7 @@ These are written to `$CLAUDE_ENV_FILE` by `detect-ivy-workspace.sh` so downstre
 | `IVY_LSP_LOG_PATH` | Path to the latest LSP log symlink |
 | `IVY_MCP_LOG_PATH` | Path to the latest MCP log symlink |
 | `IVY_MCP_PID_FILE` | PID file path for the MCP server |
-| `IVY_ACTIVE_WORKSPACE` | Workspace group name when one is explicitly set via `/set-workspace` |
+| `IVY_ACTIVE_WORKSPACE` | Workspace group name when one is explicitly set via `ivy_workspace(action='set')` |
 
 ### Optional overrides (user environment)
 
@@ -230,7 +245,8 @@ Set these in your shell environment before starting Claude Code if you need to o
 
 ## Quick Reference
 
-**Workflows**: navigate, verify, build, review, triage
-**Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-iut-test, /nct-health, /nct-observability, /nct-learn
-**Internal agents**: spec-analyst, model-reviewer, traceability-agent
-**Internal knowledge**: verification-failures, specification-patterns, propagation-patterns, apt-attack-patterns, ivy-syntax, ivy-toolkit, methodology, reflection-patterns, knowledge-capture
+**Orchestrator**: `skills/ivy/SKILL.md` — single entry point; routes to specialist agents.
+**Specialist agents**: ivy-verifier-agent, ivy-builder-agent, ivy-reviewer-agent, ivy-triage-agent, ivy-meta-agent.
+**Gate-critic agents**: g-plan-critic, g-fidelity-critic, g-knowledge-critic.
+**Shortcuts**: /nct-iut-test, /nct-health.
+**Cross-cutting knowledge skills**: verification-failures, specification-patterns, propagation-patterns, apt-attack-patterns, ivy-syntax, ivy-toolkit, methodology.

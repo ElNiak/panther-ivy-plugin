@@ -21,6 +21,37 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - A stored `active-workflow` YAML file from a prior session that still contains `invocation_depth` and `caller` is tolerated: the unknown keys are dropped with a one-shot WARN on `sys.stderr`. No migration script is required.
 - `pending_dispatch` TTL: pending-dispatch entries older than the 2-hour staleness threshold (the same threshold as `active-workflow`) are ignored by navigate's Phase 1 Step 2c. A stalled chain left over from a prior session is not resumed silently.
 
+## [0.11.0] — 2026-04-28 — Orchestrator refactor (approach E)
+
+### Added
+- `skills/ivy/` orchestrator skill (single entry point).
+- 5 workflow ops-skills (`triage-ops`, `build-ops`, `verify-ops`, `review-ops`, `meta-self-mod-ops`).
+- 5 workflow specialist agents (`ivy-{triage,builder,verifier,reviewer,meta}-agent`).
+- 3 gate-critic agents (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`).
+- `scripts/migrate-active-workflow.sh` one-shot YAML schema migration.
+- `systemMessage` output key on every kept hook with non-trivial output (Phase D table).
+
+### Changed
+- 7 `knowledge-*` skills renamed to bare names (`ivy-toolkit`, `ivy-syntax`, etc.) and restructured to thin SKILL.md (≤80 LOC) + on-demand references/.
+- Hook footprint slimmed from 34 to 28 scripts.
+- Rewrote directives in 4 gate-firing scripts (dropped reflection-patterns reference, renamed workflow filter).
+- `check-workspace-scope.py` deny message uses `ivy_workspace` MCP tool.
+- `inject-using-plugin.sh` primer points at `panther-ivy-plugin:ivy` orchestrator.
+- 5 of 13 `.claude/rules/` rewritten (iron-laws, gap-markers, output-style, postuse-hook-ordering, skill-conventions).
+
+### Removed
+- `routing-rules.json` (programmatic dispatch deprecated; orchestrator description owns activation).
+- 6 hook scripts (`compose-style`, `route-user-prompt`, `track-workflow-skill`, `auto-load-skill-references`, `interaction-checkpoint`, `tip-shown`) → `.backup/2026-04-28/`.
+- 5 commands (`nct-check`, `nct-compile`, `nct-learn`, `nct-model-info`, `nct-observability`).
+- 3 output styles (`ivy-default`, `ivy-audit`, output-styles/README.md).
+- 11 deprecated skills (`workflow-*`, `cross-cutting-*`, `meta-using-panther-ivy-plugin`, `meta-plugin-self-mod`) → `.backup/2026-04-28/skills/`.
+- 4 deprecated specialist agents (`spec-analyst`, `model-reviewer`, `traceability-agent`, `plugin-conventions-reviewer`) → `.backup/2026-04-28/agents/`.
+
+### Migration notes
+- Run `scripts/migrate-active-workflow.sh <protocol-testing-root>` once to rewrite `.panther-ivy/active-workflow` files from `workflow: workflow-verify` schema to `workflow: verify`.
+- Workspace scope via `ivy_workspace(action='set'|'clear', target='<name>')` MCP tool, not slash commands. Workflow tracking via `ivy_workflow_state(action='set', workflow='<name>', phase='<phase>', protocol='<name>')` MCP tool (separate from `ivy_workspace`).
+- Stale `panther-ivy-plugin 2/` duplicate tree left untouched per the standing memory rule on backup retention.
+
 ## [0.10.0] — 2026-04-21
 
 ### Removed

@@ -1,7 +1,7 @@
 {
   "name": "panther-ivy-plugin",
   "description": "Ivy formal protocol tester. LSP + MCP servers, NCT/NACT/NSCT methodology, and 14-layer templates for writing, compiling, verifying, and running protocol specs against real implementations.",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "author": {
     "name": "ElNiak",
     "email": "elniak@github.com"
