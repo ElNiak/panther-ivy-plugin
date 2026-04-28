@@ -8,6 +8,7 @@ workflow context and multi-session build progress.
 import json
 import os
 import sys
+from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -259,36 +260,24 @@ def clear_active_workflow(protocol_dir: str) -> None:
         pass
 
 
-def _known_workflows_from_routing_rules() -> set[str]:
-    """Return the set of known workflow names from routing-rules.json.
-
-    Reads the ``workflows`` top-level key from the plugin's routing-rules.json
-    at call time. If the file is missing or unreadable, returns an empty set —
-    callers of :func:`validate_active_workflow` should treat that as a reason
-    to pass an explicit ``known_workflows`` argument rather than accept the
-    empty default, since an empty set would cause every workflow to be flagged
-    as unknown.
-    """
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if not plugin_root:
-        return set()
-    path = Path(plugin_root) / "routing-rules.json"
-    if not path.exists():
-        return set()
-    try:
-        with open(path) as f:
-            data = json.load(f)
-    except (OSError, json.JSONDecodeError):
-        return set()
-    workflows = data.get("workflows")
-    if not isinstance(workflows, dict):
-        return set()
-    return {name for name in workflows if isinstance(name, str)}
+# Post-Phase-C canonical workflow names. routing-rules.json was archived in
+# Phase D commit 01c9adf; the orchestrator at skills/ivy/SKILL.md and the
+# specialised ops-skills (skills/{build,verify,review,triage,meta}-ops plus the
+# navigate flow inside the orchestrator) are the authoritative writers, all
+# using the unprefixed names below.
+_KNOWN_WORKFLOWS: frozenset[str] = frozenset({
+    "navigate",
+    "build",
+    "verify",
+    "review",
+    "triage",
+    "meta",
+})
 
 
 def validate_active_workflow(
     protocol_dir: str,
-    known_workflows: set[str] | None = None,
+    known_workflows: AbstractSet[str] | None = None,
 ) -> tuple[bool, str | None]:
     """Validate the ``active-workflow`` YAML file against the 3-field schema.
 
@@ -312,12 +301,9 @@ def validate_active_workflow(
     Args:
         protocol_dir: Path to the protocol directory.
         known_workflows: Optional set of accepted workflow names. When None,
-            defaults to the ``workflows`` keys of the plugin's
-            ``routing-rules.json`` (read at call time so the validator stays
-            current as new workflows land). If the default resolves to the
-            empty set (plugin root unavailable, file missing, or malformed),
-            the workflow-name check is skipped — the other three checks
-            still run.
+            defaults to :data:`_KNOWN_WORKFLOWS` — the post-Phase-C canonical
+            set of workflow names hardcoded in this module. The workflow-name
+            check is skipped when the resolved set is empty.
 
     Returns:
         (True, None) if the file is absent (absence is valid; no active
@@ -346,7 +332,7 @@ def validate_active_workflow(
         return False, "missing or empty 'workflow' field"
 
     if known_workflows is None:
-        known_workflows = _known_workflows_from_routing_rules()
+        known_workflows = _KNOWN_WORKFLOWS
     if known_workflows and workflow not in known_workflows:
         reason = f"unknown workflow '{workflow}' (expected one of {sorted(known_workflows)})"
         return False, reason
