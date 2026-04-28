@@ -40,10 +40,10 @@ Full canonical wording, edge cases, and the exception cases for both rules: Read
 | Thought | Reality |
 |---|---|
 | "Layer compiles cleanly, structural check is overkill" | `NO_LAYER_WITHOUT_SCAFFOLD` binds `ivy_diagnostics(mode=structural)` on the predecessor layer before any Write/Edit on layer N. Compile success is necessary but not sufficient. |
-| "I can guess which layers from the 14-template" | The methodology branch (NCT / NACT / NSCT) selects layer order. Load `specification-patterns` and `methodology-reference` rather than guessing. |
+| "I can guess which layers from the 14-template" | The methodology branch (NCT / NACT / NSCT) selects layer order. Load `specification-patterns` and `methodology` rather than guessing. |
 | "G1 ABSTAIN means proceed cautiously" | `ABSTAIN` is not a synonym for `SOUND`. Resolve the evidence gap or escalate to Opus tier; do not enter Phase 3 on ABSTAIN. |
 | "I'll fix the [GAP] marker later, layer N+1 first" | Resolve every open `[GAP: #NN]` marker across the current Phase 3 lifecycle BEFORE starting the next layer. Each marker is fixed in place or promoted to `// DEFERRED YYYY-MM-DD`. |
-| "The RFC quote feels right from memory" | Always Read the RFC source via the `spec-analyst` agent or the `methodology-reference` skill. Never paraphrase or quote normative text from memory. |
+| "The RFC quote feels right from memory" | Always Read the RFC source via the `spec-analyst` agent or the `methodology` skill. Never paraphrase or quote normative text from memory. |
 
 ## Step Tracking
 
@@ -129,9 +129,9 @@ These journal entries enable warm session resume and decision traceability acros
 
 Look for NCT/NACT/NSCT keywords in the user's request. If none found, ask: "Which testing methodology? NCT (compliance), NACT (security), or NSCT (simulation)."
 
-Load the `methodology-reference` knowledge skill via the Skill tool for methodology details.
+Load the `methodology` knowledge skill via the Skill tool for methodology details.
 
-**Tool selection.** Load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:knowledge-ivy-toolkit")` and consult its parameter matrix and mode map before each ivy-tools call. The toolkit skill owns the canonical tool taxonomy; do not rely on memory for tool flags.
+**Tool selection.** Load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult its parameter matrix and mode map before each ivy-tools call. The toolkit skill owns the canonical tool taxonomy; do not rely on memory for tool flags.
 
 ### Step 2: Identify target
 
@@ -233,7 +233,7 @@ tier — do not enter Phase 3 on either.
 
 Load `references/layer-scaffolding.md` for the full per-layer scaffolding procedure, compile-attempt cap, and post-edit workspace-block recovery menu. Summary of the scaffolding loop:
 
-1. Load `ivy-writing-guide` skill.
+1. Load `ivy-syntax` skill.
 2. Write ONE layer at a time in dependency order; run `ivy_compile` after each.
 3. On compile error: dispatch `spec-analyst`, fix inline, recompile. For the attempt-counter recovery protocol, see `references/layer-scaffolding.md` (Step 2: Generate specs incrementally section).
 4. On compile success: update `build-state.yaml` layer status.
@@ -297,7 +297,7 @@ Present a summary of what was built:
 
 ### Step 1b: NSCT sidecar emission (methodology-conditional)
 
-If `build-state.yaml.methodology == "nsct"`, load `methodology-reference` skill and follow its `references/nsct-experiment-template.md` — substitute placeholders from `build-state.yaml`, `mkdir -p experiment-config/protocols/{protocol}/`, and write `experiment_config_{protocol}_shadow.yaml`. Append `progress{detail: "NSCT experiment-config scaffolded at <path>"}`. The sidecar is a scaffold, not runnable; users hand-edit topology, services, and IUT plugin names before running it. Skip entirely for `nct` or `nact`.
+If `build-state.yaml.methodology == "nsct"`, load `methodology` skill and follow its `references/nsct-experiment-template.md` — substitute placeholders from `build-state.yaml`, `mkdir -p experiment-config/protocols/{protocol}/`, and write `experiment_config_{protocol}_shadow.yaml`. Append `progress{detail: "NSCT experiment-config scaffolded at <path>"}`. The sidecar is a scaffold, not runnable; users hand-edit topology, services, and IUT plugin names before running it. Skip entirely for `nct` or `nact`.
 
 ### Step 2: Clear state
 
@@ -344,7 +344,7 @@ Hand-off mechanism rationale, lifecycle diagram, and the "no direct cross-workfl
 - **Called by:** `navigate` (dispatch), user directly ("build a model", "scaffold a protocol")
 - **Shortcut command alternative:** `/nct-compile <file>` for a single-shot layer compile without workflow state; see `commands/README.md` for the full shortcut catalog.
 - **Calls:** `verify` (post-build verification), `spec-analyst` agent (compile error diagnosis), `model-reviewer` agent (quality gate), `traceability-agent` agent (coverage gate)
-- **Knowledge skills loaded:** `reflection-patterns` (MPE Phase 1, SB Phase 2, RG Phase 3, SB Phase 5), `methodology-reference` (Phase 1), `specification-patterns` (Phase 2), `ivy-writing-guide` (Phase 3), `counterexample-guide` (Phase 3 on error), `propagation-patterns` (Phase 3 on type change), `knowledge-capture` (KG Phase 3, KG Phase 5)
+- **Knowledge skills loaded:** `reflection-patterns` (MPE Phase 1, SB Phase 2, RG Phase 3, SB Phase 5), `methodology` (Phase 1), `specification-patterns` (Phase 2), `ivy-syntax` (Phase 3), `counterexample-guide` (Phase 3 on error), `propagation-patterns` (Phase 3 on type change), `knowledge-capture` (KG Phase 3, KG Phase 5)
 - **MCP tools used:** `ivy_compile`, `ivy_workspace`
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`
 - **MCP tool reliability:** For MCP-tool retry/timeout policy, see `.claude/rules/mcp-tool-reliability.md`.

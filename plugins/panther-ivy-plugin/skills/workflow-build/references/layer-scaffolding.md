@@ -8,7 +8,7 @@ Detailed per-layer writing procedure for Phase 3 of the build workflow.
 
 ### Step 1: Load writing guidance
 
-Load the `ivy-writing-guide` knowledge skill via the Skill tool.
+Load the `ivy-syntax` knowledge skill via the Skill tool.
 
 ### Step 2: Generate specs incrementally
 

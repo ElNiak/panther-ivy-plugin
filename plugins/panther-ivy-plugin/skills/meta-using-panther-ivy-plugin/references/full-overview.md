@@ -28,7 +28,7 @@ When a skill applies, you MUST invoke the `Skill` tool. Do NOT paraphrase the sk
 
 Three testing methodologies determine which workflow + reference skills load:
 
-- **NCT (compliance testing)** — RFC compliance against IUTs. Workflow: `build` → `verify` → `review`. Reference skills: `methodology-reference`, `specification-patterns`, `ivy-writing-guide`.
+- **NCT (compliance testing)** — RFC compliance against IUTs. Workflow: `build` → `verify` → `review`. Reference skills: `methodology`, `specification-patterns`, `ivy-syntax`.
 - **NACT (security testing)** — adversarial / APT-style attacks. Workflow: `build` (with apt-attack-patterns scope) → `verify`. Reference skill: `apt-attack-patterns`.
 - **NSCT (simulation testing)** — Shadow Network Simulator scenarios. Workflow: `build` → emits experiment-config sidecar at Phase 6.
 
@@ -72,9 +72,9 @@ Check the active workspace via `ivy_workspace(action="get")`.
 
 **Pattern skills** (flexible — adapt to context):
 
-- `ivy-writing-guide` — Ivy 1.7 syntax.
+- `ivy-syntax` — Ivy 1.7 syntax.
 - `ivy-error-patterns` — verifier catalog + error lookup.
-- `methodology-reference` — NCT/NACT/NSCT.
+- `methodology` — NCT/NACT/NSCT.
 - `specification-patterns` — 14-layer template.
 - `apt-attack-patterns` — APT 6-stage lifecycle.
 - `ivy-toolkit` — MCP tool catalog.

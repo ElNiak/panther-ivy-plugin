@@ -170,7 +170,7 @@ Offer the user three choices:
 2. **Pick specific test(s)** from the list found in Step 1
 3. **Design a new test inline** — this pulls supplementary knowledge for test authoring
 
-If the user picks option 3, invoke the `ivy-writing-guide` skill and the `specification-patterns` skill to load authoring guidance. Guide the user through creating the test spec, then continue to Phase 3.
+If the user picks option 3, invoke the `ivy-syntax` skill and the `specification-patterns` skill to load authoring guidance. Guide the user through creating the test spec, then continue to Phase 3.
 
 ### Situation Briefing — Test Selection Confirmation
 
@@ -187,7 +187,7 @@ Update phase to `"test-selected"` via `ivy_workflow_state(action="set", workflow
 
 ## Phase 3 — Compile
 
-**Tool selection.** Before the first tool call in this phase, load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:knowledge-ivy-toolkit")` and consult its parameter matrix for `ivy_compile`. The toolkit skill owns the canonical tool taxonomy; do not rely on memory for tool flags or modes.
+**Tool selection.** Before the first tool call in this phase, load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` and consult its parameter matrix for `ivy_compile`. The toolkit skill owns the canonical tool taxonomy; do not rely on memory for tool flags or modes.
 
 For each selected test file, call:
 
@@ -386,7 +386,7 @@ When `ivy_verify` would block for minutes, run it in a background subagent via `
 - **Called by:** `navigate` (dispatch), `build` (post-build verification), user directly ("verify this", "run tests")
 - **Shortcut command alternative:** `/nct-check <file>` for a single-shot verification without workflow state; see `commands/README.md` for the full shortcut catalog.
 - **Calls:** `triage` (preflight), `spec-analyst` agent (diagnosis), `model-reviewer` agent (structural audit), `review` workflow (follow-up coverage)
-- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 4, MPE Phase 6, SB Phase 7), `counterexample-guide` (Phase 6), `ivy-writing-guide` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3), `knowledge-capture` (KG Phase 4, KG Phase 7)
+- **Knowledge skills loaded:** `reflection-patterns` (SB Phase 2, RG Phase 4, MPE Phase 6, SB Phase 7), `counterexample-guide` (Phase 6), `ivy-syntax` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3), `knowledge-capture` (KG Phase 4, KG Phase 7)
 - **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_iut_test`
 - **State files:** `.panther-ivy/active-workflow`
 - **MCP tool reliability:** For MCP-tool retry/timeout policy, see `.claude/rules/mcp-tool-reliability.md`.

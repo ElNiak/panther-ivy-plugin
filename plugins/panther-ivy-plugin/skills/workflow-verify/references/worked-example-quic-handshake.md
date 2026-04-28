@@ -4,7 +4,7 @@ A full end-to-end walkthrough of one verify cycle: compile, fail, diagnose,
 fix, re-verify, completion-gate. The example is illustrative — the exact
 JSON shapes and trace formats may evolve with the verifier; refresh this
 page whenever a verifier-pattern is added to
-`skills/knowledge-verification-failures/references/verifier_patterns.md`.
+`skills/verification-failures/references/verifier_patterns.md`.
 
 ## Setup
 
@@ -47,7 +47,7 @@ The G4 verification gate (PostToolUse) immediately dispatches three context-isol
 
 ## Phase 6 — Diagnose (spec-analyst dispatch)
 
-`workflow-verify` Phase 6 dispatches `spec-analyst` with the failure context. Its `<dispatch-context>` block carries the workspace, target file, and the counterexample summary. After 47 seconds the agent returns a diagnosis grounded in the counterexample-interpretation patterns under `skills/knowledge-verification-failures/SKILL.md` §Counterexample interpretation:
+`workflow-verify` Phase 6 dispatches `spec-analyst` with the failure context. Its `<dispatch-context>` block carries the workspace, target file, and the counterexample summary. After 47 seconds the agent returns a diagnosis grounded in the counterexample-interpretation patterns under `skills/verification-failures/SKILL.md` §Counterexample interpretation:
 
 ```text
 Diagnosis (spec-analyst):

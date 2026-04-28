@@ -12,7 +12,7 @@ Human-readable summary:
 | Verify or debug a specification | `verify` workflow |
 | Review quality or coverage | `review` workflow |
 | Diagnose broken tools | `triage` workflow |
-| Learn methodology | `methodology-reference` skill |
+| Learn methodology | `methodology` skill |
 | Extract RFC requirements | `traceability-agent` agent |
 
 Machine-readable call graph:
@@ -21,7 +21,7 @@ Machine-readable call graph:
 <dispatch target="verify" via="skill" trigger="verify or debug a specification"/>
 <dispatch target="review" via="skill" trigger="review quality or coverage"/>
 <dispatch target="triage" via="skill" trigger="diagnose broken tools"/>
-<dispatch target="methodology-reference" via="skill" trigger="learn methodology"/>
+<dispatch target="methodology" via="skill" trigger="learn methodology"/>
 <dispatch target="traceability-agent" via="agent" trigger="extract RFC requirements"/>
 
 <branch condition="user's goal does not clearly map to any target above" name="clarify">

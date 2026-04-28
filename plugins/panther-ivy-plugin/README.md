@@ -50,9 +50,9 @@ started: "2026-04-07T14:30:00Z"
 **Propagation**: ivy_propagation (modes: variants/serdes/impact)
 **Testing**: ivy_iut_test
 
-For parameters, timeouts, error handling, and rendering details, see the **knowledge-ivy-toolkit** skill.
+For parameters, timeouts, error handling, and rendering details, see the **ivy-toolkit** skill.
 
-**LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted when dispatched by workflow skills. See the `knowledge-ivy-toolkit` skill for invocation patterns.
+**LSP policy (scoped access):** Do not call the `LSP` tool directly for everyday navigation — use `Read`/`Grep`/`Glob` and MCP tools (`ivy_model_info`, `ivy_diagnostics`). Direct LSP calls (`hover`, `goToDefinition`, `findReferences`, `documentSymbol`) are permitted when dispatched by workflow skills. See the `ivy-toolkit` skill for invocation patterns.
 
 **Note**: The LSP server pushes structural diagnostics on file edits. The PostToolUse hook runs `ivy_diagnostics(mode="structural")` automatically after `.ivy` file writes.
 
@@ -80,7 +80,7 @@ Direct tool access (bypass workflows):
 `spec-analyst`, `model-reviewer`, `traceability-agent`
 
 **Knowledge skills** (loaded by workflows, not user-facing):
-`knowledge-verification-failures`, `knowledge-specification-patterns`, `knowledge-propagation-patterns`, `knowledge-apt-attack-patterns`, `knowledge-ivy-writing-guide`, `knowledge-ivy-toolkit`, `knowledge-methodology-reference`, `cross-cutting-reflection-patterns`
+`verification-failures`, `specification-patterns`, `propagation-patterns`, `apt-attack-patterns`, `ivy-syntax`, `ivy-toolkit`, `methodology`, `cross-cutting-reflection-patterns`
 
 **User-invocable skills** (triggered by user intent or natural-language phrases, not workflow dispatch):
 `cross-cutting-knowledge-capture` — review session learnings and audit plugin skills/references; also loaded by workflow knowledge gates and `/nct-learn` (`user-invocable: true`)
@@ -145,7 +145,7 @@ Neither directory is user-facing; changes there propagate through hooks only.
 ### Style Precedence Rules
 
 - Workflow overlays override output style dimensions for the active phase.
-- Skills that define fixed output formats (the `knowledge-verification-failures`
+- Skills that define fixed output formats (the `verification-failures`
   resolution-comment prefixes and counterexample trace format, finding IDs)
   override the output style's structure dimension for those specific artifacts.
   The style applies to surrounding prose, not to structured artifacts with
@@ -233,4 +233,4 @@ Set these in your shell environment before starting Claude Code if you need to o
 **Workflows**: navigate, verify, build, review, triage
 **Shortcuts**: /nct-check, /nct-compile, /nct-model-info, /nct-iut-test, /nct-health, /nct-observability, /nct-learn
 **Internal agents**: spec-analyst, model-reviewer, traceability-agent
-**Internal knowledge**: verification-failures, specification-patterns, propagation-patterns, apt-attack-patterns, ivy-writing-guide, ivy-toolkit, methodology-reference, reflection-patterns, knowledge-capture
+**Internal knowledge**: verification-failures, specification-patterns, propagation-patterns, apt-attack-patterns, ivy-syntax, ivy-toolkit, methodology, reflection-patterns, knowledge-capture

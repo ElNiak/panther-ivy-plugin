@@ -5,13 +5,13 @@ Hook registrations for the panther-ivy-plugin live in `hooks.json`.
 Individual script files live under `hooks/scripts/` (see
 `hooks/scripts/README.md` for naming conventions). The full
 tool-lifecycle reference, including matchers and observability schema,
-lives in `skills/knowledge-ivy-toolkit/references/hook-lifecycle.md`.
+lives in `skills/ivy-toolkit/references/hook-lifecycle.md`.
 </purpose>
 
 ## Related References
 
 - `hooks/scripts/README.md` — script-naming convention (kebab vs. snake case).
-- `skills/knowledge-ivy-toolkit/references/hook-lifecycle.md` — full per-event reference (SessionStart, PreToolUse, PostToolUse, Stop, UserPromptSubmit, Notification).
+- `skills/ivy-toolkit/references/hook-lifecycle.md` — full per-event reference (SessionStart, PreToolUse, PostToolUse, Stop, UserPromptSubmit, Notification).
 - `.claude/rules/gap-markers.md` — the `[GAP: #NN]` marker contract that the G2/G3/G4/G5 adversarial hooks write.
 
 <integration

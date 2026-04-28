@@ -80,7 +80,7 @@ def test_learning_injection():
     assert output is not None
     ctx = _extract_context(output)
     assert "[ROUTING:KNOWLEDGE]" in ctx
-    assert "methodology-reference" in ctx
+    assert "methodology" in ctx
 
 
 def test_active_workflow_suppression():

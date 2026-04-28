@@ -166,7 +166,7 @@ Update phase to `"triaged"` via `ivy_workflow_state(action="set", workflow="work
 
 ## Phase 2 — Execute
 
-**Tool selection.** Before dispatching agents in this phase, load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:knowledge-ivy-toolkit")` so dispatched agents inherit the canonical tool catalog. Coverage Path uses `ivy_coverage`/`ivy_extract_requirements`; Quality Path uses `ivy_quality`. Pass the relevant catalog section to each agent's `<dispatch-context>` rather than letting agents guess tool flags from memory.
+**Tool selection.** Before dispatching agents in this phase, load `ivy-toolkit` via `Skill(skill="panther-ivy-plugin:ivy-toolkit")` so dispatched agents inherit the canonical tool catalog. Coverage Path uses `ivy_coverage`/`ivy_extract_requirements`; Quality Path uses `ivy_quality`. Pass the relevant catalog section to each agent's `<dispatch-context>` rather than letting agents guess tool flags from memory.
 
 Branch by the review type detected in Phase 1.
 

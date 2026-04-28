@@ -33,8 +33,8 @@ Use the NCT 7-layer minimum verbatim — NSCT does not require new `.ivy` files 
 
 **Inform the user**: "NSCT adds a Shadow-NS experiment-config YAML at Phase 6 Wrap-up; the `.ivy` blueprint is identical to NCT."
 
-The NSCT-specific artifact is emitted by Phase 6 Step 1b, not by Phase 2. See `methodology-reference` skill's `references/nsct-experiment-template.md` for the template and the emission substituter.
+The NSCT-specific artifact is emitted by Phase 6 Step 1b, not by Phase 2. See `methodology` skill's `references/nsct-experiment-template.md` for the template and the emission substituter.
 
 ## Methodology drift note
 
-If `methodology-reference`'s canonical lists change (new NACT lifecycle file, renamed attack entity), update this reference together with `comprehensive-methodology-detail.md` so the multi-select options stay consistent with the canonical methodology text.
+If `methodology`'s canonical lists change (new NACT lifecycle file, renamed attack entity), update this reference together with `comprehensive-methodology-detail.md` so the multi-select options stay consistent with the canonical methodology text.

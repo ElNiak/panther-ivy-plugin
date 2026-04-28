@@ -72,4 +72,4 @@ The executable can be found in the build/ directory.
 
 On an `InputValidationError` from `ivy_compile` (deferred-tool schema not loaded, MCP server unavailable), follow the canonical recovery pattern in `.claude/rules/mcp-tool-reliability.md`: one retry via `ToolSearch({query: "select:ivy_compile"})`, then AskUserQuestion with triage / skip / abandon options.
 
-See the `methodology-reference` knowledge skill for compilation troubleshooting.
+See the `methodology` knowledge skill for compilation troubleshooting.

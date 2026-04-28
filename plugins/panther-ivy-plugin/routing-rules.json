@@ -53,6 +53,6 @@
   "learning_injection": {
     "keywords": ["teach", "explain", "how does", "what is NCT", "what is NACT", "methodology", "learn", "how do I", "what are"],
     "intentPatterns": ["(teach|explain|how does|what is).*?(NCT|NACT|NSCT|ivy|formal|protocol testing)", "how.*(write|create).*ivy"],
-    "knowledge_skills": ["knowledge-methodology-reference", "knowledge-ivy-toolkit", "knowledge-ivy-writing-guide"]
+    "knowledge_skills": ["methodology", "ivy-toolkit", "ivy-syntax"]
   }
 }

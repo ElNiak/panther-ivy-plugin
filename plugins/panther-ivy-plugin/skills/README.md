@@ -64,13 +64,13 @@ The three mechanisms each own a unique capability: routing-rules.json (intent cl
 
 | Skill | Type | Loaded by | Purpose |
 |-------|------|-----------|---------|
-| [knowledge-apt-attack-patterns](knowledge-apt-attack-patterns/) | flexible | `workflow-build` (NACT methodology Phase 2) | APT-layer pattern library for NACT |
-| [knowledge-ivy-toolkit](knowledge-ivy-toolkit/) | flexible | `workflow-build`, `workflow-verify`, learning_injection | MCP tool documentation and tool selection guidance |
-| [knowledge-ivy-writing-guide](knowledge-ivy-writing-guide/) | flexible | `workflow-build` (Phase 3), learning_injection | Ivy 1.7 syntax reference and RFC annotation conventions |
-| [knowledge-methodology-reference](knowledge-methodology-reference/) | flexible | `workflow-build` (Phase 1), `workflow-navigate`, learning_injection | NCT, NACT, NSCT methodology reference + 14-layer template |
-| [knowledge-propagation-patterns](knowledge-propagation-patterns/) | flexible | `workflow-build` (Phase 3 on type change) | Patterns for propagating type changes across spec layers |
-| [knowledge-specification-patterns](knowledge-specification-patterns/) | flexible | `workflow-build` (Phase 2) | 14-layer structural template and formal model patterns |
-| [knowledge-verification-failures](knowledge-verification-failures/) | flexible | `workflow-verify` (Phase 6 Diagnose), `workflow-build` (Phase 3 on compile error), `workflow-review` (Phase 3 contested findings); G4 / G5 critics | Error-pattern catalog, debugging methodology, counterexample interpretation, and claim-discussion gate (consolidates four prior skills) |
+| [apt-attack-patterns](apt-attack-patterns/) | flexible | `workflow-build` (NACT methodology Phase 2) | APT-layer pattern library for NACT |
+| [ivy-toolkit](ivy-toolkit/) | flexible | `workflow-build`, `workflow-verify`, learning_injection | MCP tool documentation and tool selection guidance |
+| [ivy-syntax](ivy-syntax/) | flexible | `workflow-build` (Phase 3), learning_injection | Ivy 1.7 syntax reference and RFC annotation conventions |
+| [methodology](methodology/) | flexible | `workflow-build` (Phase 1), `workflow-navigate`, learning_injection | NCT, NACT, NSCT methodology reference + 14-layer template |
+| [propagation-patterns](propagation-patterns/) | flexible | `workflow-build` (Phase 3 on type change) | Patterns for propagating type changes across spec layers |
+| [specification-patterns](specification-patterns/) | flexible | `workflow-build` (Phase 2) | 14-layer structural template and formal model patterns |
+| [verification-failures](verification-failures/) | flexible | `workflow-verify` (Phase 6 Diagnose), `workflow-build` (Phase 3 on compile error), `workflow-review` (Phase 3 contested findings); G4 / G5 critics | Error-pattern catalog, debugging methodology, counterexample interpretation, and claim-discussion gate (consolidates four prior skills) |
 
 ## Cross-cutting Skills (4)
 

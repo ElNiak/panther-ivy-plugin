@@ -74,8 +74,8 @@ or:
 `knowledge-capture`. These are workflow skills bound by iron laws and
 adversarial gates; deviation is a soundness risk.
 
-**Flexible (8):** `ivy-writing-guide`, `verification-failures`,
-`methodology-reference`, `specification-patterns`, `apt-attack-patterns`,
+**Flexible (8):** `ivy-syntax`, `verification-failures`,
+`methodology`, `specification-patterns`, `apt-attack-patterns`,
 `ivy-toolkit`, `propagation-patterns`, `reflection-patterns`. These are
 pattern/reference skills consumed by the rigid workflows and by the
 user. (Roster updated 2026-04-27: the four prior `claim-discussion`,

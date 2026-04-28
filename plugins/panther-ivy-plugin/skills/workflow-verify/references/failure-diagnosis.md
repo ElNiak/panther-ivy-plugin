@@ -112,7 +112,7 @@ Before applying the fix, evaluate the attempt-counter gate:
    )
    ```
 
-Apply the fix suggested by the spec-analyst. If editing `.ivy` files, invoke the `ivy-writing-guide` skill to load language reference guidance before making changes. After the Edit, follow the post-Edit workspace-block recovery pattern documented in the main SKILL.md.
+Apply the fix suggested by the spec-analyst. If editing `.ivy` files, invoke the `ivy-syntax` skill to load language reference guidance before making changes. After the Edit, follow the post-Edit workspace-block recovery pattern documented in the main SKILL.md.
 
 ### Step 2: Re-verify
 
