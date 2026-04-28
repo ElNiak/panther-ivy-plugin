@@ -1,6 +1,6 @@
 ---
 name: meta-using-panther-ivy-plugin
-description: "You MUST consult this on starting any panther-ivy-plugin session. Establishes the 1% rule, iron-law primer, methodology routing (NCT/NACT/NSCT), and workspace pointer. Injected at SessionStart as EXTREMELY_IMPORTANT context."
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Functionality moved to skills/ivy/SKILL.md and inject-using-plugin.sh primer. Will be deleted in Phase F."
 user-invocable: false
 ---
 

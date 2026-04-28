@@ -1,6 +1,7 @@
 ---
 name: workflow-navigate
-description: "You MUST use this when the next step is ambiguous, a prior workflow just completed, or starting a session. Routes to the next Ivy workflow (build / verify / review / triage); not for authoring, diagnosing, or testing directly."
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Routing logic moved to skills/ivy/ orchestrator. Will be deleted in Phase F."
+user-invocable: false
 ---
 
 <role>
