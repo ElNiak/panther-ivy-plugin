@@ -1,6 +1,6 @@
 ---
 name: workflow-triage
-description: "Diagnoses and repairs MCP/LSP/Serena stack health. You MUST use this when tools time out, 'ivy_status timeout', 'MCP won't connect', stale PIDs, LSP crash, or as preflight before another workflow. Not for spec authoring, verification, or quality review — use `build`, `verify`, or `review` once the toolchain is healthy."
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Functionality moved to skills/triage-ops. Will be deleted in Phase F."
 context: fork
 user-invocable: false
 ---

@@ -1,6 +1,6 @@
 ---
 name: cross-cutting-parallel-dispatch
-description: "Use when facing 2+ independent agent dispatches with no shared state or sequential dependencies. Provides the single-message multi-Agent-call composition pattern, MPE vs role-split heuristics, and context-isolation invariants."
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Functionality moved to skills/ivy/references/parallel-dispatch.md. Will be deleted in Phase F."
 user-invocable: false
 ---
 

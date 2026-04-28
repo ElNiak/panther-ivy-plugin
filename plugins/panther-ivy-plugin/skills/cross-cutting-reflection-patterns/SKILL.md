@@ -1,6 +1,6 @@
 ---
 name: cross-cutting-reflection-patterns
-description: "Reflection Gate, Multi-Perspective Exploration, Situation Briefing, Completion Verification, and G0/G0b/G1-G6 quality-gate patterns. Use when dispatching gate critics or at phase transitions."
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Functionality moved to (gate-critic agents own this; see g-{plan,fidelity,knowledge}-critic.md). Will be deleted in Phase F."
 user-invocable: false
 context: fork
 ---

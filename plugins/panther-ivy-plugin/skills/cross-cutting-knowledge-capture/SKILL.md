@@ -1,7 +1,7 @@
 ---
 name: cross-cutting-knowledge-capture
-description: "You MUST use this when /nct-learn fires, a workflow phase hits a knowledge gate, or after a session ends with material worth capturing. Captures session learnings into plugin rules; audits skill/reference quality."
-user-invocable: true
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Functionality moved to (folded into ivy orchestrator's G6 dispatch). Will be deleted in Phase F."
+user-invocable: false
 context: fork
 allowed-tools: "Read Grep Glob Write Edit Agent AskUserQuestion Bash(git diff *) Bash(git log *) Bash(ls *)"
 when_to_use: "Invoked by knowledge gates in workflow skills, by /nct-learn, and by end-of-session retrospective triggers. Trigger phrases: 'what did we learn', 'improve skills', 'session retro', 'what could be improved', 'improve references'."

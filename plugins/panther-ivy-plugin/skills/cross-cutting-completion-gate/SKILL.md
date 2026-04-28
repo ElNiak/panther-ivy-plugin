@@ -1,6 +1,6 @@
 ---
 name: cross-cutting-completion-gate
-description: "You MUST use this before any workflow-completion claim ('verification passed', 'quality SOUND', 'review complete', 'build done'). Five-step IDENTIFY → RUN → READ → VERIFY → THEN-claim gate enforcing NO_FIX_WITHOUT_VERIFY."
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Functionality moved to skills/ivy/references/completion-gate.md. Will be deleted in Phase F."
 user-invocable: false
 ---
 

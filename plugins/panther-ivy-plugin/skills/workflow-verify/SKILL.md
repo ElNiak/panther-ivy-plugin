@@ -1,6 +1,7 @@
 ---
 name: workflow-verify
-description: "Runs the verify-compile-IUT cycle on an Ivy spec with failure diagnosis. You MUST use this when the user says 'check my spec', 'verify this', 'test the handshake', or hits 'counterexample found' / 'invariant violated' / 'compilation error'. Not for authoring new specs from scratch, scaffolding layers, or RFC requirement extraction — use `build` or `review` instead."
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Functionality moved to skills/verify-ops. Will be deleted in Phase F."
+user-invocable: false
 ---
 
 <role>

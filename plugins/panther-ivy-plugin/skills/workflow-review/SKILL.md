@@ -1,6 +1,7 @@
 ---
 name: workflow-review
-description: "Audits an Ivy model for RFC coverage, requirement traceability, and structural quality. You MUST use this when checking 'what MUSTs am I missing?', 'RFC coverage?', 'traceability gap?', or 'review my model'. Not for verifying spec correctness, scaffolding new layers, or running IUT tests — use `verify` or `build` instead."
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Functionality moved to skills/review-ops. Will be deleted in Phase F."
+user-invocable: false
 ---
 
 <role>

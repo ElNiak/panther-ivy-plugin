@@ -1,6 +1,6 @@
 ---
 name: meta-plugin-self-mod
-description: "You MUST use this when modifying panther-ivy-plugin source (skills, agents, hooks, .claude/rules, commands, output-styles, routing-rules.json). Subagent-driven 3-loop: implementer → spec-compliance-reviewer → plugin-conventions-reviewer per task."
+description: "Deprecated under approach E orchestrator refactor (2026-04-28). Functionality moved to skills/meta-self-mod-ops. Will be deleted in Phase F."
 user-invocable: false
 ---
 
