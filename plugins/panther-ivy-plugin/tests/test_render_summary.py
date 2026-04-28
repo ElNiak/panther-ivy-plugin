@@ -112,7 +112,7 @@ class TestWorkflowAwareSummary:
     def test_verify_summary_includes_workflow(self, tmp_path):
         output = run_hook(
             tmp_path,
-            workflow="workflow-verify",
+            workflow="verify",
             phase="compile",
             ivy_files={"test.ivy": "#lang ivy1.7\nrelation foo(X:t)\n"},
         )

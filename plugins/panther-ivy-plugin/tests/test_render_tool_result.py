@@ -75,7 +75,7 @@ class TestIvyVerifyFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_verify",
             json.dumps({"success": False, "errors": [{"file": "a.ivy", "line": 10, "message": "violated"}]}),
-            workflow="workflow-triage",
+            workflow="triage",
             tmp_path=tmp_path,
         )
         if output is None:
@@ -87,7 +87,7 @@ class TestIvyVerifyFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_verify",
             json.dumps({"success": True, "isolate": "quic_types"}),
-            workflow="workflow-build",
+            workflow="build",
             tmp_path=tmp_path,
         )
         if output is None:
@@ -146,7 +146,7 @@ class TestIvyCoverageFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_coverage",
             json.dumps({"percentage": 85, "covered": 17, "total": 20}),
-            workflow="workflow-triage",
+            workflow="triage",
             tmp_path=tmp_path,
         )
         assert output is not None
@@ -157,7 +157,7 @@ class TestIvyCoverageFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_coverage",
             json.dumps({"percentage": 85, "covered": 17, "total": 20}),
-            workflow="workflow-verify",
+            workflow="verify",
             tmp_path=tmp_path,
         )
         assert output is not None
@@ -174,7 +174,7 @@ class TestIvyDiagnosticsFormatting:
                 {"severity": "error", "file": "a.ivy", "line": 10, "message": "bad"},
                 {"severity": "warning", "file": "b.ivy", "line": 20, "message": "warn"},
             ]}),
-            workflow="workflow-triage",
+            workflow="triage",
             tmp_path=tmp_path,
         )
         assert output is not None
@@ -213,7 +213,7 @@ class TestIvyCompileFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_compile",
             json.dumps({"status": "failure", "error_message": "undefined symbol"}),
-            workflow="workflow-build",
+            workflow="build",
             tmp_path=tmp_path,
         )
         assert output is not None
@@ -224,7 +224,7 @@ class TestIvyCompileFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_compile",
             json.dumps({"status": "success", "output_binary": "x"}),
-            workflow="workflow-triage",
+            workflow="triage",
             tmp_path=tmp_path,
         )
         assert output is not None
@@ -248,7 +248,7 @@ class TestIvyQualityFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_quality",
             json.dumps({"passed": False, "gate_level": "basic", "failures": [{"criterion": "coverage", "details": "below 50%"}]}),
-            workflow="workflow-triage",
+            workflow="triage",
             tmp_path=tmp_path,
         )
         assert output is not None
@@ -259,7 +259,7 @@ class TestIvyQualityFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_quality",
             json.dumps({"suggestions": [{"category": "style", "message": "rename", "severity": "minor"}]}),
-            workflow="workflow-verify",
+            workflow="verify",
             tmp_path=tmp_path,
         )
         assert output is None, "Suggestions should be suppressed in verify workflow"
