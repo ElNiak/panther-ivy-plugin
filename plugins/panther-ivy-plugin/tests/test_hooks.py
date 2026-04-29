@@ -344,8 +344,9 @@ class TestDetectIvyWorkspaceHook:
         )
         assert result.returncode == 0
         output = json.loads(result.stdout)
-        ctx = output["hookSpecificOutput"]["additionalContext"]
-        assert "PANTHER" in ctx or "panther" in ctx.lower()
+        ctx = output["systemMessage"]
+        assert "[ivy-workspace] detected:" in ctx
+        assert "panther" in ctx.lower()
 
     def test_standalone_project_detected(
         self, hook_scripts_dir, has_python3
@@ -368,21 +369,19 @@ class TestDetectIvyWorkspaceHook:
             )
             assert result.returncode == 0
             output = json.loads(result.stdout)
-            ctx = output["hookSpecificOutput"]["additionalContext"]
-            assert "standalone" in ctx.lower()
+            ctx = output["systemMessage"]
+            assert "[ivy-workspace] detected:" in ctx
 
     def test_fallback_when_no_ivy_files(
         self, hook_scripts_dir, tmp_path, has_python3
     ):
-        """An empty directory should fall back to 'No Ivy project detected'.
+        """An empty directory still produces the slim status line.
 
-        NOTE: detect_ivy_workspace walks UP from CWD looking for .ivy files
-        in parent directories (up to depth 8). If the test's tmp_path is
-        inside a tree that happens to contain .ivy files (e.g., from sibling
-        test directories or the project itself), standalone detection might
-        fire instead. We create a deep isolated subdirectory to minimize
-        this risk, but if the broader temp tree has .ivy files within 8
-        levels, the test accepts 'standalone' as well.
+        Phase E/F slimmed the script's output to a single ``systemMessage``
+        line that no longer surfaces the project type word. The previous
+        contract ("No Ivy project detected" / "standalone" / "fallback" in
+        additionalContext) is gone; the new contract is just the workspace
+        prefix and a non-empty CWD-derived path.
         """
         if not has_python3:
             pytest.skip("python3 required by hook script")
@@ -398,14 +397,8 @@ class TestDetectIvyWorkspaceHook:
         )
         assert result.returncode == 0
         output = json.loads(result.stdout)
-        ctx = output["hookSpecificOutput"]["additionalContext"]
-        # Accept either fallback or standalone (since parent walking may
-        # find .ivy files from other test fixtures in the same tmp tree)
-        assert (
-            "No Ivy project detected" in ctx
-            or "standalone" in ctx.lower()
-            or "fallback" in ctx.lower()
-        )
+        ctx = output["systemMessage"]
+        assert "[ivy-workspace] detected:" in ctx
 
     def test_output_is_valid_json_with_hook_event(
         self, hook_scripts_dir, tmp_path, has_python3
