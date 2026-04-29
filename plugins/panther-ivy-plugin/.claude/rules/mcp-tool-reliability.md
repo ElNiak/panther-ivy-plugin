@@ -33,8 +33,8 @@ given tool call succeeds.
      ```
    - Present `AskUserQuestion` with three options:
      - **Retry after fixing MCP server** — dispatch
-       `Skill(skill="panther-ivy-plugin:workflow-triage")` (direct mode, no args) so
-       the user sees the full diagnose-and-repair flow; on repair
+       `Agent(subagent_type="panther-ivy-plugin:ivy-triage-agent", prompt="Run the 9-step Ivy LSP + MCP health-check runbook and repair any failed steps.")`
+       so the user sees the full diagnose-and-repair flow; on repair
        completion triage emits `pending_dispatch(<caller>, reason="post-triage-repair")`
        to hand control back.
      - **Skip this step** — proceed without the tool's output; record a

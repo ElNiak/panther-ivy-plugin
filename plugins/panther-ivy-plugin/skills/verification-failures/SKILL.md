@@ -30,7 +30,7 @@ This skill consolidates four lifecycle-related knowledge surfaces invoked when v
 - `references/mapping-claim.md` — claim-discussion template for `ivy_extract_requirements` or RFC mapping decisions.
 - `references/coverage-claim.md` — claim-discussion template for `ivy_coverage(mode="gaps")` results.
 
-If verification fails but no counterexample is present, the failure is likely a type error, unresolved symbol, or Z3 timeout — load `methodology` instead. For C++ serializer / deserializer state-machine issues, the methodology routes to `ivy-syntax` → `references/serializer-patterns.md`. For the full 9-step health-check runbook (log paths, common failures, process liveness), dispatch the triage skill via `Skill(skill="panther-ivy-plugin:workflow-triage")`.
+If verification fails but no counterexample is present, the failure is likely a type error, unresolved symbol, or Z3 timeout — load `methodology` instead. For C++ serializer / deserializer state-machine issues, the methodology routes to `ivy-syntax` → `references/serializer-patterns.md`. For the full 9-step health-check runbook (log paths, common failures, process liveness), dispatch the triage agent via `Agent(subagent_type="panther-ivy-plugin:ivy-triage-agent", prompt="Run the 9-step Ivy LSP + MCP health-check runbook.")`.
 
 ## Integration
 

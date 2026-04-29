@@ -80,4 +80,4 @@ For C++ serializer state machine issues (wrong bytes on wire, `deser_err` throws
 
 ## Self-evaluation reference
 
-`debugging-environment.md` (sibling file in the same `references/` directory) — self-evaluation protocol (anti-pattern checklist), debug environment variables, LSP indexing awareness. For the full 9-step health-check runbook (log paths, common failures, process liveness), dispatch the triage skill via `Skill(skill="panther-ivy-plugin:workflow-triage")`.
+`debugging-environment.md` (sibling file in the same `references/` directory) — self-evaluation protocol (anti-pattern checklist), debug environment variables, LSP indexing awareness. For the full 9-step health-check runbook (log paths, common failures, process liveness), dispatch the triage agent via `Agent(subagent_type="panther-ivy-plugin:ivy-triage-agent", prompt="Run the 9-step Ivy LSP + MCP health-check runbook.")`.

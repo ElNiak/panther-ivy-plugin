@@ -426,6 +426,12 @@ Manage workflow state files for multi-session tracking.
 | `workflow_resumed` | navigate Phase 1.5 after G0 SOUND verdict | `workflow` (caller), `phase_after_resume`, `g0_cycle` |
 | `knowledge_captured` | knowledge-capture skill after a capture cycle | `source`, `status` (`approved`/`user_declined`/`deferred`), `references_plan_approved_ts` |
 
+<!-- TODO(harness-audit 2026-04-29): the two skills referenced below
+     (`cross-cutting-reflection-patterns`, `workflow-navigate`) do not exist
+     anywhere in the plugin. The 18-skill architecture documented in skills/README.md
+     was partially refactored to 13 *-ops skills without updating these cross-references.
+     Decide: restore the two skills, redirect to whichever current skill owns the
+     gate-verdict payload spec / plan-mode lifecycle, or delete this paragraph. -->
 Detailed payload shapes for `gate_verdict` live in the reflection-patterns skill (load via `Skill(skill="panther-ivy-plugin:cross-cutting-reflection-patterns")`; see "Gate verdict payload"). `plan_approved` and `workflow_resumed` are consumed by the navigate skill's Phase 1.5 (load via `Skill(skill="panther-ivy-plugin:workflow-navigate")`).
 
 ---
