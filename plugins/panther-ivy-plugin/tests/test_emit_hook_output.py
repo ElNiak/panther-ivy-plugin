@@ -79,14 +79,55 @@ def test_additional_context_appears_in_hook_specific_output(
     assert "permissionDecision" not in payload["hookSpecificOutput"]
 
 
-def test_system_message_sits_at_top_level_not_inside_hook_specific_output(
+def test_session_end_emits_hook_specific_output(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    """SessionEnd is in the allow-list, so the nested envelope is emitted
+    and ``systemMessage`` lives top-level alongside it."""
+    mod = _load_module()
+    mod.emit_hook_output("SessionEnd", system_message="MCP reconnecting")
+    payload = _parse(capsys.readouterr().out)
+    assert payload == {
+        "hookSpecificOutput": {"hookEventName": "SessionEnd"},
+        "systemMessage": "MCP reconnecting",
+    }
+
+
+def test_stop_envelope_is_top_level_only(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Stop is not in the allow-list. The runtime rejects
+    ``hookSpecificOutput`` for Stop, so the helper must emit only top-level
+    fields. Pins the fix for the original validator-rejected envelope."""
+    mod = _load_module()
+    mod.emit_hook_output("Stop", system_message="[ivy-session] recorded")
+    payload = _parse(capsys.readouterr().out)
+    assert payload == {"systemMessage": "[ivy-session] recorded"}
+    assert "hookSpecificOutput" not in payload
+
+
+def test_notification_envelope_is_top_level_only(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Notification is not in the allow-list either. Same top-level-only
+    contract as Stop."""
     mod = _load_module()
     mod.emit_hook_output("Notification", system_message="MCP reconnecting")
     payload = _parse(capsys.readouterr().out)
-    assert payload["systemMessage"] == "MCP reconnecting"
-    assert "systemMessage" not in payload["hookSpecificOutput"]
+    assert payload == {"systemMessage": "MCP reconnecting"}
+    assert "hookSpecificOutput" not in payload
+
+
+def test_stop_drops_additional_context(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """``additional_context`` has no top-level home in the Stop envelope, so
+    the helper drops it. Callers are expected to pass ``system_message``
+    instead."""
+    mod = _load_module()
+    mod.emit_hook_output("Stop", additional_context="ignored for Stop")
+    payload = _parse(capsys.readouterr().out)
+    assert payload == {}
 
 
 def test_deny_and_additional_context_combine(

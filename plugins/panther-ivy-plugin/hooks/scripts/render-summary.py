@@ -272,7 +272,7 @@ def main():
     protocol_dir = ctx.protocol_dir if ctx else None
 
     summary = build_summary(ivy_files, workflow, phase, protocol_dir)
-    emit_hook_output("Stop", additional_context=summary)
+    emit_hook_output("Stop", system_message=summary)
 
 
 if __name__ == "__main__":

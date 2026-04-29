@@ -134,6 +134,17 @@ def read_stdin() -> dict:
         return {}
 
 
+_EVENTS_WITH_HOOK_SPECIFIC_OUTPUT = frozenset({
+    "PreToolUse",
+    "PostToolUse",
+    "PostToolBatch",
+    "PostToolUseFailure",
+    "UserPromptSubmit",
+    "SessionStart",
+    "SessionEnd",
+})
+
+
 def emit_hook_output(
     event_name: str,
     *,
@@ -143,15 +154,23 @@ def emit_hook_output(
 ) -> None:
     """Print a Claude Code advanced-protocol hook JSON decision to stdout.
 
-    Emits the canonical hook envelope::
+    Two envelope shapes per the runtime schema. For events in
+    ``_EVENTS_WITH_HOOK_SPECIFIC_OUTPUT`` the helper emits::
 
         {"hookSpecificOutput": {"hookEventName": ..., ...}, "systemMessage": ...}
 
+    For all other events (``Stop``, ``SubagentStart``, ``SubagentStop``,
+    ``Notification``, ``PreCompact``) the runtime rejects ``hookSpecificOutput``
+    entirely; the helper emits only top-level fields. ``additional_context``
+    has no top-level home in that schema and is silently dropped — callers
+    targeting those events should pass ``system_message`` instead.
+
     The caller MUST return via a normal exit 0 after calling this function.
     Per the Claude Code hooks protocol (https://code.claude.com/docs/en/hooks),
-    JSON output is only processed on exit 0; `sys.exit(2)` would cause the JSON
-    payload to be ignored entirely and fall back to the legacy block-on-exit-2
-    contract, which discards ``deny_reason`` and ``additional_context``.
+    JSON output is only processed on exit 0; ``sys.exit(2)`` would cause the
+    JSON payload to be ignored entirely and fall back to the legacy
+    block-on-exit-2 contract, which discards ``deny_reason`` and
+    ``additional_context``.
 
     For PreToolUse hooks, passing ``deny_reason`` sets
     ``permissionDecision: "deny"`` in the envelope and blocks the tool call.
@@ -160,26 +179,30 @@ def emit_hook_output(
 
     Args:
         event_name: Hook event name, e.g. ``"PreToolUse"`` / ``"PostToolUse"``
-            / ``"SessionStart"``. Placed in ``hookSpecificOutput.hookEventName``.
-        additional_context: Optional string appended to the model's prompt as
-            ``additionalContext``. Non-blocking.
+            / ``"Stop"``. Determines which envelope shape is emitted.
+        additional_context: Optional string surfaced to the model as
+            ``hookSpecificOutput.additionalContext``. Meaningful only for
+            events in ``_EVENTS_WITH_HOOK_SPECIFIC_OUTPUT``; ignored otherwise.
         deny_reason: Optional string that turns the envelope into a blocking
-            deny decision. Sets ``permissionDecision`` to ``"deny"`` and
-            ``permissionDecisionReason`` to this value. Valid only for
-            PreToolUse hooks.
-        system_message: Optional top-level ``systemMessage`` field the Claude
-            Code runtime surfaces to the user out-of-band from the model.
+            deny decision. Sets ``hookSpecificOutput.permissionDecision`` to
+            ``"deny"`` and ``permissionDecisionReason`` to this value. Valid
+            only for PreToolUse hooks.
+        system_message: Optional top-level ``systemMessage`` the Claude Code
+            runtime surfaces to the user out-of-band from the model. Valid
+            for every event.
 
     Returns:
         None. Output is printed to stdout as a single JSON line.
     """
-    hook_output: dict = {"hookEventName": event_name}
-    if deny_reason:
-        hook_output["permissionDecision"] = "deny"
-        hook_output["permissionDecisionReason"] = deny_reason
-    if additional_context:
-        hook_output["additionalContext"] = additional_context
-    output: dict = {"hookSpecificOutput": hook_output}
+    output: dict = {}
+    if event_name in _EVENTS_WITH_HOOK_SPECIFIC_OUTPUT:
+        hook_output: dict = {"hookEventName": event_name}
+        if deny_reason:
+            hook_output["permissionDecision"] = "deny"
+            hook_output["permissionDecisionReason"] = deny_reason
+        if additional_context:
+            hook_output["additionalContext"] = additional_context
+        output["hookSpecificOutput"] = hook_output
     if system_message:
         output["systemMessage"] = system_message
     print(json.dumps(output))

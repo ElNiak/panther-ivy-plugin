@@ -73,12 +73,12 @@ def main():
     server_name = _identify_server(data)
     emit_hook_output(
         "Notification",
-        additional_context=(
-            "[ivy-health] The Ivy MCP server has disconnected. "
-            "Run /mcp to reconnect before calling ivy_verify, "
-            "ivy_coverage, ivy_diagnostics, or other MCP-dependent tools."
+        system_message=(
+            f"[ivy-mcp] disconnected from {server_name} -- "
+            "the Ivy MCP server has disconnected. Run /mcp to reconnect "
+            "before calling ivy_verify, ivy_coverage, ivy_diagnostics, "
+            "or other MCP-dependent tools."
         ),
-        system_message=f"[ivy-mcp] disconnected from {server_name}",
     )
 
 

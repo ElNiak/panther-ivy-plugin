@@ -91,7 +91,7 @@ class TestLintDetection:
             ivy_files={"test.ivy": "include order\n# no lang header\n"},
         )
         assert output is not None, "Should produce output for modified .ivy files"
-        ctx = output["hookSpecificOutput"]["additionalContext"]
+        ctx = output["systemMessage"]
         assert "SESSION SUMMARY" in ctx
         assert "lint" in ctx.lower() or "missing" in ctx.lower()
 
@@ -103,7 +103,7 @@ class TestClaimCounting:
             ivy_files={"test.ivy": "#lang ivy1.7\n# RESOLVED(rfc9000:4.1) confirmed\n"},
         )
         assert output is not None
-        ctx = output["hookSpecificOutput"]["additionalContext"]
+        ctx = output["systemMessage"]
         assert "CLAIM" in ctx
         assert "1 resolution" in ctx or "1 confirmed" in ctx
 
@@ -117,7 +117,7 @@ class TestWorkflowAwareSummary:
             ivy_files={"test.ivy": "#lang ivy1.7\nrelation foo(X:t)\n"},
         )
         assert output is not None
-        ctx = output["hookSpecificOutput"]["additionalContext"]
+        ctx = output["systemMessage"]
         assert "SESSION SUMMARY" in ctx
         assert "WORKFLOW" in ctx or "Verify" in ctx
 
@@ -129,5 +129,5 @@ class TestFallbackBehavior:
             ivy_files={"test.ivy": "#lang ivy1.7\nrelation foo(X:t)\n"},
         )
         assert output is not None
-        ctx = output["hookSpecificOutput"]["additionalContext"]
+        ctx = output["systemMessage"]
         assert "SESSION SUMMARY" in ctx
