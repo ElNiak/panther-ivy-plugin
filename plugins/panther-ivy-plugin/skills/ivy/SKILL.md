@@ -37,6 +37,34 @@ If methodology is unclear from the user prompt, ask via `AskUserQuestion`. Full 
 
 Active workspace via `ivy_workspace(action="get")`. To set: `ivy_workspace(action="set", target="<name>")`. To clear: `ivy_workspace(action="clear")`. Available targets: workspace group names (quic, apt, apt_quic, minip, bgp, coap, scaffolds) OR a specific `.ivy` test file path. The tool's kwarg is `target=`, not `protocol=`.
 
+## Phase 1.5 — Resume hand-off
+
+Phase 1 read the journal `last_n=20` and the active-workflow YAML. Phase 1.5 decides what to do with what was read. Three branches; at most one fires per turn.
+
+**Plan-mode skip.** If plan-mode is detected (per `.claude/rules/plan-mode.md` § "Detection signals"), Phase 1.5 is SKIPPED. The orchestrator drops to plan authoring per that rule's 5-step procedure. Writing `workflow_resumed` without a real dispatch would break the consume-pair semantics defined in `.claude/rules/journaling-contract.md` §4.1; the unconsumed `pending_dispatch` survives to the next turn (subject to the 2 h staleness window in `workflow_state.py::is_workflow_stale`).
+
+**Warm-resume (fresh `pending_dispatch`).** If the journal contains a `pending_dispatch` with no paired `workflow_resumed` and the entry is fresh (<2 h):
+
+1. Append `workflow_resumed` BEFORE `set_active_workflow` and BEFORE the dispatch (order matters — see contract §4: a crash between consume and dispatch must leave the pair already complete so the next-turn read does not double-consume):
+   ```
+   ivy_workflow_state(
+     action="append_journal",
+     protocol="<protocol>",
+     event_type="workflow_resumed",
+     state='{"workflow":"<target>","phase_after_resume":"<phase>","source_pending_dispatch_index":<int>}'
+   )
+   ```
+2. Set active-workflow:
+   ```
+   ivy_workflow_state(action="set", workflow="<target>", phase="<phase>", protocol="<protocol>")
+   ```
+3. Dispatch the matching specialist via the Dispatch table below.
+4. Emit user-visible `[ivy-resume] resuming <workflow> (<phase>) from <source_workflow>'s pending_dispatch` per `.claude/rules/output-style.md`.
+
+**G0 plan-gate (fresh `plan_approved`).** If the journal contains a `plan_approved` entry with no paired G0 `gate_verdict`, dispatch `g-plan-critic` ×3 in parallel via `references/parallel-dispatch.md`; aggregate 2-of-3 vote per `.claude/rules/gate-verdicts.md`. SOUND → emit `pending_dispatch(<caller_workflow>, reason="post-G0-SOUND", phase_hint=...)` so the next turn hits warm-resume above. UNSOUND → halt and surface to user. ABSTAIN → gather evidence and re-dispatch.
+
+**Cold start.** Neither branch applies → drop to Phase 2 (Dispatch — workflow specialist agents) with intent classified from the user prompt.
+
 ## Dispatch — workflow specialist agents
 
 For "do something" tasks, dispatch the matching workflow agent. Before every dispatch, write the active-workflow YAML via the `ivy_workflow_state` MCP tool so warm-resume works:
@@ -71,6 +99,20 @@ For adversarial-vote gates, dispatch the matching critic agent **3 times in para
 
 Critics emit `VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN`. Aggregate via 2-of-3 vote. SOUND → proceed. UNSOUND → halt and surface to user. ABSTAIN → gather evidence and re-dispatch.
 
+## Post-dispatch sample-verify gate
+
+After a workflow specialist returns a digest, the orchestrator MUST sample-verify the highest-leverage assertable claims before integrating findings into memory or proceeding to the next phase. Procedure: see `references/sample-verify.md`.
+
+Sampling rule: `N = min(3, ceil(claim_count / 5))` highest-leverage claims, prioritized by whose falsity would change the orchestrator's next action.
+
+Schema (mirrors the critic `CITATION_*` contract):
+
+- `SAMPLE_PASS(<claim>, <evidence>)` → integrate as-is
+- `SAMPLE_FAIL(<claim>, <expected>, <observed>)` → reject; re-dispatch with falsifying evidence in `prior_findings`
+- `SAMPLE_ABSTAIN(<claim>, <reason>)` → integrate with caveat in frontmatter `description:`
+
+Gate fires for review / verify / build dispatches. Skipped for triage (G7/G8 inline gates already cover) and meta (editorial output, not assertion-dense).
+
 ## Knowledge questions (no agent dispatch)
 
 For "explain X" / "what is Y" prompts, do not dispatch an agent. Read the matching cross-cutting skill on-demand:
@@ -92,7 +134,7 @@ This orchestrator is rigid; track each step via `TaskCreate` / `TaskUpdate`:
 ```
 TaskCreate(subject="Detect plan mode", activeForm="Detecting plan mode")
 TaskCreate(subject="Phase 1 silent context scan", activeForm="Scanning context")
-TaskCreate(subject="Phase 1.5 G0 plan-gate (conditional, only on plan_approved entry)", activeForm="Running G0 plan-gate")
+TaskCreate(subject="Phase 1.5 resume hand-off (pending_dispatch / G0 plan-gate / cold start)", activeForm="Running resume hand-off")
 TaskCreate(subject="Phase 2 branch-by-context", activeForm="Branching by context")
 TaskCreate(subject="Reflection gate before dispatch", activeForm="Confirming dispatch")
 TaskCreate(subject="Dispatch agent or read knowledge", activeForm="Dispatching")
@@ -104,9 +146,11 @@ TaskCreate(subject="Dispatch agent or read knowledge", activeForm="Dispatching")
 digraph orchestrator {
   start [shape=doublecircle];
   plan_mode [shape=diamond, label="Plan mode active?"];
-  phase_1_scan [shape=box, label="Phase 1: silent context scan\n(read journal, active-workflow YAML)"];
-  phase_15_gate [shape=box, label="Phase 1.5: G0 plan-gate\n(after ExitPlanMode only)"];
-  phase_2_branch [shape=diamond, label="Branch by context"];
+  phase_1_scan [shape=box, label="Phase 1: silent context scan\n(read journal last_n=20,\nactive-workflow YAML)"];
+  phase_15_handoff [shape=diamond, label="Phase 1.5: resume hand-off\nbranch?"];
+  phase_15_warm [shape=box, label="warm-resume\nappend workflow_resumed\nset active-workflow\ndispatch + [ivy-resume]"];
+  phase_15_g0 [shape=box, label="G0 plan-gate\ng-plan-critic x3\n2-of-3 vote"];
+  phase_2_branch [shape=diamond, label="Phase 2: branch by context"];
   reflection [shape=box, label="Reflection gate\n(present options to user)"];
   dispatch [shape=box, label="Write active-workflow YAML\nDispatch agent OR read knowledge"];
   done [shape=doublecircle];
@@ -117,9 +161,12 @@ digraph orchestrator {
   plan_mode -> plan_authoring [label="yes"];
   plan_authoring -> done [label="ExitPlanMode"];
   plan_mode -> phase_1_scan [label="no"];
-  phase_1_scan -> phase_15_gate [label="plan_approved entry found"];
-  phase_15_gate -> phase_2_branch;
-  phase_1_scan -> phase_2_branch [label="no plan_approved"];
+  phase_1_scan -> phase_15_handoff;
+  phase_15_handoff -> phase_15_warm [label="fresh pending_dispatch"];
+  phase_15_handoff -> phase_15_g0 [label="fresh plan_approved"];
+  phase_15_handoff -> phase_2_branch [label="cold start"];
+  phase_15_warm -> done [label="dispatch fired"];
+  phase_15_g0 -> done [label="emit pending_dispatch on SOUND;\nnext turn hits warm-resume"];
   phase_2_branch -> reflection;
   reflection -> dispatch;
   dispatch -> done;
@@ -141,6 +188,7 @@ digraph orchestrator {
 
 - `references/completion-gate.md` — 5-step IDENTIFY → RUN → READ → VERIFY → THEN-claim gate. Read at claim time.
 - `references/parallel-dispatch.md` — single-message multi-Agent dispatch pattern. Read when dispatching multiple critics.
+- `references/sample-verify.md` — post-dispatch sample-verify gate (`SAMPLE_PASS / SAMPLE_FAIL / SAMPLE_ABSTAIN`). Read after each review/verify/build specialist return, before integrating findings.
 - `.claude/rules/iron-laws.md` — full iron-law detail (auto-loaded on `.ivy`/`.spec` edits).
 - `.claude/rules/agent-dispatch.md` — `<dispatch-context>` schema + failure recovery contract.
 
