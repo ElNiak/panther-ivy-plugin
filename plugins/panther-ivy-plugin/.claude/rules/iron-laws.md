@@ -1,11 +1,18 @@
 ---
-paths: ["**/*.ivy", "**/*.spec"]
+paths: ["**/*.ivy", "**/*.spec", "**/skills/*/SKILL.md"]
 ---
 
 <purpose>
 Four canonical guidelines cited by the `build`, `verify`, and `review` skills.
 The text below is the canonical guidance; the workflow skills reference it
 rather than duplicating the wording.
+
+Skills MUST NOT re-cite iron-law text in their `SKILL.md` bodies — the rule
+auto-loads on every skill entry via the `**/skills/*/SKILL.md` glob, so the
+canonical wording, branch conditions, and worked examples below are always
+in context. The per-workflow binding table at the top of this rule lists
+which iron laws bind which workflow; consult it instead of restating in
+SKILL.md.
 </purpose>
 
 <context>
