@@ -8,6 +8,8 @@ user-invocable: false
 
 **Type:** flexible — adapt principles to context.
 
+**Journal:** read-only knowledge skill. Per `.claude/rules/journaling-contract.md` §1, this skill does NOT write to `.panther-ivy/workflow-journal.yaml`; the orchestrator and the 5 ops-skills are the writer surfaces.
+
 > **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
 
 This skill owns *layer-decomposition* decisions (which file does a type belong in, which layer depends on which) and the formal model pattern library. `ivy-syntax` owns *language-level* decisions (how to write a before/after monitor, what `around` means, how `require` interacts with `_generating`). Load both when designing a new layer; load only `ivy-syntax` when editing within a layer.

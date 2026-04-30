@@ -8,6 +8,8 @@ user-invocable: false
 
 **Type:** flexible — adapt principles to context.
 
+**Journal:** read-only knowledge skill. Per `.claude/rules/journaling-contract.md` §1, this skill does NOT write to `.panther-ivy/workflow-journal.yaml`; the orchestrator and the 5 ops-skills are the writer surfaces.
+
 Use this skill when propagating an Ivy type change to serializer/deserializer state machines. It provides the exact C++ patterns, encoding conventions, and asymmetry warnings needed to generate correct edits.
 
 ## Authority Rule

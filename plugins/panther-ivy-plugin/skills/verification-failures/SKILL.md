@@ -8,6 +8,8 @@ user-invocable: false
 
 **Type:** flexible — adapt principles to context.
 
+**Journal:** read-only knowledge skill. Per `.claude/rules/journaling-contract.md` §1, this skill does NOT write to `.panther-ivy/workflow-journal.yaml`; the orchestrator and the 5 ops-skills are the writer surfaces.
+
 This skill consolidates four lifecycle-related knowledge surfaces invoked when verification produces signal: error-pattern lookup, the mandatory pre-fix debugging methodology, structured counterexample interpretation, and the claim-resolution gate that records the outcome inline. SKILL.md is a thin dispatcher; procedural content lives in `references/`. Set the active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
 
 | Trigger | Reference to load |

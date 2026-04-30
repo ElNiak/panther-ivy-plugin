@@ -1,6 +1,6 @@
 # ivy_verdict -- Verdict Block Renderer
 
-Renders a verdict block for adversarial quality gates (G1–G5). Unlike the other tool-renderers in this directory, `ivy_verdict` is not an MCP tool — it is a synthesized block written by the gate PostToolUse hooks (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, and the G1/G4 extensions of `route-user-prompt.py` / `record-workflow-error.py`). The hooks read this spec to produce consistent output across gates.
+Renders a verdict block for adversarial quality gates (G1–G5). Unlike the other tool-renderers in this directory, `ivy_verdict` is not an MCP tool — it is a synthesized block written by the gate PostToolUse hooks (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, and `record-workflow-error.py` for the G4 verification gate). G1 (build exploration) is dispatched inline by the build-ops skill rather than from a hook. The hooks read this spec to produce consistent output across gates.
 
 ## Input fields
 

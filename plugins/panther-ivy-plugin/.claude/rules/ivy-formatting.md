@@ -41,17 +41,19 @@ matches the concept being labeled.
    Phase 3 compile result, `/nct-check` output.
 
 2. **Gate verdict**: SOUND / UNSOUND(#NN, reason, file:line) / ABSTAIN.
-   Use for the calibrated verdict of an adversarial quality gate (G0-G5).
+   Use for the calibrated verdict of an adversarial quality gate (G0-G8).
    ABSTAIN is a first-class output signalling insufficient evidence, not a
-   synonym for WARN or UNSURE. Used by: `reflection-patterns` gates;
-   `gate_verdict` journal entries; `model-reviewer` gate-critic mode.
+   synonym for WARN or UNSURE. Used by: the three gate critics
+   (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`); the
+   inline G2/G3/G4/G5/G7/G8 dispatches in the build / verify / review /
+   triage ops-skills; `gate_verdict` journal entries.
 
 3. **Finding severity**: ERROR / WARNING / INFO.
    Use for the severity of a code-level or workflow-level finding that has
    a file:line locator. Format per the existing canonical rule above
-   (`ERROR: {file}:{line} -- {message}`). Used by: `model-reviewer`
-   interactive mode, build Phase 5 findings, review Phase 3 findings,
-   `spec-analyst` diagnostic reports.
+   (`ERROR: {file}:{line} -- {message}`). Used by: `ivy-reviewer-agent`
+   interactive coverage / quality output, build Phase 5 findings, review
+   Phase 3 findings, `ivy-verifier-agent` diagnostic reports.
 
 These systems do not map onto each other. A FAIL tool-outcome may correspond
 to multiple ERROR findings; an UNSOUND gate verdict may cite one or more

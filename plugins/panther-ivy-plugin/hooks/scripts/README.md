@@ -65,9 +65,9 @@ One line per script and the event that triggers it. Multi-handler events run in 
 - `observability/observe.py --event <Name>` — emits a JSONL observability event (one per hook)
 
 ### UserPromptSubmit (runs in array order)
-1. `compose-style.py` — injects the active output-style overlay for the current workflow/phase
-2. `route-user-prompt.py` — consults `routing-rules.json` to activate the matching workflow
-3. `observability/observe.py --event UserPromptSubmit` — emits a JSONL observability event
+1. `observability/observe.py --event UserPromptSubmit` — emits a JSONL observability event
+
+(The pre-Phase-E `compose-style.py` and `route-user-prompt.py` hooks were removed; intent classification now lives in the orchestrator skill `skills/ivy/SKILL.md`, and style composition is driven by `.claude/rules/output-style.md` and per-skill bodies.)
 
 ### Notification (runs in array order)
 1. `notify-mcp-disconnect.py` — handles MCP-disconnect notifications

@@ -15,9 +15,9 @@ Fire before Claude processes each user message. No matcher — apply to every pr
 
 | Hook | Effect |
 |------|--------|
-| compose-style.py | Reads active workflow overlay and injects it as a system prompt prefix, overriding output-style defaults for the current phase |
-| route-user-prompt.py | Maps user intent to the active workflow skill; activates the matching workflow if none is active |
 | observe.py --event UserPromptSubmit | Observability: records prompt metadata to JSONL session log |
+
+(The pre-Phase-E `compose-style.py` and `route-user-prompt.py` hooks were removed; intent classification now lives in the orchestrator skill `skills/ivy/SKILL.md`, and style composition is driven by `.claude/rules/output-style.md` and the per-skill body, not a separate hook.)
 
 ## SessionStart Hooks
 

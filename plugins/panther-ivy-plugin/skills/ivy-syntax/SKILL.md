@@ -10,6 +10,8 @@ paths: "**/*.ivy"
 
 **Type:** flexible — adapt principles to context.
 
+**Journal:** read-only knowledge skill. Per `.claude/rules/journaling-contract.md` §1, this skill does NOT write to `.panther-ivy/workflow-journal.yaml`; the orchestrator and the 5 ops-skills are the writer surfaces.
+
 > **Workspace**: Set active workspace with `/set-workspace <protocol>` for protocol-scoped operations.
 
 This skill covers *language-level* decisions for `.ivy` files: before/after monitor syntax, `require` / `_generating` semantics, serializer/deserializer patterns, RFC bracket-tag annotations, and the search-before-write practice.

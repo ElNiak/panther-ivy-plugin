@@ -128,6 +128,18 @@ Want me to restart it?
 
 Wait for user confirmation before proceeding to Phase 3. Update phase to `"fix"` via `ivy_workflow_state(action="set", workflow="triage", phase="fix", protocol="<protocol>")`.
 
+#### G7 Diagnosis-Fidelity Gate (post-Phase-2, pre-Phase-3)
+
+Before the user is asked "Want me to restart it?", dispatch `g-fidelity-critic` ×3 in parallel to vet the diagnosis. Use the verbatim G7 prompts at `skills/ivy/references/critic_prompts/g7_triage_diag.md`. Apply the standard 2-of-3 asymmetric vote per `skills/ivy/references/parallel-dispatch.md`.
+
+- **VERDICT_SOUND** → continue to "Present diagnosis" + user confirmation flow above.
+- **VERDICT_UNSOUND** → halt; do NOT present the diagnosis to the user; loop back to "Identify failures" with the critic's `CITATION_FAIL` evidence as the new starting hypothesis.
+- **VERDICT_ABSTAIN** → present to user with a caveat in the diagnosis naming the unverifiable claim, per the workflow-specific routing in `.claude/rules/gate-verdicts.md`.
+
+After aggregation, append a `gate_verdict` journal entry: `ivy_workflow_state(action="append_journal", protocol="<protocol>", event_type="gate_verdict", state='{"gate":"g7","verdict":"sound|unsound|abstain","vote":"2-of-3"}')`.
+
+User override: if the user has prior context indicating the gate is wrong (e.g., observed the failure firsthand in this same session), they can override via `AskUserQuestion(retry-with-new-evidence | proceed-anyway | abandon)`. Default is to follow the gate verdict.
+
 ---
 
 ### Phase 3 — Fix
@@ -176,7 +188,17 @@ Claude Code auto-restarts MCP/LSP servers on the next tool invocation. After cle
 
 Re-run Phase 1 checks to confirm the stack is back up. Per `STALENESS_RULE`, do not reuse the prior `ivy_status` result — issue a fresh call.
 
-**If recovered:** Report success and proceed to completion.
+**If recovered:** continue to G8 below before reporting success.
+
+#### G8 Repair-Verify Gate (post-fix, pre-return)
+
+After Step 3 reports recovery successful, dispatch `g-fidelity-critic` ×3 in parallel to vet the post-fix indicators. Use the verbatim G8 prompts at `skills/ivy/references/critic_prompts/g8_triage_verify.md`. Apply the standard 2-of-3 asymmetric vote per `skills/ivy/references/parallel-dispatch.md`.
+
+- **VERDICT_SOUND** → report success, proceed to Knowledge Gate, return remediation summary to orchestrator.
+- **VERDICT_UNSOUND** → the repair did not take effect; route to "Reflection Gate — Recovery Failed" below with the critic's `CITATION_FAIL` evidence as the new diagnosis hypothesis.
+- **VERDICT_ABSTAIN** → return with caveat in the digest naming the unverifiable post-fix indicator.
+
+After aggregation, append a `gate_verdict` journal entry: `ivy_workflow_state(action="append_journal", protocol="<protocol>", event_type="gate_verdict", state='{"gate":"g8","verdict":"sound|unsound|abstain","vote":"2-of-3"}')`.
 
 #### Reflection Gate — Recovery Failed
 
@@ -330,7 +352,7 @@ For the underlying MCP tools (`ivy_status`, `ivy_diagnostics`, `ivy_coverage`), 
 
 Before completing, invoke `Skill(skill="panther-ivy-plugin:ivy")` and read `references/completion-gate.md` for the 5-step completion procedure (IDENTIFY → RUN → READ → VERIFY → THEN-claim). For triage, the IDENTIFY claim is "stack health restored" and only the structural check (Step 1) is required — skip the anti-pattern checklist and coverage delta. The 5-step gate is otherwise unchanged.
 
-Clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. If triage was reached via the preflight-failure escalation path, emit a paired `pending_dispatch` naming the original caller workflow before clearing, so the orchestrator re-activates the caller on its next turn. Otherwise, simply clear the flag — the orchestrator re-activates on the next user turn.
+Per the 4-step Terminal-state HARD-GATE in `.claude/rules/journaling-contract.md` §5: if triage was reached via the preflight-failure escalation path, emit `append_pending_dispatch(<original-caller>, reason="post-triage-repair")` first; otherwise skip the optional `pending_dispatch`. Then clear active-workflow via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Emit the user-visible terminal line in the §8 format `[ivy-triage] {repair_outcome}. {next_action_phrase}` — for example `[ivy-triage] Repair complete. Resuming verify (caller of preflight).` END TURN.
 
 ---
 

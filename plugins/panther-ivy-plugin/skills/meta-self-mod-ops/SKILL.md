@@ -9,7 +9,7 @@ version: "1.0.0"
 
 **Type:** rigid — follow exactly, do not adapt away discipline.
 
-Operating procedure for the `ivy-meta-agent`. Governs every change to `panther-ivy-plugin` source — SKILL.md bodies, agent files, hook scripts, `.claude/rules/*.md`, command files, output styles, and `routing-rules.json`. The agent runs the canonical three-loop: an implementer dispatch produces the diff, a spec-compliance review audits the diff against the original task spec, and a plugin-conventions review audits the diff against plugin conventions. All three verdicts must return SOUND before any plugin-source change ships. The orchestrator dispatches this agent; this body teaches the agent how to operate.
+Operating procedure for the `ivy-meta-agent`. Governs every change to `panther-ivy-plugin` source — SKILL.md bodies, agent files, hook scripts, `.claude/rules/*.md`, command files, output styles. The agent runs the canonical three-loop: an implementer dispatch produces the diff, a spec-compliance review audits the diff against the original task spec, and a plugin-conventions review audits the diff against plugin conventions. All three verdicts must return SOUND before any plugin-source change ships. The orchestrator dispatches this agent; this body teaches the agent how to operate.
 
 ## Iron-law binding
 
@@ -44,14 +44,14 @@ Plugin self-modification is bound by the local `PLUGIN_3LOOP` discipline declare
 <HARD-GATE>
 Activate this skill ONLY when the task edits `panther-ivy-plugin` source paths:
 `skills/**`, `agents/**`, `hooks/**`, `.claude/rules/**`, `commands/**`,
-`output-styles/**`, `plugin.json`, `routing-rules.json`. For any other path
+`output-styles/**`, `plugin.json`. For any other path
 (`.ivy` files, `docs/`, `README.md`, tests), exit immediately and route to
 the matching workflow specialist via the orchestrator. Do NOT run the
 three-loop on out-of-scope edits — it is calibrated for plugin-source drift
 risk only.
 </HARD-GATE>
 
-The path globs above mirror the `routing-rules.json` activation entries that wire this skill into PostToolUse on Write/Edit. The orchestrator routes plugin-source intent here; user prompts that mention non-plugin paths route elsewhere.
+The path globs above mirror the orchestrator's plugin-source intent classification (post-Phase-E; pre-Phase-C this was wired via `routing-rules.json` activation entries that have been removed). The orchestrator routes plugin-source intent here; user prompts that mention non-plugin paths route elsewhere.
 
 ### Phase 1 — Task framing
 
@@ -86,10 +86,10 @@ The implementer returns a diff. Do not skip to ship; the diff is a candidate, no
 
 #### Step 2 — Spec-compliance review
 
-Dispatch the existing `model-reviewer` agent with `review_scope="spec-compliance"` populated in the `<dispatch-context>` block (per `.claude/rules/agent-dispatch.md`). Opus tier, 180 s default budget. The reviewer compares the implementer's diff against the original task spec and acceptance criteria.
+Dispatch `ivy-reviewer-agent` with `review_scope="spec-compliance"` populated in the `<dispatch-context>` block (per `.claude/rules/agent-dispatch.md`). Opus tier, 180 s default budget. The reviewer compares the implementer's diff against the original task spec and acceptance criteria.
 
 ```
-Agent(subagent_type="panther-ivy-plugin:model-reviewer",
+Agent(subagent_type="panther-ivy-plugin:ivy-reviewer-agent",
       description="Spec-compliance review of <task>",
       prompt="<diff + original spec + acceptance criteria>")
 ```
@@ -125,6 +125,8 @@ When all three SOUND: invoke `Skill(skill="panther-ivy-plugin:ivy")` and read `r
 
 ### Phase 3 — Terminal state
 
+The 4-step Terminal-state HARD-GATE (optional `pending_dispatch` → `clear_active_workflow` → emit §8 message → END TURN) is defined in `.claude/rules/journaling-contract.md` §5. The per-meta specifics:
+
 <HARD-GATE>
 The terminal state of meta-self-mod-ops is one of:
 
@@ -140,7 +142,7 @@ is the convention drift the plugin-conventions-reviewer is designed to
 catch.
 </HARD-GATE>
 
-Update workflow state via `ivy_workflow_state(action="set", workflow="meta", phase="shipped" | "abandoned", protocol="<protocol-or-meta>")` before exit.
+Update workflow state via `ivy_workflow_state(action="set", workflow="meta", phase="shipped" | "abandoned", protocol="<protocol-or-meta>")` before exit. Emit the user-visible terminal line in the §8 format `[ivy-meta] {phase} {verdict}. {next_action_phrase}` — for example `[ivy-meta] Phase 3 SHIP. Three-loop SOUND; task complete; no further dispatch.` then clear active-workflow and END TURN.
 
 ## Process Flow
 
@@ -183,7 +185,7 @@ The `spec` and `conv` reviewers run as parallel siblings of the implementer's di
 | "I'm the implementer + reviewer in one context." | Single-context dispatch loses the dual-context isolation that catches drift. Three context-isolated agents catch what one in-context Claude misses. |
 | "Plugin conventions are 'soft' guidelines." | The plugin-local `skill-conventions.md`, three-layer split, and audit doc make drift detectable. The PostToolUse hooks make it loud. |
 | "Both reviewers will say the same thing." | spec-compliance-reviewer audits change-vs-spec; plugin-conventions-reviewer audits change-vs-conventions. Different axes, different verdicts. |
-| "This file isn't really 'plugin source'." | If it lives under `skills/`, `agents/`, `hooks/`, `.claude/rules/`, `commands/`, `output-styles/`, `plugin.json`, or `routing-rules.json`, it is plugin source — run the loop. |
+| "This file isn't really 'plugin source'." | If it lives under `skills/`, `agents/`, `hooks/`, `.claude/rules/`, `commands/`, `output-styles/`, or `plugin.json`, it is plugin source — run the loop. |
 
 ## Step Tracking
 
@@ -212,7 +214,7 @@ The two reviewer tasks share a single `addBlockedBy` on the implementer task —
 
 ## Integration
 
-- **Called by:** the `ivy` orchestrator when the user intent or PostToolUse path matches plugin-source globs (wired in `routing-rules.json`); never invoked by users directly.
+- **Called by:** the `ivy` orchestrator when the user intent or PostToolUse path matches plugin-source globs (classified inline in the orchestrator dispatch table); never invoked by users directly.
 - **Calls:** generic `Explore` (implementer), `panther-ivy-plugin:model-reviewer` (spec-compliance review), `panther-ivy-plugin:plugin-conventions-reviewer` (plugin-conventions review).
 - **Inline patterns:** Completion gate (`Skill(skill="panther-ivy-plugin:ivy")` `references/completion-gate.md`) for final claim emission. Multi-Agent single-message dispatch (`Skill(skill="panther-ivy-plugin:ivy")` `references/parallel-dispatch.md`) when the two reviewer dispatches run as siblings.
 - **Cross-references:** `.claude/rules/agent-dispatch.md` (fault handling for any of the three dispatches); `.claude/rules/skill-conventions.md` (the audit checklist the plugin-conventions reviewer applies).

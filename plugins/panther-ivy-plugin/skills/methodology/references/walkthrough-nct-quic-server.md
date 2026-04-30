@@ -25,13 +25,12 @@ remain free.
 
 User prompt: *"create a QUIC server compliance model from RFC 9000 §17"*.
 
-The UserPromptSubmit hook reads `routing-rules.json`, scores
-`workflow-build` highest (matches `intentPatterns`: `(create|build).*?model`,
-`RFC\s*\d+.*model`), and emits:
-
-```text
-[ROUTING] Activate the 'workflow-build' workflow skill.
-```
+The orchestrator skill `panther-ivy-plugin:ivy` classifies the intent
+("create / build a model") and routes to the build workflow per its
+Dispatch table. The post-Phase-E orchestrator replaces the pre-Phase-C
+`route-user-prompt.py` hook + `routing-rules.json` regex matcher; the
+semantics (intent → workflow target) survive but the surface is now a
+prose dispatch table in `skills/ivy/SKILL.md` rather than a JSON file.
 
 ## Step 3 — Build Phase 1 (Methodology detection)
 
@@ -86,11 +85,12 @@ verification")`, clear `active-workflow`, end turn.
 
 ## Step 7 — Verify cycle (next turn)
 
-UserPromptSubmit hook reads the journal, finds the fresh
-`pending_dispatch`, emits `[ROUTING:CONTINUE]` for `workflow-verify`,
-and `workflow-navigate` Phase 1 Step 2c consumes the entry and invokes
-`Skill(workflow-verify)`. Verify Phase 3 (compile) → Phase 4 (verify)
-runs; G4 critic confirms SOUND with calibrated 3-of-3 vote.
+The orchestrator skill `panther-ivy-plugin:ivy` Phase 1.5 (resume hand-off)
+reads the journal, finds the fresh `pending_dispatch`, writes a
+`workflow_resumed` event, sets the active-workflow YAML, and dispatches
+`ivy-verifier-agent` per the contract §4 consume-pair semantics.
+Verify Phase 3 (compile) → Phase 4 (verify) runs; G4 critic confirms
+SOUND with calibrated 3-of-3 vote.
 
 ## Step 8 — Verify Phase 5 (IUT testing)
 
@@ -115,7 +115,7 @@ per `.claude/rules/ivy-formatting.md` severity.
 | Concept | Where |
 |---|---|
 | `/set-workspace` edit isolation | Step 1 |
-| `routing-rules.json` regex match | Step 2 |
+| Orchestrator dispatch-table intent classification | Step 2 |
 | `build-state.yaml` methodology field | Step 3 |
 | 14-layer template selection | Step 4 |
 | Iron law `NO_LAYER_WITHOUT_SCAFFOLD` | Step 5 |

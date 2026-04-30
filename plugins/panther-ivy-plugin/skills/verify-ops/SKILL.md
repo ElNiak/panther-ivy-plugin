@@ -11,16 +11,7 @@ version: "1.0.0"
 
 Operating procedure for the `ivy-verifier-agent`. Carries an Ivy test spec through the compile → verify → IUT cycle, dispatches the G4 verification gate inline to catch false `SOUND`, interprets counterexamples in-place via the preloaded `verification-failures` catalog, and runs the Phase 7 fix loop under an attempt-counter cap. The orchestrator dispatches this agent; this body teaches the agent how to operate.
 
-## Iron-law binding
-
-Verify is bound by `NO_FIX_WITHOUT_VERIFY` and `STALENESS_RULE` (`.claude/rules/iron-laws.md`).
-
-- `NO_FIX_WITHOUT_VERIFY` — No claim of resolution without a fresh `ivy_verify` / `ivy_compile` tool result from the current turn. The fix is half the work; the re-verify is the other half. Direct-CLI invocation of `ivyc` / `ivy_check` / `ivy_show` is blocked by the `block-direct-ivy.sh` PreToolUse hook.
-- `STALENESS_RULE` — A tool result is stale if any file in its include closure (per `ivy_analysis(mode="includes")`) was modified after the result's timestamp. Re-run before citing PASS, transitioning phases, or proposing a concrete patch.
-
-The other iron laws (`NO_LAYER_WITHOUT_SCAFFOLD`, `NO_QUALITY_WITHOUT_COVERAGE`) bind build and review respectively; they do not apply to verify's compile-and-verify domain. Read `.claude/rules/iron-laws.md` for canonical wording, branch conditions, and the `Skill(skill="panther-ivy-plugin:verification-failures")` claim-resolution gate before entering Phase 4.
-
-For the calibrated meanings of `SOUND`, `ABSTAIN`, MPE, "iron law", "knowledge gate", and `pending_dispatch` as used below, Read `references/glossary.md` once — these terms have fixed definitions and are not paraphrased here.
+For the calibrated meanings of MPE, "iron law", "knowledge gate", and `pending_dispatch` as used below, Read `references/glossary.md` once — these terms have fixed definitions and are not paraphrased here. Gate-verdict semantics (`SOUND` / `UNSOUND` / `ABSTAIN`) live in `.claude/rules/gate-verdicts.md` and auto-load on skill entry.
 
 ## Phases
 
@@ -137,7 +128,7 @@ G4 verification gate (every `ivy_verify` return, pass or fail): apply the
 **Multi-Perspective Exploration (MPE)** pattern. Dispatch
 `g-fidelity-critic` ×3 in parallel (single message, three `Agent` calls)
 for asymmetric vote, using verbatim G4 prompts
-(`critic_prompts/g4_verification`), catalog slices
+(`skills/ivy/references/critic_prompts/g4_verification.md`), catalog slices
 `#200-249` + `#250-299` + `#400-499`. Verdict actions: SOUND advances;
 UNSOUND writes `[GAP: #NN]` markers and blocks until fix-and-re-verify
 or promotion to `// DEFERRED YYYY-MM-DD`; ABSTAIN proceeds to Phase 6
@@ -155,7 +146,7 @@ For an end-to-end walkthrough of one verify cycle (compile → FAIL with counter
 
 #### On PASS
 
-1. Report: "Verification passed for `<test_file>`."
+1. Report in the §8 terminal-state format from `.claude/rules/journaling-contract.md`: `[ivy-verify] Phase 4 PASS (G4 SOUND, vote N-of-3). Verification passed for <test_file>; <next_action_phrase>`. Append the verdict to the journal as a `gate_verdict` event.
 2. Offer follow-ups via `AskUserQuestion`: "Run another test? Check coverage? Review model quality? Done."
 3. If the user picks coverage or review, do NOT dispatch review directly. Emit a `pending_dispatch` naming `review` and let the orchestrator hand control over on the next turn:
    ```
@@ -319,6 +310,8 @@ The cap value (3) is documented inline; raise it only via the `override_attempt_
 
 Apply the fix indicated by the inline counterexample interpretation. If editing `.ivy` files, invoke `Skill(skill="panther-ivy-plugin:ivy-syntax")` to load language reference guidance before making changes. After the Edit, follow the post-Edit workspace-block recovery pattern in Phase 6.
 
+> **A1 — verifier-agent capability note.** The `panther-ivy-plugin:ivy-verifier-agent` has `forbidden_tools: ["Edit","Write"]`. When verify-ops runs inside the verifier agent (the common case), Step 2 is satisfied by handing off to the builder via `append_pending_dispatch(target_workflow="build", phase_hint="apply-fix", reason="verify Phase 7 Step 2 — apply diagnosed fix from <file>:<line>")` and clearing active-workflow; the builder applies the Edit on the next turn and emits `pending_dispatch(verify, phase_hint="re-verify")` on completion to loop back to Phase 7 Step 3. When verify-ops runs in a different context that allows Edit, the inline Edit is the direct path. The cycle invariant (`NO_FIX_WITHOUT_VERIFY`) is unchanged either way.
+
 #### Step 3: Re-verify
 
 Loop back to Phase 3 (recompile). The cycle is: Phase 3 → Phase 4 → Phase 6 → Phase 7 → Phase 3. `NO_FIX_WITHOUT_VERIFY` binds: no claim of resolution without a fresh `ivy_verify` / `ivy_compile` tool result on the edited spec.
@@ -361,7 +354,6 @@ digraph verify_ops {
 | "ivy_verify returned SOUND, we're done" | G4 critic verdict required before any claim. SOUND alone is necessary but not sufficient — whitelisted `assume`, trusted-isolate leak, or solver wall-timeout masquerade can produce false SOUND. The verifier agent dispatches G4 inline. |
 | "The IUT trace matches the Ivy log, skip pcap" | Ivy log events do not guarantee wire transmission. Always cross-validate via pcap (G5 catalog `#501`). |
 | "This counterexample is a model bug, not the IUT" | Distinguish IUT bug vs. model bug via the G5 trace gate (`#505`). Do not classify without the gate. |
-| "ABSTAIN means proceed cautiously" | ABSTAIN is inconclusive. Proceed to Phase 6 Diagnose using `abstain_reason` as the starting hypothesis; do NOT treat the upstream `ivy_verify` result as authoritative. |
 | "I can fix the failure without re-verifying" | `NO_FIX_WITHOUT_VERIFY`: every fix loops back through Phase 3 (compile) and Phase 4 (verify). No claim of resolution without fresh tool output. |
 | "Three failed attempts, one more should do it" | Phase 7 caps fix attempts at 3 per test file. Above the cap, present the escalation menu — do not silently retry. The cap is journaled via `progress{kind: fix_attempt}` for cross-session accountability. |
 | "G4 will fire from the post-tool hook, I'll just keep moving" | The verifier dispatches G4 inline after every `ivy_verify` return. The hook backstop fires too, but inline dispatch is what the workflow consumes for its verdict; the hook protects against agent-side omission only. |
@@ -421,6 +413,8 @@ Before completing, invoke `Skill(skill="panther-ivy-plugin:ivy")` and read `refe
 If this verify run needs another workflow next (e.g., the user picked "review coverage" on Phase 4 PASS), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. The orchestrator's next-turn routing consumes any pending dispatch (or same-turn if the harness routes in-line). If no hand-off is needed, simply clear the flag — the orchestrator re-activates on the next user turn.
 
 ## Terminal state
+
+The 4-step Terminal-state HARD-GATE (optional `pending_dispatch` → `clear_active_workflow` → emit `[ivy-verify] {phase} {verdict}. {next_action_phrase}` → END TURN) is defined in `.claude/rules/journaling-contract.md` §5. The per-verify specifics:
 
 <HARD-GATE>
 The terminal state of verify is one of:

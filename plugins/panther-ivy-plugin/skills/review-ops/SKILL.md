@@ -11,15 +11,6 @@ version: "1.0.0"
 
 Operating procedure for the `ivy-reviewer-agent`. Audits an Ivy protocol model along three concerns — RFC coverage (traceability), structural quality, and post-IUT trace fidelity. The agent runs the Coverage path inline using `ivy_coverage` / `ivy_extract_requirements`, runs the Quality path inline using `ivy_quality` plus a Multi-Perspective Exploration (MPE), absorbs RFC requirement extraction and audit inline (no separate traceability dispatch), and dispatches G5 trace-analysis critics on IUT-test results. The orchestrator dispatches this agent; this body teaches the agent how to operate.
 
-## Iron-law binding
-
-Review is bound by `NO_QUALITY_WITHOUT_COVERAGE` and `STALENESS_RULE` (`.claude/rules/iron-laws.md`).
-
-- `NO_QUALITY_WITHOUT_COVERAGE` — Every quality verdict MUST cite a fresh `ivy_coverage` / `ivy_quality` tool output. Personal heuristic ("looks fine", "covers the obvious cases") does not discharge the rule. Coverage and quality are evidence-bound; the verdict carries the tool-output reference.
-- `STALENESS_RULE` — A tool result is stale if any file in its include closure (per `ivy_analysis(mode="includes")`) was modified after the result's timestamp. Re-run before citing a verdict, transitioning phases, or marking findings resolved.
-
-The other iron laws (`NO_FIX_WITHOUT_VERIFY`, `NO_LAYER_WITHOUT_SCAFFOLD`) bind verify and build respectively; they do not apply to review's audit-only domain. Read `.claude/rules/iron-laws.md` for canonical wording, branch conditions, and edge cases before exiting Phase 1.
-
 ## Phases
 
 ### Phase 0 — Plan-mode option framings
@@ -192,6 +183,8 @@ Then clear the active-workflow flag via `ivy_workflow_state(action="clear", prot
 
 **If the user accepts as-is:** Proceed to completion.
 
+Per the 4-step Terminal-state HARD-GATE in `.claude/rules/journaling-contract.md` §5: append the optional `pending_dispatch` first, clear active-workflow, then emit the user-visible terminal line in the §8 format `[ivy-review] {phase} {verdict}. {next_action_phrase}` — for example `[ivy-review] Phase 3 PASS (G5 SOUND). Workflow complete; no further dispatch.` END TURN.
+
 #### Knowledge Gate: Post-Findings-Resolution
 
 **Knowledge Gate.** Pause for the G6 knowledge-capture vote (g-knowledge-critic ×3, asymmetric vote): focus areas are workflow refinements from the resolution process and fix strategies that worked or did not (rules, references, feedback memory).
@@ -207,7 +200,7 @@ G5 trace-analysis gate (every IUT-test scope): apply the
 **Multi-Perspective Exploration (MPE)** pattern. The reviewer agent dispatches
 `g-fidelity-critic` ×3 in parallel (single message, three `Agent` calls) for
 asymmetric vote, using verbatim G5 prompts
-(`critic_prompts/g5_trace_analysis`), catalog slices `#100-107` +
+(`skills/ivy/references/critic_prompts/g5_trace.md`), catalog slices `#100-107` +
 `#500-559` (+ `#560-589` for NSCT). Critics analyse the existing run's output
 directory in fixed read order: `analysis/ivy_tester_results.json` → compile
 log → tester log → IUT log → pcap. Primary checks: `#501` (Ivy trace claims

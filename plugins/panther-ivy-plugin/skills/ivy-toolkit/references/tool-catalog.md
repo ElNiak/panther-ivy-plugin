@@ -420,7 +420,7 @@ Manage workflow state files for multi-session tracking.
 | `progress` | workflow skills during long-running steps | `detail` |
 | `error` | `record-workflow-error.py` hook and workflow skills | `detail`, `implication`, `summary` |
 | `context_switch` | navigate Phase 0 (plan-mode detection), other skills | `detection`, `mode` |
-| `gate_dispatched` | gate-trigger hooks (`assess-modeling.py`, `route-user-prompt.py`, etc.) | `gate`, `trigger`, `artifact`, `layer`, `methodology` |
+| `gate_dispatched` | gate-trigger hooks (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, `record-workflow-error.py`) | `gate`, `trigger`, `artifact`, `layer`, `methodology` |
 | `gate_verdict` | orchestrator after critic fan-out | `gate` ("g0".."g5"), `verdict`, `vote`, `patterns`, `cycle`, `tier`, `duration_s` |
 | `plan_approved` | navigate Plan-Author Branch on ExitPlanMode | `workflow` (caller), `phase_before_plan`, `plan_file`, `supersedes` |
 | `workflow_resumed` | navigate Phase 1.5 after G0 SOUND verdict | `workflow` (caller), `phase_after_resume`, `g0_cycle` |

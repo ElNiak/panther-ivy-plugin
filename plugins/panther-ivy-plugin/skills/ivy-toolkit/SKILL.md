@@ -8,6 +8,8 @@ user-invocable: false
 
 **Type:** flexible — adapt principles to context.
 
+**Journal:** read-only knowledge skill. Per `.claude/rules/journaling-contract.md` §1, this skill does NOT write to `.panther-ivy/workflow-journal.yaml`; the orchestrator and the 5 ops-skills are the writer surfaces.
+
 Single source of truth for Ivy tool operations. All skills and commands reference this skill instead of maintaining their own tool documentation. Three complementary tool systems are available: native Ivy LSP (navigation, diagnostics, go-to-definition), the ivy-tools MCP (verification, compilation, analysis), the Serena MCP (semantic symbol search, rename, refactor, session memory), plus Claude's native tools for file I/O and editing. The standard workflow is Navigate (LSP) → Understand (LSP + MCP) → Edit (Claude) → Verify (MCP).
 
 ## Iron Law

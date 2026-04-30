@@ -248,14 +248,6 @@ def build_summary(
             warning_lines = ["[JOURNAL AUDIT]"] + [f"  - {w}" for w in audit_warnings]
             parts.append("\n".join(warning_lines))
 
-    # Knowledge gate prompt
-    parts.append(
-        "[KNOWLEDGE GATE] Before ending this session, invoke "
-        'Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture") to capture '
-        "any learnings from this session. If no learnable patterns are "
-        "found, the skill exits silently."
-    )
-
     return "\n".join(parts)
 
 

@@ -13,6 +13,12 @@ For quick preflight liveness checks, dispatch the agent with a
 preflight intent instead.
 </purpose>
 
+<journal-note>
+Per `.claude/rules/journaling-contract.md` §1, this command writes the
+journal via the underlying `triage-ops` skill (the agent invokes it).
+The terminal-state HARD-GATE in contract §5 binds the dispatched agent.
+</journal-note>
+
 <metadata mode="FAST" orchestrator="false" workspace-aware="false"/>
 
 <dispatch target="ivy-triage-agent" via="agent" mode="full-health-check"

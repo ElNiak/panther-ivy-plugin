@@ -11,15 +11,6 @@ version: "1.0.0"
 
 Operating procedure for the `ivy-builder-agent`. Carries a protocol model from RFC to a structurally sound, verified Ivy specification layer by layer. Dispatches `spec-analyst` for compile-error diagnosis, `model-reviewer` and `traceability-agent` for the Phase 5 quality and coverage audits, MPE Explore agents at Phase 1 for architectural-approach exploration, and `g-fidelity-critic` ×3 inline for the G2 modeling gate. The orchestrator dispatches this agent; this body teaches the agent how to operate.
 
-## Iron-law binding
-
-Build is bound by `NO_LAYER_WITHOUT_SCAFFOLD` and `STALENESS_RULE` (`.claude/rules/iron-laws.md`).
-
-- `NO_LAYER_WITHOUT_SCAFFOLD` — Before writing a net-new layer file, ground the decision in `ivy_diagnostics(mode="structural")` returning no ERROR-severity diagnostics on the predecessor layer. Compile success is necessary but not sufficient. Patches to existing layer files are out of scope (the rule binds new-layer authoring only).
-- `STALENESS_RULE` — A tool result is stale if any file in its include closure (per `ivy_analysis(mode="includes")`) was modified after the result's timestamp. Re-run before citing PASS, transitioning phases, or proposing a concrete patch.
-
-The other iron laws (`NO_FIX_WITHOUT_VERIFY`, `NO_QUALITY_WITHOUT_COVERAGE`) bind verify and review respectively; they do not apply to build's authoring domain. Read `.claude/rules/iron-laws.md` for canonical wording, branch conditions, and worked examples before entering Phase 3.
-
 ## Phases
 
 ### Phase 0 — Plan-mode option framings
@@ -149,9 +140,9 @@ After each `Write`/`Edit` on a `.ivy` file, the builder agent dispatches the app
 <HARD-GATE>
 G2 modeling gate (non-test `.ivy` files): dispatch `g-fidelity-critic` ×3 in parallel
 (single message, three `Agent` calls) for asymmetric vote. Use `reflection-patterns`
-Pattern B verbatim G2 prompts (`critic_prompts/g2_modeling`).
+Pattern B verbatim G2 prompts (`skills/ivy/references/critic_prompts/g2_modeling.md`).
 G3 test-spec gate (`*_test_*.ivy`): same dispatch shape with G3 verbatim prompts
-(`critic_prompts/g3_testspec`).
+(`skills/ivy/references/critic_prompts/g3_testspec.md`).
 The `assess-modeling.py` PostToolUse hook is a backstop; the builder is responsible
 for inline dispatch and must not defer to the hook for primary G2 invocation.
 On `VERDICT_UNSOUND`, write `[GAP: #NN <reason>]` markers inline at cited locations
@@ -210,7 +201,7 @@ If `build-state.yaml.methodology == "nsct"`, load `Skill(skill="panther-ivy-plug
 
 #### Step 2: Clear state
 
-If this build run needs another workflow next (e.g., user explicitly asked for a review after the quality gate), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`.
+Per the 4-step Terminal-state HARD-GATE in `.claude/rules/journaling-contract.md` §5: if this build run needs another workflow next (e.g., user explicitly asked for a review after the quality gate), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Emit the user-visible terminal-state line in the §8 format `[ivy-build] {phase} {verdict}. {next_action_phrase}` — for example `[ivy-build] Phase 6 PASS. Handing off to verify (post-modeling verification).` END TURN; do not Skill() into another ops-skill or Agent() dispatch directly.
 
 ## Process Flow
 
@@ -250,7 +241,6 @@ digraph build_ops {
 |---|---|
 | "Layer compiles cleanly, structural check is overkill" | `NO_LAYER_WITHOUT_SCAFFOLD` binds `ivy_diagnostics(mode="structural")` on the predecessor layer before any Write/Edit on layer N. Compile success is necessary but not sufficient. |
 | "I can guess which layers from the 14-template" | The methodology branch (NCT / NACT / NSCT) selects layer order. Load `Skill(skill="panther-ivy-plugin:specification-patterns")` and `Skill(skill="panther-ivy-plugin:methodology")` rather than guessing. |
-| "G1 ABSTAIN means proceed cautiously" | `ABSTAIN` is not a synonym for `SOUND`. Resolve the evidence gap or escalate to Opus tier; do not enter Phase 3 on ABSTAIN. |
 | "I'll fix the [GAP] marker later, layer N+1 first" | Resolve every open `[GAP: #NN]` marker across the current Phase 3 lifecycle BEFORE starting the next layer. Each marker is fixed in place or promoted to `// DEFERRED YYYY-MM-DD`. |
 | "The RFC quote feels right from memory" | Always Read the RFC source via the `spec-analyst` agent or the `methodology` skill. Never paraphrase or quote normative text from memory. |
 | "G2 will fire from the post-write hook, I'll just keep writing" | The builder dispatches G2/G3 inline after each Write/Edit on `.ivy`. The `assess-modeling.py` hook is a backstop, not the primary trigger. Inline dispatch produces the asymmetric-vote verdict the workflow consumes. |
