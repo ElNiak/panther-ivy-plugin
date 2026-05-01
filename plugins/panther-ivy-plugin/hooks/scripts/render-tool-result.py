@@ -68,7 +68,7 @@ def format_ivy_verify(data: dict, workflow: str | None) -> str | None:
     if workflow == "triage":
         if success:
             return "ivy_verify: OK"
-        return f"ivy_verify: FAIL -- {len(errors)} error(s). Run verify workflow for details."
+        return f"ivy_verify: FAIL -- {len(errors)} error(s). Run refine workflow for details."
 
     if workflow == "scaffold":
         if success:

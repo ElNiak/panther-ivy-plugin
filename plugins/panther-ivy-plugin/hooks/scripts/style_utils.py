@@ -60,7 +60,7 @@ def compose_style(
 
     Args:
         plugin_root: Path to the plugin root directory.
-        workflow: Active workflow name (e.g., "verify"), or None.
+        workflow: Active workflow name (e.g., "refine"), or None.
         phase: Active phase within the workflow (e.g., "compile"), or None.
 
     Returns:
