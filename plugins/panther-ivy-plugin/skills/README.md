@@ -5,7 +5,7 @@
 Skills provide reference material and operating procedures for Ivy protocol testing within the PANTHER framework. Post-Phase-F.1 (CHANGELOG 0.11.0), the plugin uses an **orchestrator + specialist-agent** layout. The 13 skills under this directory split into three roles:
 
 - **Orchestrator (1)** — `ivy/` is the single user-invocable entry point. It routes user intent to a specialist agent or answers knowledge questions inline by reading a knowledge skill on demand.
-- **Ops skills (5)** — `verify-ops/`, `build-ops/`, `review-ops/`, `triage-ops/`, `meta-self-mod-ops/` carry the operating procedures previously held by the deprecated `workflow-*` skills. They are preloaded into their owning specialist agent via the agent's `skills:` frontmatter chain at spawn time and are not user-invocable directly.
+- **Ops skills (5)** — `verify-ops/`, `scaffold-ops/`, `review-ops/`, `triage-ops/`, `meta-self-mod-ops/` carry the operating procedures previously held by the deprecated `workflow-*` skills. They are preloaded into their owning specialist agent via the agent's `skills:` frontmatter chain at spawn time and are not user-invocable directly.
 - **Knowledge skills (7)** — `apt-attack-patterns/`, `ivy-toolkit/`, `ivy-syntax/`, `methodology/`, `propagation-patterns/`, `specification-patterns/`, `verification-failures/` carry on-demand reference material loaded by the orchestrator and by specialist agents.
 
 Specialist execution happens in five sibling agent files under `agents/` (`ivy-verifier-agent`, `ivy-builder-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`). Three gate-critic agents (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`) live alongside them. Agents are documented in `agents/README.md`; this file indexes the skills only.
@@ -46,7 +46,7 @@ The three layers each own a unique capability: the ivy orchestrator (intent clas
 
 1. **`ivy/SKILL.md`** — the orchestrator. Iron-law primer, methodology routing (NCT/NACT/NSCT), workspace control, dispatch tables for specialist agents and gate critics, post-dispatch sample-verify gate, and the knowledge-question routing table. Read this first; everything else is reached through it.
 2. **`.claude/rules/iron-laws.md`** — the four laws (`NO_FIX_WITHOUT_VERIFY`, `NO_LAYER_WITHOUT_SCAFFOLD`, `NO_QUALITY_WITHOUT_COVERAGE`, `STALENESS_RULE`) cited by every ops skill.
-3. **One ops skill that interests you** (`verify-ops`, `build-ops`, `review-ops`, `triage-ops`, or `meta-self-mod-ops`) plus its owning agent file under `../agents/` — read them as a pair, since the agent file owns the capability contract and the ops skill owns the procedure.
+3. **One ops skill that interests you** (`verify-ops`, `scaffold-ops`, `review-ops`, `triage-ops`, or `meta-self-mod-ops`) plus its owning agent file under `../agents/` — read them as a pair, since the agent file owns the capability contract and the ops skill owns the procedure.
 4. **The knowledge skills cited by that ops skill's phase headers** (e.g. `verify-ops` cites `verification-failures` and `ivy-toolkit`).
 
 ## Orchestrator (1)
@@ -62,7 +62,7 @@ Operating procedures preloaded into a specialist agent via the agent's `skills:`
 | Skill | Type | Iron laws bound | Preloaded into | Purpose |
 |-------|------|-----------------|----------------|---------|
 | [verify-ops](verify-ops/) | rigid | `NO_FIX_WITHOUT_VERIFY`, `STALENESS_RULE` | `ivy-verifier-agent` | Verify, compile, run IUT tests, and diagnose counterexamples in Ivy specifications. |
-| [build-ops](build-ops/) | rigid | `NO_LAYER_WITHOUT_SCAFFOLD`, `STALENESS_RULE` | `ivy-builder-agent` | Scaffold and extend protocol models (NCT 14-layer template, NACT 6-stage attack template, NSCT simulation), propagate field/variant changes across layers. |
+| [scaffold-ops](scaffold-ops/) | rigid | `NO_LAYER_WITHOUT_SCAFFOLD`, `STALENESS_RULE` | `ivy-builder-agent` | Scaffold and extend protocol models (NCT 14-layer template, NACT 6-stage attack template, NSCT simulation), propagate field/variant changes across layers. |
 | [review-ops](review-ops/) | rigid | `NO_QUALITY_WITHOUT_COVERAGE`, `STALENESS_RULE` | `ivy-reviewer-agent` | Audit RFC coverage, extract requirement manifests, score model quality, analyse IUT traces. |
 | [triage-ops](triage-ops/) | rigid | (none — diagnostic) | `ivy-triage-agent` | 9-step MCP / LSP / Serena health-check runbook and repair flow. |
 | [meta-self-mod-ops](meta-self-mod-ops/) | rigid | (none — editorial) | `ivy-meta-agent` | Plugin source modification flow (skills, agents, hooks, `.claude/rules/`, commands, output-styles) with self-audit against plugin conventions. |
@@ -77,8 +77,8 @@ On-demand reference material. Loaded by the orchestrator (for "explain X" prompt
 | [ivy-toolkit](ivy-toolkit/) | flexible | `ivy-{verifier,builder,reviewer,triage}-agent`; `ivy` orchestrator (knowledge questions) | MCP tool catalogue (18 ivy-tools tools + Serena), parameter matrix, mode map, selection guide. |
 | [ivy-syntax](ivy-syntax/) | flexible | `ivy-verifier-agent`; `ivy-builder-agent`; `ivy` orchestrator (knowledge questions) | Ivy 1.7 syntax reference, module system, RFC annotation conventions, test-spec patterns. |
 | [methodology](methodology/) | flexible | `ivy` orchestrator (NCT/NACT/NSCT selection and knowledge questions) | NCT (compliance) / NACT (security) / NSCT (simulation) selection and workflow guidance, 14-layer template overview. |
-| [propagation-patterns](propagation-patterns/) | flexible | `ivy-builder-agent` (on type change in build-ops); `ivy` orchestrator (knowledge questions) | Field/variant propagation patterns across stack/entities/shims/utils with Ivy-to-C++ encoding tables. |
-| [specification-patterns](specification-patterns/) | flexible | `ivy-builder-agent` (layer scaffolding in build-ops); `ivy` orchestrator (knowledge questions) | 14-layer structural template reference and formal-model pattern scaffolding. |
+| [propagation-patterns](propagation-patterns/) | flexible | `ivy-builder-agent` (on type change in scaffold-ops); `ivy` orchestrator (knowledge questions) | Field/variant propagation patterns across stack/entities/shims/utils with Ivy-to-C++ encoding tables. |
+| [specification-patterns](specification-patterns/) | flexible | `ivy-builder-agent` (layer scaffolding in scaffold-ops); `ivy` orchestrator (knowledge questions) | 14-layer structural template reference and formal-model pattern scaffolding. |
 | [verification-failures](verification-failures/) | flexible | `ivy-verifier-agent` (diagnose phase in verify-ops); `ivy-reviewer-agent` (contested findings); G4 / G5 gate critics; `ivy` orchestrator (knowledge questions) | Numbered verifier-pattern catalogue (#100–#599), counterexample interpretation, claim-resolution gate. |
 
 ## Cross-cutting content (no longer discrete skills)

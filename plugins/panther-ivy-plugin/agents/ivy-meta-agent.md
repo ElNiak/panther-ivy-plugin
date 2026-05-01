@@ -1,6 +1,6 @@
 ---
 name: ivy-meta-agent
-description: "Specialist agent for plugin source modifications (skills, agents, hooks, .claude/rules, commands, output-styles, plugin.json). Use when the ivy orchestrator dispatches this agent for plugin self-modification tasks ('update skills/build-ops/SKILL.md', 'edit a hook', 'add a rule'). <example>Context: orchestrator routed a plugin-self-mod request. user: \"add a HARD-GATE section to skills/build-ops/SKILL.md\". assistant: \"Dispatching ivy-meta-agent.\" <commentary>Meta has full Read/Write/Edit/Bash access; it audits its own changes against plugin conventions before returning.</commentary></example>"
+description: "Specialist agent for plugin source modifications (skills, agents, hooks, .claude/rules, commands, output-styles, plugin.json). Use when the ivy orchestrator dispatches this agent for plugin self-modification tasks ('update skills/scaffold-ops/SKILL.md', 'edit a hook', 'add a rule'). <example>Context: orchestrator routed a plugin-self-mod request. user: \"add a HARD-GATE section to skills/scaffold-ops/SKILL.md\". assistant: \"Dispatching ivy-meta-agent.\" <commentary>Meta has full Read/Write/Edit/Bash access; it audits its own changes against plugin conventions before returning.</commentary></example>"
 model: opus
 color: red
 tools:
@@ -24,7 +24,7 @@ Per `.claude/rules/journaling-contract.md` §1, this agent does NOT write the jo
 
 <dispatch-context>
   <field name="target_files" required="true"
-         example="Edit skills/build-ops/SKILL.md to add a HARD-GATE in Phase 3"/>
+         example="Edit skills/scaffold-ops/SKILL.md to add a HARD-GATE in Phase 3"/>
   <field name="workspace" required="true"
          example="Workspace: panther-ivy-plugin (plugin source modification, not protocol)"/>
   <field name="phase_context" required="true"

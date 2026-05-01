@@ -1,11 +1,11 @@
 ---
-name: build-ops
-description: "Operating procedure preloaded into the ivy-builder-agent at spawn. Use when the ivy orchestrator dispatches the builder agent for protocol model construction (NCT/NACT/NSCT). Not user-invocable directly."
+name: scaffold-ops
+description: "Operating procedure preloaded into the ivy-builder-agent at spawn. Use when the ivy orchestrator dispatches the builder agent for protocol model construction (NCT/NACT/NSCT) — corresponds to scaffold mode (NCT phases 2-7). Not user-invocable directly."
 user-invocable: false
-version: "1.0.0"
+version: "1.1.0"
 ---
 
-# Build Ops
+# Scaffold Ops
 
 **Type:** rigid — follow exactly, do not adapt away discipline.
 
@@ -201,7 +201,7 @@ If `build-state.yaml.methodology == "nsct"`, load `Skill(skill="panther-ivy-plug
 
 #### Step 2: Clear state
 
-Per the 4-step Terminal-state HARD-GATE in `.claude/rules/journaling-contract.md` §5: if this build run needs another workflow next (e.g., user explicitly asked for a review after the quality gate), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Emit the user-visible terminal-state line in the §8 format `[ivy-build] {phase} {verdict}. {next_action_phrase}` — for example `[ivy-build] Phase 6 PASS. Handing off to verify (post-modeling verification).` END TURN; do not Skill() into another ops-skill or Agent() dispatch directly.
+Per the 4-step Terminal-state HARD-GATE in `.claude/rules/journaling-contract.md` §5: if this scaffold run needs another workflow next (e.g., user explicitly asked for a review after the quality gate), append `pending_dispatch(<next>, reason=<why>)` first. Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")`. Emit the user-visible terminal-state line in the §8 format `[ivy-scaffold] {phase} {verdict}. {next_action_phrase}` — for example `[ivy-scaffold] Phase 6 PASS. Handing off to verify (post-modeling verification).` END TURN; do not Skill() into another ops-skill or Agent() dispatch directly.
 
 ## Process Flow
 

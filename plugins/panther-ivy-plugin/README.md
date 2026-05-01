@@ -80,7 +80,7 @@ The orchestrator (`skills/ivy/SKILL.md`) is the single user-facing entry point. 
 | Specialist agent | Ops-skill | Purpose |
 |---|---|---|
 | `ivy-verifier-agent` | `verify-ops` | Run `ivy_verify` / `ivy_compile`, diagnose counterexamples |
-| `ivy-builder-agent` | `build-ops` | Construct or extend protocol models (NCT/NACT/NSCT) |
+| `ivy-builder-agent` | `scaffold-ops` | Construct or extend protocol models (NCT/NACT/NSCT) |
 | `ivy-reviewer-agent` | `review-ops` | RFC coverage audit, quality scoring, traceability, IUT trace analysis |
 | `ivy-triage-agent` | `triage-ops` | MCP/LSP/Serena health repair, 9-step diagnostic runbook |
 | `ivy-meta-agent` | `meta-self-mod-ops` | Plugin source modifications (skills, agents, hooks, rules, commands) |

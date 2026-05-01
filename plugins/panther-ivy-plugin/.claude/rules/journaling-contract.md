@@ -122,7 +122,7 @@ Before ending its turn, every ops-skill MUST do exactly this in this order:
 
 `pending_dispatch` is optional (no hand-off needed → just clear). Direct `Skill()` or `Agent()` calls between ops-skills are forbidden — the orchestrator owns dispatch.
 
-Per `.claude/rules/skill-conventions.md` and the project's `feedback_autoload_rule_no_pointer_stub`, ops-skill bodies (build-ops, verify-ops, review-ops, triage-ops, meta-self-mod-ops) retain only their per-workflow Terminal sections with concrete `pending_dispatch` examples and per-workflow next-step phrasing. The abstract HARD-GATE rule above lives only in this contract document; it is not duplicated in the ops-skill bodies.
+Per `.claude/rules/skill-conventions.md` and the project's `feedback_autoload_rule_no_pointer_stub`, ops-skill bodies (scaffold-ops, verify-ops, review-ops, triage-ops, meta-self-mod-ops) retain only their per-workflow Terminal sections with concrete `pending_dispatch` examples and per-workflow next-step phrasing. The abstract HARD-GATE rule above lives only in this contract document; it is not duplicated in the ops-skill bodies.
 
 ## 6. Subagent return shapes (canonical)
 
@@ -186,7 +186,7 @@ Every ops-skill MUST emit a one-liner before its `clear_active_workflow` call:
 Examples:
 
 - `[ivy-verify] Phase 4 PASS (G4 SOUND, 2-of-3). Dispatching review for coverage follow-up.`
-- `[ivy-build] Phase 4 PASS. Handing off to verify (post-modeling verification).`
+- `[ivy-scaffold] Phase 4 PASS. Handing off to verify (post-modeling verification).`
 - `[ivy-review] Phase 3 PASS (G5 SOUND). Workflow complete; no further dispatch.`
 - `[ivy-triage] Repair complete. Resuming verify (caller of preflight).`
 

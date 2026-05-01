@@ -1,13 +1,13 @@
 ---
-description: Build workflow anti-patterns (Red Flags). Auto-loads on build-ops skill entry. Each row pairs a tempting thought with the calibrated correct behavior. Skill body is leaner because this content lives here, not duplicated in SKILL.md.
-paths: ["**/skills/build-ops/SKILL.md"]
+description: Build workflow anti-patterns (Red Flags). Auto-loads on scaffold-ops skill entry. Each row pairs a tempting thought with the calibrated correct behavior. Skill body is leaner because this content lives here, not duplicated in SKILL.md.
+paths: ["**/skills/scaffold-ops/SKILL.md"]
 ---
 
 <purpose>
 Build-workflow anti-patterns formerly inline as the `## Red Flags` table in
-`skills/build-ops/SKILL.md`. Promoted to an auto-loaded rule so the skill
+`skills/scaffold-ops/SKILL.md`. Promoted to an auto-loaded rule so the skill
 body stays focused on phase mechanics; the anti-pattern catalog auto-loads
-on every build-ops skill entry.
+on every scaffold-ops skill entry.
 </purpose>
 
 ## Red Flags — Build

@@ -329,7 +329,7 @@ The terminal state of review is one of:
 - `append_pending_dispatch(build, phase_hint="layer-check", reason="review surfaced structural fixes that belong in build")` + clear active-workflow flag.
 - Bare clear of active-workflow flag (default routing — the orchestrator re-activates on the next user turn).
 
-Do NOT invoke any other workflow's ops skill (`build-ops`, `verify-ops`,
+Do NOT invoke any other workflow's ops skill (`scaffold-ops`, `verify-ops`,
 `triage-ops`) directly from review. Hand-off rides on `append_pending_dispatch`
 so the causal chain stays visible in the journal. The On Completion gate
 MUST clear before any `pending_dispatch` is written. G2/G3 build-time gates

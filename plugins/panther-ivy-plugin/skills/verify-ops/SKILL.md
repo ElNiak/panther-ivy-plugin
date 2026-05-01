@@ -422,7 +422,7 @@ The terminal state of verify is one of:
 - `append_pending_dispatch(build, phase_hint="layer-check", reason="verify diagnose surfaced structural fix")` + clear active-workflow flag.
 - Bare clear of active-workflow flag (default routing — the orchestrator re-activates on the next user turn).
 
-Do NOT invoke any other workflow's ops skill (`build-ops`, `review-ops`,
+Do NOT invoke any other workflow's ops skill (`scaffold-ops`, `review-ops`,
 `triage-ops`) directly from verify. Hand-off rides on `append_pending_dispatch`
 so the causal chain stays visible in the journal. The On Completion gate
 MUST clear before any `pending_dispatch` is written.

@@ -23,7 +23,7 @@ constraints that bind it.
 
 Rule loaded via `paths: ["**/skills/*/SKILL.md"]` so any skill activation
 brings the calibrated semantics into context. The rule is referenced (not
-duplicated) by build-ops, verify-ops, review-ops, triage-ops, and
+duplicated) by scaffold-ops, verify-ops, review-ops, triage-ops, and
 meta-self-mod-ops. Glossary content for `SOUND` and `ABSTAIN` previously
 held only in `skills/verify-ops/references/glossary.md` is promoted here
 because the same semantics apply across all five ops skills, not just
@@ -43,7 +43,7 @@ verify.
 ABSTAIN's calibrated meaning is universal; the routing target is
 workflow-specific and stays in the owning skill body:
 
-- `build-ops`: ABSTAIN on G1 → resolve the evidence gap or escalate to
+- `scaffold-ops`: ABSTAIN on G1 → resolve the evidence gap or escalate to
   Opus tier; do not enter Phase 3 on ABSTAIN.
 - `verify-ops`: ABSTAIN on G4 → Phase 6 Diagnose using `abstain_reason`
   as the starting hypothesis; the upstream `ivy_verify` is not authoritative.
@@ -101,6 +101,6 @@ Workflow-specific routing on each verdict is allowed and lives in the
 owning ops skill (per the Workflow-specific ABSTAIN routing table above).
 
 <integration
-  cited-by="skills/build-ops, skills/verify-ops, skills/review-ops, skills/triage-ops, skills/meta-self-mod-ops"
+  cited-by="skills/scaffold-ops, skills/verify-ops, skills/review-ops, skills/triage-ops, skills/meta-self-mod-ops"
   related-rules=".claude/rules/iron-laws.md, .claude/rules/gap-markers.md, .claude/rules/agent-dispatch.md, .claude/rules/ivy-formatting.md, .claude/rules/journaling-contract.md"
   glossary-source-superseded="skills/verify-ops/references/glossary.md (gate-verdict subset only; MPE / iron law / pending_dispatch entries remain in the glossary)"/>

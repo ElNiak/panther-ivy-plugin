@@ -25,7 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ### Added
 - `skills/ivy/` orchestrator skill (single entry point).
-- 5 workflow ops-skills (`triage-ops`, `build-ops`, `verify-ops`, `review-ops`, `meta-self-mod-ops`).
+- 5 workflow ops-skills (`triage-ops`, `scaffold-ops`, `verify-ops`, `review-ops`, `meta-self-mod-ops`).
 - 5 workflow specialist agents (`ivy-{triage,builder,verifier,reviewer,meta}-agent`).
 - 3 gate-critic agents (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`).
 - `scripts/migrate-active-workflow.sh` one-shot YAML schema migration.

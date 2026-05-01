@@ -5,7 +5,7 @@
     "g1": {
       "expected_critic": "g-plan-critic",
       "dispatch_count": 3,
-      "dispatch_locus": "build-ops Phase 2 (blueprint-done)",
+      "dispatch_locus": "scaffold-ops Phase 2 (blueprint-done)",
       "references_skills": [
         "specification-patterns",
         "methodology",
@@ -15,7 +15,7 @@
     "g2": {
       "expected_critic": "g-fidelity-critic",
       "dispatch_count": 3,
-      "dispatch_locus": "build-ops Phase 3 modeling-gate (per H ARD-GATE)",
+      "dispatch_locus": "scaffold-ops Phase 3 modeling-gate (per H ARD-GATE)",
       "references_skills": [
         "verification-failures",
         "ivy-syntax",
@@ -25,7 +25,7 @@
     "g3": {
       "expected_critic": "g-fidelity-critic",
       "dispatch_count": 3,
-      "dispatch_locus": "build-ops Phase 3 test-spec gate (per H ARD-GATE) — inline with G2",
+      "dispatch_locus": "scaffold-ops Phase 3 test-spec gate (per H ARD-GATE) — inline with G2",
       "references_skills": [
         "verification-failures",
         "ivy-syntax",
@@ -51,6 +51,24 @@
         "specification-patterns",
         "methodology"
       ]
+    },
+    "g7": {
+      "expected_critic": "g-fidelity-critic",
+      "dispatch_count": 3,
+      "dispatch_locus": "triage-ops Phase 2 — inline post-diagnose, pre-fix (vets root-cause claim before user-confirmation prompt)",
+      "references_skills": [
+        "ivy-toolkit"
+      ],
+      "verbatim_prompt_template": "skills/ivy/references/critic_prompts/g7_triage_diag.md"
+    },
+    "g8": {
+      "expected_critic": "g-fidelity-critic",
+      "dispatch_count": 3,
+      "dispatch_locus": "triage-ops Phase 3 Step 3 — inline post-fix, pre-return (vets post-fix indicators before reporting recovery)",
+      "references_skills": [
+        "ivy-toolkit"
+      ],
+      "verbatim_prompt_template": "skills/ivy/references/critic_prompts/g8_triage_verify.md"
     }
   }
 }

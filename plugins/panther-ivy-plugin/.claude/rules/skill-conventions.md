@@ -70,7 +70,7 @@ or:
 **Type:** flexible — adapt principles to context.
 ```
 
-**Rigid (6):** `ivy` (orchestrator), `triage-ops`, `build-ops`, `verify-ops`, `review-ops`, `meta-self-mod-ops`. These are workflow / orchestration skills bound by iron laws and adversarial gates.
+**Rigid (6):** `ivy` (orchestrator), `triage-ops`, `scaffold-ops`, `verify-ops`, `review-ops`, `meta-self-mod-ops`. These are workflow / orchestration skills bound by iron laws and adversarial gates.
 
 **Flexible (6):** `verification-failures`, `specification-patterns`, `propagation-patterns`, `apt-attack-patterns`, `ivy-toolkit`, `ivy-syntax`. These are pattern / reference skills consumed by the rigid skills + agents and by the user.
 

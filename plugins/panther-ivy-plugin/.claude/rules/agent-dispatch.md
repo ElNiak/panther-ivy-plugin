@@ -44,7 +44,7 @@ Every specialist agent (`ivy-verifier-agent`, `ivy-builder-agent`, `ivy-reviewer
 
   <!-- OPTIONAL: ivy-meta-agent only — plugin-source modification context -->
   <field name="plugin_paths" required="false"
-         example="Edit skills/build-ops/SKILL.md to add a HARD-GATE in Phase 3"/>
+         example="Edit skills/scaffold-ops/SKILL.md to add a HARD-GATE in Phase 3"/>
 </dispatch-context>
 ```
 
