@@ -17,7 +17,7 @@ import yaml
 
 from hook_utils import get_workspace_root
 
-_STATE_DIR_NAME = ".panther-ivy"
+STATE_DIR_NAME = ".panther-ivy"
 _ACTIVE_WORKFLOW_FILE = "active-workflow"
 _BUILD_STATE_FILE = "build-state.yaml"
 _JOURNAL_FILE = "workflow-journal.yaml"
@@ -134,7 +134,7 @@ def find_protocol_dir(protocol: str | None = None) -> str | None:
         for name in sorted(os.listdir(root)):
             subdir = os.path.join(root, name)
             if os.path.isdir(subdir) and not name.startswith("."):
-                state = os.path.join(subdir, _STATE_DIR_NAME, _ACTIVE_WORKFLOW_FILE)
+                state = os.path.join(subdir, STATE_DIR_NAME, _ACTIVE_WORKFLOW_FILE)
                 if os.path.isfile(state):
                     return subdir
     except OSError:
@@ -145,7 +145,7 @@ def find_protocol_dir(protocol: str | None = None) -> str | None:
 
 def _state_dir(protocol_dir: str) -> Path:
     """Returns the ``.panther-ivy`` state directory inside *protocol_dir*."""
-    return Path(protocol_dir) / _STATE_DIR_NAME
+    return Path(protocol_dir) / STATE_DIR_NAME
 
 
 def get_active_workflow(protocol_dir: str) -> dict | None:

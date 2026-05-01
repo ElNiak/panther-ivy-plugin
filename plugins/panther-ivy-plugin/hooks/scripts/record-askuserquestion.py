@@ -33,22 +33,26 @@ from __future__ import annotations
 import json
 import os
 import sys
-import time
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop, get_workspace_root, read_stdin  # noqa: E402
-from workflow_state import WorkflowContext, append_journal_event  # noqa: E402
+from hook_utils import (  # noqa: E402
+    emit_hook_output,
+    emit_noop,
+    get_workspace_root,
+    read_stdin,
+    resolve_session_id,
+)
+from workflow_state import (  # noqa: E402
+    STATE_DIR_NAME,
+    WorkflowContext,
+    append_journal_event,
+)
 
 _LOG_FILENAME = "askuserquestion-log.jsonl"
-_STATE_DIR = ".panther-ivy"
-
-
-def _utc_now_iso() -> str:
-    """Return current UTC time as ISO-8601 with explicit ``+00:00`` suffix."""
-    return time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime())
 
 
 def _resolve_log_dir(ctx: WorkflowContext | None) -> Path | None:
@@ -60,15 +64,16 @@ def _resolve_log_dir(ctx: WorkflowContext | None) -> Path | None:
     case.
     """
     if ctx is not None:
-        return Path(ctx.protocol_dir) / _STATE_DIR
+        return Path(ctx.protocol_dir) / STATE_DIR_NAME
     workspace_root = get_workspace_root().strip()
     if not workspace_root:
         return None
-    return Path(workspace_root) / _STATE_DIR
+    return Path(workspace_root) / STATE_DIR_NAME
 
 
 def _build_record(
     *,
+    hook_input: dict[str, Any],
     questions: list[dict[str, Any]],
     answers: dict[str, Any],
     annotations: dict[str, Any] | None,
@@ -78,8 +83,8 @@ def _build_record(
     """Shape a single JSONL record. Order is stable for diff-friendly output."""
     record: dict[str, Any] = {
         "id": record_id,
-        "ts": _utc_now_iso(),
-        "session_id": os.environ.get("CLAUDE_SESSION_ID", "") or None,
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "session_id": resolve_session_id(hook_input),
         "questions": questions,
         "answers": answers,
         "active_workflow": ctx is not None,
@@ -160,6 +165,7 @@ def main() -> None:
     ctx = WorkflowContext.current()
     record_id = uuid.uuid4().hex[:12]
     record = _build_record(
+        hook_input=data,
         questions=questions,
         answers=answers,
         annotations=annotations,
