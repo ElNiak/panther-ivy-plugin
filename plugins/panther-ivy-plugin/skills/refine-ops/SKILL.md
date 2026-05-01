@@ -192,7 +192,7 @@ When `ivy_verify` returns FAIL with a counterexample, the refiner agent interpre
 
 1. Load the catalog: `Skill(skill="panther-ivy-plugin:verification-failures")` for the numbered counterexample-pattern index, debugging methodology, and claim-resolution gate.
 2. Walk the counterexample trace step-by-step, mapping each step to a catalog pattern (e.g., `#410` missing-guard, `#420` invariant-induction-gap, `#430` array-bounds-state-coupling).
-3. For structural / include-graph concerns, dispatch `model-reviewer` for a deeper audit (the structural-issue case is the only Phase 6 sub-agent dispatch — pattern-based diagnosis stays inline).
+3. For structural / include-graph concerns, dispatch `ivy-reviewer-agent` for a deeper audit (the structural-issue case is the only Phase 6 sub-agent dispatch — pattern-based diagnosis stays inline).
 4. Cite the catalog pattern by number in the diagnosis presented to the user. Catalog pattern numbers are referenced verbatim from `verification-failures`; do not coin new numbers locally.
 
 #### MPE diagnosis (when patterns disagree)
@@ -369,10 +369,10 @@ MUST clear before any `pending_dispatch` is written.
 
 ## Failure recovery (sub-agent dispatches)
 
-Refine dispatches `g-fidelity-critic` ×3 (Phase 4 G4 inline gate), MPE Explore agents (Phase 6 ambiguous-counterexample diagnosis), and `model-reviewer` (Phase 6 structural-issue audit). Apply the canonical failure-recovery contract from `.claude/rules/agent-dispatch.md` for every dispatch:
+Refine dispatches `g-fidelity-critic` ×3 (Phase 4 G4 inline gate), MPE Explore agents (Phase 6 ambiguous-counterexample diagnosis), and `ivy-reviewer-agent` (Phase 6 structural-issue audit). Apply the canonical failure-recovery contract from `.claude/rules/agent-dispatch.md` for every dispatch:
 
 - Append `progress{kind: "agent_dispatch_start", agent: "<name>", workflow: "refine", phase: "<phase>"}` before dispatch.
-- Use the per-tier timeout (Sonnet: 90 s; Opus: 180 s; `model-reviewer` is Opus tier with no auto-retry on `context_exhaustion`).
+- Use the per-tier timeout (Sonnet: 90 s; Opus: 180 s; `ivy-reviewer-agent` is Opus tier with no auto-retry on `context_exhaustion`).
 - On `timeout` / `context_exhaustion` / `partial` / `malformed`: classify, append `agent_dispatch_failure`, auto-retry once. On second failure or `tool_not_found` / `explicit_error`: present `AskUserQuestion(retry-manually | skip | abandon)`.
 
 For MCP tools (`ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_workflow_state`), apply `.claude/rules/mcp-tool-reliability.md`: on `InputValidationError`, re-load the schema via `ToolSearch({query: "select:<tool>"})` and retry once; on second failure, route to triage. Note: `ivy_verify` is NOT auto-retried by the read-only retry hook (not idempotent).
@@ -381,7 +381,7 @@ For MCP tools (`ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_workflow_state
 
 - **Called by:** orchestrator on refine dispatch (`Skill(skill="panther-ivy-plugin:ivy")` routing); user requests like "verify this", "check my spec", "diagnose this counterexample"; `scaffold` post-modeling hand-off; `experiment` on iut-fail-trace-points-to-spec-bug.
 - **Shortcut command alternative:** `/nct-check <file>` for a single-shot verification without workflow state; see `commands/README.md` for the full shortcut catalog.
-- **Calls:** `triage` (preflight only), `g-fidelity-critic` (Phase 4 G4 inline), `model-reviewer` (Phase 6 structural-issue audit), MPE Explore agents (Phase 6 ambiguous diagnosis), `experiment` workflow (post-PASS IUT validation via `pending_dispatch`), `review` workflow (post-PASS coverage / quality follow-up via `pending_dispatch`).
+- **Calls:** `triage` (preflight only), `g-fidelity-critic` (Phase 4 G4 inline), `ivy-reviewer-agent` (Phase 6 structural-issue audit), MPE Explore agents (Phase 6 ambiguous diagnosis), `experiment` workflow (post-PASS IUT validation via `pending_dispatch`), `review` workflow (post-PASS coverage / quality follow-up via `pending_dispatch`).
 - **Knowledge skills loaded:** `verification-failures` (Phase 3 compile-error catalog, Phase 6 counterexample interpretation, claim-resolution gate), `ivy-syntax` (Phase 2 option 3, Phase 7), `specification-patterns` (Phase 2 option 3), `ivy-toolkit` (tool selection).
 - **Inline patterns:** Situation Briefing (Phase 2 test-selection confirmation, Phase 7 fix strategy), Reflection Gate (Phase 4 post-execution direction), Multi-Perspective Exploration (Phase 4 G4 verification gate, Phase 6 ambiguous-pattern diagnosis). G6 knowledge-capture vote (`g-knowledge-critic` ×3) at the Knowledge Gates in Phase 4 and Phase 7. Completion gate (`Skill(skill="panther-ivy-plugin:ivy")` `references/completion-gate.md`) on Completion. Multi-Agent dispatch shape: `Skill(skill="panther-ivy-plugin:ivy")` `references/parallel-dispatch.md`.
 - **MCP tools used:** `ivy_compile`, `ivy_verify`, `ivy_workspace`, `ivy_workflow_state`, `ivy_analysis`, `ivy_diagnostics`.

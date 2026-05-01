@@ -9,7 +9,7 @@ version: "1.1.0"
 
 **Type:** rigid — follow exactly, do not adapt away discipline.
 
-Operating procedure for the `ivy-builder-agent`. Carries a protocol model from RFC to a structurally sound, verified Ivy specification layer by layer. Dispatches `spec-analyst` for compile-error diagnosis, `model-reviewer` and `traceability-agent` for the Phase 5 quality and coverage audits, MPE Explore agents at Phase 1 for architectural-approach exploration, and `g-fidelity-critic` ×3 inline for the G2 modeling gate. The orchestrator dispatches this agent; this body teaches the agent how to operate.
+Operating procedure for the `ivy-builder-agent`. Carries a protocol model from RFC to a structurally sound, verified Ivy specification layer by layer. Dispatches `spec-analyst` for compile-error diagnosis, `ivy-reviewer-agent` and `traceability-agent` for the Phase 5 quality and coverage audits, MPE Explore agents at Phase 1 for architectural-approach exploration, and `g-fidelity-critic` ×3 inline for the G2 modeling gate. The orchestrator dispatches this agent; this body teaches the agent how to operate.
 
 ## Phases
 
@@ -171,9 +171,9 @@ The orchestrator's next-turn routing consumes the `pending_dispatch` and dispatc
 
 ### Phase 5 — Quality Gate
 
-Dispatch `model-reviewer` and `traceability-agent` in parallel via two `Agent` calls in one message. Aggregate findings by ERROR/WARNING/INFO severity per `.claude/rules/ivy-formatting.md`. On ERROR findings, ask user fix-now-or-accept (gate checkpoint); loop to Phase 3 for structural fixes, Phase 4 for verification, or fix coverage gaps inline. Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="scaffold", phase="quality-passed", protocol="<protocol>")`.
+Dispatch `ivy-reviewer-agent` and `traceability-agent` in parallel via two `Agent` calls in one message. Aggregate findings by ERROR/WARNING/INFO severity per `.claude/rules/ivy-formatting.md`. On ERROR findings, ask user fix-now-or-accept (gate checkpoint); loop to Phase 3 for structural fixes, Phase 4 for verification, or fix coverage gaps inline. Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="scaffold", phase="quality-passed", protocol="<protocol>")`.
 
-**Knowledge Gate.** Pause for the G6 knowledge-capture vote (g-knowledge-critic ×3, asymmetric vote): focus areas are architecture decisions solidified during quality review and model-reviewer / traceability-agent findings worth remembering.
+**Knowledge Gate.** Pause for the G6 knowledge-capture vote (g-knowledge-critic ×3, asymmetric vote): focus areas are architecture decisions solidified during quality review and ivy-reviewer-agent / traceability-agent findings worth remembering.
 
 Full procedure including dispatch payloads, gate-checkpoint phrasing, and the Situation Briefing template: `references/phase-5-quality-gate.md`.
 
@@ -267,7 +267,7 @@ TaskCreate(subject="Verify layer N with ivy_verify", activeForm="Verifying layer
 
 Agent dispatch with dependencies (Phase 5):
 ```
-TaskCreate(subject="Quality audit (model-reviewer)")        → task A
+TaskCreate(subject="Quality audit (ivy-reviewer-agent)")        → task A
 TaskCreate(subject="Coverage audit (traceability-agent)")   → task B
 TaskUpdate(taskId=B, addBlockedBy=[A])
 ```
@@ -314,10 +314,10 @@ breaks the workflow state machine.
 
 ## Failure recovery (sub-agent dispatches)
 
-Build dispatches `spec-analyst` (Phase 3 compile-error diagnosis), `model-reviewer` + `traceability-agent` (Phase 5 quality gate, in parallel), `g-fidelity-critic` ×3 (Phase 3 G2/G3 inline dispatch), and MPE Explore agents (Phase 1 architectural approach). Apply the canonical failure-recovery contract from `.claude/rules/agent-dispatch.md` for every dispatch:
+Build dispatches `spec-analyst` (Phase 3 compile-error diagnosis), `ivy-reviewer-agent` + `traceability-agent` (Phase 5 quality gate, in parallel), `g-fidelity-critic` ×3 (Phase 3 G2/G3 inline dispatch), and MPE Explore agents (Phase 1 architectural approach). Apply the canonical failure-recovery contract from `.claude/rules/agent-dispatch.md` for every dispatch:
 
 - Append `progress{kind: "agent_dispatch_start", agent: "<name>", workflow: "scaffold", phase: "<phase>"}` before dispatch.
-- Use the per-tier timeout (Sonnet: 90 s; Opus: 180 s; `model-reviewer` is Opus tier with no auto-retry on `context_exhaustion`).
+- Use the per-tier timeout (Sonnet: 90 s; Opus: 180 s; `ivy-reviewer-agent` is Opus tier with no auto-retry on `context_exhaustion`).
 - On `timeout`/`context_exhaustion`/`partial`/`malformed`: classify, append `agent_dispatch_failure`, auto-retry once. On second failure or `tool_not_found`/`explicit_error`: present `AskUserQuestion(retry-manually | skip | abandon)`.
 
 For MCP tools (`ivy_compile`, `ivy_diagnostics`, `ivy_workspace`, `ivy_workflow_state`), apply `.claude/rules/mcp-tool-reliability.md`: on `InputValidationError`, re-load the schema via `ToolSearch({query: "select:<tool>"})` and retry once; on second failure, route to triage.
@@ -326,7 +326,7 @@ For MCP tools (`ivy_compile`, `ivy_diagnostics`, `ivy_workspace`, `ivy_workflow_
 
 - **Called by:** orchestrator on build dispatch (`Skill(skill="panther-ivy-plugin:ivy")` routing); user requests like "build a model", "scaffold a protocol".
 - **Shortcut command alternative:** `/nct-compile <file>` for a single-shot layer compile without workflow state.
-- **Calls:** `verify` (post-build verification), `spec-analyst` agent (compile error diagnosis), `model-reviewer` + `traceability-agent` (Phase 5 quality gate), `g-fidelity-critic` (G2/G3 inline gates), MPE Explore agents (Phase 1).
+- **Calls:** `verify` (post-build verification), `spec-analyst` agent (compile error diagnosis), `ivy-reviewer-agent` + `traceability-agent` (Phase 5 quality gate), `g-fidelity-critic` (G2/G3 inline gates), MPE Explore agents (Phase 1).
 - **Knowledge skills loaded:** `methodology` (Phase 1), `specification-patterns` (Phase 2 — owns the 14-layer template), `ivy-syntax` (Phase 3), `propagation-patterns` (Phase 3 on type change), `ivy-toolkit` (tool selection).
 - **Inline patterns:** Multi-Perspective Exploration (Phase 1 architectural approach, Phase 2 G1 gate), Situation Briefing (Phase 2 blueprint approval, Phase 5 Quality Gate), Reflection Gate (Phase 3 every 3 layers, Phase 6 completion). G6 knowledge-capture vote (`g-knowledge-critic` ×3) at the Knowledge Gates in Phase 3 and Phase 5. Completion gate (`Skill(skill="panther-ivy-plugin:ivy")` `references/completion-gate.md`) at Phase 6.
 - **MCP tools used:** `ivy_compile`, `ivy_diagnostics`, `ivy_workspace`, `ivy_workflow_state`, `ivy_analysis`.

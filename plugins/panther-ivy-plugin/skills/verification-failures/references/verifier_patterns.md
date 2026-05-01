@@ -502,7 +502,7 @@ Gates load only their range slice plus the active methodology overlay. The activ
 ### #401: Unsound `assume` collapses obligation
 - **Trigger:** Spec contains an `assume` that was used as a shortcut when a `require` should have been proved.
 - **What to check:** Grep for every `assume` in the verified file; each must have a documented rationale. An `assume true`, an `assume` on a complex predicate, or any `assume` added "to get verify to pass" is a likely unsound shortcut.
-- **Source:** Plugin convention; `model-reviewer` anti-pattern.
+- **Source:** Plugin convention; `ivy-reviewer-agent` anti-pattern.
 - **Methodology tag:** `Plugin-Memory`
 
 </catalog_entry>

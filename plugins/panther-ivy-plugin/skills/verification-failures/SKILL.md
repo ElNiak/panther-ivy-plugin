@@ -17,7 +17,7 @@ This skill consolidates four lifecycle-related knowledge surfaces invoked when v
 | Cryptic Ivy compile / verify error string (`'X' not found`, `ungrounded`, `invariant failed`, `type mismatch`); adversarial gate cites catalog `#NN` | `references/verifier_patterns.md`, `references/error-table.md` |
 | `ivy_verify` / `ivy_check` failed and a fix is being prepared | `references/debugging-methodology.md` |
 | `ivy_verify` output contains `counterexample` or `counterexample_trace` | `references/counterexample-walkthrough.md` |
-| `ivy_verify` FAIL, `ivy_coverage` shows gaps, or `model-reviewer` reports issues that need an inline resolution comment | `references/verification-claim.md`, `references/mapping-claim.md`, `references/coverage-claim.md` |
+| `ivy_verify` FAIL, `ivy_coverage` shows gaps, or `ivy-reviewer-agent` reports issues that need an inline resolution comment | `references/verification-claim.md`, `references/mapping-claim.md`, `references/coverage-claim.md` |
 
 ## References
 
@@ -28,7 +28,7 @@ This skill consolidates four lifecycle-related knowledge surfaces invoked when v
 - `references/counterexample-walkthrough.md` — 6-step interpretation workflow plus the four common failure patterns with `Symptom`/`Trace signature`/`Root cause`/`Fix` (Missing Guard `#410`, Uninitialized State `#411`, Incorrect Monitor Scope `#412`, Invariant Too Strong `#413`); fix-strategy summary table and lifecycle-placement decision matrix.
 - `references/trace-example.md` — complete end-to-end trace interpretation example.
 - `references/generator-patterns.md` — pattern guide for Ivy test-traffic generators; anti-patterns (timer competition, two-step message construction, missing handle exports, over-constrained guards) and correct patterns (auto-send, handle exports).
-- `references/verification-claim.md` — claim-discussion template for `ivy_verify` FAIL or model-reviewer ERROR; includes the inline resolution-comment conventions (RESOLVED / IUT_FINDING / GUARD_ADDED / DEFERRED / KNOWN_DEVIATION / N/A).
+- `references/verification-claim.md` — claim-discussion template for `ivy_verify` FAIL or ivy-reviewer-agent ERROR; includes the inline resolution-comment conventions (RESOLVED / IUT_FINDING / GUARD_ADDED / DEFERRED / KNOWN_DEVIATION / N/A).
 - `references/mapping-claim.md` — claim-discussion template for `ivy_extract_requirements` or RFC mapping decisions.
 - `references/coverage-claim.md` — claim-discussion template for `ivy_coverage(mode="gaps")` results.
 
@@ -36,11 +36,11 @@ If verification fails but no counterexample is present, the failure is likely a 
 
 ## Integration
 
-- **Loaded by:** `verify` (Phase 6 Diagnose), `scaffold` (Phase 3 on compile error), `review` (Phase 3 on contested findings); G4 verification critics, G5 trace-analysis critics, and the `model-reviewer` / `spec-analyst` agents during their dispatch phases.
+- **Loaded by:** `verify` (Phase 6 Diagnose), `scaffold` (Phase 3 on compile error), `review` (Phase 3 on contested findings); G4 verification critics, G5 trace-analysis critics, and the `ivy-reviewer-agent` / `spec-analyst` agents during their dispatch phases.
 - **Precedes:** the G4 verification gate cites `references/debugging-methodology.md` (catalog entry `#405`); fixes proposed without those steps are UNSOUND by gate criteria.
 
 **Related skills:** `ivy-syntax` (language reference), `ivy-toolkit` (MCP tool inventory), `methodology` (verification-cycle context, per-methodology counterexample interpretation), `cross-cutting-reflection-patterns` (adversarial-gate discipline layer).
 
-**Related agents:** `spec-analyst` (automated diagnosis — consumes the catalog and the debugging methodology), `model-reviewer` (adversarial review — consumes the catalog and the claim-discussion templates).
+**Related agents:** `spec-analyst` (automated diagnosis — consumes the catalog and the debugging methodology), `ivy-reviewer-agent` (adversarial review — consumes the catalog and the claim-discussion templates).
 
 **MCP tools used:** `ivy_verify` (counterexample source), `ivy_diagnostics` (structural check + full diagnostic array), `ivy_model_info` (symbol look-up), `ivy_visualize(view="state_machine")` (state-transition view), `ivy_coverage(mode="gaps")` (gap discovery); LSP `hover` / `findReferences` / `goToDefinition` (symbol look-up across includes).

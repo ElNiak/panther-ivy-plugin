@@ -62,4 +62,4 @@ For the full error-to-fix lookup table with code examples, load the `ivy-error-p
 
 - **Loaded by:** scaffold workflow (write phase).
 - **Related skills:** `specification-patterns` (layer placement), `methodology` (RFC mapping), `ivy-toolkit` (MCP tool docs), `ivy-error-patterns` (error catalog).
-- **Related agents:** `model-reviewer` (quality), `spec-analyst` (verification + diagnosis).
+- **Related agents:** `ivy-reviewer-agent` (quality), `spec-analyst` (verification + diagnosis).

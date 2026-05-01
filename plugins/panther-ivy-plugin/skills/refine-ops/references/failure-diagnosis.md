@@ -70,7 +70,7 @@ Classify into one of three categories:
 - **Type error** — type mismatch, missing type interpretation, or unresolved type in the model.
 - **Structural issue** — include path problems, missing modules, circular dependencies, unresolved symbols.
 
-On structural issues, dispatch the `model-reviewer` agent for a deeper audit of the model's include graph and layer structure. This is the only Phase 6 sub-agent dispatch besides MPE — pattern-based diagnosis stays inline.
+On structural issues, dispatch the `ivy-reviewer-agent` agent for a deeper audit of the model's include graph and layer structure. This is the only Phase 6 sub-agent dispatch besides MPE — pattern-based diagnosis stays inline.
 
 ### Step 5: Present diagnosis
 

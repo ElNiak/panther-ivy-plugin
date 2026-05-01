@@ -17,7 +17,7 @@ On `VERDICT_UNSOUND`, the orchestrator writes `[GAP: #NN <reason>]` markers inli
 
 Dispatch both agents in a single message using two `Agent` tool calls:
 
-<dispatch target="model-reviewer" via="agent" phase="5"
+<dispatch target="ivy-reviewer-agent" via="agent" phase="5"
           reason="Phase 5 quality audit — structural correctness, type safety, invariant completeness, action well-formedness, initialization, organization"/>
 
 <dispatch target="traceability-agent" via="agent" phase="5"
@@ -67,7 +67,7 @@ Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflo
 **KNOWLEDGE GATE (KG)**: Pause for the G6 knowledge-capture vote — the orchestrator dispatches `g-knowledge-critic` ×3 in parallel (asymmetric vote) on whether session learnings are worth persisting (rules, references, feedback memory).
 
 - Reflect on architecture decisions solidified during quality review.
-- Capture model-reviewer and traceability-agent findings worth remembering.
+- Capture ivy-reviewer-agent and traceability-agent findings worth remembering.
 - Save session log (observability events + digest).
 - If candidates found, classify and present for user confirmation.
 - Resume workflow after the vote completes.

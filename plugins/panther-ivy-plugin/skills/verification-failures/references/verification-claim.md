@@ -1,6 +1,6 @@
 # Verification Claim Discussion Template
 
-**Trigger**: After `ivy_verify` failure with counterexample, or after model-reviewer finds an ERROR.
+**Trigger**: After `ivy_verify` failure with counterexample, or after ivy-reviewer-agent finds an ERROR.
 
 ---
 

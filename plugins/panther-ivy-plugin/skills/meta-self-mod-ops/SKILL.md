@@ -153,7 +153,7 @@ digraph meta_self_mod_flow {
   guard [shape=diamond, label="Plugin-source\npath?"];
   exit [shape=box, label="Exit; route to\nmatching specialist"];
   impl [shape=box, label="Step 1: Implementer\n(Explore, Sonnet)"];
-  spec [shape=box, label="Step 2: Spec-compliance\n(model-reviewer, Opus)"];
+  spec [shape=box, label="Step 2: Spec-compliance\n(ivy-reviewer-agent, Opus)"];
   conv [shape=box, label="Step 3: Plugin-conventions\n(plugin-conventions-reviewer, Sonnet)"];
   verdict [shape=diamond, label="All 3 SOUND?"];
   fix [shape=box, label="Implementer fixes\ncited issues"];
@@ -208,14 +208,14 @@ The two reviewer tasks share a single `addBlockedBy` on the implementer task —
 
 ## Failure modes
 
-`.claude/rules/agent-dispatch.md` owns the canonical recovery pattern for any of the three dispatches (timeout, context exhaustion, partial output, malformed output, tool-not-found, explicit error). Per-tier defaults: Sonnet 90 s, Opus 180 s. The `model-reviewer` dispatch disables auto-retry on `context_exhaustion` per its own Failure Modes section — prefer the partial output rather than re-dispatch.
+`.claude/rules/agent-dispatch.md` owns the canonical recovery pattern for any of the three dispatches (timeout, context exhaustion, partial output, malformed output, tool-not-found, explicit error). Per-tier defaults: Sonnet 90 s, Opus 180 s. The `ivy-reviewer-agent` dispatch disables auto-retry on `context_exhaustion` per its own Failure Modes section — prefer the partial output rather than re-dispatch.
 
 `.claude/rules/mcp-tool-reliability.md` covers MCP tool failures inside any reviewer; the failure surfaces to that reviewer first, not to this skill.
 
 ## Integration
 
 - **Called by:** the `ivy` orchestrator when the user intent or PostToolUse path matches plugin-source globs (classified inline in the orchestrator dispatch table); never invoked by users directly.
-- **Calls:** generic `Explore` (implementer), `panther-ivy-plugin:model-reviewer` (spec-compliance review), `panther-ivy-plugin:plugin-conventions-reviewer` (plugin-conventions review).
+- **Calls:** generic `Explore` (implementer), `panther-ivy-plugin:ivy-reviewer-agent` (spec-compliance review), `panther-ivy-plugin:plugin-conventions-reviewer` (plugin-conventions review).
 - **Inline patterns:** Completion gate (`Skill(skill="panther-ivy-plugin:ivy")` `references/completion-gate.md`) for final claim emission. Multi-Agent single-message dispatch (`Skill(skill="panther-ivy-plugin:ivy")` `references/parallel-dispatch.md`) when the two reviewer dispatches run as siblings.
 - **Cross-references:** `.claude/rules/agent-dispatch.md` (fault handling for any of the three dispatches); `.claude/rules/skill-conventions.md` (the audit checklist the plugin-conventions reviewer applies).
 - **MCP tool reliability:** N/A — this skill does not invoke MCP tools directly. Reviewers may invoke MCP tools; their failures follow `.claude/rules/mcp-tool-reliability.md`.
