@@ -16,13 +16,16 @@ These hooks inject identifiable `additionalContext` messages into the agent's co
 
 | Prefix / Marker | Event | Source hook | Meaning |
 |---|---|---|---|
-| `[ivy-workspace]` | SessionStart | `detect-ivy-workspace.sh` | Ivy/PANTHER project detected; workspace root and MCP status exported. |
-| `[ivy-indexing]` | SessionStart | `wait-for-indexing.sh` | MCP server readiness status after session startup. |
-| `[ivy-indexing]` | PreToolUse | `check-indexing-ready.sh` | LSP still indexing; tool call may be denied or warned. |
-| `[ivy-startup]` | PreToolUse | `check-indexing-ready.sh` | MCP server still initialising; tool call denied until ready. |
-| `[ivy-health]` | PreToolUse | `check-indexing-ready.sh` | MCP may not be fully started; tool call allowed with advisory. |
+| `[ivy-workspace]` | SessionStart | `detect-ivy-workspace.py` | Ivy/PANTHER project detected; workspace root and MCP status exported. |
+| `[ivy-indexing]` | SessionStart | `wait-for-indexing.py` | MCP server readiness status after session startup. |
+| `[ivy-indexing]` | PreToolUse | `check-indexing-ready.py` | LSP still indexing; tool call may be denied or warned. |
+| `[ivy-startup]` | PreToolUse | `check-indexing-ready.py` | MCP server still initialising; tool call denied until ready. |
+| `[ivy-health]` | PreToolUse | `check-indexing-ready.py` | MCP may not be fully started; tool call allowed with advisory. |
 | `[ivy-health]` | Notification | `notify-mcp-disconnect.py` | Ivy MCP server disconnected; run `/mcp` to reconnect. |
-| `[IVY-LINT]` | PostToolUse | `post-write-ivy-lint.sh` | Structural issues found in a written `.ivy` file (missing header, unbalanced braces). |
+| `[IVY-LINT]` | PostToolUse | `post-write-ivy-lint.py` | Structural issues found in a written `.ivy` file (missing header, unbalanced braces). |
+| `[ivy-block]` | PreToolUse | `block-direct-ivy.py` | Bash command invoked `ivyc` / `ivy_check` / `ivy_show` / `ivy_to_cpp` directly; advisory MCP-tool suggestion table surfaced (always exit 0). |
+| `[ivy-skill]` | PostToolUse | `track-skill-invocation.py` | `Skill` tool fired; for plugin skills (`panther-ivy-plugin:*`) auto-loads `references/*.md` into `additionalContext` (capped at 8000 chars; degrades to a file listing on overflow). Non-plugin skills get the status line only. |
+| `[ivy-noop]` | (any event) | any hook | Hook ran but took no action. Emitted via `hook_utils.emit_noop` so the user can visually filter no-op lines from action-bearing ones. |
 | `[G2 modeling gate]` | PostToolUse | `assess-modeling.py` | Ivy layer file written during `build` workflow; G2 adversarial modeling critic dispatched. |
 | `[G3 test-spec gate]` | PostToolUse | `assess-testspec.py` | Ivy test-spec file written during `build` workflow; G3 adversarial test-spec critic dispatched. |
 | `[G4 verification gate]` | PostToolUse | `record-workflow-error.py` | `ivy_verify` completed; G4 verification critic dispatched. |

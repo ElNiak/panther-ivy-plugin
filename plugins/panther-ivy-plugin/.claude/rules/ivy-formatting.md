@@ -18,7 +18,7 @@ description: "RFC citation format ([rfcNNNN:X.Y]), error/warning formatting, the
 ## Self-Review
 
 - Append a "Considerations" block to every response that contains any one
-  of: analysis, recommendations, or design choices. Treat this trigger as
+  of: analysis, recommendations, or design choices for the workflow tasks. Treat this trigger as
   disjunctive — a response with a single recommendation still qualifies.
   The block lists:
   - **Pro**: What this approach gets right

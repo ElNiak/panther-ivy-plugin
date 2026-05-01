@@ -73,13 +73,13 @@ Writers:
 
 | Hook | Section |
 |---|---|
-| `detect-ivy-workspace.sh` (SessionStart) | `workspace`, initial `mcp` |
-| `wait-for-indexing.sh` (SessionStart) | `mcp`, `lsp` |
-| `check-indexing-ready.sh` (PreToolUse mcp_*ivy) | `lsp` |
+| `detect-ivy-workspace.py` (SessionStart) | `workspace`, initial `mcp` |
+| `wait-for-indexing.py` (SessionStart) | `mcp`, `lsp` |
+| `check-indexing-ready.py` (PreToolUse mcp_*ivy) | `lsp` |
 | `check-mcp-health.py` (PreToolUse mcp_*ivy) | `mcp` |
 | `notify-mcp-disconnect.py` (Notification) | `mcp.status = "down"` |
-| `track-workflow-skill.py` (PostToolUse Skill) | `workflow`, `workspace.protocol` |
-| `post-write-workflow-aware.py` (PostToolUse Write/Edit) | `test_file` |
+| `track-skill-invocation.py` (PostToolUse Skill) | `active_skill` |
+| `post-write-workflow-aware.py` (PostToolUse Write/Edit/Agent) | `test_file`, `active_agent` |
 
 All writes go through `hooks/scripts/statusline_cache.py`. Each write does an
 atomic tempfile + `os.replace`; concurrent writers across hooks serialize

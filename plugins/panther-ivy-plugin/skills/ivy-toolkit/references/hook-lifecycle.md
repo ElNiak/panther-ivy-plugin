@@ -21,27 +21,26 @@ Fire before Claude processes each user message. No matcher — apply to every pr
 
 ## SessionStart Hooks
 
-Fire once when the Claude Code session starts. No matcher. Ordering matters: `detect-ivy-workspace.sh` (step 3) exports `IVY_WORKSPACE_ROOT`, `IVY_MCP_LOG_PATH`, `IVY_LSP_LOG_PATH`, and related env vars; `wait-for-indexing.sh` (step 5) consumes them. Reordering these two breaks env-var propagation and causes `wait-for-indexing.sh` to fall back to `/tmp` defaults.
+Fire once when the Claude Code session starts. No matcher. Ordering matters: `detect-ivy-workspace.py` (step 2) exports `IVY_WORKSPACE_ROOT`, `IVY_MCP_LOG_PATH`, `IVY_LSP_LOG_PATH`, and related env vars; later hooks (`cleanup-stale-pids.py`, `wait-for-indexing.py`) consume them. Reordering these breaks env-var propagation and causes the consumers to fall back to `/tmp` defaults.
 
-1. `cleanup-stale-pids.sh` — removes leftover PID files from previous sessions
-2. `cleanup-stale-workflow.py` — clears stale `active-workflow` flags older than the session
-3. `detect-ivy-workspace.sh` — auto-detects `.ivyworkspace` markers, writes `IVY_WORKSPACE_ROOT`, `IVY_LSP_LOG_PATH`, `IVY_MCP_LOG_PATH`, `IVY_SESSION_ID`, `IVY_MCP_PID_FILE`, and (conditionally) `IVY_ACTIVE_WORKSPACE` to `CLAUDE_ENV_FILE`
-4. `observe.py --event SessionStart` — observability: records session start metadata
-5. `wait-for-indexing.sh` — waits up to 20s for the LSP index to be ready before the first tool call; reads env vars exported by step 3
+1. `check-journaling-contract.py` — verifies `.claude/rules/journaling-contract.md` is present and parseable; fails the load if absent
+2. `detect-ivy-workspace.py` — auto-detects `.ivyworkspace` markers via in-process `ivy_lsp.core.workspace.context.WorkspaceContext.detect` (with pure-Python fallback), writes `IVY_WORKSPACE_ROOT`, `IVY_LSP_LOG_PATH`, `IVY_MCP_LOG_PATH`, `IVY_SESSION_ID`, `IVY_MCP_PID_FILE`, and (conditionally) `IVY_ACTIVE_WORKSPACE` to `CLAUDE_ENV_FILE`
+3. `cleanup-stale-pids.py` — removes leftover PID files from previous sessions; reaps orphaned `ivy_lsp` processes scoped to the active workspace
+4. `cleanup-stale-workflow.py` — clears stale `active-workflow` flags older than the session
+5. `inject-using-plugin.py` — emits the orchestrator priming (1% rule, methodology routing, iron-laws summary, workspace contract)
+6. `wait-for-indexing.py` — waits up to 30 s for the MCP `[MCP-READY]` sentinel; SIGTERM-handled with a one-shot envelope guarantee
+7. `observe.py --event SessionStart` — observability: records session start metadata
 
 ## PreToolUse Hooks
 
-Fire after Claude selects a tool but before execution. A hook that exits with code 2 blocks the tool call.
+Fire after Claude selects a tool but before execution. A hook that emits `permissionDecision: "deny"` via `emit_hook_output(deny_reason=...)` blocks the tool call.
 
 | Hook | Applies to | Effect |
 |------|-----------|--------|
-| block-direct-ivy.sh | `Bash` commands containing `ivy_check`, `ivyc`, `ivy_show`, or `ivy_to_cpp` | Blocks with error message; enforces MCP-only usage (CLI lacks staging and include setup) |
+| block-direct-ivy.py | `Bash` commands containing `ivy_check`, `ivyc`, `ivy_show`, or `ivy_to_cpp` | Advisory hint; emits `[ivy-block]` system message + MCP-tool suggestion table; **always exits 0** (does not block) |
 | check-workspace-scope.py | `Write` or `Edit` on `.ivy` files | Blocks writes to files outside the active workspace; reads across workspaces are always allowed |
-| ivy_verify prompt tip | `ivy_verify` | Injects prompt: "Consider running ivy_diagnostics(mode=\"structural\") first for fast structural validation" |
-| ivy_coverage prompt tip | `ivy_coverage` | Injects prompt: scope with `test_file`, run diagnostics first, use mode=stats before mode=matrix |
-| check-mcp-health.py | Any `mcp__.*ivy` tool | Validates the MCP server is alive; blocks if server is unreachable |
-| check_lsp_log.py | Any `mcp__.*ivy` tool | Checks LSP log for indexing-in-progress signal; blocks if indexing is not yet complete |
-| check-indexing-ready.sh | Any `mcp__.*ivy` tool | Secondary indexing readiness check via shell |
+| check-mcp-health.py | Any `mcp__.*ivy` tool | Two-tier liveness check (PID + TCP sidecar); blocks after 3 consecutive failures |
+| check-indexing-ready.py | Any `mcp__.*ivy` tool | Four readiness signals (LSP indexed, offline index, MCP prepopulated, MCP-READY); blocks via `permissionDecision: "deny"` until indexing completes; degrades to advisory after 6 denials |
 | observe.py --event PreToolUse | `mcp__`, `Bash`, `Write`, `Edit`, `Agent` | Observability: records tool selection and parameters |
 
 ## PostToolUse Hooks
@@ -50,16 +49,14 @@ Fire after tool execution, before the result is returned to Claude. Hooks are gr
 
 | Hook | Applies to | Effect |
 |------|-----------|--------|
-| track-workflow-skill.py | `Skill` invocations | Records phase transitions to the workflow journal |
-| auto-load-skill-references.py | `Skill` invocations | Injects relevant reference files into context after skill activation |
-| post-write-ivy-lint.sh | `Write` or `Edit` on `.ivy` files | Runs `ivy_diagnostics(mode="structural")` automatically after every Ivy file save |
-| post-write-workflow-aware.py | `Write` or `Edit` | Workflow-aware post-write processing (phase tracking, build-state updates) |
+| post-write-workflow-aware.py | `Write`, `Edit`, or `Agent` | For `Agent` dispatches records the active specialist agent in the statusline; for `.ivy` writes outside an active workflow surfaces an orientation hint |
+| post-write-ivy-lint.py | `Write` or `Edit` on `.ivy` files | Three structural checks (`#lang` header, balanced braces, non-empty); emits `[ivy-lint]` summary on findings |
 | assess-modeling.py | `Write` or `Edit` | Adversarial G2 critic: analyses modeling quality, emits `[GAP: #NN]` markers for model-layer findings |
 | assess-testspec.py | `Write` or `Edit` | Adversarial G3 critic: analyses test-spec quality, emits `[GAP: #NN]` markers for testspec-layer findings |
 | assess-trace.py | `ivy_iut_test` | Analyses IUT trace after each test run; surfaces assertion failures and unexpected event sequences |
-| interaction-checkpoint.py | `ivy_verify`, `ivy_coverage`, `ivy_extract_requirements`, `ivy_quality` | Records interaction checkpoint for session continuity |
 | render-tool-result.py | `ivy_verify`, `ivy_coverage`, `ivy_diagnostics`, `ivy_compile`, `ivy_quality` | Reformats raw JSON result to workflow-appropriate prose or tables; style adapts to active overlay |
-| record-workflow-error.py | `ivy_verify`, `ivy_compile`, `ivy_diagnostics`, `ivy_coverage`, `ivy_iut_test`, `ivy_quality` | Captures tool errors to the session error log for debugging |
+| record-workflow-error.py | `ivy_verify`, `ivy_compile`, `ivy_diagnostics`, `ivy_coverage`, `ivy_iut_test`, `ivy_quality` | Captures tool errors to the session error log; emits the G4 verification-gate dispatch directive after `ivy_verify` |
+| track-skill-invocation.py | `Skill` | Surfaces `[ivy-skill]` system message; updates statusline `active_skill`; for plugin skills auto-loads `references/*.md` (cap 8000 chars); for ops-skill invocations inside an active workflow appends `progress{kind: "skill_invoked"}` to the journal |
 | observe.py --event PostToolUse | `mcp__`, `Bash`, `Write`, `Edit`, `Agent` | Observability: records tool result metadata |
 
 ## Rendering Rules
@@ -147,5 +144,5 @@ Fire when Claude Code surfaces a permission prompt to the user. No matcher.
 | Stop | record-session-end.py | Finalizes session log entry |
 | Stop | render-summary.py | Renders session summary (workflow phases completed, errors encountered) |
 | Stop | observe.py --event Stop | Observability: records session end |
-| SessionEnd | cleanup-ivy-lsp.sh | Stops the LSP server and cleans up socket/PID files |
+| SessionEnd | cleanup-ivy-lsp.py | Stops the LSP server and cleans up socket/PID files |
 | SessionEnd | observe.py --event SessionEnd | Observability: records session end metadata |

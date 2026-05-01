@@ -104,6 +104,16 @@
         ]
       },
       {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/track-skill-invocation.py",
+            "timeout": 10
+          }
+        ]
+      },
+      {
         "matcher": "mcp__|Bash|Write|Edit|Agent",
         "hooks": [
           {

@@ -72,6 +72,7 @@ The list below is closed. Adding a new event type requires editing `_VALID_EVENT
 | `progress{kind: fix_attempt}` | `kind: "fix_attempt"`, `key` (file path), `attempt` (int) | — | `verify-ops/SKILL.md` Phase 7 |
 | `progress{kind: mcp_retry}` | `kind: "mcp_retry"`, `tool` (str), `outcome` (str) | — | `hooks/scripts/retry-ivy-mcp.py` |
 | `progress{kind: agent_dispatch_*}` | `kind`, `agent`, `workflow`, `phase` | `reason` (failure mode) | per `.claude/rules/agent-dispatch.md` |
+| `progress{kind: skill_invoked}` | `kind: "skill_invoked"`, `skill` (str: full plugin-prefixed name), `workflow` (str), `phase` (str) | — | `hooks/scripts/track-skill-invocation.py` (only fires when an ops-skill — `scaffold-ops`, `verify-ops`, `review-ops`, `triage-ops`, `meta-self-mod-ops` — is invoked inside an active workflow). The orchestrator reads this on its next turn for warm-resume routing. |
 | `error` | `pattern` (str), `file` (str), `line` (int) | `tool_name`, `tool_result_excerpt` | `record-workflow-error.py`; ops-skill on caught exception |
 | `context_switch` | `detection` (str), `mode` (str) | — | orchestrator on plan-mode entry / exit |
 | `gate_dispatched` | `gate` (str: `g0`/`g0b`/`g2`/`g3`/`g4`/`g5`/`g6`), `trigger` (str), `artifact` (str) | `layer`, `methodology` | `assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, `record-workflow-error.py` (G4) |
