@@ -88,7 +88,7 @@ Apply the **Situation Briefing** pattern (a structured pre-action context dump) 
 Write `scaffold-state.yaml` via `ivy_workflow_state(action="set_build", protocol="<protocol>", state="<JSON>")`:
 
 ```yaml
-workflow: build
+workflow: scaffold
 protocol: {protocol}
 methodology: {nct|nact|nsct}
 started: {ISO datetime}

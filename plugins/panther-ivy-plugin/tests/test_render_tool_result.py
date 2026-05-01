@@ -160,11 +160,11 @@ class TestIvyCoverageFormatting:
         ctx = output["hookSpecificOutput"]["additionalContext"]
         assert "Coverage: 85%" in ctx
 
-    def test_coverage_verify(self, tmp_path):
+    def test_coverage_refine(self, tmp_path):
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_coverage",
             json.dumps({"percentage": 85, "covered": 17, "total": 20}),
-            workflow="verify",
+            workflow="refine",
             tmp_path=tmp_path,
         )
         assert output is not None
@@ -262,16 +262,16 @@ class TestIvyQualityFormatting:
         ctx = output["hookSpecificOutput"]["additionalContext"]
         assert "FAIL" in ctx
 
-    def test_quality_suggestions_suppressed_in_verify(self, tmp_path):
+    def test_quality_suggestions_suppressed_in_refine(self, tmp_path):
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_quality",
             json.dumps({"suggestions": [{"category": "style", "message": "rename", "severity": "minor"}]}),
-            workflow="verify",
+            workflow="refine",
             tmp_path=tmp_path,
         )
-        # Strict-literal scope: suggestions are still suppressed for the model
-        # in the verify workflow (no additionalContext), but the hook surfaces
-        # an [ivy-noop] systemMessage so the user sees it ran.
+        # Suggestions are suppressed for the model in the refine workflow (no
+        # additionalContext), but the hook surfaces an [ivy-noop] systemMessage
+        # so the user sees it ran.
         assert output is not None
         assert output.get("systemMessage", "").startswith("[ivy-noop]")
         assert "hookSpecificOutput" not in output or (

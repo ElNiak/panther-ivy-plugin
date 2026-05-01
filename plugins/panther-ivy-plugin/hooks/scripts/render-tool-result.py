@@ -73,13 +73,13 @@ def format_ivy_verify(data: dict, workflow: str | None) -> str | None:
     if workflow == "scaffold":
         if success:
             return f"Layer verified: {isolate} PASS"
-        return "Layer verification failed -- switching to verify workflow for diagnosis."
+        return "Layer verification failed -- switching to refine workflow for diagnosis."
 
     if workflow == "review":
         status = "PASS" if success else "FAIL"
         return f"| {isolate} | {status} | {clauses} | {duration}s |"
 
-    if workflow == "verify":
+    if workflow == "refine":
         if success:
             return f"PASS: {isolate} ({clauses} clauses, {duration}s)"
         lines = []
@@ -110,7 +110,7 @@ def format_ivy_coverage(data: dict, workflow: str | None) -> str | None:
     if workflow == "triage":
         return f"Coverage: {pct}%"
 
-    if workflow == "verify":
+    if workflow == "refine":
         return f"{pct}% ({covered}/{total})"
 
     if workflow == "review":
@@ -141,7 +141,7 @@ def format_ivy_diagnostics(data: dict, workflow: str | None) -> str | None:
     if workflow == "triage":
         return f"{len(errors)} errors, {len(warnings)} warnings"
 
-    if workflow == "verify" or workflow == "review":
+    if workflow == "refine" or workflow == "review":
         lines = ["| Severity | File | Line | Message |", "| --- | --- | --- | --- |"]
         for issue in errors + warnings:
             sev = issue.get("severity", "?")
@@ -179,7 +179,7 @@ def format_ivy_compile(data: dict, workflow: str | None) -> str | None:
             return f"Layer compiled: {binary}"
         return "Layer compilation failed. Fix before proceeding to next layer."
 
-    if workflow == "verify":
+    if workflow == "refine":
         if success:
             return f"Compiled: {binary} ({duration}s)"
         return f"Compilation failed: {err_msg}. Consider switching to diagnose phase."
@@ -205,7 +205,7 @@ def format_ivy_quality(data: dict, workflow: str | None) -> str | None:
                 return "Quality gate: PASS"
             return f"Quality gate: FAIL ({len(failures)})"
 
-        if workflow == "verify":
+        if workflow == "refine":
             return f"Gate {level}: {'PASS' if passed else 'FAIL'}"
 
         if workflow == "review":
@@ -221,8 +221,8 @@ def format_ivy_quality(data: dict, workflow: str | None) -> str | None:
 
     # Suggestions mode
     suggestions = data.get("suggestions", [])
-    if workflow in ("triage", "verify"):
-        return None  # suppress suggestions in triage/verify
+    if workflow in ("triage", "refine"):
+        return None  # suppress suggestions in triage/refine
 
     lines = []
     for i, s in enumerate(suggestions, 1):

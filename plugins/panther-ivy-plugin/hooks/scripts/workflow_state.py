@@ -183,7 +183,7 @@ class WorkflowContext:
     Attributes:
         protocol_dir: Absolute path to the protocol directory (parent of
             ``.panther-ivy/``).
-        workflow: Name of the active workflow (e.g. ``"scaffold"``, ``"verify"``).
+        workflow: Name of the active workflow (e.g. ``"scaffold"``, ``"refine"``).
         phase: Current phase within the workflow.
         started: ISO-8601 UTC timestamp when the workflow was set.
     """
@@ -539,7 +539,7 @@ def append_pending_dispatch(
 
     Args:
         protocol_dir: Path to the protocol directory.
-        target_workflow: The workflow that should run next (e.g. ``"verify"``).
+        target_workflow: The workflow that should run next (e.g. ``"refine"``).
         phase_hint: Optional phase to start the target in. When absent the
             target starts at its own ``init`` phase.
         reason: Human-readable reason for the dispatch (surfaced by

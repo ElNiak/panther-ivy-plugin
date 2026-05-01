@@ -198,14 +198,18 @@ def build_summary(
         )
 
     # Workflow-specific section
-    if workflow == "verify":
+    if workflow == "refine":
         if phase:
-            parts.append(f"[WORKFLOW] Verify workflow ended in phase: {phase}")
+            parts.append(f"[WORKFLOW] Refine workflow ended in phase: {phase}")
+
+    elif workflow == "experiment":
+        if phase:
+            parts.append(f"[WORKFLOW] Experiment workflow ended in phase: {phase}")
 
     elif workflow == "scaffold" and scaffold_state:
         layers = scaffold_state.get("layers", {})
         if layers:
-            layer_lines = ["[BUILD PROGRESS]"]
+            layer_lines = ["[SCAFFOLD PROGRESS]"]
             for name, info in layers.items():
                 status = info.get("status", "pending") if isinstance(info, dict) else info
                 layer_lines.append(f"  - {name}: {status}")

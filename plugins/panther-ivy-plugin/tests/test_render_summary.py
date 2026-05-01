@@ -116,17 +116,17 @@ class TestClaimCounting:
 
 
 class TestWorkflowAwareSummary:
-    def test_verify_summary_includes_workflow(self, tmp_path):
+    def test_refine_summary_includes_workflow(self, tmp_path):
         output = run_hook(
             tmp_path,
-            workflow="verify",
+            workflow="refine",
             phase="compile",
             ivy_files={"test.ivy": "#lang ivy1.7\nrelation foo(X:t)\n"},
         )
         assert output is not None
         ctx = output["systemMessage"]
         assert "SESSION SUMMARY" in ctx
-        assert "WORKFLOW" in ctx or "Verify" in ctx
+        assert "WORKFLOW" in ctx or "Refine" in ctx
 
 
 class TestFallbackBehavior:
