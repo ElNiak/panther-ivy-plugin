@@ -1,9 +1,9 @@
 # Walkthrough — NCT path for a QUIC server IUT
 
 A concrete end-to-end walkthrough showing how the NCT methodology drives
-`scaffold` workflow + `workflow-verify` from RFC selection to a SOUND model
-with IUT testing. The example assumes a fresh workspace and an IUT that
-implements the protocol.
+the `scaffold` + `refine` + `experiment` workflows from RFC selection to a
+SOUND model with IUT testing. The example assumes a fresh workspace and an
+IUT that implements the protocol.
 
 ## Goal
 

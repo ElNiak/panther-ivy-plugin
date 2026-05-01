@@ -75,7 +75,7 @@ On-demand reference material. Loaded by the orchestrator (for "explain X" prompt
 | Skill | Type | Loaded by | Purpose |
 |-------|------|-----------|---------|
 | [apt-attack-patterns](apt-attack-patterns/) | flexible | `ivy-reviewer-agent`; `ivy-builder-agent` (NACT methodology); `ivy` orchestrator (knowledge questions) | APT 6-stage attack lifecycle, attacker entities, around-block monitor patterns. |
-| [ivy-toolkit](ivy-toolkit/) | flexible | `ivy-{verifier,builder,reviewer,triage}-agent`; `ivy` orchestrator (knowledge questions) | MCP tool catalogue (18 ivy-tools tools + Serena), parameter matrix, mode map, selection guide. |
+| [ivy-toolkit](ivy-toolkit/) | flexible | `ivy-{refiner,experimenter,builder,reviewer,triage}-agent`; `ivy` orchestrator (knowledge questions) | MCP tool catalogue (18 ivy-tools tools + Serena), parameter matrix, mode map, selection guide. |
 | [ivy-syntax](ivy-syntax/) | flexible | `ivy-refiner-agent`; `ivy-builder-agent`; `ivy` orchestrator (knowledge questions) | Ivy 1.7 syntax reference, module system, RFC annotation conventions, test-spec patterns. |
 | [methodology](methodology/) | flexible | `ivy` orchestrator (NCT/NACT/NSCT selection and knowledge questions) | NCT (compliance) / NACT (security) / NSCT (simulation) selection and workflow guidance, 14-layer template overview. |
 | [propagation-patterns](propagation-patterns/) | flexible | `ivy-builder-agent` (on type change in scaffold-ops); `ivy` orchestrator (knowledge questions) | Field/variant propagation patterns across stack/entities/shims/utils with Ivy-to-C++ encoding tables. |
