@@ -54,7 +54,7 @@ from hook_utils import emit_hook_output, emit_noop, read_stdin
 from workflow_state import (
     WorkflowContext,
     append_journal_event,
-    get_build_state_safe,
+    get_scaffold_state_safe,
 )
 
 _WATCHED_TOOLS = {"Edit", "Write", "NotebookEdit"}
@@ -68,11 +68,11 @@ def _is_layer_file(file_path: str) -> bool:
     return "_test_" not in name and not name.endswith("_test.ivy")
 
 
-def _detect_layer(file_path: str, build_state: "dict[str, Any] | None") -> str | None:
-    """Resolve layer name from build-state.yaml `layers` map, if available."""
-    if not build_state:
+def _detect_layer(file_path: str, scaffold_state: "dict[str, Any] | None") -> str | None:
+    """Resolve layer name from scaffold-state.yaml `layers` map, if available."""
+    if not scaffold_state:
         return None
-    layers = build_state.get("layers") or {}
+    layers = scaffold_state.get("layers") or {}
     target = os.path.basename(file_path)
     for name, entry in layers.items():
         if isinstance(entry, dict) and os.path.basename(entry.get("file", "")) == target:
@@ -88,7 +88,7 @@ def _build_directive(
     layer_name: str | None,
 ) -> str:
     """Construct the G2 dispatch additionalContext directive."""
-    layer_line = f"- Layer (from build-state.yaml): {layer_name}" if layer_name else "- Layer: unknown — not resolved from build-state.yaml"
+    layer_line = f"- Layer (from scaffold-state.yaml): {layer_name}" if layer_name else "- Layer: unknown — not resolved from scaffold-state.yaml"
     methodology_line = f"- Methodology: {methodology}" if methodology else "- Methodology: unknown (NACT/NSCT overlays not applied)"
     nsct_note = ""
     if methodology == "nsct":
@@ -136,10 +136,10 @@ def main() -> None:
         emit_noop("PostToolUse", "G2 is scaffold-workflow only")
         return
 
-    build_state = get_build_state_safe(ctx.protocol_dir) or {}
-    protocol = build_state.get("protocol") or os.path.basename(ctx.protocol_dir.rstrip("/"))
-    methodology = build_state.get("methodology")
-    layer_name = _detect_layer(file_path, build_state)
+    scaffold_state = get_scaffold_state_safe(ctx.protocol_dir) or {}
+    protocol = scaffold_state.get("protocol") or os.path.basename(ctx.protocol_dir.rstrip("/"))
+    methodology = scaffold_state.get("methodology")
+    layer_name = _detect_layer(file_path, scaffold_state)
 
     append_journal_event(
         ctx.protocol_dir,

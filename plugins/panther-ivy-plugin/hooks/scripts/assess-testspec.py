@@ -42,7 +42,7 @@ from hook_utils import emit_hook_output, emit_noop, read_stdin
 from workflow_state import (
     WorkflowContext,
     append_journal_event,
-    get_build_state_safe,
+    get_scaffold_state_safe,
 )
 
 _WATCHED_TOOLS = {"Edit", "Write", "NotebookEdit"}
@@ -104,9 +104,9 @@ def main() -> None:
         emit_noop("PostToolUse", "G3 is scaffold-workflow only")
         return
 
-    build_state = get_build_state_safe(ctx.protocol_dir) or {}
-    protocol = build_state.get("protocol") or os.path.basename(ctx.protocol_dir.rstrip("/"))
-    methodology = build_state.get("methodology")
+    scaffold_state = get_scaffold_state_safe(ctx.protocol_dir) or {}
+    protocol = scaffold_state.get("protocol") or os.path.basename(ctx.protocol_dir.rstrip("/"))
+    methodology = scaffold_state.get("methodology")
 
     append_journal_event(
         ctx.protocol_dir,

@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, emit_noop, read_stdin, resolve_sessions_dir
-from workflow_state import WorkflowContext, get_build_state_safe, get_journal_entries
+from workflow_state import WorkflowContext, get_scaffold_state_safe, get_journal_entries
 
 CLAIM_PATTERNS = {
     "resolved": re.compile(r"RESOLVED\("),
@@ -140,8 +140,8 @@ def audit_journal(protocol_dir: str, workflow: str | None) -> list[str]:
     decisions = [e for e in entries if e.get("type") == "decision"]
 
     if workflow == "scaffold" and not decisions:
-        build_state = get_build_state_safe(protocol_dir)
-        if build_state and build_state.get("decisions"):
+        scaffold_state = get_scaffold_state_safe(protocol_dir)
+        if scaffold_state and scaffold_state.get("decisions"):
             warnings.append(
                 "Build state has decisions but no decision events were journaled this session."
             )
@@ -177,9 +177,9 @@ def build_summary(
     metrics = gather_tool_metrics()
 
     # Build state (for scaffold workflow)
-    build_state = None
+    scaffold_state = None
     if workflow == "scaffold" and protocol_dir:
-        build_state = get_build_state_safe(protocol_dir)
+        scaffold_state = get_scaffold_state_safe(protocol_dir)
 
     # Compose summary
     parts: list[str] = []
@@ -202,8 +202,8 @@ def build_summary(
         if phase:
             parts.append(f"[WORKFLOW] Verify workflow ended in phase: {phase}")
 
-    elif workflow == "scaffold" and build_state:
-        layers = build_state.get("layers", {})
+    elif workflow == "scaffold" and scaffold_state:
+        layers = scaffold_state.get("layers", {})
         if layers:
             layer_lines = ["[BUILD PROGRESS]"]
             for name, info in layers.items():

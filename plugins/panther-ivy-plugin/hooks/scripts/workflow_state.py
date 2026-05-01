@@ -2,7 +2,7 @@
 """Read/write utilities for workflow state files.
 
 State files live at ``<protocol_dir>/.panther-ivy/`` and track active
-workflow context and multi-session build progress.
+workflow context and multi-session scaffold progress.
 """
 
 import json
@@ -19,13 +19,14 @@ from hook_utils import get_workspace_root
 
 STATE_DIR_NAME = ".panther-ivy"
 _ACTIVE_WORKFLOW_FILE = "active-workflow"
-_BUILD_STATE_FILE = "build-state.yaml"
+_SCAFFOLD_STATE_FILE = "scaffold-state.yaml"
 _JOURNAL_FILE = "workflow-journal.yaml"
 _JOURNAL_ARCHIVE_DIR = "journal-archive"
 
 OPS_SKILLS = frozenset({
     "scaffold-ops",
-    "verify-ops",
+    "refine-ops",
+    "experiment-ops",
     "review-ops",
     "triage-ops",
     "meta-self-mod-ops",
@@ -271,13 +272,14 @@ def clear_active_workflow(protocol_dir: str) -> None:
 
 # Post-Phase-C canonical workflow names. routing-rules.json was archived in
 # Phase D commit 01c9adf; the orchestrator at skills/ivy/SKILL.md and the
-# specialised ops-skills (skills/{scaffold,verify,review,triage,meta}-ops plus
-# the navigate flow inside the orchestrator) are the authoritative writers,
+# specialised ops-skills (skills/{scaffold,refine,experiment,review,triage,meta}-ops
+# plus the navigate flow inside the orchestrator) are the authoritative writers,
 # all using the unprefixed names below.
 _KNOWN_WORKFLOWS: frozenset[str] = frozenset({
     "navigate",
     "scaffold",
-    "verify",
+    "refine",
+    "experiment",
     "review",
     "triage",
     "meta",
@@ -382,8 +384,8 @@ def is_workflow_stale(protocol_dir: str, max_age_hours: int = 2) -> bool:
     return age.total_seconds() > max_age_hours * 3600
 
 
-class BuildStateParseError(Exception):
-    """Raised when ``build-state.yaml`` exists but fails YAML parse.
+class ScaffoldStateParseError(Exception):
+    """Raised when ``scaffold-state.yaml`` exists but fails YAML parse.
 
     Distinguishes parse failure (file is present but corrupt — caller must
     handle / back up) from missing-file (benign — caller treats as a fresh
@@ -391,79 +393,79 @@ class BuildStateParseError(Exception):
 
     MCP-surfacing status (2026-04-23): SKILL.md workflow bodies call state
     ops via the ``ivy_workflow_state`` MCP tool, not via this Python module
-    directly, so they cannot catch ``BuildStateParseError`` as an exception.
-    Consuming this exception from navigate / build requires adding an MCP
+    directly, so they cannot catch ``ScaffoldStateParseError`` as an exception.
+    Consuming this exception from navigate / scaffold requires adding an MCP
     action in the ivy-lsp submodule (e.g. ``ivy_workflow_state(
     action="get_build")`` that distinguishes missing-file from parse-
     failure in its error surface). Until then this exception is consumed
     only by in-process Python callers: unit tests, hooks (via
-    :func:`get_build_state_safe`), and future CLI tooling.
+    :func:`get_scaffold_state_safe`), and future CLI tooling.
     """
 
 
-def get_build_state(protocol_dir: str) -> dict | None:
-    """Read ``<protocol_dir>/.panther-ivy/build-state.yaml``.
+def get_scaffold_state(protocol_dir: str) -> dict | None:
+    """Read ``<protocol_dir>/.panther-ivy/scaffold-state.yaml``.
 
     Returns:
         None if the file does not exist.
         dict if the file parses successfully.
 
     Raises:
-        BuildStateParseError: the file exists but YAML parse fails, or the
+        ScaffoldStateParseError: the file exists but YAML parse fails, or the
             parse yields a non-dict root. Includes the underlying parse
             error's message and the file path for caller diagnostics.
     """
-    path = _state_dir(protocol_dir) / _BUILD_STATE_FILE
+    path = _state_dir(protocol_dir) / _SCAFFOLD_STATE_FILE
     if not path.exists():
         return None
     try:
         with open(path) as f:
             parsed = yaml.safe_load(f)
     except OSError as exc:
-        raise BuildStateParseError(
-            f"could not read build-state.yaml at {path}: {exc}"
+        raise ScaffoldStateParseError(
+            f"could not read scaffold-state.yaml at {path}: {exc}"
         ) from exc
     except yaml.YAMLError as exc:
-        raise BuildStateParseError(
+        raise ScaffoldStateParseError(
             f"YAML parse error in {path}: {exc}"
         ) from exc
     if not isinstance(parsed, dict):
-        raise BuildStateParseError(
+        raise ScaffoldStateParseError(
             f"expected a dict at {path} root, got {type(parsed).__name__}"
         )
     return parsed
 
 
-def get_build_state_safe(protocol_dir: str) -> dict | None:
+def get_scaffold_state_safe(protocol_dir: str) -> dict | None:
     """Hook-friendly wrapper: returns None on BOTH missing file and parse failure.
 
     Passive observers (hook scripts, status-line renderers) that want to
-    continue gracefully when ``build-state.yaml`` is corrupt should call this
-    wrapper instead of :func:`get_build_state`. Workflow bodies that own the
-    file (build Phase 2 Step 2) should call :func:`get_build_state` directly
-    and handle :class:`BuildStateParseError` with user-visible recovery.
+    continue gracefully when ``scaffold-state.yaml`` is corrupt should call this
+    wrapper instead of :func:`get_scaffold_state`. Workflow bodies that own the
+    file (scaffold Phase 2 Step 2) should call :func:`get_scaffold_state` directly
+    and handle :class:`ScaffoldStateParseError` with user-visible recovery.
 
     The parse failure is swallowed but reported once per process to
     ``sys.stderr`` so the user can investigate, without the hook itself
     raising.
     """
     try:
-        return get_build_state(protocol_dir)
-    except BuildStateParseError as exc:
+        return get_scaffold_state(protocol_dir)
+    except ScaffoldStateParseError as exc:
         if "workflow_state" not in sys.modules or not getattr(
-            sys.modules[__name__], "_BUILD_STATE_WARNED", False
+            sys.modules[__name__], "_SCAFFOLD_STATE_WARNED", False
         ):
-            msg = f"WARN: get_build_state_safe swallowed parse failure at {protocol_dir}: {exc}"
+            msg = f"WARN: get_scaffold_state_safe swallowed parse failure at {protocol_dir}: {exc}"
             print(msg, file=sys.stderr)
-            setattr(sys.modules[__name__], "_BUILD_STATE_WARNED", True)
+            setattr(sys.modules[__name__], "_SCAFFOLD_STATE_WARNED", True)
         return None
 
 
-def set_build_state(protocol_dir: str, state_dict: dict) -> None:
-    """Write build-state.yaml."""
+def set_scaffold_state(protocol_dir: str, state_dict: dict) -> None:
+    """Write scaffold-state.yaml."""
     state_path = _state_dir(protocol_dir)
     state_path.mkdir(parents=True, exist_ok=True)
-    with open(state_path / _BUILD_STATE_FILE, "w") as f:
+    with open(state_path / _SCAFFOLD_STATE_FILE, "w") as f:
         yaml.safe_dump(state_dict, f)
 
 

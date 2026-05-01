@@ -98,12 +98,12 @@ class TestMissingDirReturnsNone:
         mod = _import_module()
         assert mod.get_active_workflow(str(tmp_path / "nonexistent")) is None
 
-    def test_build_state_returns_none(self, tmp_path):
+    def test_scaffold_state_returns_none(self, tmp_path):
         mod = _import_module()
-        assert mod.get_build_state(str(tmp_path / "nonexistent")) is None
+        assert mod.get_scaffold_state(str(tmp_path / "nonexistent")) is None
 
 
-class TestBuildStateRoundtrip:
+class TestScaffoldStateRoundtrip:
     def test_write_and_read(self, tmp_path):
         mod = _import_module()
         state = {
@@ -111,42 +111,42 @@ class TestBuildStateRoundtrip:
             "targets": ["quic_server_test"],
             "completed": ["quic_types"],
         }
-        mod.set_build_state(str(tmp_path), state)
-        result = mod.get_build_state(str(tmp_path))
+        mod.set_scaffold_state(str(tmp_path), state)
+        result = mod.get_scaffold_state(str(tmp_path))
         assert result == state
 
 
-class TestGetBuildStateParseFailure:
-    """Tests for get_build_state() raising on parse failure (cluster-12 S8)."""
+class TestGetScaffoldStateParseFailure:
+    """Tests for get_scaffold_state() raising on parse failure (cluster-12 S8)."""
 
     def test_missing_file_returns_none(self, tmp_path):
         mod = _import_module()
-        assert mod.get_build_state(str(tmp_path)) is None
+        assert mod.get_scaffold_state(str(tmp_path)) is None
 
     def test_valid_file_returns_dict(self, tmp_path):
         mod = _import_module()
         state = {"phase": "compile", "layers": {"quic_types": "complete"}}
-        mod.set_build_state(str(tmp_path), state)
-        assert mod.get_build_state(str(tmp_path)) == state
+        mod.set_scaffold_state(str(tmp_path), state)
+        assert mod.get_scaffold_state(str(tmp_path)) == state
 
     def test_malformed_yaml_raises(self, tmp_path):
         mod = _import_module()
         state_dir = tmp_path / ".panther-ivy"
         state_dir.mkdir()
-        (state_dir / "build-state.yaml").write_text(
+        (state_dir / "scaffold-state.yaml").write_text(
             "phase: compile\n" "  : bad-yaml\n" "layers: [unclosed\n"
         )
-        with pytest.raises(mod.BuildStateParseError):
-            mod.get_build_state(str(tmp_path))
+        with pytest.raises(mod.ScaffoldStateParseError):
+            mod.get_scaffold_state(str(tmp_path))
 
     def test_non_dict_root_raises(self, tmp_path):
         """A parseable-but-non-dict root (e.g., a YAML list) is a parse failure."""
         mod = _import_module()
         state_dir = tmp_path / ".panther-ivy"
         state_dir.mkdir()
-        (state_dir / "build-state.yaml").write_text("- phase: compile\n- layers: []\n")
-        with pytest.raises(mod.BuildStateParseError):
-            mod.get_build_state(str(tmp_path))
+        (state_dir / "scaffold-state.yaml").write_text("- phase: compile\n- layers: []\n")
+        with pytest.raises(mod.ScaffoldStateParseError):
+            mod.get_scaffold_state(str(tmp_path))
 
 
 class TestValidateActiveWorkflow:
@@ -213,7 +213,8 @@ class TestValidateActiveWorkflow:
 
     def test_empty_known_workflows_skips_name_check(self, tmp_path):
         """If known_workflows resolves empty (e.g., plugin root unavailable),
-        the workflow-name check is skipped but structural checks still run."""
+        the workflow-name check is skipped but structural checks still run.
+        """
         mod = _import_module()
         state_dir = tmp_path / ".panther-ivy"
         state_dir.mkdir()

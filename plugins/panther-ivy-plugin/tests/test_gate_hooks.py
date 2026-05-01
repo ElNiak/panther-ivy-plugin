@@ -46,7 +46,7 @@ def _run(script: str, payload: dict, env_overrides: "dict[str, str] | None" = No
     return None
 
 
-def _make_workspace(tmpdir: str, *, workflow: str, phase: str, methodology: str = "nct", build_state: bool = True) -> "dict[str, str]":
+def _make_workspace(tmpdir: str, *, workflow: str, phase: str, methodology: str = "nct", scaffold_state: bool = True) -> "dict[str, str]":
     """Create an Ivy-workspace skeleton inside tmpdir.
 
     Layout:
@@ -55,7 +55,7 @@ def _make_workspace(tmpdir: str, *, workflow: str, phase: str, methodology: str 
           bgp/
             .panther-ivy/
               active-workflow      (yaml)
-              build-state.yaml     (yaml, if build_state=True)
+              scaffold-state.yaml     (yaml, if scaffold_state=True)
             bgp_stack/
               bgp_open.ivy         (placeholder layer file)
             bgp_tests/
@@ -70,8 +70,8 @@ def _make_workspace(tmpdir: str, *, workflow: str, phase: str, methodology: str 
              "started": "2026-01-01T00:00:00+00:00"},
             f,
         )
-    if build_state:
-        with open(state_dir / "build-state.yaml", "w") as f:
+    if scaffold_state:
+        with open(state_dir / "scaffold-state.yaml", "w") as f:
             yaml.safe_dump(
                 {"workflow": workflow, "protocol": "bgp", "methodology": methodology,
                  "started": "2026-01-01T00:00:00+00:00",
