@@ -1,6 +1,6 @@
 {
   "gate": "g2",
-  "description": "G2 modeling gate fires on PostToolUse when an Edit/Write to a non-test .ivy file completes during an active build workflow.",
+  "description": "G2 modeling gate fires on PostToolUse when an Edit/Write to a non-test .ivy file completes during an active scaffold workflow.",
   "should_trigger": [
     {"prompt": "Add an after init block to bgp_stack/bgp_fsm.ivy initializing all state relations", "expected_tool_match": "Edit|Write on *.ivy"},
     {"prompt": "Write the new connection-layer file quic_stack/quic_connection.ivy", "expected_tool_match": "Write on *.ivy"},

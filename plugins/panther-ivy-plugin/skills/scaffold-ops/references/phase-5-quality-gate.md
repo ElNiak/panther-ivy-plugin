@@ -60,7 +60,7 @@ Apply the **Situation Briefing** pattern (a structured pre-action context dump):
 
 ### Step 4: Update state
 
-Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="build", phase="quality-passed", protocol="<protocol>")`.
+Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="scaffold", phase="quality-passed", protocol="<protocol>")`.
 
 ### Knowledge Gate: Post-Quality-Gate
 

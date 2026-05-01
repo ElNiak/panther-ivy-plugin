@@ -1,6 +1,6 @@
-# Build — Multi-Perspective Exploration: Architectural Approach
+# Scaffold — Multi-Perspective Exploration: Architectural Approach
 
-Architectural-approach detail for Phase 1 Step 2 of the build workflow. Read when authoring a new protocol model and needing to choose a model-architecture stance up front.
+Architectural-approach detail for Phase 1 Step 2 of the scaffold workflow. Read when authoring a new protocol model and needing to choose a model-architecture stance up front.
 
 ## Multi-Perspective Exploration — Architectural Approach
 

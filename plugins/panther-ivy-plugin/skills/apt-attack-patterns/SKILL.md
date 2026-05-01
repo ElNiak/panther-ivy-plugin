@@ -24,7 +24,7 @@ You are editing a file under `protocol-testing/apt/` (any of `apt_entities/`, `a
 
 ## Integration
 
-- **LOADED BY:** build workflow (Phase 3 Write when the target file path contains `protocol-testing/apt/`); verify workflow (Phase 6 Diagnose when a failure traces to attack-entity or lifecycle logic).
+- **LOADED BY:** scaffold workflow (Phase 3 Write when the target file path contains `protocol-testing/apt/`); verify workflow (Phase 6 Diagnose when a failure traces to attack-entity or lifecycle logic).
 - **LOADS:** the reference files above for concrete code excerpts and the protocol-binding template.
 
 **Related skills:**

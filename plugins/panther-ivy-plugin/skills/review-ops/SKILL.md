@@ -165,7 +165,7 @@ Apply the **Reflection Gate** pattern (pause and re-evaluate before escalating):
 
 #### Step 2: Handle user response
 
-**If the user wants fixes:** Adversarial gates G2 (layer modeling) and G3 (test-spec) do NOT fire on review-inline fixes — they are build-time gates by design. For structural concerns that warrant G2/G3 re-run, dispatch back to `build` via `append_pending_dispatch(target_workflow="build", phase_hint="layer-check")` and clear the active-workflow flag; review is for audit, not construction. Otherwise guide fixes inline using the structural-audit recommendations, then re-run the analysis that found the issue (fresh `ivy_coverage` or `ivy_quality` citation) to confirm resolution.
+**If the user wants fixes:** Adversarial gates G2 (layer modeling) and G3 (test-spec) do NOT fire on review-inline fixes — they are scaffold-time gates by design. For structural concerns that warrant G2/G3 re-run, dispatch back to `scaffold` via `append_pending_dispatch(target_workflow="scaffold", phase_hint="layer-check")` and clear the active-workflow flag; review is for audit, not construction. Otherwise guide fixes inline using the structural-audit recommendations, then re-run the analysis that found the issue (fresh `ivy_coverage` or `ivy_quality` citation) to confirm resolution.
 
 After any `Write` / `Edit` on a `.ivy` file during this inline-fix path, inspect the tool result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. If blocked, append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal and present `AskUserQuestion` per `.claude/rules/mcp-tool-reliability.md`: switch workspace to the file's protocol, clear workspace restrictions, or abandon the fix.
 
@@ -258,7 +258,7 @@ digraph review_ops {
 | "Coverage looks good, skip the citation" | `NO_QUALITY_WITHOUT_COVERAGE`: every verdict MUST cite a fresh `ivy_coverage` / `ivy_quality` tool output. Personal heuristic is not a substitute. |
 | "Findings are obvious, skip the MPE roles" | The three MPE roles (Conservative Architect / Pragmatic Engineer / Adversarial Auditor) are the calibrated source. Skipping bypasses the asymmetric-vote discipline and context-isolation invariants. |
 | "RFC requirements feel covered" | Run `ivy_extract_requirements` and compare against bracket-tag annotations. Do not assert coverage without measurement. |
-| "Just inline-fix the structural issues here" | Review is for audit, not construction. Structural fixes belong in `build` via `pending_dispatch(target_workflow="build", phase_hint="layer-check")`. G2/G3 are build-time gates and will not fire on review-inline edits. |
+| "Just inline-fix the structural issues here" | Review is for audit, not construction. Structural fixes belong in `scaffold` via `pending_dispatch(target_workflow="scaffold", phase_hint="layer-check")`. G2/G3 are scaffold-time gates and will not fire on review-inline edits. |
 | "WARNING/INFO findings can be ignored" | They surface in the resolution lifecycle. Mark `// DEFERRED YYYY-MM-DD: <reason>`, do not silently skip. |
 | "G5 will fire from the post-tool hook, I'll skip the inline dispatch" | The reviewer dispatches G5 inline on every IUT-test scope. The `assess-trace.py` hook is a backstop only; inline dispatch is what the workflow consumes for its verdict. |
 | "Ivy trace shows the event, that's enough" | Ivy log events do NOT guarantee wire transmission. Always cross-validate via pcap (G5 catalog `#501`). |
@@ -326,7 +326,7 @@ If this review run needs another workflow next (e.g., the user asked for targete
 <HARD-GATE>
 The terminal state of review is one of:
 - `append_pending_dispatch(verify, reason="review Phase 3 — user requested targeted verification of flagged findings")` + clear active-workflow flag.
-- `append_pending_dispatch(build, phase_hint="layer-check", reason="review surfaced structural fixes that belong in build")` + clear active-workflow flag.
+- `append_pending_dispatch(scaffold, phase_hint="layer-check", reason="review surfaced structural fixes that belong in scaffold")` + clear active-workflow flag.
 - Bare clear of active-workflow flag (default routing — the orchestrator re-activates on the next user turn).
 
 Do NOT invoke any other workflow's ops skill (`scaffold-ops`, `verify-ops`,

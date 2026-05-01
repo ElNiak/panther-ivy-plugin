@@ -1,6 +1,6 @@
 {
   "gate": "g1",
-  "description": "G1 exploration gate fires on UserPromptSubmit when build workflow is in phase 'blueprint-done'.",
+  "description": "G1 exploration gate fires on UserPromptSubmit when scaffold workflow is in phase 'blueprint-done'.",
   "should_trigger": [
     {"prompt": "I just finished the blueprint, are all RFC MUST clauses in scope?", "expected_phase": "blueprint-done"},
     {"prompt": "Audit this blueprint for completeness", "expected_phase": "blueprint-done"},

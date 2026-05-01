@@ -1,6 +1,6 @@
 # NSCT Shadow-NS Experiment-Config Template
 
-Consumed by the `build` workflow's Phase 6 Step 1b NSCT sidecar emission. The template is plain YAML wrapped in a fenced code block below; the build workflow's substituter replaces the three placeholder tokens, `mkdir -p`s the target directory under `experiment-config/protocols/{protocol}/`, and writes the substituted content to `experiment_config_{protocol}_shadow.yaml`.
+Consumed by the `scaffold` workflow's Phase 6 Step 1b NSCT sidecar emission. The template is plain YAML wrapped in a fenced code block below; the scaffold workflow's substituter replaces the three placeholder tokens, `mkdir -p`s the target directory under `experiment-config/protocols/{protocol}/`, and writes the substituted content to `experiment_config_{protocol}_shadow.yaml`.
 
 ## Placeholders
 

@@ -2,7 +2,7 @@
 """PostToolUse hook: trigger G3 test-spec gate on *_test_*.ivy writes.
 
 Fires after Edit|Write on an Ivy test spec file (name contains `_test_`).
-When the active workflow is `build`, emits an additionalContext directive
+When the active workflow is `scaffold`, emits an additionalContext directive
 instructing Claude to dispatch G3 test-spec critics (your preloaded
 `verification-failures` skill provides the catalog).
 
@@ -13,23 +13,23 @@ marker writing).
 
 Non-blocking — always exits 0.
 
-## Why build-only?
+## Why scaffold-only?
 
 G3 audits test-spec soundness during *construction* — coverage-matrix
 gaps relative to the target RFC's MUST requirements, generator over-
 constraint that silently skips test cases, and the structural pathologies
 in ``*_test_*.ivy`` that matter most when a test spec is being written
 for the first time. The filter line below (``if ctx is None or
-ctx.workflow != "build": return``) is intentional scoping.
+ctx.workflow != "scaffold": return``) is intentional scoping.
 
 Verify's Phase 7 fix loop and review's Phase 3 inline fixes, under the
-cluster 1 design, either stay small or dispatch back to ``build`` via
+cluster 1 design, either stay small or dispatch back to ``scaffold`` via
 ``pending_dispatch`` when the change warrants G3 re-run. That is the
-re-engagement path — users write in ``build``, G3 fires.
+re-engagement path — users write in ``scaffold``, G3 fires.
 
-Users who want an adversarial audit of a test spec outside ``build``
-emit ``append_pending_dispatch(target_workflow="build",
-phase_hint="layer-check")`` and let navigate re-engage ``build``.
+Users who want an adversarial audit of a test spec outside ``scaffold``
+emit ``append_pending_dispatch(target_workflow="scaffold",
+phase_hint="layer-check")`` and let navigate re-engage ``scaffold``.
 """
 
 import os
@@ -63,7 +63,7 @@ def _build_directive(*, file_path: str, protocol: str, methodology: str | None) 
         nsct_note = "\n  - NSCT active: NSCT-specific test-spec patterns are limited; apply base catalog slice only."
 
     return (
-        "[G3 test-spec gate] A `*_test_*.ivy` file has been written while the `build` workflow is active. "
+        "[G3 test-spec gate] A `*_test_*.ivy` file has been written while the `scaffold` workflow is active. "
         "Dispatch the G3 test-spec gate before running `ivy_compile` / `ivy_verify`.\n\n"
         f"Artifact under audit: `{file_path}` (protocol: {protocol}).\n"
         f"{methodology_line}{nsct_note}\n\n"
@@ -75,7 +75,7 @@ def _build_directive(*, file_path: str, protocol: str, methodology: str | None) 
         "5. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
         "6. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only).\n"
         "7. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
-        "8. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the build-overlay format.\n\n"
+        "8. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the scaffold-overlay format.\n\n"
         "A test spec that looks clean but silently fails to cover a MUST requirement or over-constrains the generator is the exact failure mode G3 exists to catch — read the coverage matrix carefully."
     )
 
@@ -98,10 +98,10 @@ def main() -> None:
         return
 
     ctx = WorkflowContext.current()
-    # G3 is build-only by design — see "Why build-only?" in the module
+    # G3 is scaffold-only by design — see "Why scaffold-only?" in the module
     # docstring for the rationale.
-    if ctx is None or ctx.workflow != "build":
-        emit_noop("PostToolUse", "G3 is build-workflow only")
+    if ctx is None or ctx.workflow != "scaffold":
+        emit_noop("PostToolUse", "G3 is scaffold-workflow only")
         return
 
     build_state = get_build_state_safe(ctx.protocol_dir) or {}
@@ -117,7 +117,7 @@ def main() -> None:
             "artifact": file_path,
             "methodology": methodology,
         },
-        workflow="build",
+        workflow="scaffold",
         phase=ctx.phase,
     )
 

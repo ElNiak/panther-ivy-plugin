@@ -139,7 +139,7 @@ def audit_journal(protocol_dir: str, workflow: str | None) -> list[str]:
 
     decisions = [e for e in entries if e.get("type") == "decision"]
 
-    if workflow == "build" and not decisions:
+    if workflow == "scaffold" and not decisions:
         build_state = get_build_state_safe(protocol_dir)
         if build_state and build_state.get("decisions"):
             warnings.append(
@@ -176,9 +176,9 @@ def build_summary(
     # Tool metrics
     metrics = gather_tool_metrics()
 
-    # Build state (for build workflow)
+    # Build state (for scaffold workflow)
     build_state = None
-    if workflow == "build" and protocol_dir:
+    if workflow == "scaffold" and protocol_dir:
         build_state = get_build_state_safe(protocol_dir)
 
     # Compose summary
@@ -202,7 +202,7 @@ def build_summary(
         if phase:
             parts.append(f"[WORKFLOW] Verify workflow ended in phase: {phase}")
 
-    elif workflow == "build" and build_state:
+    elif workflow == "scaffold" and build_state:
         layers = build_state.get("layers", {})
         if layers:
             layer_lines = ["[BUILD PROGRESS]"]

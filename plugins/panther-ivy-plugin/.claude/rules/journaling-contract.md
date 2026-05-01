@@ -14,7 +14,7 @@ If the contract file is missing or unreadable, the injection hook exits with cod
 | Surface | Writes journal? | Writes active-workflow YAML? |
 |---|---|---|
 | `skills/ivy/SKILL.md` (orchestrator) | YES — `workflow_resumed`, `gate_verdict` (after critic aggregation), `context_switch`, `plan_approved` (delegated to plan-mode rule), `knowledge_captured` (after G6 SOUND) | YES — `set` on dispatch; the matching ops-skill clears at terminal |
-| `skills/{build,verify,review,triage,meta-self-mod}-ops/SKILL.md` | YES — `phase_transition`, `decision`, `progress`, `gate_verdict` (for hook-internal G4/G5), `error`, `pending_dispatch` | The orchestrator wrote `set` before dispatch; ops-skill clears at terminal |
+| `skills/{scaffold,verify,review,triage,meta-self-mod}-ops/SKILL.md` | YES — `phase_transition`, `decision`, `progress`, `gate_verdict` (for hook-internal G4/G5), `error`, `pending_dispatch` | The orchestrator wrote `set` before dispatch; ops-skill clears at terminal |
 | `skills/{methodology,ivy-syntax,ivy-toolkit,specification-patterns,propagation-patterns,apt-attack-patterns,verification-failures}/SKILL.md` | NO (knowledge skills are read-only references) | NO |
 | `agents/ivy-{verifier,builder,reviewer,triage,meta}-agent.md` | NO directly — invokes its preloaded ops-skill which writes | NO directly |
 | `agents/g-{plan,fidelity,knowledge}-critic.md` | NO — returns `VERDICT_*` (or `KEEP/DROP/DEFER` for `g-knowledge-critic`); the orchestrator writes `gate_verdict` after aggregation | NO |
@@ -104,7 +104,7 @@ Today the architecture ensures sequencing:
 - Ops-skills run sequentially via `pending_dispatch` hand-off across turn boundaries.
 - Critics dispatched in parallel (G0 / G0b / G6 each fire 3 critics) do NOT write the journal — they return verdicts, the orchestrator writes a single `gate_verdict` after aggregation.
 
-Forward-looking note: a future change introducing parallel ops-skill dispatch (e.g. simultaneous build + review) would require adding `fcntl` locking to `append_journal_event` or moving to an append-only journal format. The contract assumes sequential discipline; do not violate it without addressing the locking gap.
+Forward-looking note: a future change introducing parallel ops-skill dispatch (e.g. simultaneous scaffold + review) would require adding `fcntl` locking to `append_journal_event` or moving to an append-only journal format. The contract assumes sequential discipline; do not violate it without addressing the locking gap.
 
 ### 4.3 Journal rotation
 
@@ -200,4 +200,4 @@ The contract is load-bearing. Failure modes documented:
 - **Contract file unreadable** — the SubagentStart injection hook exits 2 and blocks the dispatch. The user sees a hook-error message and fixes the file before retrying.
 - **Unknown plugin agent name** — the injection hook logs `unknown panther-ivy-plugin agent: <name>` to stderr and emits the 5-line read-only stub as a fail-safe default. Dispatch proceeds. Adding a new agent to the plugin requires updating the gating switch in the hook script.
 - **Journal write race** — does not happen under the sequential-write assumption (§4.2). If a future change violates the assumption, `append_journal_event` will silently drop one of the racing writes (the later one wins). Add `fcntl` locking before introducing parallelism.
-- **Legacy active-workflow names** — `_KNOWN_WORKFLOWS` in `workflow_state.py` is the unprefixed set (`navigate`, `build`, `verify`, `review`, `triage`, `meta`). Legacy prefixed names (`workflow-verify`, etc.) are migrated by the user-invoked one-shot `scripts/migrate_legacy_workflow.py`, NOT by `cleanup-stale-workflow.py` (per `feedback_no_backward_compat_shims`).
+- **Legacy active-workflow names** — `_KNOWN_WORKFLOWS` in `workflow_state.py` is the unprefixed set (`navigate`, `scaffold`, `verify`, `review`, `triage`, `meta`). Legacy prefixed names (`workflow-verify`, `workflow-build`, etc.) are migrated by the user-invoked one-shot `scripts/migrate_legacy_workflow.py`, NOT by `cleanup-stale-workflow.py` (per `feedback_no_backward_compat_shims`).

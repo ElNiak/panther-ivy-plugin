@@ -1,6 +1,6 @@
-# Build Workflow — Layer Scaffolding Reference
+# Scaffold Workflow — Layer Scaffolding Reference
 
-Detailed per-layer writing procedure for Phase 3 of the build workflow.
+Detailed per-layer writing procedure for Phase 3 of the scaffold workflow.
 
 ---
 
@@ -55,7 +55,7 @@ If the user mentions a type change that affects other layers, load `Skill(skill=
 
 ### Step 4: Update state
 
-After all layers are written and compile, update phase to `"written"` via `ivy_workflow_state(action="set", workflow="build", phase="written", protocol="<protocol>")`.
+After all layers are written and compile, update phase to `"written"` via `ivy_workflow_state(action="set", workflow="scaffold", phase="written", protocol="<protocol>")`.
 
 ### Knowledge Gate: Post-Write
 

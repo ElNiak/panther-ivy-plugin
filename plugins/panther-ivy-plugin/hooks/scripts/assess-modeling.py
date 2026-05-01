@@ -2,7 +2,7 @@
 """PostToolUse hook: trigger G2 modeling gate on .ivy layer writes.
 
 Fires after Edit|Write on a .ivy file (excluding *_test_*.ivy). When the
-active workflow is `build`, emits an additionalContext directive instructing
+active workflow is `scaffold`, emits an additionalContext directive instructing
 Claude to dispatch G2 modeling critics (your preloaded `verification-failures`
 skill provides the catalog).
 
@@ -14,13 +14,13 @@ marker writing).
 Non-blocking — always exits 0. Gate dispatch failures are non-fatal; the
 verdict event is recorded in the workflow journal, not surfaced as an error.
 
-## Why build-only?
+## Why scaffold-only?
 
 G2 audits layer modeling soundness during *construction* — ungrounded
 quantifiers, missing invariants, actions without require guards, the
 structural pathologies that matter most when a layer is being written for
 the first time. The filter line below (``if ctx is None or ctx.workflow
-!= "build": return``) is intentional scoping, not inertia.
+!= "scaffold": return``) is intentional scoping, not inertia.
 
 Verify's Phase 7 fix loop is expected to be narrow counterexample-driven
 repairs bounded by cluster 7's journal-counted attempt cap (5 per test
@@ -32,15 +32,15 @@ counterexample-driven patches rarely introduce the structural pathologies
 G2 is calibrated for.
 
 Review's Phase 3 inline fixes either stay small (qualitative patches) or,
-under cluster 1's design, dispatch back to ``build`` via
-``pending_dispatch(build, phase_hint="<appropriate>")`` for structural
+under cluster 1's design, dispatch back to ``scaffold`` via
+``pending_dispatch(scaffold, phase_hint="<appropriate>")`` for structural
 rethink. Either way, any .ivy write that warrants G2 re-runs G2 naturally
-by re-entering ``build``.
+by re-entering ``scaffold``.
 
-Users who want an adversarial audit outside build emit
-``append_pending_dispatch(target_workflow="build",
+Users who want an adversarial audit outside scaffold emit
+``append_pending_dispatch(target_workflow="scaffold",
 phase_hint="layer-check")`` from the current workflow and let navigate
-re-engage ``build``.
+re-engage ``scaffold``.
 """
 
 import os
@@ -95,7 +95,7 @@ def _build_directive(
         nsct_note = "\n  - NSCT active: include catalog range #260-289 in the slice."
 
     return (
-        "[G2 modeling gate] An .ivy layer file has been written while the `build` workflow is active. "
+        "[G2 modeling gate] An .ivy layer file has been written while the `scaffold` workflow is active. "
         "Dispatch the G2 modeling gate before proceeding to the next layer.\n\n"
         f"Artifact under audit: `{file_path}` (protocol: {protocol}).\n"
         f"{layer_line}\n"
@@ -107,7 +107,7 @@ def _build_directive(
         "4. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
         "5. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only — never let a critic edit the file).\n"
         "6. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
-        "7. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the build-overlay format.\n\n"
+        "7. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the scaffold-overlay format.\n\n"
         "Do not proceed to the next layer until each `[GAP:]` is either resolved or deliberately promoted to `// DEFERRED YYYY-MM-DD: …`."
     )
 
@@ -130,10 +130,10 @@ def main() -> None:
         return
 
     ctx = WorkflowContext.current()
-    # G2 is build-only by design — see "Why build-only?" in the module
+    # G2 is scaffold-only by design — see "Why scaffold-only?" in the module
     # docstring for the rationale.
-    if ctx is None or ctx.workflow != "build":
-        emit_noop("PostToolUse", "G2 is build-workflow only")
+    if ctx is None or ctx.workflow != "scaffold":
+        emit_noop("PostToolUse", "G2 is scaffold-workflow only")
         return
 
     build_state = get_build_state_safe(ctx.protocol_dir) or {}
@@ -151,7 +151,7 @@ def main() -> None:
             "layer": layer_name,
             "methodology": methodology,
         },
-        workflow="build",
+        workflow="scaffold",
         phase=ctx.phase,
     )
 

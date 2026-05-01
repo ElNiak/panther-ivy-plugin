@@ -235,7 +235,7 @@ Update active-workflow phase to match the outcome: `phase="iut-pass"`, `phase="i
 
 #### G2/G3 scope note
 
-G2/G3 gates do NOT fire on verify Phase 7 fix edits (they are build-time only). If a fix raises structural concerns, append `pending_dispatch(target_workflow="build", phase_hint="layer-check")` and clear the active-workflow flag; the orchestrator re-enters `build` on its next turn and the re-edit path re-engages G2 naturally. The rationale: G2/G3 are scoped to layer authoring (build-only), not patch-edits during verification — re-entering build is what causes the structural critic to fire on the new layer state.
+G2/G3 gates do NOT fire on verify Phase 7 fix edits (they are scaffold-time only). If a fix raises structural concerns, append `pending_dispatch(target_workflow="scaffold", phase_hint="layer-check")` and clear the active-workflow flag; the orchestrator re-enters `scaffold` on its next turn and the re-edit path re-engages G2 naturally. The rationale: G2/G3 are scoped to layer authoring (scaffold-only), not patch-edits during verification — re-entering scaffold is what causes the structural critic to fire on the new layer state.
 
 #### Counterexample interpretation (inline)
 
@@ -310,7 +310,7 @@ The cap value (3) is documented inline; raise it only via the `override_attempt_
 
 Apply the fix indicated by the inline counterexample interpretation. If editing `.ivy` files, invoke `Skill(skill="panther-ivy-plugin:ivy-syntax")` to load language reference guidance before making changes. After the Edit, follow the post-Edit workspace-block recovery pattern in Phase 6.
 
-> **A1 — verifier-agent capability note.** The `panther-ivy-plugin:ivy-verifier-agent` has `forbidden_tools: ["Edit","Write"]`. When verify-ops runs inside the verifier agent (the common case), Step 2 is satisfied by handing off to the builder via `append_pending_dispatch(target_workflow="build", phase_hint="apply-fix", reason="verify Phase 7 Step 2 — apply diagnosed fix from <file>:<line>")` and clearing active-workflow; the builder applies the Edit on the next turn and emits `pending_dispatch(verify, phase_hint="re-verify")` on completion to loop back to Phase 7 Step 3. When verify-ops runs in a different context that allows Edit, the inline Edit is the direct path. The cycle invariant (`NO_FIX_WITHOUT_VERIFY`) is unchanged either way.
+> **A1 — verifier-agent capability note.** The `panther-ivy-plugin:ivy-verifier-agent` has `forbidden_tools: ["Edit","Write"]`. When verify-ops runs inside the verifier agent (the common case), Step 2 is satisfied by handing off to the builder via `append_pending_dispatch(target_workflow="scaffold", phase_hint="apply-fix", reason="verify Phase 7 Step 2 — apply diagnosed fix from <file>:<line>")` and clearing active-workflow; the builder applies the Edit on the next turn and emits `pending_dispatch(verify, phase_hint="re-verify")` on completion to loop back to Phase 7 Step 3. When verify-ops runs in a different context that allows Edit, the inline Edit is the direct path. The cycle invariant (`NO_FIX_WITHOUT_VERIFY`) is unchanged either way.
 
 #### Step 3: Re-verify
 

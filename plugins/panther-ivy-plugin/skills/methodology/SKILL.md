@@ -21,12 +21,12 @@ Once the methodology is chosen, this table maps the user's situation to the firs
 
 | Situation | Methodology | First skill to load | First workflow |
 |---|---|---|---|
-| RFC compliance test, IUT exists | NCT | `specification-patterns` | `workflow-build` |
-| Attack / security test, attacker model needed | NACT | `apt-attack-patterns` | `workflow-build` |
-| Network-condition / replay tests (Shadow simulator) | NSCT | `methodology` (this file) | `workflow-build` |
-| Existing spec, want to verify | (any) | `verification-failures` | `workflow-verify` |
-| Existing spec, want coverage / quality verdict | (any) | `verification-failures` | `workflow-review` |
-| Tools timing out / MCP errors | (any) | (none — direct invocation) | `workflow-triage` |
+| RFC compliance test, IUT exists | NCT | `specification-patterns` | `scaffold` |
+| Attack / security test, attacker model needed | NACT | `apt-attack-patterns` | `scaffold` |
+| Network-condition / replay tests (Shadow simulator) | NSCT | `methodology` (this file) | `scaffold` |
+| Existing spec, want to verify | (any) | `verification-failures` | `verify` |
+| Existing spec, want coverage / quality verdict | (any) | `verification-failures` | `review` |
+| Tools timing out / MCP errors | (any) | (none — direct invocation) | `triage` |
 
 ## References
 

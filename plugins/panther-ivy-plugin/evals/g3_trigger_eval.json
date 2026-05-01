@@ -1,6 +1,6 @@
 {
   "gate": "g3",
-  "description": "G3 test-spec gate fires on PostToolUse when an Edit/Write to a *_test_*.ivy file completes during an active build workflow.",
+  "description": "G3 test-spec gate fires on PostToolUse when an Edit/Write to a *_test_*.ivy file completes during an active scaffold workflow.",
   "should_trigger": [
     {"prompt": "Add the export declaration for handle_update in bgp_server_test_session.ivy", "expected_tool_match": "Edit on *_test_*.ivy"},
     {"prompt": "Write a new test spec quic_client_test_handshake.ivy that exports the relevant actions", "expected_tool_match": "Write on *_test_*.ivy"},

@@ -298,7 +298,7 @@ class TestAppendJournalEvent:
     def test_appends_to_existing_journal(self, tmp_path):
         mod = _import_module()
         mod.append_journal_event(str(tmp_path), "session_start", {"resumed_from": None}, "workflow-build", "init")
-        mod.append_journal_event(str(tmp_path), "decision", {"summary": "defer group D", "context": "needs 3-speaker"}, "build", "scoped")
+        mod.append_journal_event(str(tmp_path), "decision", {"summary": "defer group D", "context": "needs 3-speaker"}, "scaffold", "scoped")
 
         journal_path = tmp_path / ".panther-ivy" / "workflow-journal.yaml"
         entries = yaml.safe_load(journal_path.read_text())

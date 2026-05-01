@@ -87,10 +87,10 @@ def test_different_workflow_overwrites_fresh(protocol_dir: Path):
     )
     prev = yaml.safe_load((protocol_dir / ".panther-ivy" / "active-workflow").read_text())
     now = "2026-04-20T13:05:00+00:00"
-    new_state, kind = mod._compute_new_state(str(protocol_dir), prev, "build", now)
+    new_state, kind = mod._compute_new_state(str(protocol_dir), prev, "scaffold", now)
     assert kind == "overwrite"
     assert new_state == {
-        "workflow": "build",
+        "workflow": "scaffold",
         "phase": "init",
         "started": now,
     }
@@ -107,10 +107,10 @@ def test_overwrite_does_not_depend_on_staleness(protocol_dir: Path):
     )
     prev = yaml.safe_load((protocol_dir / ".panther-ivy" / "active-workflow").read_text())
     now = "2026-04-20T13:10:00+00:00"
-    new_state, kind = mod._compute_new_state(str(protocol_dir), prev, "build", now)
+    new_state, kind = mod._compute_new_state(str(protocol_dir), prev, "scaffold", now)
     assert kind == "overwrite"
     assert new_state == {
-        "workflow": "build",
+        "workflow": "scaffold",
         "phase": "init",
         "started": now,
     }

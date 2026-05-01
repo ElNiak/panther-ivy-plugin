@@ -87,7 +87,7 @@ class TestIvyVerifyFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_verify",
             json.dumps({"success": True, "isolate": "quic_types"}),
-            workflow="build",
+            workflow="scaffold",
             tmp_path=tmp_path,
         )
         if output is None:
@@ -220,7 +220,7 @@ class TestIvyCompileFormatting:
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_compile",
             json.dumps({"status": "failure", "error_message": "undefined symbol"}),
-            workflow="build",
+            workflow="scaffold",
             tmp_path=tmp_path,
         )
         assert output is not None

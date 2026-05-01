@@ -36,7 +36,7 @@ Per `.claude/rules/journaling-contract.md` §1, this agent does NOT write the jo
   <field name="workspace" required="true"
          example="Workspace: bgp  (from ivy_workspace(action=&quot;get&quot;))"/>
   <field name="phase_context" required="true"
-         example="Dispatched from build workflow Phase 3 — implement layer"/>
+         example="Dispatched from scaffold workflow Phase 3 — implement layer"/>
   <field name="prior_findings" required="false"
          example="G2 flagged missing invariant on bgp_frame.ivy:78"/>
   <field name="review_scope" required="false"

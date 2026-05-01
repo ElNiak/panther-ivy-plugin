@@ -50,7 +50,7 @@ Three-agent MPE (Conservative Architect / Pragmatic Engineer / Adversarial Audit
 
 #### Step 3: Update state
 
-Update phase to `"scoped"` via `ivy_workflow_state(action="set", workflow="build", phase="scoped", protocol="<protocol>")`.
+Update phase to `"scoped"` via `ivy_workflow_state(action="set", workflow="scaffold", phase="scoped", protocol="<protocol>")`.
 
 ### Phase 2 — Blueprint
 
@@ -100,7 +100,7 @@ decisions:
 
 #### Step 5: Update state and fire G1 gate
 
-Update phase to `"blueprint-done"` via `ivy_workflow_state(action="set", workflow="build", phase="blueprint-done", protocol="<protocol>")`.
+Update phase to `"blueprint-done"` via `ivy_workflow_state(action="set", workflow="scaffold", phase="blueprint-done", protocol="<protocol>")`.
 
 <HARD-GATE>
 G1 exploration gate fires after `phase=blueprint-done`. Dispatch G1 critics inline using
@@ -171,7 +171,7 @@ The orchestrator's next-turn routing consumes the `pending_dispatch` and dispatc
 
 ### Phase 5 — Quality Gate
 
-Dispatch `model-reviewer` and `traceability-agent` in parallel via two `Agent` calls in one message. Aggregate findings by ERROR/WARNING/INFO severity per `.claude/rules/ivy-formatting.md`. On ERROR findings, ask user fix-now-or-accept (gate checkpoint); loop to Phase 3 for structural fixes, Phase 4 for verification, or fix coverage gaps inline. Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="build", phase="quality-passed", protocol="<protocol>")`.
+Dispatch `model-reviewer` and `traceability-agent` in parallel via two `Agent` calls in one message. Aggregate findings by ERROR/WARNING/INFO severity per `.claude/rules/ivy-formatting.md`. On ERROR findings, ask user fix-now-or-accept (gate checkpoint); loop to Phase 3 for structural fixes, Phase 4 for verification, or fix coverage gaps inline. Update phase to `"quality-passed"` via `ivy_workflow_state(action="set", workflow="scaffold", phase="quality-passed", protocol="<protocol>")`.
 
 **Knowledge Gate.** Pause for the G6 knowledge-capture vote (g-knowledge-critic ×3, asymmetric vote): focus areas are architecture decisions solidified during quality review and model-reviewer / traceability-agent findings worth remembering.
 
@@ -316,7 +316,7 @@ breaks the workflow state machine.
 
 Build dispatches `spec-analyst` (Phase 3 compile-error diagnosis), `model-reviewer` + `traceability-agent` (Phase 5 quality gate, in parallel), `g-fidelity-critic` ×3 (Phase 3 G2/G3 inline dispatch), and MPE Explore agents (Phase 1 architectural approach). Apply the canonical failure-recovery contract from `.claude/rules/agent-dispatch.md` for every dispatch:
 
-- Append `progress{kind: "agent_dispatch_start", agent: "<name>", workflow: "build", phase: "<phase>"}` before dispatch.
+- Append `progress{kind: "agent_dispatch_start", agent: "<name>", workflow: "scaffold", phase: "<phase>"}` before dispatch.
 - Use the per-tier timeout (Sonnet: 90 s; Opus: 180 s; `model-reviewer` is Opus tier with no auto-retry on `context_exhaustion`).
 - On `timeout`/`context_exhaustion`/`partial`/`malformed`: classify, append `agent_dispatch_failure`, auto-retry once. On second failure or `tool_not_found`/`explicit_error`: present `AskUserQuestion(retry-manually | skip | abandon)`.
 

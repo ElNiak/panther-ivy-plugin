@@ -1,7 +1,7 @@
 # Walkthrough — NCT path for a QUIC server IUT
 
 A concrete end-to-end walkthrough showing how the NCT methodology drives
-`workflow-build` + `workflow-verify` from RFC selection to a SOUND model
+`scaffold` workflow + `workflow-verify` from RFC selection to a SOUND model
 with IUT testing. The example assumes a fresh workspace and an IUT that
 implements the protocol.
 
@@ -26,15 +26,15 @@ remain free.
 User prompt: *"create a QUIC server compliance model from RFC 9000 §17"*.
 
 The orchestrator skill `panther-ivy-plugin:ivy` classifies the intent
-("create / build a model") and routes to the build workflow per its
+("create / build a model") and routes to the scaffold workflow per its
 Dispatch table. The post-Phase-E orchestrator replaces the pre-Phase-C
 `route-user-prompt.py` hook + `routing-rules.json` regex matcher; the
 semantics (intent → workflow target) survive but the surface is now a
 prose dispatch table in `skills/ivy/SKILL.md` rather than a JSON file.
 
-## Step 3 — Build Phase 1 (Methodology detection)
+## Step 3 — Scaffold Phase 1 (Methodology detection)
 
-`workflow-build` reads RFC 9000 keywords, finds no `attack` / `attacker`
+`scaffold` workflow reads RFC 9000 keywords, finds no `attack` / `attacker`
 keywords, no `network simulation` mentions, classifies `methodology=nct`,
 and writes `build-state.yaml`:
 
@@ -46,7 +46,7 @@ target_role: server
 iut_layer: picoquic
 ```
 
-## Step 4 — Build Phase 2 (Blueprint)
+## Step 4 — Scaffold Phase 2 (Blueprint)
 
 Loads `Skill(panther-ivy-plugin:specification-patterns)` and
 applies the 14-layer template. For QUIC server NCT the relevant subset:
@@ -62,7 +62,7 @@ applies the 14-layer template. For QUIC server NCT the relevant subset:
 `build-state.yaml.layers` records each layer's status; only layer 7 will
 be authored in this run.
 
-## Step 5 — Build Phase 3 (Implement layer 7)
+## Step 5 — Scaffold Phase 3 (Implement layer 7)
 
 Iron law `NO_LAYER_WITHOUT_SCAFFOLD` binds: before writing
 `quic_server_test_handshake.ivy`, run
@@ -78,9 +78,9 @@ The role-inversion rule applies: testing a QUIC *server* means Ivy plays
 the *client* (`quic_server_test_*` files contain client-side
 test-traffic generators).
 
-## Step 6 — Build Phase 4 (Hand off to verify)
+## Step 6 — Scaffold Phase 4 (Hand off to verify)
 
-`append_pending_dispatch(verify, reason="build Phase 4 — post-modeling
+`append_pending_dispatch(verify, reason="scaffold Phase 4 — post-modeling
 verification")`, clear `active-workflow`, end turn.
 
 ## Step 7 — Verify cycle (next turn)

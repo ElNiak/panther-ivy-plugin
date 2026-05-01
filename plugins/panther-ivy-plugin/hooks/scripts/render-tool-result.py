@@ -70,7 +70,7 @@ def format_ivy_verify(data: dict, workflow: str | None) -> str | None:
             return "ivy_verify: OK"
         return f"ivy_verify: FAIL -- {len(errors)} error(s). Run verify workflow for details."
 
-    if workflow == "build":
+    if workflow == "scaffold":
         if success:
             return f"Layer verified: {isolate} PASS"
         return "Layer verification failed -- switching to verify workflow for diagnosis."
@@ -174,7 +174,7 @@ def format_ivy_compile(data: dict, workflow: str | None) -> str | None:
     if workflow == "triage":
         return "ivy_compile: OK" if success else f"ivy_compile: FAIL -- {err_msg}"
 
-    if workflow == "build":
+    if workflow == "scaffold":
         if success:
             return f"Layer compiled: {binary}"
         return "Layer compilation failed. Fix before proceeding to next layer."

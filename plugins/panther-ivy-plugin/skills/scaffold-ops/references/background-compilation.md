@@ -1,6 +1,6 @@
-# Build Workflow — Background Compilation Reference
+# Scaffold Workflow — Background Compilation Reference
 
-Detailed procedure for running `ivy_compile` in a background subagent during Phase 3 of the build workflow, so productive work continues in the main conversation while long compilations run.
+Detailed procedure for running `ivy_compile` in a background subagent during Phase 3 of the scaffold workflow, so productive work continues in the main conversation while long compilations run.
 
 ---
 

@@ -73,7 +73,7 @@ class TestWorkflowContextCurrent:
                     "workflow": "workflow-verify",
                     "phase": "exec",
                     "invocation_depth": 2,
-                    "caller": "build",
+                    "caller": "scaffold",
                     "rogue_field": "should-be-dropped",
                     "another_new_key": 42,
                 },

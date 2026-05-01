@@ -1,6 +1,6 @@
 ---
 name: ivy-verifier-agent
-description: "Specialist agent for Ivy spec verification, compile checks, and counterexample diagnosis. Use when the ivy orchestrator dispatches this agent for verify tasks ('verify protocol-testing/bgp/bgp_stack/bgp_connection.ivy', 'check this spec', 'diagnose this counterexample'). <example>Context: orchestrator routed a verify request after a build phase. user: \"verify bgp_connection.ivy\". assistant: \"Dispatching ivy-verifier-agent.\" <commentary>Verifier owns the verify-compile-IUT cycle and the diagnosis path; rewrites are routed back to the builder.</commentary></example>"
+description: "Specialist agent for Ivy spec verification, compile checks, and counterexample diagnosis. Use when the ivy orchestrator dispatches this agent for verify tasks ('verify protocol-testing/bgp/bgp_stack/bgp_connection.ivy', 'check this spec', 'diagnose this counterexample'). <example>Context: orchestrator routed a verify request after a scaffold phase. user: \"verify bgp_connection.ivy\". assistant: \"Dispatching ivy-verifier-agent.\" <commentary>Verifier owns the verify-compile-IUT cycle and the diagnosis path; rewrites are routed back to the builder.</commentary></example>"
 model: opus
 color: blue
 tools:

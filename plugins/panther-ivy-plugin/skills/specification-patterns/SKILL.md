@@ -63,7 +63,7 @@ module (no deps)
 
 ## Integration
 
-- **LOADED BY:** build workflow (plan phase)
+- **LOADED BY:** scaffold workflow (plan phase)
 
 **Related skills:**
 - **methodology** -- Layer decomposition in NCT/NACT/NSCT workflows

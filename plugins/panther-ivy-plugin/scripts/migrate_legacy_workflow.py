@@ -42,7 +42,7 @@ import yaml  # noqa: E402
 from workflow_state import append_journal_event  # type: ignore[import-not-found]  # noqa: E402
 
 _MIGRATION_MAP: dict[str, str | None] = {
-    "workflow-build": "build",
+    "workflow-build": "scaffold",
     "workflow-verify": "verify",
     "workflow-review": "review",
     "workflow-triage": "triage",

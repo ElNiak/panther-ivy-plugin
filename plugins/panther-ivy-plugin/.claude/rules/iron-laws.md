@@ -38,14 +38,14 @@ skill detects plan mode). The G0 plan-gate enforces conformance when a plan
 is approved and the workflow re-activates at Phase 1.5.
 </context>
 
-## Iron Laws (build, verify, review workflows)
+## Iron Laws (scaffold, verify, review workflows)
 
 | Law | Workflow | Enforcement site |
 |---|---|---|
 | NO_FIX_WITHOUT_VERIFY | verify | workflow self-discipline + hooks/scripts/block-direct-ivy.py (advisory hint) |
-| NO_LAYER_WITHOUT_SCAFFOLD | build | ivy_diagnostics(mode="structural") call before new-layer writes |
+| NO_LAYER_WITHOUT_SCAFFOLD | scaffold | ivy_diagnostics(mode="structural") call before new-layer writes |
 | NO_QUALITY_WITHOUT_COVERAGE | review | ivy_coverage / ivy_quality citation at verdict time |
-| STALENESS RULE | build, verify, review | ivy_analysis(mode="includes") closure + tool timestamp |
+| STALENESS RULE | scaffold, verify, review | ivy_analysis(mode="includes") closure + tool timestamp |
 
 <iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="workflow-verify" enforcement="hooks/scripts/block-direct-ivy.py (advisory) + workflow self-discipline">
 
@@ -72,7 +72,7 @@ is approved and the workflow re-activates at Phase 1.5.
 
 </iron-law>
 
-<iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="workflow-build" enforcement="ivy_diagnostics(mode=structural) precondition in build Phase 3">
+<iron-law name="NO_LAYER_WITHOUT_SCAFFOLD" workflow="scaffold" enforcement="ivy_diagnostics(mode=structural) precondition in scaffold Phase 3">
 
   <instructions>
   Before writing a *net-new* layer file (e.g., creating `quic_8.ivy` when
@@ -130,7 +130,7 @@ is approved and the workflow re-activates at Phase 1.5.
 
 </iron-law>
 
-<iron-law name="STALENESS_RULE" workflow="build, verify, review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp">
+<iron-law name="STALENESS_RULE" workflow="scaffold, verify, review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp">
 
   <instructions>
   A tool result for file `F` is *stale* if `F` itself or any file in `F`'s
@@ -162,7 +162,7 @@ is approved and the workflow re-activates at Phase 1.5.
   - **verify**: Phase 2 runs `ivy_diagnostics` on recently modified files
     before `ivy_verify`; Phase 4 re-runs `ivy_verify` if any file in the
     target's include closure changed since the prior PASS.
-  - **build**: Phase 3 re-runs `ivy_diagnostics(mode="structural")` on a
+  - **scaffold**: Phase 3 re-runs `ivy_diagnostics(mode="structural")` on a
     predecessor layer if the closure includes a file edited since the
     prior structural pass — the NO_LAYER_WITHOUT_SCAFFOLD gate consumes
     a fresh result, not a cached one.
@@ -174,7 +174,7 @@ is approved and the workflow re-activates at Phase 1.5.
 </iron-law>
 
 <integration
-  cited-by="skills/build, skills/verify, skills/review"
+  cited-by="skills/scaffold-ops, skills/verify-ops, skills/review-ops"
   enforcement-hook="hooks/scripts/block-direct-ivy.py (advisory hint)"
   suspended-during="plan mode (navigate Phase 0)"
   re-checked-at="G0 plan-gate on plan approval (navigate Phase 1.5)"/>
