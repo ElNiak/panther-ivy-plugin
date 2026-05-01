@@ -369,13 +369,13 @@ class TestAppendPendingDispatch:
             str(tmp_path),
             "workflow-verify",
             phase_hint="preflight",
-            reason="build phase 4 requires verification",
+            reason="scaffold phase 4 requires verification",
         )
         entry = mod.get_journal_entries(str(tmp_path))[0]
         assert entry["payload"] == {
             "workflow": "workflow-verify",
             "phase_hint": "preflight",
-            "reason": "build phase 4 requires verification",
+            "reason": "scaffold phase 4 requires verification",
         }
 
     def test_omits_phase_hint_and_reason_when_none(self, tmp_path):

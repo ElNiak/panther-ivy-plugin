@@ -36,7 +36,7 @@ If verification fails but no counterexample is present, the failure is likely a 
 
 ## Integration
 
-- **Loaded by:** `workflow-verify` (Phase 6 Diagnose), `workflow-build` (Phase 3 on compile error), `workflow-review` (Phase 3 on contested findings); G4 verification critics, G5 trace-analysis critics, and the `model-reviewer` / `spec-analyst` agents during their dispatch phases.
+- **Loaded by:** `verify` (Phase 6 Diagnose), `scaffold` (Phase 3 on compile error), `review` (Phase 3 on contested findings); G4 verification critics, G5 trace-analysis critics, and the `model-reviewer` / `spec-analyst` agents during their dispatch phases.
 - **Precedes:** the G4 verification gate cites `references/debugging-methodology.md` (catalog entry `#405`); fixes proposed without those steps are UNSOUND by gate criteria.
 
 **Related skills:** `ivy-syntax` (language reference), `ivy-toolkit` (MCP tool inventory), `methodology` (verification-cycle context, per-methodology counterexample interpretation), `cross-cutting-reflection-patterns` (adversarial-gate discipline layer).
