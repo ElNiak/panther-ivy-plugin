@@ -38,7 +38,7 @@ skill detects plan mode). The G0 plan-gate enforces conformance when a plan
 is approved and the workflow re-activates at Phase 1.5.
 </context>
 
-## Iron Laws (scaffold, refine, review workflows)
+## Iron Laws (scaffold, refine, experiment, review workflows)
 
 | Law | Workflow | Enforcement site |
 |---|---|---|

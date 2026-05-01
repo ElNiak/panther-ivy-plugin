@@ -51,6 +51,14 @@ _MIGRATION_MAP: dict[str, str | None] = {
     "workflow-review": "review",
     "workflow-triage": "triage",
     "meta-plugin-self-mod": "meta",
+    # Post-Phase-1, pre-Phase-2 unprefixed names get a second migration step.
+    # `build` and `verify` were canonical between the prefix-removal commit and
+    # the verify-ops split; both retire after Phase 2. `build` -> `scaffold`,
+    # `verify` -> `refine` (refine owns the dominant prior verify-cycle usage;
+    # if the existing YAML was at the IUT phase, manually re-set to `experiment`
+    # post-migration).
+    "build": "scaffold",
+    "verify": "refine",
     "workflow-navigate": None,
 }
 
