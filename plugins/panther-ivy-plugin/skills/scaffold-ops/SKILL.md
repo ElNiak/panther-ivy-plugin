@@ -160,7 +160,7 @@ Hand control to the `verify` workflow via a `pending_dispatch` event — no in-p
    ```
    append_pending_dispatch(
      protocol="<protocol>",
-     target_workflow="verify",
+     target_workflow="refine",
      reason="build Phase 4 — post-modeling verification"
    )
    ```

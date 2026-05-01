@@ -82,7 +82,7 @@ Ask via `AskUserQuestion`: "Fix it yourself, or want me to attempt the fix?" Wai
 
 ### Step 6: Update state
 
-Update phase to `"diagnosed"` via `ivy_workflow_state(action="set", workflow="verify", phase="diagnosed", protocol="<protocol>")`.
+Update phase to `"diagnosed"` via `ivy_workflow_state(action="set", workflow="refine", phase="diagnosed", protocol="<protocol>")`.
 
 ---
 

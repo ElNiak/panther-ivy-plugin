@@ -169,17 +169,17 @@ Apply the **Reflection Gate** pattern (pause and re-evaluate before escalating):
 
 After any `Write` / `Edit` on a `.ivy` file during this inline-fix path, inspect the tool result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. If blocked, append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal and present `AskUserQuestion` per `.claude/rules/mcp-tool-reliability.md`: switch workspace to the file's protocol, clear workspace restrictions, or abandon the fix.
 
-**If the user wants verification:** Emit a `pending_dispatch` naming `verify` and let the orchestrator route the hand-off on the next turn — review does not dispatch verify directly:
+**If the user wants verification:** Emit a `pending_dispatch` naming `refine` and let the orchestrator route the hand-off on the next turn — review does not dispatch refine directly:
 
 ```
 append_pending_dispatch(
   protocol="<protocol>",
-  target_workflow="verify",
+  target_workflow="refine",
   reason="review Phase 3 — user requested targeted verification of flagged findings"
 )
 ```
 
-Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")` and end the turn. On verify's completion it may emit `pending_dispatch(review, phase_hint="findings")` to hand control back; review then re-enters with the verify outcome readable from the journal (`gate_verdict`, `progress`).
+Then clear the active-workflow flag via `ivy_workflow_state(action="clear", protocol="<protocol>")` and end the turn. On refine's completion it may emit `pending_dispatch(review, phase_hint="findings")` to hand control back; review then re-enters with the refine outcome readable from the journal (`gate_verdict`, `progress`).
 
 **If the user accepts as-is:** Proceed to completion.
 

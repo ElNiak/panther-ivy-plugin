@@ -24,7 +24,7 @@ After writing EACH layer:
    - If `count >= 5`, ESCALATE via `AskUserQuestion`:
      - **Continue anyway** — append `decision{kind: "override_attempt_cap", key: "<layer>"}`; the cap re-engages after 5 more attempts.
      - **Abandon this layer** — mark the layer's `scaffold-state.yaml` status as `abandoned`, record `decision{summary: "Abandon <layer> after N attempts"}`, move to the next layer in dependency order.
-     - **Switch workflow** — emit `append_pending_dispatch(target_workflow="verify", reason="Compile loop capped on <layer>")` (or `build` if structural rethink is needed), clear the active-workflow flag.
+     - **Switch workflow** — emit `append_pending_dispatch(target_workflow="refine", reason="Compile loop capped on <layer>")` (or `scaffold` if structural rethink is needed), clear the active-workflow flag.
    - Otherwise, append `progress{kind: "compile_attempt", key: "<layer>", protocol: "<protocol>"}` and proceed to step 2.
 2. Run `ivy_compile` for a compile check on the new file.
 3. **On compile error:**
