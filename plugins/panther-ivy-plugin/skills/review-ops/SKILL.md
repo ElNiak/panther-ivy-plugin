@@ -332,8 +332,8 @@ The terminal state of review is one of:
 Do NOT invoke any other workflow's ops skill (`scaffold-ops`, `verify-ops`,
 `triage-ops`) directly from review. Hand-off rides on `append_pending_dispatch`
 so the causal chain stays visible in the journal. The On Completion gate
-MUST clear before any `pending_dispatch` is written. G2/G3 build-time gates
-DO NOT fire on review-inline edits — structural fixes belong in `build`,
+MUST clear before any `pending_dispatch` is written. G2/G3 scaffold-time gates
+DO NOT fire on review-inline edits — structural fixes belong in `scaffold`,
 not here.
 </HARD-GATE>
 

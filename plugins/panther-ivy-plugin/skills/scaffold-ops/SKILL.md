@@ -302,8 +302,8 @@ When `ivy_compile` would block for minutes, run it in a background subagent via 
 ## Terminal state
 
 <HARD-GATE>
-The terminal state of build is one of:
-- `append_pending_dispatch(verify, reason="build Phase 4 — post-modeling verification")` + clear active-workflow flag (Phase 4 hand-off).
+The terminal state of scaffold is one of:
+- `append_pending_dispatch(verify, reason="scaffold Phase 4 — post-modeling verification")` + clear active-workflow flag (Phase 4 hand-off).
 - `append_pending_dispatch(<next>, …)` or bare clear of active-workflow flag (Phase 6 completion routing).
 
 Do NOT invoke any other workflow's ops skill (`verify-ops`, `review-ops`,

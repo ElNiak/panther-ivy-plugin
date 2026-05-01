@@ -83,7 +83,7 @@ class TestIvyVerifyFormatting:
         ctx = output["hookSpecificOutput"]["additionalContext"]
         assert "FAIL" in ctx
 
-    def test_verify_pass_build_workflow(self, tmp_path):
+    def test_verify_pass_scaffold_workflow(self, tmp_path):
         output = run_hook(
             "mcp__panther-ivy-plugin__ivy_verify",
             json.dumps({"success": True, "isolate": "quic_types"}),
@@ -91,7 +91,7 @@ class TestIvyVerifyFormatting:
             tmp_path=tmp_path,
         )
         if output is None:
-            pytest.skip("Formatter not yet producing output for build")
+            pytest.skip("Formatter not yet producing output for scaffold")
         ctx = output["hookSpecificOutput"]["additionalContext"]
         assert "Layer verified" in ctx
 

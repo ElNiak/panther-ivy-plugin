@@ -68,7 +68,7 @@ This is an inline interpretation by the verifier agent — no separate diagnosti
 
 ## Phase 7 — Fix (apply diff)
 
-Attempt counter is at 0 (first fix on this file this session), well below the cap of 3. The verifier appends `progress{kind: "fix_attempt", key: "quic_server_test_handshake.ivy", attempt: 1}` and applies the unified diff via the `Edit` tool. The PostToolUse `assess-modeling.py` hook does NOT fire G2 on Phase 7 verify-time edits (G2 is build-time only — see `cross-cutting-reflection-patterns/references/gates.md` § "G2/G3 workflow scope").
+Attempt counter is at 0 (first fix on this file this session), well below the cap of 3. The verifier appends `progress{kind: "fix_attempt", key: "quic_server_test_handshake.ivy", attempt: 1}` and applies the unified diff via the `Edit` tool. The PostToolUse `assess-modeling.py` hook does NOT fire G2 on Phase 7 verify-time edits (G2 is scaffold-time only — see `cross-cutting-reflection-patterns/references/gates.md` § "G2/G3 workflow scope").
 
 ## Phase 4 — Re-verify (SOUND)
 
@@ -96,6 +96,6 @@ Invoke `Skill(skill="panther-ivy-plugin:ivy")` and read `references/completion-g
 | Counterexample interpretation pattern `#410` | Cited by both G4 verdict and Phase 6 diagnosis. |
 | Phase 7 attempt-counter accountability | `progress{kind: "fix_attempt", attempt: 1}` journal event. |
 | `cross-cutting-completion-gate` | Final IDENTIFY → THEN-claim. |
-| G2/G3 workflow-scope rule | Phase 7 fix did NOT fire G2 (build-time only). |
+| G2/G3 workflow-scope rule | Phase 7 fix did NOT fire G2 (scaffold-time only). |
 
 Refresh trigger: when a new verifier-pattern is added to `verification-failures/references/verifier_patterns.md`, re-derive the JSON / trace format here so the example stays representative of current verifier output.
