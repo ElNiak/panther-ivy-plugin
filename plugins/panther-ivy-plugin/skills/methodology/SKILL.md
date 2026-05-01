@@ -2,6 +2,9 @@
 name: methodology
 description: "Use when choosing a testing methodology, starting model construction, or mapping RFC requirements to an Ivy testing strategy. Provides NCT (compliance) / NACT (security) / NSCT (simulation) selection and workflow guidance."
 user-invocable: false
+paths:
+  - "**/*.ivy"
+  - "**/skills/*/SKILL.md"
 ---
 
 # Formal Testing Methodologies
@@ -10,7 +13,7 @@ user-invocable: false
 
 **Journal:** read-only knowledge skill. Per `.claude/rules/journaling-contract.md` §1, this skill does NOT write to `.panther-ivy/workflow-journal.yaml`; the orchestrator and the 5 ops-skills (build-ops / verify-ops / review-ops / triage-ops / meta-self-mod-ops) are the writer surfaces.
 
-PANTHER's three Ivy testing methodologies are NCT (compliance), NACT (adversarial security), and NSCT (Shadow-NS simulation). All three share the 14-layer specification template (canonical location in `.claude/rules/nct-methodology.md`), the before/after monitor pattern, `require` / `export` / `_finalize` semantics, and role inversion. Decision tree: testing RFC compliance → NCT; testing security against attacks → NACT; testing under controlled network conditions → NSCT; unsure → start with NCT (the foundation for both NACT and NSCT). For tool usage across all methodologies, see `ivy-toolkit`.
+PANTHER's three Ivy testing methodologies are NCT (compliance), NACT (adversarial security), and NSCT (Shadow-NS simulation). All three share the 14-layer specification template (canonical location: this skill body, mirrored in user auto-memory at `~/.claude/projects/<project>/memory/reference_nct_methodology.md`), the before/after monitor pattern, `require` / `export` / `_finalize` semantics, and role inversion. Decision tree: testing RFC compliance → NCT; testing security against attacks → NACT; testing under controlled network conditions → NSCT; unsure → start with NCT (the foundation for both NACT and NSCT). For tool usage across all methodologies, see `ivy-toolkit`.
 
 ## Dispatch decision table
 

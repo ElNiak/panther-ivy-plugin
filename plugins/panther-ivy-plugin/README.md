@@ -11,12 +11,13 @@ Provides Ivy LSP (diagnostics, navigation), MCP tools (verification, compilation
 | Orchestrator skill (single entry point) | 1 | `skills/ivy/` |
 | Workflow ops-skills (preloaded by specialist agents) | 5 | `skills/{triage,build,verify,review,meta-self-mod}-ops/` |
 | Cross-cutting knowledge skills (thin SKILL.md + on-demand `references/`) | 7 | `skills/{ivy-toolkit,ivy-syntax,methodology,verification-failures,specification-patterns,propagation-patterns,apt-attack-patterns}/` |
+| Maintainer self-audit skill | 1 | `skills/reference-drift/` |
 | Workflow specialist agents | 5 | `agents/ivy-{triage,builder,verifier,reviewer,meta}-agent.md` |
 | Gate-critic agents | 3 | `agents/g-{plan,fidelity,knowledge}-critic.md` |
-| Hook scripts | 28 | `hooks/scripts/` |
+| Hook scripts | 24 distinct (35 registrations across 12 events) | `hooks/scripts/` |
 | Slash commands | 2 | `commands/{nct-iut-test,nct-health}.md` |
 | Output style | 1 | `output-styles/ivy-guided.md` |
-| `.claude/rules/` files | 13 | `.claude/rules/*.md` |
+| `.claude/rules/` files | 15 | `.claude/rules/*.md` |
 
 ## Workflow Routing
 

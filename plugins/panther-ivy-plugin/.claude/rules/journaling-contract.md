@@ -78,7 +78,7 @@ The list below is closed. Adding a new event type requires editing `_VALID_EVENT
 | `gate_verdict` | `gate` (str), `verdict` (str: `sound`/`unsound`/`abstain`), `vote` (str: e.g. `2-of-3`) | `patterns` (list of `#NN`), `cycle` (int), `tier` (str), `duration_s` (number), `abstain_reason` (str if `verdict=abstain`) | orchestrator after critic fan-out aggregation |
 | `plan_approved` | `workflow` (str: caller), `phase_before_plan` (str), `plan_file` (str: abs path) | `supersedes` (list of str) | plan-mode procedure (per `plan-mode.md` Step 4) |
 | `workflow_resumed` | `workflow` (str: caller being resumed), `phase_after_resume` (str), `source_pending_dispatch_index` (int) | `g0_cycle` (int) if traced from G0 SOUND | orchestrator on `pending_dispatch` consumption (Phase 1.5) |
-| `knowledge_captured` | `rule_file` (str: dest path under `.claude/rules/insights.md` or new feedback path), `summary` (str) | `g6_cycle` (int), `kept_count` (int), `dropped_count` (int) | orchestrator after G6 `g-knowledge-critic` SOUND verdict |
+| `knowledge_captured` | `rule_file` (str: dest path under `~/.claude/projects/<project>/memory/feedback_<topic>.md`), `summary` (str) | `g6_cycle` (int), `kept_count` (int), `dropped_count` (int) | orchestrator after G6 `g-knowledge-critic` SOUND verdict |
 | `pending_dispatch` | `target_workflow` (str), `reason` (str) | `phase_hint` (str), `source_workflow` (str), `source_phase` (str) | ops-skill terminal HARD-GATE via `append_pending_dispatch` helper |
 
 ## 4. Idempotency, plan-mode, and concurrency

@@ -13,7 +13,7 @@ Per `.claude/rules/journaling-contract.md` §1, critics do NOT write the journal
 ## Your Core Responsibilities
 
 1. Read the candidate learnings (provided in dispatch-context).
-2. Read the existing knowledge surfaces (`.claude/rules/insights.md`, `~/.claude/projects/.../memory/feedback_*.md`).
+2. Read the existing knowledge surfaces (`~/.claude/projects/.../memory/feedback_*.md` and `~/.claude/projects/.../memory/MEMORY.md`).
 3. Score each candidate on three dimensions: **novelty** (not already captured), **load-bearing** (would change future behaviour), **portable** (applies beyond this one session).
 4. Return a calibrated verdict per candidate.
 
@@ -58,7 +58,7 @@ Before rendering your gate verdict you MUST cross-check at least one assertable 
 Your final per-batch `VERDICT_*` line must reference at least one `CITATION_PASS` or `CITATION_FAIL`. A verdict citing only `CITATION_ABSTAIN` is itself `VERDICT_ABSTAIN`. This rule is binding even when the per-candidate KEEP/DROP/DEFER list looks obvious — the spot-check is what distinguishes evidence-based novelty from assenting on appearance. Pick the highest-leverage claim per candidate: one whose falsity would flip KEEP to DROP or vice versa.
 
 <dispatch-context>
-  <field name="target_files" required="true" example=".claude/rules/insights.md, ~/.claude/projects/.../memory/MEMORY.md"/>
+  <field name="target_files" required="true" example="~/.claude/projects/.../memory/feedback_<topic>.md, ~/.claude/projects/.../memory/MEMORY.md"/>
   <field name="workspace" required="true" example="Workspace: bgp"/>
   <field name="phase_context" required="true" example="Stop hook dispatching G6"/>
   <field name="candidate_learnings" required="true" example="List of N candidate learnings extracted from this session's journal"/>

@@ -11,7 +11,7 @@ context: fork
 
 **Journal:** read-only knowledge skill. Per `.claude/rules/journaling-contract.md` §1, this skill does NOT write to `.panther-ivy/workflow-journal.yaml`; the orchestrator and the 5 ops-skills are the writer surfaces.
 
-NACT (Network-Attack Compositional Testing) extends NCT with attacker perspective. The APT workspace at `protocol-testing/apt/` mirrors the 14-layer NCT template and adds four attack-specific layers (entities, entity behavior, lifecycle, attack-aware application protocols). This skill catalogues the reusable structural patterns across those layers; the canonical methodology overview lives in `methodology` and in the project auto-memory at `~/.claude/projects/<project>/memory/reference_nct_methodology.md` (the `.claude/rules/nct-methodology.md` stub points there).
+NACT (Network-Attack Compositional Testing) extends NCT with attacker perspective. The APT workspace at `protocol-testing/apt/` mirrors the 14-layer NCT template and adds four attack-specific layers (entities, entity behavior, lifecycle, attack-aware application protocols). This skill catalogues the reusable structural patterns across those layers; the canonical methodology overview lives in the `methodology` skill (auto-loaded on `.ivy` files via its `paths:` frontmatter) and mirrored in the project auto-memory at `~/.claude/projects/<project>/memory/reference_nct_methodology.md`.
 
 ## When this applies
 

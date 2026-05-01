@@ -18,7 +18,7 @@ This skill owns *layer-decomposition* decisions (which file does a type belong i
 
 ## 14-Layer template (canonical reference)
 
-The 14-layer formal model template (Types / Application / Security / Frame / Packet / Protection / Connection / Transport Params / Error / Entity Defs / Entity Behavior / Shims / Serialization / Utilities) lives canonically in user auto-memory; see `.claude/rules/nct-methodology.md` for the path. This skill does not restate the table.
+The 14-layer formal model template (Types / Application / Security / Frame / Packet / Protection / Connection / Transport Params / Error / Entity Defs / Entity Behavior / Shims / Serialization / Utilities) lives canonically in user auto-memory at `~/.claude/projects/<project>/memory/reference_nct_methodology.md`, mirrored by the `methodology` skill body. This skill does not restate the table.
 
 The memory file also carries:
 
