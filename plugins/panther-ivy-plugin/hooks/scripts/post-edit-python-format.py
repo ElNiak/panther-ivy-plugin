@@ -61,29 +61,13 @@ def _is_in_plugin_scope(file_path: Path) -> bool:
         return str(file_path).startswith(plugin_root.rstrip("/") + "/")
 
 
-def _run_ruff(ruff_bin: str, file_path: Path) -> tuple[int, str, str]:
-    """Run ``ruff check --fix --output-format json <file>``.
-
-    JSON output (rather than the previous text-and-regex approach) survives
-    ruff version bumps: each finding is a JSON object with a ``fix`` key
-    that has been part of the schema since ruff 0.1.0.
-    """
-    proc = subprocess.run(
-        [ruff_bin, "check", "--fix", "--output-format", "json", str(file_path)],
-        capture_output=True,
-        text=True,
-        timeout=_RUFF_TIMEOUT_S,
-    )
-    return proc.returncode, proc.stdout, proc.stderr
-
-
-def _summarize_fix_count(stdout: str, stderr: str) -> int:
-    """Count how many findings ruff auto-fixed via JSON output parsing.
+def _summarize_fix_count(stdout: str) -> int:
+    """Count findings in ruff JSON output that have a non-null ``fix`` field.
 
     Ruff's JSON output is a list of finding objects on stdout; each finding
     has a ``fix`` field (``null`` if not auto-fixable, or an object with
-    ``applicability`` indicating whether the fix was applied). Empty stdout
-    means no findings — return 0.
+    ``applicability`` indicating the fix kind). Empty stdout means no
+    findings — return 0.
     """
     if not stdout.strip():
         return 0
@@ -97,6 +81,35 @@ def _summarize_fix_count(stdout: str, stderr: str) -> int:
         1 for f in findings
         if isinstance(f, dict) and f.get("fix") is not None
     )
+
+
+def _run_ruff(ruff_bin: str, file_path: Path) -> tuple[int, int, str]:
+    """Count fixable findings, then apply fixes. Return (rc, fixed_count, stderr).
+
+    A single ``ruff check --fix`` returns the *remaining* findings after the
+    fix pass (typically empty for auto-fixable issues), so counting from
+    that output reports zero even when fixes were applied. The two-call
+    approach below runs ``--no-fix`` first to enumerate fixable findings,
+    then ``--fix`` to apply them, and returns the pre-pass count alongside
+    the apply-pass return code and stderr.
+    """
+    pre = subprocess.run(
+        [ruff_bin, "check", "--no-fix", "--output-format", "json", str(file_path)],
+        capture_output=True,
+        text=True,
+        timeout=_RUFF_TIMEOUT_S,
+    )
+    fixable_count = _summarize_fix_count(pre.stdout)
+    if fixable_count == 0:
+        return pre.returncode, 0, pre.stderr
+
+    apply = subprocess.run(
+        [ruff_bin, "check", "--fix", "--quiet", str(file_path)],
+        capture_output=True,
+        text=True,
+        timeout=_RUFF_TIMEOUT_S,
+    )
+    return apply.returncode, fixable_count, apply.stderr
 
 
 def main() -> None:
@@ -127,7 +140,7 @@ def main() -> None:
         return
 
     try:
-        rc, stdout, stderr = _run_ruff(ruff_bin, file_path)
+        rc, fixed, stderr = _run_ruff(ruff_bin, file_path)
     except subprocess.TimeoutExpired:
         emit_hook_output(
             "PostToolUse",
@@ -141,11 +154,10 @@ def main() -> None:
         emit_hook_output(
             "PostToolUse",
             system_message=f"[ivy-ruff] check failed (rc={rc}) on {file_path.name}",
-            additional_context=(stderr or stdout).strip()[:1500] or None,
+            additional_context=stderr.strip()[:1500] or None,
         )
         return
 
-    fixed = _summarize_fix_count(stdout, stderr)
     if fixed > 0:
         emit_hook_output(
             "PostToolUse",
@@ -153,7 +165,7 @@ def main() -> None:
                 f"[ivy-ruff] {fixed} issue{'s' if fixed != 1 else ''} "
                 f"auto-fixed in {file_path.name}"
             ),
-            additional_context=(stdout + stderr).strip()[:1500] or None,
+            additional_context=stderr.strip()[:1500] or None,
         )
         return
 
