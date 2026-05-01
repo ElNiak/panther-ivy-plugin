@@ -11,7 +11,7 @@ import sys
 from typing import Any
 
 sys.path.insert(0, os.path.dirname(__file__))
-from hook_utils import emit_hook_output, read_stdin
+from hook_utils import emit_hook_output, emit_noop, read_stdin
 from statusline_cache import update_from_hook as _statusline_update
 
 # Substrings that indicate an MCP server disconnection notification.
@@ -66,6 +66,7 @@ def main():
     data = read_stdin()
 
     if not _is_ivy_mcp_disconnect(data):
+        emit_noop("Notification", "non-MCP-disconnect notification")
         return
 
     _statusline_update("mcp", {"status": "down", "last_error": "notification"})

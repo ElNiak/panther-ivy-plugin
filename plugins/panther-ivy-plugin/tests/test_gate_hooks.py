@@ -121,6 +121,17 @@ def test_g2_emits_on_layer_edit_during_build():
         assert any(e["type"] == "gate_dispatched" and e["payload"]["gate"] == "g2" for e in events)
 
 
+def _is_noop_envelope(out: "dict | None") -> bool:
+    """True for the strict-literal `[ivy-noop]` envelope (no additionalContext)."""
+    if out is None:
+        return False
+    sm = out.get("systemMessage", "")
+    if not sm.startswith("[ivy-noop]"):
+        return False
+    hook = out.get("hookSpecificOutput") or {}
+    return "additionalContext" not in hook
+
+
 def test_g2_silent_on_test_spec_edit():
     with tempfile.TemporaryDirectory() as tmpdir:
         ws = _make_workspace(tmpdir, workflow="workflow-build", phase="write")
@@ -129,7 +140,7 @@ def test_g2_silent_on_test_spec_edit():
             {"tool_name": "Edit", "tool_input": {"file_path": ws["test_file"]}},
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
-        assert out is None
+        assert _is_noop_envelope(out)
 
 
 def test_g2_silent_when_no_workflow():
@@ -143,7 +154,7 @@ def test_g2_silent_when_no_workflow():
             {"tool_name": "Edit", "tool_input": {"file_path": str(layer)}},
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
-        assert out is None
+        assert _is_noop_envelope(out)
 
 
 # ----- assess-testspec.py (G3) -----
@@ -172,7 +183,7 @@ def test_g3_silent_on_layer_edit():
             {"tool_name": "Edit", "tool_input": {"file_path": ws["layer_file"]}},
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
-        assert out is None
+        assert _is_noop_envelope(out)
 
 
 # ----- assess-trace.py (G5) -----
@@ -212,7 +223,7 @@ def test_g5_silent_on_other_tools():
             {"tool_name": "ivy_verify", "tool_result": {"status": "OK"}},
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
-        assert out is None
+        assert _is_noop_envelope(out)
 
 
 # ----- route-user-prompt.py G1 branch -----
@@ -276,7 +287,7 @@ def test_g4_silent_when_no_workflow():
              "tool_result": {"status": "OK"}},
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
-        assert out is None
+        assert _is_noop_envelope(out)
 
 
 def test_g4_silent_on_other_tools():

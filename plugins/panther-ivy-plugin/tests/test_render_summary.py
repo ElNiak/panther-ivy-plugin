@@ -79,9 +79,16 @@ def run_hook(
 
 
 class TestNoModifiedFiles:
-    def test_exits_silently(self, tmp_path):
+    def test_emits_noop(self, tmp_path):
+        # Strict-literal scope: no .ivy files modified produces an
+        # [ivy-noop] systemMessage rather than total silence so the user
+        # sees the Stop hook ran.
         output = run_hook(tmp_path)
-        assert output is None
+        assert output is not None
+        assert output.get("systemMessage", "").startswith("[ivy-noop]")
+        assert "hookSpecificOutput" not in output or (
+            "additionalContext" not in output["hookSpecificOutput"]
+        )
 
 
 class TestLintDetection:

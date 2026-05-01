@@ -97,13 +97,20 @@ class TestIvyVerifyFormatting:
 
 
 class TestUnrelatedTool:
-    def test_non_rendered_tool_exits_silently(self, tmp_path):
+    def test_non_rendered_tool_emits_noop(self, tmp_path):
         output = run_hook(
             "Read",
             "file contents",
             tmp_path=tmp_path,
         )
-        assert output is None
+        # Strict-literal scope: every hook invocation emits a status line.
+        # Unrecognised tool names produce an [ivy-noop] systemMessage with no
+        # additionalContext (nothing for the model to consume).
+        assert output is not None
+        assert output.get("systemMessage", "").startswith("[ivy-noop]")
+        assert "hookSpecificOutput" not in output or (
+            "additionalContext" not in output["hookSpecificOutput"]
+        )
 
 
 class TestMalformedInput:
@@ -262,4 +269,11 @@ class TestIvyQualityFormatting:
             workflow="verify",
             tmp_path=tmp_path,
         )
-        assert output is None, "Suggestions should be suppressed in verify workflow"
+        # Strict-literal scope: suggestions are still suppressed for the model
+        # in the verify workflow (no additionalContext), but the hook surfaces
+        # an [ivy-noop] systemMessage so the user sees it ran.
+        assert output is not None
+        assert output.get("systemMessage", "").startswith("[ivy-noop]")
+        assert "hookSpecificOutput" not in output or (
+            "additionalContext" not in output["hookSpecificOutput"]
+        )

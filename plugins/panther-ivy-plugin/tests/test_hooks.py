@@ -24,9 +24,16 @@ def _run_hook(
     cwd: Path | None = None,
     env: dict | None = None,
 ) -> subprocess.CompletedProcess:
-    """Run a hook script with JSON piped to stdin."""
+    """Run a hook script with JSON piped to stdin.
+
+    Dispatches on the script's extension: ``.py`` runs through ``python3``,
+    ``.sh`` (legacy) runs through ``bash``. Extension dispatch lets the
+    test suite cover both during the shell→Python migration without
+    forcing every call site to know which runtime applies.
+    """
+    interp = "python3" if script.suffix == ".py" else "bash"
     return subprocess.run(
-        ["bash", str(script)],
+        [interp, str(script)],
         input=json.dumps(json_input),
         capture_output=True,
         text=True,
@@ -37,7 +44,7 @@ def _run_hook(
 
 
 # ===================================================================
-# PreToolUse hook: block-direct-ivy.sh
+# PreToolUse hook: block-direct-ivy.py
 # ===================================================================
 
 
@@ -45,7 +52,7 @@ class TestBlockDirectIvyHook:
     """Tests for the PreToolUse hook that warns about direct Ivy CLI calls."""
 
     def _script(self, hook_scripts_dir: Path) -> Path:
-        return hook_scripts_dir / "block-direct-ivy.sh"
+        return hook_scripts_dir / "block-direct-ivy.py"
 
     def test_ivy_check_triggers_mcp_suggestion(
         self, hook_scripts_dir, has_python3
@@ -57,52 +64,46 @@ class TestBlockDirectIvyHook:
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"command": "ivy_check model.ivy"},
+            {"tool_input": {"command": "ivy_check model.ivy"}},
         )
         assert result.returncode == 0
         assert "MCP" in result.stdout
         assert "ivy_verify" in result.stdout
 
-    def test_non_ivy_command_produces_no_output(
+    def test_non_ivy_command_produces_noop(
         self, hook_scripts_dir, has_python3
     ):
-        """A plain 'ls -la' command should pass silently (no suggestion)."""
+        """A plain 'ls -la' command emits an [ivy-noop] line under
+        strict-literal scope (replaces the bash predecessor's silent exit)."""
         if not has_python3:
             pytest.skip("python3 required by hook script")
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"command": "ls -la"},
+            {"tool_input": {"command": "ls -la"}},
         )
         assert result.returncode == 0
-        assert result.stdout.strip() == ""
+        parsed = json.loads(result.stdout)
+        assert parsed.get("systemMessage", "").startswith("[ivy-noop]")
+        assert "additionalContext" not in parsed.get("hookSpecificOutput", {})
 
     def test_word_boundary_no_false_positive(
         self, hook_scripts_dir, has_python3
     ):
-        """A command like 'my_ivy_checker' should NOT match because of word
-        boundary matching (\\b) in the grep pattern."""
+        """A command like 'my_ivy_checker foo.ivy' should NOT match the
+        word-boundary regex `\\b(ivy_check|ivyc|ivy_show|ivy_to_cpp)\\b` —
+        the leading `_` is a word character, so `\\b` does not match before
+        the embedded `ivy_check`. Hook emits an [ivy-noop] envelope."""
         if not has_python3:
             pytest.skip("python3 required by hook script")
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"command": "my_ivy_checker foo.ivy"},
+            {"tool_input": {"command": "my_ivy_checker foo.ivy"}},
         )
         assert result.returncode == 0
-        # The script uses \bivy_check\b -- 'my_ivy_checker' should not match
-        # because 'ivy_check' is preceded by 'my_' (not a word boundary)
-        # However, grep -E '\bivy_check\b' WILL match 'my_ivy_checker' since
-        # '_' is not a word character boundary in grep. Let's verify actual
-        # behavior and assert accordingly.
-        # Actually, in grep \b treats '_' as a word character, so
-        # 'my_ivy_checker' contains 'ivy_check' NOT at a word boundary
-        # because 'y' precedes it. Wait: the pattern is \bivy_check\b.
-        # In 'my_ivy_checker': 'ivy_check' starts at position 3.
-        # The char before 'i' is '_' which IS a word char, so \b does not
-        # match. The char after 'k' is 'e' which IS a word char, so trailing
-        # \b does not match. So no match. Good.
-        assert result.stdout.strip() == ""
+        parsed = json.loads(result.stdout)
+        assert parsed.get("systemMessage", "").startswith("[ivy-noop]")
 
     def test_ivyc_triggers_mcp_suggestion(
         self, hook_scripts_dir, has_python3
@@ -114,26 +115,27 @@ class TestBlockDirectIvyHook:
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"command": "ivyc target=test foo.ivy"},
+            {"tool_input": {"command": "ivyc target=test foo.ivy"}},
         )
         assert result.returncode == 0
         assert "MCP" in result.stdout
         assert "ivy_compile" in result.stdout
 
     def test_empty_command_field(self, hook_scripts_dir, has_python3):
-        """Empty command field should produce no output."""
+        """Empty command field emits an [ivy-noop] line under strict-literal scope."""
         if not has_python3:
             pytest.skip("python3 required by hook script")
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"command": ""},
+            {"tool_input": {"command": ""}},
         )
         assert result.returncode == 0
-        assert result.stdout.strip() == ""
+        parsed = json.loads(result.stdout)
+        assert parsed.get("systemMessage", "").startswith("[ivy-noop]")
 
     def test_missing_command_field(self, hook_scripts_dir, has_python3):
-        """JSON without a 'command' field should produce no output (safe fallback)."""
+        """JSON without a 'command' field emits an [ivy-noop] line."""
         if not has_python3:
             pytest.skip("python3 required by hook script")
 
@@ -142,7 +144,8 @@ class TestBlockDirectIvyHook:
             {"tool_name": "Bash"},
         )
         assert result.returncode == 0
-        assert result.stdout.strip() == ""
+        parsed = json.loads(result.stdout)
+        assert parsed.get("systemMessage", "").startswith("[ivy-noop]")
 
 
 # ===================================================================
@@ -154,7 +157,7 @@ class TestPostWriteIvyLintHook:
     """Tests for the PostToolUse hook that checks .ivy files after writes."""
 
     def _script(self, hook_scripts_dir: Path) -> Path:
-        return hook_scripts_dir / "post-write-ivy-lint.sh"
+        return hook_scripts_dir / "post-write-ivy-lint.py"
 
     def test_valid_ivy_file_no_issues(
         self, hook_scripts_dir, tmp_path, has_python3
@@ -169,11 +172,11 @@ class TestPostWriteIvyLintHook:
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"file_path": str(ivy_file)},
+            {"tool_input": {"file_path": str(ivy_file)}},
             cwd=tmp_path,
         )
         assert result.returncode == 0
-        # No issues means no hookSpecificOutput or empty stdout
+        # No issues means no [IVY-LINT] additionalContext (an [ivy-noop] line is OK).
         assert "IVY-LINT" not in result.stdout
 
     def test_missing_lang_header_warns(
@@ -189,7 +192,7 @@ class TestPostWriteIvyLintHook:
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"file_path": str(ivy_file)},
+            {"tool_input": {"file_path": str(ivy_file)}},
             cwd=tmp_path,
         )
         assert result.returncode == 0
@@ -208,11 +211,14 @@ class TestPostWriteIvyLintHook:
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"file_path": str(py_file)},
+            {"tool_input": {"file_path": str(py_file)}},
             cwd=tmp_path,
         )
         assert result.returncode == 0
-        assert result.stdout.strip() == ""
+        # Strict-literal scope: silent-exit replaced with [ivy-noop] envelope.
+        parsed = json.loads(result.stdout)
+        assert parsed.get("systemMessage", "").startswith("[ivy-noop]")
+        assert "additionalContext" not in parsed.get("hookSpecificOutput", {})
 
     def test_unbalanced_braces_warns(
         self, hook_scripts_dir, tmp_path, has_python3
@@ -239,7 +245,7 @@ class TestPostWriteIvyLintHook:
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"file_path": str(ivy_file)},
+            {"tool_input": {"file_path": str(ivy_file)}},
             cwd=tmp_path,
         )
         assert result.returncode == 0
@@ -255,10 +261,11 @@ class TestPostWriteIvyLintHook:
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"file_path": ""},
+            {"tool_input": {"file_path": ""}},
         )
         assert result.returncode == 0
-        assert result.stdout.strip() == ""
+        parsed = json.loads(result.stdout)
+        assert parsed.get("systemMessage", "").startswith("[ivy-noop]")
 
     def test_nonexistent_ivy_file_silent_exit(
         self, hook_scripts_dir, tmp_path, has_python3
@@ -270,11 +277,12 @@ class TestPostWriteIvyLintHook:
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"file_path": str(tmp_path / "does_not_exist.ivy")},
+            {"tool_input": {"file_path": str(tmp_path / "does_not_exist.ivy")}},
             cwd=tmp_path,
         )
         assert result.returncode == 0
-        assert result.stdout.strip() == ""
+        parsed = json.loads(result.stdout)
+        assert parsed.get("systemMessage", "").startswith("[ivy-noop]")
 
     def test_output_is_valid_json(
         self, hook_scripts_dir, tmp_path, has_python3
@@ -296,7 +304,7 @@ class TestPostWriteIvyLintHook:
 
         result = _run_hook(
             self._script(hook_scripts_dir),
-            {"file_path": str(ivy_file)},
+            {"tool_input": {"file_path": str(ivy_file)}},
             cwd=tmp_path,
         )
         assert result.returncode == 0
@@ -315,7 +323,7 @@ class TestDetectIvyWorkspaceHook:
     """Tests for the SessionStart hook that detects Ivy workspace type."""
 
     def _script(self, hook_scripts_dir: Path) -> Path:
-        return hook_scripts_dir / "detect-ivy-workspace.sh"
+        return hook_scripts_dir / "detect-ivy-workspace.py"
 
     def test_panther_project_detected(
         self, hook_scripts_dir, tmp_path, has_python3

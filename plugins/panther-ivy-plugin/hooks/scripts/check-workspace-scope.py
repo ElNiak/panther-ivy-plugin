@@ -7,29 +7,34 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import resolve_session_id, emit_hook_output, read_stdin
+from hook_utils import resolve_session_id, emit_hook_output, emit_noop, read_stdin
 
 
 def main():
     # Read hook input from stdin
     hook_input = read_stdin()
     if not hook_input:
+        emit_noop("PreToolUse", "no hook input")
         return
 
     tool_input = hook_input.get("tool_input", {})
     file_path = tool_input.get("file_path", "")
 
     if not file_path:
+        emit_noop("PreToolUse", "no file_path in tool input")
         return
 
     if not file_path.endswith(".ivy"):
+        emit_noop("PreToolUse", "non-.ivy file")
         return
 
     if os.sep + os.path.join("ivy", "include") in file_path:
+        emit_noop("PreToolUse", "ivy/include path (ignored)")
         return
 
     workspace_root = os.environ.get("IVY_WORKSPACE_ROOT", "")
     if not workspace_root:
+        emit_noop("PreToolUse", "IVY_WORKSPACE_ROOT not set")
         return
 
     # Parse .ivyworkspace once for all helpers
@@ -57,6 +62,10 @@ def main():
     if file_layer is None:
         emit_hook_output(
             "PreToolUse",
+            system_message=(
+                f"[ivy-workspace-scope] {os.path.basename(file_path)} has no "
+                "registered workspace layer"
+            ),
             additional_context=(
                 "This file has no registered workspace layer. If creating a new protocol:\n"
                 " 1. Create protocol-testing/<name>/.ivyworkspace marker\n"
@@ -66,6 +75,10 @@ def main():
         return
 
     if file_layer in active_layers:
+        emit_noop(
+            "PreToolUse",
+            f"layer '{file_layer}' is in active workspace",
+        )
         return
 
     file_group = _find_group_for_layer(file_layer, ivyworkspace_config)
@@ -132,6 +145,7 @@ def _progressive_narrowing(file_path, workspace_root, ivyworkspace_config):
 
     current_layer = _get_file_layer(file_path, workspace_root, ivyworkspace_config)
     if not current_layer:
+        emit_noop("PreToolUse", "file has no resolvable workspace layer")
         return
 
     try:
@@ -146,6 +160,10 @@ def _progressive_narrowing(file_path, workspace_root, ivyworkspace_config):
         # Cross-protocol edit — warn
         emit_hook_output(
             "PreToolUse",
+            system_message=(
+                f"[ivy-workspace-scope] cross-protocol edit detected "
+                f"({previous_layer} → {current_layer})"
+            ),
             additional_context=(
                 f"You are editing files across different protocol layers "
                 f"('{previous_layer}' and '{current_layer}'). "
@@ -160,11 +178,25 @@ def _progressive_narrowing(file_path, workspace_root, ivyworkspace_config):
         if group:
             emit_hook_output(
                 "PreToolUse",
+                system_message=(
+                    f"[ivy-workspace-scope] no active workspace; "
+                    f"first edit in layer '{current_layer}' (group {group})"
+                ),
                 additional_context=(
                     f"No active workspace set. This file is in the '{current_layer}' layer.\n"
                     f"Consider /set-workspace {group} to enable edit isolation."
                 ),
             )
+        else:
+            emit_noop(
+                "PreToolUse",
+                f"first edit in layer '{current_layer}' has no group mapping",
+            )
+    else:
+        emit_noop(
+            "PreToolUse",
+            f"continuing edits in inferred layer '{current_layer}'",
+        )
 
     # Update inferred state
     inferred["inferred_layer"] = current_layer

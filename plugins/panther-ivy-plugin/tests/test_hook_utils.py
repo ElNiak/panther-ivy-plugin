@@ -60,12 +60,20 @@ class TestGetStatePath:
 class TestEmitHookOutput:
     def test_emit_additional_context(self, capsys):
         mod = _import_hook_utils()
-        mod.emit_hook_output("PreToolUse", additional_context="test message")
+        mod.emit_hook_output(
+            "PreToolUse",
+            system_message="",
+            additional_context="test message",
+        )
         output = json.loads(capsys.readouterr().out)
         assert output["hookSpecificOutput"]["additionalContext"] == "test message"
 
     def test_emit_deny(self, capsys):
         mod = _import_hook_utils()
-        mod.emit_hook_output("PreToolUse", deny_reason="blocked")
+        mod.emit_hook_output(
+            "PreToolUse",
+            system_message="",
+            deny_reason="blocked",
+        )
         output = json.loads(capsys.readouterr().out)
         assert output["hookSpecificOutput"]["permissionDecision"] == "deny"

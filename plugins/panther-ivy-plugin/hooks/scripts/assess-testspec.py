@@ -37,7 +37,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, read_stdin
+from hook_utils import emit_hook_output, emit_noop, read_stdin
 
 from workflow_state import (
     WorkflowContext,
@@ -68,7 +68,7 @@ def _build_directive(*, file_path: str, protocol: str, methodology: str | None) 
         f"Artifact under audit: `{file_path}` (protocol: {protocol}).\n"
         f"{methodology_line}{nsct_note}\n\n"
         "To dispatch:\n"
-        "1. Read the G3 verbatim critic template at `critic_prompts/g3_testspec.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "1. Read the G3 verbatim critic template at `skills/ivy/references/critic_prompts/g3_testspec.md` (your preloaded `verification-failures` skill provides the catalog).\n"
         "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
         "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #200-208 + #256-259 + #300-399.\n"
         "4. Before spawning critics, gather inputs the template expects: the test file contents, the RFC requirement manifest (typically `{protocol}_requirements.yaml`), and the output of `ivy_coverage(mode=\"matrix\", test_file=<file_path>)`.\n"
@@ -83,21 +83,25 @@ def _build_directive(*, file_path: str, protocol: str, methodology: str | None) 
 def main() -> None:
     hook_input = read_stdin()
     if not hook_input:
+        emit_noop("PostToolUse", "no hook input")
         return
 
     tool_name = hook_input.get("tool_name", "")
     if tool_name not in _WATCHED_TOOLS:
+        emit_noop("PostToolUse", f"tool '{tool_name}' not watched by G3")
         return
 
     tool_input = hook_input.get("tool_input", {})
     file_path = tool_input.get("file_path", "")
     if not _is_test_spec(file_path):
+        emit_noop("PostToolUse", "edit is not a test-spec file")
         return
 
     ctx = WorkflowContext.current()
     # G3 is build-only by design — see "Why build-only?" in the module
     # docstring for the rationale.
     if ctx is None or ctx.workflow != "build":
+        emit_noop("PostToolUse", "G3 is build-workflow only")
         return
 
     build_state = get_build_state_safe(ctx.protocol_dir) or {}

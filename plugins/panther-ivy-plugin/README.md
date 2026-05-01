@@ -214,7 +214,7 @@ Most settings are configured through Claude Code's `userConfig` (see `plugin.jso
 
 ### Runtime-set (populated by SessionStart hooks)
 
-These are written to `$CLAUDE_ENV_FILE` by `detect-ivy-workspace.sh` so downstream hooks and the MCP / LSP server processes inherit them. Do not set them manually.
+These are written to `$CLAUDE_ENV_FILE` by `detect-ivy-workspace.py` so downstream hooks and the MCP / LSP server processes inherit them. Do not set them manually.
 
 | Variable | Purpose |
 |---|---|

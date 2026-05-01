@@ -57,7 +57,19 @@ detect_ivy_workspace() {
     local depth=0
     while [ "$check" != "/" ] && [ $depth -lt 8 ]; do
         local ivy_count
-        ivy_count=$(find "$check" -maxdepth 2 -name "*.ivy" 2>/dev/null | head -5 | wc -l)
+        # `find ... | head -5` would SIGPIPE find when find produces more
+        # than 5 lines, and `set -euo pipefail` (line 5) propagates that as
+        # exit 141. Capture find's output to a variable first so head reads
+        # from a closed stream, never from a still-writing pipe. The empty
+        # case (no matches) yields ivy_list="" and ivy_count=0; the trailing
+        # `|| true` swallows the wc-on-empty-pipe quirk on macOS.
+        local ivy_list
+        ivy_list=$(find "$check" -maxdepth 2 -name "*.ivy" 2>/dev/null || true)
+        if [ -n "$ivy_list" ]; then
+            ivy_count=$(printf '%s\n' "$ivy_list" | head -5 | wc -l | tr -d ' ')
+        else
+            ivy_count=0
+        fi
         if [ "$ivy_count" -ge 3 ]; then
             DETECTED_ROOT="$check"
             DETECTED_TYPE="standalone"

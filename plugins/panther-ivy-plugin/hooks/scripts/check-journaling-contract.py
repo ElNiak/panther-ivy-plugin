@@ -15,12 +15,15 @@ Failure modes blocked:
     accidentally truncated or replaced the file).
 
 On any failure: stderr message + exit 2. The plugin will not load.
-On success: silent exit 0. SessionStart already has multiple chained hooks;
-extra noise here would clutter the user's session start.
+On success: emits a brief [ivy-contract] systemMessage so the user sees the
+precondition fired and passed.
 """
 
 import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hook_utils import emit_hook_output
 
 
 CONTRACT_REL_PATH = ".claude/rules/journaling-contract.md"
@@ -72,6 +75,10 @@ def main() -> int:
         )
         return 2
 
+    emit_hook_output(
+        "SessionStart",
+        system_message="[ivy-contract] journaling contract verified",
+    )
     return 0
 
 

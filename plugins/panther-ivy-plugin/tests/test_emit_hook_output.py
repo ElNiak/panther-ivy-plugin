@@ -40,7 +40,7 @@ def test_emits_minimal_envelope_with_event_name_only(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     mod = _load_module()
-    mod.emit_hook_output("PreToolUse")
+    mod.emit_hook_output("PreToolUse", system_message="")
     payload = _parse(capsys.readouterr().out)
     assert payload == {"hookSpecificOutput": {"hookEventName": "PreToolUse"}}
 
@@ -51,6 +51,7 @@ def test_deny_reason_sets_permission_decision(
     mod = _load_module()
     mod.emit_hook_output(
         "PreToolUse",
+        system_message="",
         deny_reason="BLOCKED: file outside active workspace",
     )
     payload = _parse(capsys.readouterr().out)
@@ -69,6 +70,7 @@ def test_additional_context_appears_in_hook_specific_output(
     mod = _load_module()
     mod.emit_hook_output(
         "PreToolUse",
+        system_message="",
         additional_context="Consider /set-workspace bgp",
     )
     payload = _parse(capsys.readouterr().out)
@@ -125,7 +127,11 @@ def test_stop_drops_additional_context(
     the helper drops it. Callers are expected to pass ``system_message``
     instead."""
     mod = _load_module()
-    mod.emit_hook_output("Stop", additional_context="ignored for Stop")
+    mod.emit_hook_output(
+        "Stop",
+        system_message="",
+        additional_context="ignored for Stop",
+    )
     payload = _parse(capsys.readouterr().out)
     assert payload == {}
 
@@ -136,6 +142,7 @@ def test_deny_and_additional_context_combine(
     mod = _load_module()
     mod.emit_hook_output(
         "PreToolUse",
+        system_message="",
         deny_reason="BLOCKED",
         additional_context="Use /clear-workspace to remove restrictions",
     )
@@ -153,9 +160,21 @@ def test_falsy_deny_reason_is_ignored(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     mod = _load_module()
-    mod.emit_hook_output("PreToolUse", deny_reason="")
+    mod.emit_hook_output("PreToolUse", system_message="", deny_reason="")
     payload = _parse(capsys.readouterr().out)
     assert "permissionDecision" not in payload["hookSpecificOutput"]
+
+
+def test_none_system_message_raises_type_error() -> None:
+    """``emit_hook_output`` raises on a missing ``system_message``.
+
+    Empty string is allowed (suppresses the field); ``None`` is not.
+    Backs the AST lint test in ``test_hook_output_discipline.py``: a
+    contributor who forgets the kwarg gets a loud Python traceback
+    rather than a silently-broken hook."""
+    mod = _load_module()
+    with pytest.raises(TypeError, match="system_message"):
+        mod.emit_hook_output("PreToolUse", system_message=None)
 
 
 def test_output_is_single_json_line(
@@ -164,6 +183,7 @@ def test_output_is_single_json_line(
     mod = _load_module()
     mod.emit_hook_output(
         "PostToolUse",
+        system_message="",
         additional_context="line one\nline two",
     )
     raw = capsys.readouterr().out

@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, read_stdin
+from hook_utils import emit_hook_output, emit_noop, read_stdin
 
 from workflow_state import (
     append_journal_event,
@@ -69,7 +69,7 @@ def _build_directive(*, artifacts: "dict[str, Any]", methodology: str | None) ->
         f"- `ivy_trace_path`: {ivy_trace_path}\n"
         f"{methodology_line}{nsct_note}\n\n"
         "To dispatch:\n"
-        "1. Read the G5 verbatim critic template at `critic_prompts/g5_trace.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "1. Read the G5 verbatim critic template at `skills/ivy/references/critic_prompts/g5_trace.md` (your preloaded `verification-failures` skill provides the catalog).\n"
         "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
         "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #100-107 + #500-559 (+ #560-589 if NSCT).\n"
         "4. CRITICAL constraint: critics must read the run output directory in the mandatory order (analysis_results.json → compile log if compilation suspect → ivy_tester.log → IUT log → pcaps via tshark). They must NOT invoke `ivy_iut_test` themselves — spawning a new run is forbidden.\n"
@@ -84,14 +84,17 @@ def _build_directive(*, artifacts: "dict[str, Any]", methodology: str | None) ->
 def main() -> None:
     hook_input = read_stdin()
     if not hook_input:
+        emit_noop("PostToolUse", "no hook input")
         return
 
     tool_name = hook_input.get("tool_name", "")
     if tool_name != "ivy_iut_test":
+        emit_noop("PostToolUse", f"tool '{tool_name}' is not ivy_iut_test")
         return
 
     tool_result = _parse_tool_result(hook_input.get("tool_result"))
     if not tool_result:
+        emit_noop("PostToolUse", "ivy_iut_test produced no parseable tool_result")
         return
 
     artifacts = {
@@ -106,6 +109,7 @@ def main() -> None:
         "summary": tool_result.get("summary", {}),
     }
     if not artifacts["output_dir"]:
+        emit_noop("PostToolUse", "ivy_iut_test result has no output_dir")
         return
 
     protocol_dir = find_protocol_dir()

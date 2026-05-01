@@ -5,6 +5,12 @@ Centralizes session ID resolution, workspace detection, MCP health state
 management, and JSON hook output formatting.
 """
 
+# `from __future__ import annotations` defers annotation evaluation so PEP-604
+# `X | Y` syntax in signatures works under the system Python 3.9 that
+# `subprocess.run(["python3", ...])` may pick up when tests pin a restricted
+# PATH (see test_hooks.py::TestDetectIvyWorkspaceHook::test_standalone_project_detected).
+from __future__ import annotations
+
 import fcntl
 import json
 import os
@@ -142,15 +148,16 @@ _EVENTS_WITH_HOOK_SPECIFIC_OUTPUT = frozenset({
     "UserPromptSubmit",
     "SessionStart",
     "SessionEnd",
+    "SubagentStart",  # accepts additionalContext empirically (~2KB cap); see feedback_subagent_start_semantics
 })
 
 
 def emit_hook_output(
     event_name: str,
     *,
+    system_message: str,
     additional_context: str | None = None,
     deny_reason: str | None = None,
-    system_message: str | None = None,
 ) -> None:
     """Print a Claude Code advanced-protocol hook JSON decision to stdout.
 
@@ -159,11 +166,11 @@ def emit_hook_output(
 
         {"hookSpecificOutput": {"hookEventName": ..., ...}, "systemMessage": ...}
 
-    For all other events (``Stop``, ``SubagentStart``, ``SubagentStop``,
-    ``Notification``, ``PreCompact``) the runtime rejects ``hookSpecificOutput``
-    entirely; the helper emits only top-level fields. ``additional_context``
-    has no top-level home in that schema and is silently dropped — callers
-    targeting those events should pass ``system_message`` instead.
+    For all other events (``Stop``, ``SubagentStop``, ``Notification``,
+    ``PreCompact``) the runtime rejects ``hookSpecificOutput`` entirely;
+    the helper emits only top-level fields. ``additional_context`` has no
+    top-level home in that schema and is silently dropped — callers
+    targeting those events should pass ``system_message`` only.
 
     The caller MUST return via a normal exit 0 after calling this function.
     Per the Claude Code hooks protocol (https://code.claude.com/docs/en/hooks),
@@ -180,6 +187,13 @@ def emit_hook_output(
     Args:
         event_name: Hook event name, e.g. ``"PreToolUse"`` / ``"PostToolUse"``
             / ``"Stop"``. Determines which envelope shape is emitted.
+        system_message: REQUIRED top-level ``systemMessage`` shown to the user
+            in the Claude Code UI out-of-band from the model. Every hook
+            surface must surface what it did, even on no-op paths
+            (e.g. ``"[ivy-workspace-scope] no-op (non-.ivy file)"``). Pass
+            ``""`` to suppress — empty string skips the JSON field via the
+            ``if system_message:`` guard below. ``None`` raises ``TypeError``
+            so accidental omission is loud.
         additional_context: Optional string surfaced to the model as
             ``hookSpecificOutput.additionalContext``. Meaningful only for
             events in ``_EVENTS_WITH_HOOK_SPECIFIC_OUTPUT``; ignored otherwise.
@@ -187,13 +201,23 @@ def emit_hook_output(
             deny decision. Sets ``hookSpecificOutput.permissionDecision`` to
             ``"deny"`` and ``permissionDecisionReason`` to this value. Valid
             only for PreToolUse hooks.
-        system_message: Optional top-level ``systemMessage`` the Claude Code
-            runtime surfaces to the user out-of-band from the model. Valid
-            for every event.
+
+    Raises:
+        TypeError: If ``system_message`` is not a ``str``. Empty string is
+            allowed and suppresses the field.
 
     Returns:
         None. Output is printed to stdout as a single JSON line.
     """
+    if not isinstance(system_message, str):
+        raise TypeError(
+            "emit_hook_output requires system_message: str (got "
+            f"{type(system_message).__name__}). Pass an empty string to "
+            "suppress the systemMessage field; None is not allowed because "
+            "every hook surface must explicitly state whether it produces "
+            "a status line."
+        )
+
     output: dict = {}
     if event_name in _EVENTS_WITH_HOOK_SPECIFIC_OUTPUT:
         hook_output: dict = {"hookEventName": event_name}
@@ -206,6 +230,21 @@ def emit_hook_output(
     if system_message:
         output["systemMessage"] = system_message
     print(json.dumps(output))
+
+
+def emit_noop(event_name: str, reason: str) -> None:
+    """Emit a low-priority status line for hooks that ran but did nothing.
+
+    Convention: status messages emitted via this helper carry the
+    ``[ivy-noop]`` prefix so the user can visually filter them from
+    action-bearing status lines.
+
+    Args:
+        event_name: Hook event name (passed through to :func:`emit_hook_output`).
+        reason: Short human-readable description of why the hook took no
+            action. Combined into a ``"[ivy-noop] <reason>"`` system message.
+    """
+    emit_hook_output(event_name, system_message=f"[ivy-noop] {reason}")
 
 
 def resolve_log_dir(session_id: str) -> str:

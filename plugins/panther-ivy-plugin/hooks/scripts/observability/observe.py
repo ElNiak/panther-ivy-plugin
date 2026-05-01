@@ -23,6 +23,7 @@ try:
     from hook_utils import (
         MAX_CONSECUTIVE_MCP_FAILURES,
         emit_hook_output,
+        emit_noop,
         read_mcp_health_state,
         write_mcp_health_state,
     )
@@ -237,6 +238,10 @@ def _handle_mcp_health_circuit_breaker(tool_name: str) -> None:
         if state["consecutive_failures"] >= MAX_CONSECUTIVE_MCP_FAILURES:
             emit_hook_output(
                 "PostToolUseFailure",
+                system_message=(
+                    f"[ivy-health] {state['consecutive_failures']} consecutive "
+                    "MCP tool failures — server may be crashed"
+                ),
                 additional_context=(
                     f"[ivy-health] WARNING: {state['consecutive_failures']} "
                     "consecutive MCP tool failures. The MCP server may be "
@@ -254,6 +259,8 @@ def main():
     args = parser.parse_args()
 
     if os.environ.get("IVY_OBSERVABILITY_ENABLED", "1") == "0":
+        if _HAS_HOOK_UTILS:
+            emit_noop(args.event, "observability disabled (IVY_OBSERVABILITY_ENABLED=0)")
         return
 
     if args.event not in _KNOWN_EVENTS:
@@ -264,9 +271,12 @@ def main():
 
     data = read_stdin()
     session_id = data.get("session_id", "")
+    tool_name = data.get("tool_name", "")
     payload = _build_payload(args.event, data)
 
     if payload is None:
+        if _HAS_HOOK_UTILS:
+            emit_noop(args.event, f"event filtered (tool={tool_name or 'n/a'})")
         return
 
     try:
@@ -275,7 +285,13 @@ def main():
         pass
 
     if args.event == "PostToolUseFailure":
-        _handle_mcp_health_circuit_breaker(data.get("tool_name", ""))
+        _handle_mcp_health_circuit_breaker(tool_name)
+
+    if _HAS_HOOK_UTILS:
+        emit_hook_output(
+            args.event,
+            system_message=f"[ivy-obs] {args.event} logged for {tool_name or 'lifecycle'}",
+        )
 
 
 if __name__ == "__main__":

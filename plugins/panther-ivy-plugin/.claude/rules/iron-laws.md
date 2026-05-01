@@ -23,11 +23,15 @@ the `paths:` glob. Both surfaces stay in sync via this rule being the
 canonical source — the primer is a summary derived from the rule body.
 Edits here propagate to the orchestrator on the next refactor pass.
 
-The deterministic enforcement layer is the project-scoped `PreToolUse` hook
-at `hooks/scripts/block-direct-ivy.sh` (registered in `hooks/hooks.json` for
-the `Bash` matcher), which warns (exit 0) about direct CLI invocations of
-`ivyc`, `ivy_check`, `ivy_show`, and `ivy_to_cpp` and suggests their MCP
-equivalents — see `ivy-toolkit/SKILL.md` Enforcement section.
+The advisory surface is the project-scoped `PreToolUse` hook at
+`hooks/scripts/block-direct-ivy.py` (registered in `hooks/hooks.json` for
+the `Bash` matcher). It surfaces an `[ivy-block] direct CLI call detected`
+status line plus an MCP-tool suggestion table when `ivyc`, `ivy_check`,
+`ivy_show`, or `ivy_to_cpp` is invoked from Bash, and **always exits 0**.
+It is informational only — the actual enforcement of `NO_FIX_WITHOUT_VERIFY`
+relies on workflow self-discipline (cite a fresh `ivy_verify` /
+`ivy_compile` result before proposing a fix). See `ivy-toolkit/SKILL.md`
+Enforcement section.
 
 These guidelines are suspended during plan authoring (when the `navigate`
 skill detects plan mode). The G0 plan-gate enforces conformance when a plan
@@ -38,12 +42,12 @@ is approved and the workflow re-activates at Phase 1.5.
 
 | Law | Workflow | Enforcement site |
 |---|---|---|
-| NO_FIX_WITHOUT_VERIFY | verify | hooks/scripts/block-direct-ivy.sh (Bash) + workflow self-discipline |
+| NO_FIX_WITHOUT_VERIFY | verify | workflow self-discipline + hooks/scripts/block-direct-ivy.py (advisory hint) |
 | NO_LAYER_WITHOUT_SCAFFOLD | build | ivy_diagnostics(mode="structural") call before new-layer writes |
 | NO_QUALITY_WITHOUT_COVERAGE | review | ivy_coverage / ivy_quality citation at verdict time |
 | STALENESS RULE | build, verify, review | ivy_analysis(mode="includes") closure + tool timestamp |
 
-<iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="workflow-verify" enforcement="hooks/scripts/block-direct-ivy.sh">
+<iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="workflow-verify" enforcement="hooks/scripts/block-direct-ivy.py (advisory) + workflow self-discipline">
 
   <instructions>
   Before proposing a *concrete code-edit fix* (an Edit/Write tool call, or a
@@ -171,7 +175,7 @@ is approved and the workflow re-activates at Phase 1.5.
 
 <integration
   cited-by="skills/build, skills/verify, skills/review"
-  enforcement-hook="hooks/scripts/block-direct-ivy.sh"
+  enforcement-hook="hooks/scripts/block-direct-ivy.py (advisory hint)"
   suspended-during="plan mode (navigate Phase 0)"
   re-checked-at="G0 plan-gate on plan approval (navigate Phase 1.5)"/>
 
@@ -191,7 +195,7 @@ Turn N+3  : ivy_verify rerun → {"status":"OK","started_at":"…14:08Z"}
             → "verification passed" claim is now licensed.
 ```
 
-Direct CLI alternative `ivy_check quic_server_test_handshake.ivy` is warned by `hooks/scripts/block-direct-ivy.sh` (PreToolUse, exit 0 advisory).
+Direct CLI alternative `ivy_check quic_server_test_handshake.ivy` is warned by `hooks/scripts/block-direct-ivy.py` (PreToolUse, exit 0 advisory hint with MCP-tool suggestion table).
 
 ### NO_LAYER_WITHOUT_SCAFFOLD in flight
 

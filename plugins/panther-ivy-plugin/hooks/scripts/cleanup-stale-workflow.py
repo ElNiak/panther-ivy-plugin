@@ -10,7 +10,7 @@ sys.path.insert(
         os.environ.get("CLAUDE_PLUGIN_ROOT", "."), "hooks", "scripts"
     ),
 )
-from hook_utils import emit_hook_output
+from hook_utils import emit_hook_output, emit_noop
 from workflow_state import (
     append_journal_event,
     clear_active_workflow,
@@ -23,6 +23,7 @@ from workflow_state import (
 def main() -> None:
     protocol_dir = find_protocol_dir()
     if not protocol_dir:
+        emit_noop("SessionStart", "no protocol directory detected")
         return
 
     active = get_active_workflow(protocol_dir)
@@ -34,6 +35,7 @@ def main() -> None:
             workflow=None,
             phase=None,
         )
+        emit_noop("SessionStart", "no active workflow to clean up")
         return
 
     if is_workflow_stale(protocol_dir):
@@ -66,12 +68,12 @@ def main() -> None:
             workflow=active.get("workflow"),
             phase=active.get("phase"),
         )
-        emit_hook_output(
+        workflow_name = active.get("workflow", "?")
+        phase_name = active.get("phase", "?")
+        emit_noop(
             "SessionStart",
-            additional_context=(
-                f"Active workflow: {active.get('workflow', '?')} "
-                f"(phase: {active.get('phase', '?')})"
-            ),
+            f"active workflow {workflow_name} (phase {phase_name}); "
+            "deferring to orchestrator [ivy-resume]",
         )
 
 

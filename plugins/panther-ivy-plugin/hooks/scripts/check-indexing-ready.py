@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+"""PreToolUse hook: BLOCK MCP tools while ivy-lsp is still indexing.
+
+Replaces ``check-indexing-ready.sh``. Uses ``permissionDecision: "deny"`` to
+actually prevent the tool call when indexing is incomplete. After 6
+consecutive denials (~60 s), degrades to a non-blocking advisory so the user
+isn't trapped in a stuck-indexing loop.
+
+Readiness protocol (consistent with wait-for-indexing):
+  Signal 1: LSP log "Indexed N files"     — Phase 1 indexing complete
+  Signal 2: Offline .ivy-index/ exists      — pre-built offline index
+  Signal 3: MCP log "Pre-populated…"        — MCP prepopulation done
+  Signal 4: MCP log "[MCP-READY]"           — MCP startup complete
+  Any ONE signal allows the tool call.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hook_utils import emit_hook_output, emit_noop  # noqa: E402
+from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
+
+_MCP_LOG = Path(os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log"))
+_LSP_LOG = Path(os.environ.get("IVY_LSP_LOG_PATH", "/tmp/ivy-lsp-lsp-latest.log"))
+_WORKSPACE_ROOT = os.environ.get("IVY_WORKSPACE_ROOT", "")
+
+_DENY_STATE = Path("/tmp/ivy-lsp-pids/indexing-deny-count")
+_DENY_THRESHOLD = 6
+_STARTING_GRACE_S = 30
+_INDEXING_GRACE_S = 120
+
+
+def _file_contains(path: Path, needle: str) -> bool:
+    """True iff ``path`` is readable and contains ``needle``.
+
+    The ``try``/``except OSError`` is the only existence gate (race-free) —
+    a missing file raises ``FileNotFoundError`` which subclasses ``OSError``
+    and is swallowed below, so a TOCTOU split between an ``is_file()`` check
+    and ``open`` cannot occur.
+    """
+    try:
+        with open(path, "r", errors="replace") as f:
+            return any(needle in line for line in f)
+    except OSError:
+        return False
+
+
+def _file_age_seconds(path: Path) -> float:
+    try:
+        return time.time() - path.stat().st_mtime
+    except OSError:
+        return float("inf")
+
+
+def _increment_deny() -> int:
+    try:
+        current = int(_DENY_STATE.read_text().strip()) if _DENY_STATE.exists() else 0
+    except (OSError, ValueError):
+        current = 0
+    new = current + 1
+    try:
+        _DENY_STATE.parent.mkdir(parents=True, exist_ok=True)
+        _DENY_STATE.write_text(str(new))
+    except OSError as exc:
+        sys.stderr.write(
+            f"[ivy-indexing] deny-counter write failed at {_DENY_STATE}: {exc}\n"
+        )
+    return new
+
+
+def _reset_deny() -> None:
+    try:
+        _DENY_STATE.unlink()
+    except FileNotFoundError:
+        pass
+    except OSError as exc:
+        sys.stderr.write(
+            f"[ivy-indexing] deny-counter reset failed at {_DENY_STATE}: {exc}\n"
+        )
+
+
+def _emit_ready(reason: str) -> None:
+    _reset_deny()
+    _statusline_update("lsp", {"status": "ready"})
+    emit_hook_output(
+        "PreToolUse",
+        system_message=f"[ivy-ready] {reason}",
+    )
+
+
+def _signal_lsp_indexed() -> bool:
+    """Signal 1: LSP log says ``Indexed <N> files``."""
+    if not _LSP_LOG.is_file():
+        return False
+    try:
+        with open(_LSP_LOG, "r", errors="replace") as f:
+            for line in f:
+                if "Indexed " in line and " files" in line:
+                    return True
+    except OSError:
+        return False
+    return False
+
+
+def _signal_offline_index() -> bool:
+    """Signal 2: any ``protocol-testing/*/.ivy-index/manifest.json`` exists."""
+    if not _WORKSPACE_ROOT:
+        return False
+    base = Path(_WORKSPACE_ROOT) / "protocol-testing"
+    if not base.is_dir():
+        return False
+    return any((p / "manifest.json").is_file() for p in base.glob("*/.ivy-index"))
+
+
+def _signal_mcp_prepopulated() -> bool:
+    """Signal 3: MCP log mentions prepopulation completion."""
+    return any(
+        _file_contains(_MCP_LOG, marker)
+        for marker in ("Pre-populated from offline index", "pre-warmed", "PREWARM-DONE")
+    )
+
+
+def _signal_mcp_ready() -> bool:
+    """Signal 4: MCP log carries the ``[MCP-READY]`` sentinel."""
+    return _file_contains(_MCP_LOG, "[MCP-READY]")
+
+
+def main() -> None:
+    if _signal_lsp_indexed():
+        _emit_ready("LSP Phase 1 indexing finished")
+        return
+
+    if _signal_offline_index():
+        _emit_ready("offline index present")
+        return
+
+    if _signal_mcp_prepopulated():
+        _emit_ready("MCP prepopulated from offline index")
+        return
+
+    if _signal_mcp_ready():
+        _emit_ready("MCP-READY sentinel observed")
+        return
+
+    # --- Not ready: classify and surface ---
+    mcp_started = _file_contains(_MCP_LOG, "Starting ivy-lsp MCP server")
+    if mcp_started:
+        lsp_age = _file_age_seconds(_LSP_LOG) if _LSP_LOG.is_file() else float("inf")
+        if lsp_age < _INDEXING_GRACE_S:
+            deny_count = _increment_deny()
+            if deny_count > _DENY_THRESHOLD:
+                _statusline_update("lsp", {"status": "ready"})
+                emit_hook_output(
+                    "PreToolUse",
+                    system_message=(
+                        f"[ivy-indexing] allowing after {deny_count} denials "
+                        f"(~{int(lsp_age)}s)"
+                    ),
+                    additional_context=(
+                        f"[ivy-indexing] LSP indexing appears stuck "
+                        f"(~{int(lsp_age)}s elapsed, {deny_count} denied calls). "
+                        "Allowing tool call — results may be incomplete. "
+                        "Consider running /nct-health."
+                    ),
+                )
+                return
+
+            _statusline_update("lsp", {"status": "indexing"})
+            emit_hook_output(
+                "PreToolUse",
+                system_message=(
+                    f"[ivy-indexing] not ready (attempt {deny_count}/{_DENY_THRESHOLD})"
+                ),
+                deny_reason=(
+                    f"[ivy-indexing] LSP is still indexing the workspace "
+                    f"(~{int(lsp_age)}s elapsed, attempt {deny_count}/{_DENY_THRESHOLD}). "
+                    "Wait 10 seconds and retry."
+                ),
+                additional_context=(
+                    "The LSP workspace index is not yet complete. Retry this "
+                    "tool call after a short wait."
+                ),
+            )
+            return
+
+        # MCP up but LSP log absent or stale — assume ready, allow with hint.
+        emit_hook_output(
+            "PreToolUse",
+            system_message="[ivy-health] MCP up, LSP log stale — allowing",
+        )
+        return
+
+    mcp_age = _file_age_seconds(_MCP_LOG) if _MCP_LOG.is_file() else float("inf")
+    if mcp_age < _STARTING_GRACE_S:
+        emit_hook_output(
+            "PreToolUse",
+            system_message="[ivy-startup] MCP server starting",
+            deny_reason=(
+                f"[ivy-startup] MCP server is still starting up "
+                f"(~{int(mcp_age)}s elapsed). Wait 10 seconds and retry."
+            ),
+            additional_context=(
+                "The Ivy MCP server needs 5-15 seconds to initialize. "
+                "Retry after a short wait."
+            ),
+        )
+        return
+
+    # No signal but past grace period — warn, allow.
+    if not _MCP_LOG.is_file() and not _LSP_LOG.is_file():
+        emit_noop("PreToolUse", "no MCP/LSP logs to evaluate readiness")
+        return
+
+    emit_hook_output(
+        "PreToolUse",
+        system_message="[ivy-health] MCP server status uncertain",
+        additional_context=(
+            "[ivy-health] MCP server may not be fully started. "
+            "If this call fails, wait 10 seconds and retry."
+        ),
+    )
+
+
+if __name__ == "__main__":
+    main()

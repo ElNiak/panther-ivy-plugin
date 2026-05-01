@@ -70,7 +70,7 @@ Iron law `NO_LAYER_WITHOUT_SCAFFOLD` binds: before writing
 (layers 1-4). All return SOUND. Layer 7 is authored.
 
 PostToolUse hooks fire on the Write:
-- `post-write-ivy-lint.sh` — fast structural check (passes).
+- `post-write-ivy-lint.py` — fast structural check (passes).
 - `assess-testspec.py` — G3 test-spec gate dispatches 3 critics; verdict
   SOUND.
 

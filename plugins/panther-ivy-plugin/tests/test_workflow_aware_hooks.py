@@ -90,12 +90,25 @@ def test_post_write_active_workflow_suppressed():
     with tempfile.TemporaryDirectory() as tmpdir:
         env = _make_workflow_env(tmpdir)
         output = _run_post_write("/some/path/model.ivy", env=env)
-        assert output is None, "Should suppress suggestion when workflow is active"
+        # Strict-literal hook output discipline: every code path emits a
+        # status line. The orientation suggestion must be suppressed when a
+        # workflow is active, but a [ivy-noop] line is still emitted.
+        assert output is not None
+        assert output.get("systemMessage", "").startswith("[ivy-noop]")
+        assert "hookSpecificOutput" not in output or (
+            "additionalContext" not in output["hookSpecificOutput"]
+        )
 
 
 def test_post_write_non_ivy_file_silent():
     output = _run_post_write("/some/path/readme.md")
-    assert output is None, "Should not emit anything for non-.ivy files"
+    # Strict-literal scope: no orientation context for non-.ivy files, but
+    # the hook still surfaces a [ivy-noop] status line so the user sees it ran.
+    assert output is not None
+    assert output.get("systemMessage", "").startswith("[ivy-noop]")
+    assert "hookSpecificOutput" not in output or (
+        "additionalContext" not in output["hookSpecificOutput"]
+    )
 
 
 def test_checkpoint_no_workflow_fires():

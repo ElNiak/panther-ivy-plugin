@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, read_stdin
+from hook_utils import emit_hook_output, emit_noop, read_stdin
 from statusline_cache import update_from_hook as _statusline_update
 
 from workflow_state import WorkflowContext
@@ -38,12 +38,16 @@ def _extract_target_file(prompt: str | None) -> str | None:
 def _handle_agent(tool_input: dict[str, Any]) -> None:
     """PostToolUse branch for Agent dispatches.
 
-    Returns silently for non-plugin agents (general-purpose, Explore, etc.).
-    For plugin-prefixed agents, surfaces a `[ivy-state]` systemMessage and
-    refreshes the statusline `active_agent` section.
+    Emits a no-op status line for non-plugin agents (general-purpose, Explore,
+    etc.). For plugin-prefixed agents, surfaces a `[ivy-state]` systemMessage
+    and refreshes the statusline `active_agent` section.
     """
     subagent_type = tool_input.get("subagent_type", "") or ""
     if not subagent_type.startswith(_PLUGIN_AGENT_PREFIX):
+        emit_noop(
+            "PostToolUse",
+            f"non-plugin agent dispatch ({subagent_type or 'unspecified'})",
+        )
         return
 
     prompt = tool_input.get("prompt", "") or ""
@@ -79,6 +83,7 @@ def _handle_agent(tool_input: dict[str, Any]) -> None:
 def main():
     hook_input = read_stdin()
     if not hook_input:
+        emit_noop("PostToolUse", "no hook input")
         return
 
     tool_name = hook_input.get("tool_name", "")
@@ -91,6 +96,7 @@ def main():
     file_path = tool_input.get("file_path", "")
 
     if not file_path or not file_path.endswith(".ivy"):
+        emit_noop("PostToolUse", "non-.ivy file or empty path")
         return
 
     # Track the most recently written .ivy file as the statusline "active test
@@ -103,10 +109,17 @@ def main():
     })
 
     if WorkflowContext.current() is not None:
+        emit_noop(
+            "PostToolUse",
+            f".ivy edit inside active workflow ({basename(file_path)})",
+        )
         return
 
     emit_hook_output(
         "PostToolUse",
+        system_message=(
+            "[ivy-state] orientation hint surfaced for non-workflow .ivy edit"
+        ),
         additional_context=(
             "You edited an .ivy file outside of a workflow. Consider using the "
             "review workflow for quality checks, or run "

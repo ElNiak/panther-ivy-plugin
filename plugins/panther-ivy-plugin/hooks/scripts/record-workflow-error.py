@@ -21,7 +21,7 @@ sys.path.insert(
         os.environ.get("CLAUDE_PLUGIN_ROOT", "."), "hooks", "scripts"
     ),
 )
-from hook_utils import emit_hook_output, read_stdin
+from hook_utils import emit_hook_output, emit_noop, read_stdin
 from workflow_state import (
     WorkflowContext,
     append_journal_event,
@@ -60,7 +60,7 @@ def _build_g4_directive(tool_result: str, protocol: str, methodology: str | None
         f"Protocol: {protocol}\n"
         f"{methodology_line}\n\n"
         "To dispatch:\n"
-        "1. Read the G4 verbatim critic template at `critic_prompts/g4_verification.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "1. Read the G4 verbatim critic template at `skills/ivy/references/critic_prompts/g4_verification.md` (your preloaded `verification-failures` skill provides the catalog).\n"
         "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
         "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #200-249 + #250-299 + #400-499.\n"
         "4. Critics treat `status: OK` as a hypothesis to falsify, not a conclusion. Check for #401 (unsound `assume`), #402 (trusted-isolate NativeAction leak), #403 (error whitelisted), #404 (solver wall claimed sound — duration_s near timeout), #405 (pre-fix research skipped), #406 (missing four-layer diagnostic cascade).\n"
@@ -77,10 +77,12 @@ def main() -> None:
     tool_name = hook_input.get("tool_name", "")
 
     if tool_name not in _WATCHED_TOOLS:
+        emit_noop("PostToolUse", f"tool '{tool_name}' not watched for errors")
         return
 
     ctx = WorkflowContext.current()
     if ctx is None:
+        emit_noop("PostToolUse", "no active workflow")
         return
 
     tool_result = hook_input.get("tool_result", "")
@@ -126,6 +128,16 @@ def main() -> None:
             "PostToolUse",
             system_message=f"[G4 verification gate] dispatched after ivy_verify ({status_hint}) on protocol={protocol}",
             additional_context=_build_g4_directive(tool_result, protocol, methodology),
+        )
+    elif error_summary:
+        emit_noop(
+            "PostToolUse",
+            f"recorded {tool_name} error to journal (no G4 dispatch)",
+        )
+    else:
+        emit_noop(
+            "PostToolUse",
+            f"{tool_name} produced no error pattern; no journal write",
         )
 
 

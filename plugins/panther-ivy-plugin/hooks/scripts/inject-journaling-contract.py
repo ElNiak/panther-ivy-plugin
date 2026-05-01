@@ -11,7 +11,11 @@ hook (check-journaling-contract.py), not here.
 """
 
 import json
+import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hook_utils import emit_hook_output
 
 
 SPECIALISTS = frozenset({
@@ -61,17 +65,6 @@ def critic_stub() -> str:
     )
 
 
-def emit(additional_context: str, system_message: str) -> None:
-    payload = {
-        "hookSpecificOutput": {
-            "hookEventName": "SubagentStart",
-            "systemMessage": system_message,
-            "additionalContext": additional_context,
-        }
-    }
-    print(json.dumps(payload))
-
-
 def main() -> int:
     try:
         hook_input = json.load(sys.stdin)
@@ -83,23 +76,26 @@ def main() -> int:
         return 0
 
     if subagent_type in SPECIALISTS:
-        emit(
-            specialist_directive(),
-            f"[ivy-journal] contract directive injected for {subagent_type}",
+        emit_hook_output(
+            "SubagentStart",
+            additional_context=specialist_directive(),
+            system_message=f"[ivy-journal] contract directive injected for {subagent_type}",
         )
     elif subagent_type in CRITICS:
-        emit(
-            critic_stub(),
-            f"[ivy-journal] critic stub injected for {subagent_type}",
+        emit_hook_output(
+            "SubagentStart",
+            additional_context=critic_stub(),
+            system_message=f"[ivy-journal] critic stub injected for {subagent_type}",
         )
     elif subagent_type.startswith("panther-ivy-plugin:"):
         sys.stderr.write(
             f"inject-journaling-contract: unknown panther-ivy-plugin agent '{subagent_type}';"
             + " emitting critic stub as fail-safe default\n"
         )
-        emit(
-            critic_stub(),
-            f"[ivy-journal] fail-safe stub for unknown agent {subagent_type}",
+        emit_hook_output(
+            "SubagentStart",
+            additional_context=critic_stub(),
+            system_message=f"[ivy-journal] fail-safe stub for unknown agent {subagent_type}",
         )
     return 0
 

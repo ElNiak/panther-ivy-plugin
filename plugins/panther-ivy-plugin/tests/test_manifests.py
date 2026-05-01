@@ -91,8 +91,8 @@ class TestHooksJson:
 
     def test_script_paths_reference_existing_files(self, plugin_root):
         """Every hook command references a script via
-        ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.sh -- verify those files
-        exist relative to the plugin root."""
+        ``${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.{py,sh}`` — verify those
+        files exist relative to the plugin root."""
         data = json.loads(
             (plugin_root / "hooks" / "hooks.json").read_text()
         )
@@ -102,7 +102,8 @@ class TestHooksJson:
                 for hook in hooks_list:
                     command = hook.get("command", "")
                     # Extract the script path from the command template
-                    # Format: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.sh"
+                    # Format: "<interpreter> ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.<ext>"
+                    # where interpreter is "python3" for .py and "bash" for .sh.
                     if "${CLAUDE_PLUGIN_ROOT}" in command:
                         relative = command.split("${CLAUDE_PLUGIN_ROOT}/", 1)[1].split()[0]
                         script_path = plugin_root / relative

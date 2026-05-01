@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, read_stdin
+from hook_utils import emit_hook_output, emit_noop, read_stdin
 from workflow_state import WorkflowContext
 
 RENDERED_TOOLS = {
@@ -247,22 +247,37 @@ def main():
     tool_name = data.get("tool_name", "")
     base_tool = _match_tool(tool_name)
     if not base_tool:
-        sys.exit(0)
+        emit_noop("PostToolUse", f"unrecognized tool '{tool_name}'")
+        return
 
     tool_output = _parse_output(data.get("tool_output", ""))
     if not tool_output:
-        sys.exit(0)
+        emit_noop("PostToolUse", f"{base_tool} produced no parseable output")
+        return
 
     ctx = WorkflowContext.current()
     workflow = ctx.workflow if ctx else None
 
     formatter = FORMATTERS.get(base_tool)
     if not formatter:
-        sys.exit(0)
+        emit_noop("PostToolUse", f"no formatter registered for '{base_tool}'")
+        return
 
     formatted = formatter(tool_output, workflow)
     if formatted:
-        emit_hook_output("PostToolUse", additional_context=formatted)
+        emit_hook_output(
+            "PostToolUse",
+            system_message=(
+                f"[ivy-render] formatted {base_tool} result "
+                f"for workflow={workflow or '<none>'}"
+            ),
+            additional_context=formatted,
+        )
+    else:
+        emit_noop(
+            "PostToolUse",
+            f"{base_tool} formatter produced no output (workflow={workflow or '<none>'})",
+        )
 
 
 if __name__ == "__main__":

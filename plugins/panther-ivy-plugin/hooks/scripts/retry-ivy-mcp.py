@@ -15,7 +15,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, read_stdin
+from hook_utils import emit_hook_output, emit_noop, read_stdin
 from workflow_state import WorkflowContext, append_journal_event
 
 _ALLOWLIST = frozenset({
@@ -31,6 +31,10 @@ def main() -> None:
     tool_name = data.get("tool_name", "")
 
     if tool_name not in _ALLOWLIST:
+        emit_noop(
+            "PostToolUseFailure",
+            f"tool '{tool_name or 'unknown'}' not in retry allowlist",
+        )
         return
 
     short_name = tool_name.split("__")[-1] if "__" in tool_name else tool_name

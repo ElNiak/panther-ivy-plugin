@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, read_stdin, resolve_sessions_dir
+from hook_utils import emit_hook_output, emit_noop, read_stdin, resolve_sessions_dir
 from workflow_state import WorkflowContext, get_build_state_safe, get_journal_entries
 
 CLAIM_PATTERNS = {
@@ -256,7 +256,8 @@ def main():
 
     ivy_files = find_modified_ivy_files()
     if not ivy_files:
-        sys.exit(0)
+        emit_noop("Stop", "no .ivy files modified this session")
+        return
 
     ctx = WorkflowContext.current()
     workflow = ctx.workflow if ctx else None
