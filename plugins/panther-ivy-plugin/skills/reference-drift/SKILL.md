@@ -75,7 +75,7 @@ grep -rnE 'Agent\(subagent_type="[^"]+"' --include='*.md' --include='*.py' <plug
 grep -rnE 'panther-ivy-plugin:[a-z][a-z0-9-]+' <plugin>
 
 # 4. Bare agent names in rule bodies — catches docs of dead agents
-grep -rnE '\b(spec-analyst|ivy-reviewer-agent|traceability-agent|...)\b' .claude/rules/
+grep -rnE '\b(spec-analyst|plugin-conventions-reviewer|traceability-agent|...)\b' .claude/rules/
 
 # 5. _KNOWN_* frozenset/dict definitions — catches stale schemas
 grep -rnE '_KNOWN_[A-Z]+\s*=\s*(frozenset|set|\{)' <plugin>
@@ -98,7 +98,7 @@ Classify every broken reference into one of these five classes; severity follows
 
 | Class | Definition | Severity | Example |
 |---|---|---|---|
-| **Runtime-fatal** | The named target is invoked at runtime (`Skill(...)`, `Agent(...)`); call returns "Unknown skill / agent not found" | CRITICAL | `meta-self-mod-ops/SKILL.md:92` calls `panther-ivy-plugin:ivy-reviewer-agent` (no such agent) |
+| **Runtime-fatal** | The named target is invoked at runtime (`Skill(...)`, `Agent(...)`); call returns "Unknown skill / agent not found" | CRITICAL | `scaffold-ops/SKILL.md` Phase 5 dispatches `panther-ivy-plugin:traceability-agent` (no such agent — deferred per Task 1.0 of the bloat audit) |
 | **Hook-emitted** | A hook script prints a string that names a non-existent target; the user/Claude is told to invoke something that does not exist | CRITICAL | `render-summary.py:253` prints `Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture")` |
 | **Documentation drift** | A non-code reference (auto-loaded rule, glossary, README) names an agent/skill that does not exist; not runtime-fatal but pollutes context every session | WARNING | `.claude/rules/agent-dispatch.md:10` cites `spec-analyst` (no such agent) |
 | **Schema drift** | Tests, evals, or fixtures use an old name format that the production code no longer accepts | WARNING | `tests/test_workflow_state.py:155` declares `_KNOWN = {"workflow-verify", ...}`; production uses unprefixed `verify` |

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for workflow-aware hook scripts (post-write + interaction-checkpoint)."""
+"""Tests for workflow-aware hook scripts (post-write)."""
 
 import json
 import os
@@ -15,12 +15,6 @@ POST_WRITE_SCRIPT = str(
     / "hooks"
     / "scripts"
     / "post-write-workflow-aware.py"
-)
-CHECKPOINT_SCRIPT = str(
-    Path(__file__).resolve().parent.parent
-    / "hooks"
-    / "scripts"
-    / "interaction-checkpoint.py"
 )
 
 
@@ -48,22 +42,6 @@ def _run_post_write(file_path: str, env: dict | None = None) -> dict | None:
     input_data = json.dumps({"tool_input": {"file_path": file_path}})
     result = subprocess.run(
         [sys.executable, POST_WRITE_SCRIPT],
-        input=input_data,
-        capture_output=True,
-        text=True,
-        timeout=5,
-        env=env or os.environ.copy(),
-    )
-    assert result.returncode == 0, f"Hook exited {result.returncode}: {result.stderr}"
-    if result.stdout.strip():
-        return json.loads(result.stdout)
-    return None
-
-
-def _run_checkpoint(tool_name: str, tool_output: str, env: dict | None = None) -> dict | None:
-    input_data = json.dumps({"tool_name": tool_name, "tool_output": tool_output})
-    result = subprocess.run(
-        [sys.executable, CHECKPOINT_SCRIPT],
         input=input_data,
         capture_output=True,
         text=True,
@@ -111,37 +89,11 @@ def test_post_write_non_ivy_file_silent():
     )
 
 
-def test_checkpoint_no_workflow_fires():
-    env = os.environ.copy()
-    env.pop("IVY_WORKSPACE_ROOT", None)
-    output = _run_checkpoint(
-        "ivy_verify",
-        '{"result": "FAIL", "error": "invariant violated"}',
-        env=env,
-    )
-    assert output is not None
-    ctx = output["hookSpecificOutput"]["additionalContext"]
-    assert "INTERACTION CHECKPOINT" in ctx
-
-
-def test_checkpoint_active_workflow_suppressed():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        env = _make_workflow_env(tmpdir)
-        output = _run_checkpoint(
-            "ivy_verify",
-            '{"result": "FAIL", "error": "invariant violated"}',
-            env=env,
-        )
-        assert output is None, "Should suppress checkpoint when workflow is active"
-
-
 if __name__ == "__main__":
     tests = [
         test_post_write_no_workflow_suggests_review,
         test_post_write_active_workflow_suppressed,
         test_post_write_non_ivy_file_silent,
-        test_checkpoint_no_workflow_fires,
-        test_checkpoint_active_workflow_suppressed,
     ]
     passed = 0
     failed = 0

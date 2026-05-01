@@ -22,7 +22,6 @@ SCRIPTS = Path(PLUGIN_ROOT) / "hooks" / "scripts"
 ASSESS_MODELING = str(SCRIPTS / "assess-modeling.py")
 ASSESS_TESTSPEC = str(SCRIPTS / "assess-testspec.py")
 ASSESS_TRACE = str(SCRIPTS / "assess-trace.py")
-ROUTE_USER_PROMPT = str(SCRIPTS / "route-user-prompt.py")
 RECORD_WORKFLOW_ERROR = str(SCRIPTS / "record-workflow-error.py")
 
 
@@ -224,38 +223,6 @@ def test_g5_silent_on_other_tools():
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert _is_noop_envelope(out)
-
-
-# ----- route-user-prompt.py G1 branch -----
-
-def test_g1_emits_at_blueprint_done_phase():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="blueprint-done")
-        out = _run(
-            ROUTE_USER_PROMPT,
-            {"prompt": "what's next?"},
-            env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
-        )
-        assert out is not None
-        ctx = out["hookSpecificOutput"]["additionalContext"]
-        assert "[G1 exploration gate]" in ctx
-        events = _read_journal(ws["journal"])
-        assert any(e["type"] == "gate_dispatched" and e["payload"]["gate"] == "g1" for e in events)
-
-
-def test_g1_silent_at_other_build_phases():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        _make_workspace(tmpdir, workflow="workflow-build", phase="write")
-        out = _run(
-            ROUTE_USER_PROMPT,
-            {"prompt": "continue building"},
-            env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
-        )
-        # Output may or may not be present depending on routing match,
-        # but it must NOT contain the G1 directive at this phase.
-        if out is not None:
-            ctx = out["hookSpecificOutput"].get("additionalContext", "")
-            assert "[G1 exploration gate]" not in ctx
 
 
 # ----- record-workflow-error.py G4 branch -----
