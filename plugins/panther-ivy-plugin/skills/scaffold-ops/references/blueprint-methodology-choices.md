@@ -1,6 +1,6 @@
-# Build Workflow — Blueprint Methodology Choices
+# Scaffold Workflow — Blueprint Methodology Choices
 
-Detailed per-methodology layer selection for Phase 2 Step 3 of the build workflow. This reference documents which layers each methodology requires, what choices the user makes, and how those choices land in `build-state.yaml.layers`.
+Detailed per-methodology layer selection for Phase 2 Step 3 of the scaffold workflow. This reference documents which layers each methodology requires, what choices the user makes, and how those choices land in `scaffold-state.yaml.layers`.
 
 ---
 
@@ -13,7 +13,7 @@ Use the 14-layer template from the `specification-patterns` skill. Propose which
 - Minimum viable set: typically 7 layers (Types, Frame, Packet, Connection, Entity Defs, Entity Behavior, Shims).
 - Which layers already exist and can be reused.
 
-Record the chosen layers in `build-state.yaml.layers` with `status: pending`; Phase 3 updates each to `complete` as it compiles.
+Record the chosen layers in `scaffold-state.yaml.layers` with `status: pending`; Phase 3 updates each to `complete` as it compiles.
 
 ## NACT — Network-Attack Compositional Testing
 
@@ -25,7 +25,7 @@ Start from the NCT 7-layer minimum (always included as a prefix), then present a
 2. **Cross-cutting white_noise** — `attack_white_noise.ivy` for distraction attacks that cover the primary attack operation. Independent of the 6-stage lifecycle; can be included alone or alongside it.
 3. **Attack entities package** — entity definitions under `apt_entities/` for the additional roles NACT requires (Attacker, Bot, C2 Server, Target, MIM), plus behavioral constraints under `apt_entities_behavior/`.
 
-Record the chosen subset in `build-state.yaml.layers`; each element keeps `status: pending` until Phase 3 writes it.
+Record the chosen subset in `scaffold-state.yaml.layers`; each element keeps `status: pending` until Phase 3 writes it.
 
 ## NSCT — Network-Simulator Centric Compositional Testing
 

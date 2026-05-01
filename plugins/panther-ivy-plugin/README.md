@@ -40,7 +40,7 @@ phase: compile
 started: "2026-04-28T14:30:00Z"
 ```
 
-**Build-state file** (`<protocol-dir>/.panther-ivy/build-state.yaml`): Multi-session build progress. Written by the builder agent at Phase 2. Read by the orchestrator for warm session resume.
+**Scaffold-state file** (`<protocol-dir>/.panther-ivy/scaffold-state.yaml`): Multi-session scaffold progress. Written by the builder agent at Phase 2. Read by the orchestrator for warm session resume.
 
 **Workflow composition:** Workflows compose via `pending_dispatch` journal events on the orchestrator (`skills/ivy/SKILL.md`), not via a caller chain. When a workflow needs another workflow to run next (e.g., build → verify after Phase 4), it appends `pending_dispatch(target_workflow=<next>, reason=<why>)` and clears its own active-workflow flag. The orchestrator's Phase 1 Step 2c consumes the event on the next turn (or same-turn if the harness routes in-line), writes a paired `workflow_resumed` marker for idempotency, and dispatches the target.
 
@@ -167,7 +167,7 @@ A third subdirectory, `styles/overlays/`, contains workflow-overlay templates re
   override the output style's structure dimension for those specific artifacts.
   The style applies to surrounding prose, not to structured artifacts with
   fixed schemas.
-- Memory and persistence artifacts (build-state.yaml, session logs, workflow
+- Memory and persistence artifacts (scaffold-state.yaml, session logs, workflow
   journal, knowledge-capture entries) are never styled. They use the shared
   rules citation format but not style dimensions.
 - Agents do not inherit output styles. They inherit shared rules via CLAUDE.md

@@ -73,7 +73,7 @@ Branch on the methodology detected in Phase 1, per `references/blueprint-methodo
 - **NACT** → NCT 7-layer prefix + multi-select `AskUserQuestion` for APT lifecycle, cross-cutting white_noise, attack entities.
 - **NSCT** → NCT 7-layer verbatim; the Shadow-NS experiment-config sidecar is emitted at Phase 6, not Phase 2.
 
-Record the chosen layers in `build-state.yaml.layers` with `status: pending`; Phase 3 writes each.
+Record the chosen layers in `scaffold-state.yaml.layers` with `status: pending`; Phase 3 writes each.
 
 #### Situation Briefing — Blueprint Approval
 
@@ -85,7 +85,7 @@ Apply the **Situation Briefing** pattern (a structured pre-action context dump) 
 
 #### Step 4: Write build state
 
-Write `build-state.yaml` via `ivy_workflow_state(action="set_build", protocol="<protocol>", state="<JSON>")`:
+Write `scaffold-state.yaml` via `ivy_workflow_state(action="set_build", protocol="<protocol>", state="<JSON>")`:
 
 ```yaml
 workflow: build
@@ -108,7 +108,7 @@ the **Multi-Perspective Exploration (MPE)** pattern with the verbatim G1 templat
 sibling `Explore` agents in parallel via single-message multi-Agent dispatch
 (`Skill(skill="panther-ivy-plugin:ivy")` `references/parallel-dispatch.md` for the
 canonical dispatch shape). Proceed to Phase 3 only on `VERDICT_SOUND`. On `VERDICT_UNSOUND`,
-resolve cited `[GAP: #NN]` markers in `build-state.yaml` or scope notes and re-run the
+resolve cited `[GAP: #NN]` markers in `scaffold-state.yaml` or scope notes and re-run the
 gate. On `VERDICT_ABSTAIN`, surface the abstention reason and decide: collect more
 evidence, escalate to Opus tier, or accept and promote relevant GAPs to `// DEFERRED`.
 </HARD-GATE>
@@ -128,7 +128,7 @@ Load `references/layer-scaffolding.md` for the full per-layer scaffolding proced
 1. Load `Skill(skill="panther-ivy-plugin:ivy-syntax")`.
 2. Write ONE layer at a time in dependency order; run `ivy_compile` after each.
 3. On compile error: dispatch `spec-analyst`, fix inline, recompile. For the attempt-counter recovery protocol, see `references/layer-scaffolding.md` Step 2.
-4. On compile success: update `build-state.yaml` layer status.
+4. On compile success: update `scaffold-state.yaml` layer status.
 5. Reflection Gate every 3 layers.
 6. Handle type propagation via `Skill(skill="panther-ivy-plugin:propagation-patterns")` if needed.
 7. **Knowledge Gate.** Pause for G6: the orchestrator dispatches `g-knowledge-critic` ×3 in parallel to vote on whether per-layer authoring lessons (recurring fix patterns, scaffolding tweaks, type-propagation gotchas) are worth persisting (rules, references, feedback memory).
@@ -193,11 +193,11 @@ Present a summary of what was built:
 - Layers completed (with file paths)
 - Verification status (pass/fail per test)
 - Coverage statistics (MUST/SHOULD/MAY covered)
-- Key design decisions recorded in `build-state.yaml`
+- Key design decisions recorded in `scaffold-state.yaml`
 
 #### Step 1b: NSCT sidecar emission (methodology-conditional)
 
-If `build-state.yaml.methodology == "nsct"`, load `Skill(skill="panther-ivy-plugin:methodology")` and follow its `references/nsct-experiment-template.md` — substitute placeholders from `build-state.yaml`, `mkdir -p experiment-config/protocols/{protocol}/`, and write `experiment_config_{protocol}_shadow.yaml`. Append `progress{detail: "NSCT experiment-config scaffolded at <path>"}`. The sidecar is a scaffold, not runnable; users hand-edit topology, services, and IUT plugin names before running it. Skip entirely for `nct` or `nact`.
+If `scaffold-state.yaml.methodology == "nsct"`, load `Skill(skill="panther-ivy-plugin:methodology")` and follow its `references/nsct-experiment-template.md` — substitute placeholders from `scaffold-state.yaml`, `mkdir -p experiment-config/protocols/{protocol}/`, and write `experiment_config_{protocol}_shadow.yaml`. Append `progress{detail: "NSCT experiment-config scaffolded at <path>"}`. The sidecar is a scaffold, not runnable; users hand-edit topology, services, and IUT plugin names before running it. Skip entirely for `nct` or `nact`.
 
 #### Step 2: Clear state
 
@@ -287,17 +287,17 @@ These entries enable warm session resume and decision traceability across sessio
 
 ## Multi-Session State
 
-`build-state.yaml` is the persistence mechanism for multi-session builds:
+`scaffold-state.yaml` is the persistence mechanism for multi-session builds:
 
 - **Written at:** Phase 2 (blueprint)
 - **Updated during:** Phase 3 (layer statuses set to `"complete"` as each layer compiles)
 - **Read on resume:** the orchestrator reads this file in its warm-resume branch and dispatches back to build at the appropriate phase
 
-On session resume, actual progress is inferred from the file system — which `.ivy` files exist combined with the layer statuses in `build-state.yaml`. The phase field in `active-workflow` indicates which phase to resume from.
+On session resume, actual progress is inferred from the file system — which `.ivy` files exist combined with the layer statuses in `scaffold-state.yaml`. The phase field in `active-workflow` indicates which phase to resume from.
 
 ## Background Compilation
 
-When `ivy_compile` would block for minutes, run it in a background subagent via `Agent(run_in_background: true, ...)` while productive work continues in the main conversation. On completion, integrate: SUCCESS → update `build-state.yaml` and proceed; FAILURE → dispatch `spec-analyst` synchronously. The staleness rule applies: re-run if the source `.ivy` was edited since the background run started. Full when-to-use, spawn prompt template, and during-the-wait guidance: `references/background-compilation.md`.
+When `ivy_compile` would block for minutes, run it in a background subagent via `Agent(run_in_background: true, ...)` while productive work continues in the main conversation. On completion, integrate: SUCCESS → update `scaffold-state.yaml` and proceed; FAILURE → dispatch `spec-analyst` synchronously. The staleness rule applies: re-run if the source `.ivy` was edited since the background run started. Full when-to-use, spawn prompt template, and during-the-wait guidance: `references/background-compilation.md`.
 
 ## Terminal state
 
@@ -330,7 +330,7 @@ For MCP tools (`ivy_compile`, `ivy_diagnostics`, `ivy_workspace`, `ivy_workflow_
 - **Knowledge skills loaded:** `methodology` (Phase 1), `specification-patterns` (Phase 2 — owns the 14-layer template), `ivy-syntax` (Phase 3), `propagation-patterns` (Phase 3 on type change), `ivy-toolkit` (tool selection).
 - **Inline patterns:** Multi-Perspective Exploration (Phase 1 architectural approach, Phase 2 G1 gate), Situation Briefing (Phase 2 blueprint approval, Phase 5 Quality Gate), Reflection Gate (Phase 3 every 3 layers, Phase 6 completion). G6 knowledge-capture vote (`g-knowledge-critic` ×3) at the Knowledge Gates in Phase 3 and Phase 5. Completion gate (`Skill(skill="panther-ivy-plugin:ivy")` `references/completion-gate.md`) at Phase 6.
 - **MCP tools used:** `ivy_compile`, `ivy_diagnostics`, `ivy_workspace`, `ivy_workflow_state`, `ivy_analysis`.
-- **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/build-state.yaml`.
+- **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/scaffold-state.yaml`.
 - **Failure-recovery contract:** `.claude/rules/agent-dispatch.md` for sub-agent dispatches; `.claude/rules/mcp-tool-reliability.md` for MCP tool failures.
 - **Iron laws:** `NO_LAYER_WITHOUT_SCAFFOLD`, `STALENESS_RULE` (`.claude/rules/iron-laws.md`).
 - **Hook backstop:** `assess-modeling.py` (G2) and `assess-testspec.py` (G3) PostToolUse hooks fire as backstop; primary dispatch is inline in Phase 3.

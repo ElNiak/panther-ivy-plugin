@@ -25,8 +25,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ### Added
 - `skills/ivy/` orchestrator skill (single entry point).
-- 5 workflow ops-skills (`triage-ops`, `scaffold-ops`, `verify-ops`, `review-ops`, `meta-self-mod-ops`).
-- 5 workflow specialist agents (`ivy-{triage,builder,verifier,reviewer,meta}-agent`).
+- 6 workflow ops-skills (`triage-ops`, `scaffold-ops`, `refine-ops`, `experiment-ops`, `review-ops`, `meta-self-mod-ops`).
+- 6 workflow specialist agents (`ivy-{triage,builder,refiner,experimenter,reviewer,meta}-agent`).
 - 3 gate-critic agents (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`).
 - `scripts/migrate-active-workflow.sh` one-shot YAML schema migration.
 - `systemMessage` output key on every kept hook with non-trivial output (Phase D table).

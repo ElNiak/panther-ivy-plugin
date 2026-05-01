@@ -4,7 +4,7 @@ paths: ["**/skills/*/SKILL.md", "**/*.ivy", "**/*.spec"]
 
 # Plan mode handling
 
-When the Claude Code harness activates plan mode, state-mutating tools are blocked and the active workflow must switch to plan authoring. This rule codifies the shared detection-and-authoring protocol so each workflow skill (`navigate`, `build`, `verify`, `review`) only needs to express its own caller-specific option framings.
+When the Claude Code harness activates plan mode, state-mutating tools are blocked and the active workflow must switch to plan authoring. This rule codifies the shared detection-and-authoring protocol so each workflow skill (`navigate`, `scaffold`, `refine`, `experiment`, `review`, `triage`, `meta`) only needs to express its own caller-specific option framings.
 
 ## Detection signals
 
@@ -20,7 +20,7 @@ The three exist because plan-mode activation surfaces at different places depend
 
 If any indicator is present, switch to plan authoring instead of the normal workflow cycle:
 
-1. **Read-only context gathering.** Check the workflow journal for recent `error`, `gate_verdict`, and `decision` entries; inspect `build-state.yaml` if present; skip any step that would mutate state or dispatch a state-mutating MCP tool.
+1. **Read-only context gathering.** Check the workflow journal for recent `error`, `gate_verdict`, and `decision` entries; inspect `scaffold-state.yaml` if present; skip any step that would mutate state or dispatch a state-mutating MCP tool.
 
 2. **Situation briefing via `AskUserQuestion`**, framed for plan-mode options. The option set is workflow-specific — each calling skill's Phase 0 block provides its own concrete framings.
 
@@ -33,10 +33,10 @@ If any indicator is present, switch to plan authoring instead of the normal work
      protocol="<protocol>",
      event_type="plan_approved",
      payload={
-       "workflow": "<caller workflow, e.g. build, verify, review>",
+       "workflow": "<caller workflow, e.g. scaffold, refine, experiment, review>",
        "phase_before_plan": "<phase name the caller was in>",
        "plan_file": "<absolute path to the plan file>",
-       "supersedes": ["<optional list of build-state decisions the plan reverses>"]
+       "supersedes": ["<optional list of scaffold-state decisions the plan reverses>"]
      }
    )
    ```

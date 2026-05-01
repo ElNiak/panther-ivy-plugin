@@ -36,7 +36,7 @@ Per-gate slices (canonical):
 - **G4**: `#200-249` + `#250-299` + `#400-499`.
 - **G5**: `#100-107` + `#500-559` + (`#560-589` if NSCT).
 
-Gates load only their range slice plus the active methodology overlay. The active methodology comes from `build-state.yaml`'s `methodology` field. NCT-tagged entries always load; NACT entries load when `methodology: nact`; NSCT entries load when `methodology: nsct`.
+Gates load only their range slice plus the active methodology overlay. The active methodology comes from `scaffold-state.yaml`'s `methodology` field. NCT-tagged entries always load; NACT entries load when `methodology: nact`; NSCT entries load when `methodology: nsct`.
 
 ---
 

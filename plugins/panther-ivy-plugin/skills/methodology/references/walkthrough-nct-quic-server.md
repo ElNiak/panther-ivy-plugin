@@ -36,7 +36,7 @@ prose dispatch table in `skills/ivy/SKILL.md` rather than a JSON file.
 
 `scaffold` workflow reads RFC 9000 keywords, finds no `attack` / `attacker`
 keywords, no `network simulation` mentions, classifies `methodology=nct`,
-and writes `build-state.yaml`:
+and writes `scaffold-state.yaml`:
 
 ```yaml
 methodology: nct
@@ -59,7 +59,7 @@ applies the 14-layer template. For QUIC server NCT the relevant subset:
 | 4 — Connection | `quic_stack/quic_connection.ivy` | exists |
 | 7 — Test spec | `quic_tests/server_tests/quic_server_test_handshake.ivy` | NEW |
 
-`build-state.yaml.layers` records each layer's status; only layer 7 will
+`scaffold-state.yaml.layers` records each layer's status; only layer 7 will
 be authored in this run.
 
 ## Step 5 — Scaffold Phase 3 (Implement layer 7)
@@ -116,7 +116,7 @@ per `.claude/rules/ivy-formatting.md` severity.
 |---|---|
 | `/set-workspace` edit isolation | Step 1 |
 | Orchestrator dispatch-table intent classification | Step 2 |
-| `build-state.yaml` methodology field | Step 3 |
+| `scaffold-state.yaml` methodology field | Step 3 |
 | 14-layer template selection | Step 4 |
 | Iron law `NO_LAYER_WITHOUT_SCAFFOLD` | Step 5 |
 | Role inversion (Ivy plays client when testing a server) | Step 5 |

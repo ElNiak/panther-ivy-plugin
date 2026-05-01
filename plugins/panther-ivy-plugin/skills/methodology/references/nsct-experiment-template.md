@@ -4,7 +4,7 @@ Consumed by the `scaffold` workflow's Phase 6 Step 1b NSCT sidecar emission. The
 
 ## Placeholders
 
-| Token | Source in `build-state.yaml` | Fallback if absent |
+| Token | Source in `scaffold-state.yaml` | Fallback if absent |
 |-------|------------------------------|--------------------|
 | `{{protocol}}` | `protocol` | no fallback — this is required |
 | `{{version}}` | `decisions['version']` | literal `<fill-in>` |

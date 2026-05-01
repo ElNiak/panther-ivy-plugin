@@ -25,9 +25,9 @@ Rule loaded via `paths: ["**/skills/*/SKILL.md"]` so any skill activation
 brings the calibrated semantics into context. The rule is referenced (not
 duplicated) by scaffold-ops, refine-ops, experiment-ops, review-ops,
 triage-ops, and meta-self-mod-ops. Glossary content for `SOUND` and
-`ABSTAIN` previously held only in `skills/verify-ops/references/glossary.md`
-(now `skills/refine-ops/references/glossary.md`) is promoted here because
-the same semantics apply across all six ops skills, not just refine.
+`ABSTAIN` is defined in `skills/refine-ops/references/glossary.md` and
+promoted here because the same calibrated semantics apply across all six
+ops skills, not just refine.
 </context>
 
 ## Three verdict states

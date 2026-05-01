@@ -16,7 +16,7 @@ If the contract file is missing or unreadable, the injection hook exits with cod
 | `skills/ivy/SKILL.md` (orchestrator) | YES — `workflow_resumed`, `gate_verdict` (after critic aggregation), `context_switch`, `plan_approved` (delegated to plan-mode rule), `knowledge_captured` (after G6 SOUND) | YES — `set` on dispatch; the matching ops-skill clears at terminal |
 | `skills/{scaffold,refine,experiment,review,triage,meta-self-mod}-ops/SKILL.md` | YES — `phase_transition`, `decision`, `progress`, `gate_verdict` (for hook-internal G4/G5), `error`, `pending_dispatch` | The orchestrator wrote `set` before dispatch; ops-skill clears at terminal |
 | `skills/{methodology,ivy-syntax,ivy-toolkit,specification-patterns,propagation-patterns,apt-attack-patterns,verification-failures}/SKILL.md` | NO (knowledge skills are read-only references) | NO |
-| `agents/ivy-{verifier,builder,reviewer,triage,meta}-agent.md` | NO directly — invokes its preloaded ops-skill which writes | NO directly |
+| `agents/ivy-{refiner,experimenter,builder,reviewer,triage,meta}-agent.md` | NO directly — invokes its preloaded ops-skill which writes | NO directly |
 | `agents/g-{plan,fidelity,knowledge}-critic.md` | NO — returns `VERDICT_*` (or `KEEP/DROP/DEFER` for `g-knowledge-critic`); the orchestrator writes `gate_verdict` after aggregation | NO |
 | `commands/{nct-health,nct-iut-test}.md` | YES via the underlying ops-skill (triage / experiment) | YES via the underlying ops-skill |
 | Hook scripts | YES — `session_start` (`cleanup-stale-workflow.py`), `gate_dispatched` (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, `record-workflow-error.py` for G4), `error` (`record-workflow-error.py`), `progress{kind: mcp_retry}` (`retry-ivy-mcp.py`) | `cleanup-stale-workflow.py` clears stale; no other hook writes |
@@ -132,7 +132,7 @@ Two existing shapes are canonical for plugin subagents. New plugin agents MUST m
 
 ### 6.1 Specialist agents
 
-`agents/ivy-{verifier,builder,reviewer,triage,meta}-agent.md` all return:
+`agents/ivy-{refiner,experimenter,builder,reviewer,triage,meta}-agent.md` all return:
 
 ```
 Return ≤ 800 words total. JSON shape:

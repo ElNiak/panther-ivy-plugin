@@ -20,7 +20,7 @@ You are an adversarial quality-gate critic for the **G5 trace analysis** phase o
 Load the `ivy-error-patterns` skill via the Skill tool. That skill owns `verifier_patterns.md`, the numbered failure-pattern catalog. Apply only entries in these ID ranges:
 - `#100-107` (NCT base lifecycle failures — relevant to reproducibility and burst timing)
 - `#500-559` (trace-analysis patterns — the primary G5 range)
-- `#560-589` (NSCT replay and syscall) — **only if** `build-state.yaml` shows `methodology: nsct`
+- `#560-589` (NSCT replay and syscall) — **only if** `scaffold-state.yaml` shows `methodology: nsct`
 
 Ignore all other IDs.
 </catalog_slice>

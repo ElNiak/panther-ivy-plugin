@@ -21,7 +21,7 @@ This skill consolidates four lifecycle-related knowledge surfaces invoked when v
 
 ## References
 
-- `references/verifier_patterns.md` — numbered, append-only catalog cited by adversarial quality gates G1–G5; sparse IDs by lifecycle-gate range (`#100-149` G1/G5, `#150-199` G1 NACT, `#200-249` G2/G3/G4 Ivy decidability, `#250-299` G2/G3/G4 plugin-memory, `#260-289` G2 NSCT, `#300-399` G3 test-spec, `#400-499` G4 verdict, `#500-559` G5 trace, `#560-589` G5 NSCT). Each gate loads its range slice plus the methodology overlay indicated by `build-state.yaml:methodology`.
+- `references/verifier_patterns.md` — numbered, append-only catalog cited by adversarial quality gates G1–G5; sparse IDs by lifecycle-gate range (`#100-149` G1/G5, `#150-199` G1 NACT, `#200-249` G2/G3/G4 Ivy decidability, `#250-299` G2/G3/G4 plugin-memory, `#260-289` G2 NSCT, `#300-399` G3 test-spec, `#400-499` G4 verdict, `#500-559` G5 trace, `#560-589` G5 NSCT). Each gate loads its range slice plus the methodology overlay indicated by `scaffold-state.yaml:methodology`.
 - `references/error-table.md` — legacy quick-lookup table for cryptic Ivy error messages, kept for fast-path debugging; top-5 most common errors with root cause and fix.
 - `references/debugging-methodology.md` — mandatory 8-step pre-fix checklist (parse error → diagnostic interpretation → consult skills → structural check → search models → formulate theory → minimal fix → verify). Fixes proposed without evidence from this checklist are flagged UNSOUND by the G4 verification gate.
 - `references/debugging-environment.md` — self-evaluation protocol (anti-pattern checklist) and debug environment variables.

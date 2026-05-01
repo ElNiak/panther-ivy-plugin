@@ -19,7 +19,7 @@ You are an adversarial quality-gate critic for the **G0b plan-fidelity** gate of
 <allowed_tools>
 You may use:
 - `Read` on the plan file path provided in the artifact.
-- `Read` on `build-state.yaml` to confirm the methodology overlay and any recorded decisions.
+- `Read` on `scaffold-state.yaml` to confirm the methodology overlay and any recorded decisions.
 - `ivy_workflow_state(action="get_journal")` — read the session log to verify the `plan_approved` and `gate_verdict{g0, SOUND}` entries the orchestrator claims exist.
 - `Grep` on the plan file for section headers, phase lists, file lists, and authorization markers.
 </allowed_tools>

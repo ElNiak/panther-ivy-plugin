@@ -21,7 +21,7 @@ An adversarial quality gate (G1 exploration, G2 per-layer modeling, G3 test-spec
 The marker MUST be embedded in a way the host file's parser ignores. The orchestrator selects placement based on file extension:
 
 - **`.ivy` files** — append after the relevant line as a `# [GAP: …]` comment (Ivy uses `#` as line comments). Or place a comment line above the cited construct. Inline trailing form is preferred when the line is short.
-- **`.yaml` files** (e.g., `build-state.yaml`) — embed ONLY as a YAML comment using `# [GAP: …]` at end of a key line. Never insert a bare `[GAP: …]` token into a YAML document — bracket syntax is a flow sequence in YAML and corrupts parsing. Multi-line GAP rationale on YAML belongs in a leading `# [GAP: …]` comment block above the key.
+- **`.yaml` files** (e.g., `scaffold-state.yaml`) — embed ONLY as a YAML comment using `# [GAP: …]` at end of a key line. Never insert a bare `[GAP: …]` token into a YAML document — bracket syntax is a flow sequence in YAML and corrupts parsing. Multi-line GAP rationale on YAML belongs in a leading `# [GAP: …]` comment block above the key.
 - **`.md` / scope notes** — embed as `<!-- [GAP: …] -->` HTML comment OR as a normal `> [GAP: …]` blockquote line (clearly authored, not consumed by markdown formatters).
 - **`.json` files** — JSON has no comment syntax. Do NOT write GAP markers into JSON. Surface the finding in the verdict block and journal entry only.
 
