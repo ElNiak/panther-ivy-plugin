@@ -1,6 +1,6 @@
-# Verify-ops — failure-diagnosis reference
+# Refine-ops — failure-diagnosis reference
 
-Detailed failure-diagnosis and fix procedures for verify-ops Phases 6 and 7, plus the G4 verification-gate discipline contract dispatched inline after every `ivy_verify` return.
+Detailed failure-diagnosis and fix procedures for refine-ops Phases 6 and 7, plus the G4 verification-gate discipline contract dispatched inline after every `ivy_verify` return.
 
 ---
 

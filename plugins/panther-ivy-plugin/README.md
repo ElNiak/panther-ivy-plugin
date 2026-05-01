@@ -75,13 +75,14 @@ For parameters, timeouts, error handling, and rendering details, see the **ivy-t
 
 ### Available Workflows
 
-The orchestrator (`skills/ivy/SKILL.md`) is the single user-facing entry point. It routes natural-language requests to one of five specialist agents, each preloaded with its matching ops-skill:
+The orchestrator (`skills/ivy/SKILL.md`) is the single user-facing entry point. It routes natural-language requests to one of six specialist agents, each preloaded with its matching ops-skill:
 
 | Specialist agent | Ops-skill | Purpose |
 |---|---|---|
-| `ivy-verifier-agent` | `verify-ops` | Run `ivy_verify` / `ivy_compile`, diagnose counterexamples |
 | `ivy-builder-agent` | `scaffold-ops` | Construct or extend protocol models (NCT/NACT/NSCT) |
-| `ivy-reviewer-agent` | `review-ops` | RFC coverage audit, quality scoring, traceability, IUT trace analysis |
+| `ivy-refiner-agent` | `refine-ops` | Run `ivy_verify` / `ivy_compile`, dispatch G4 inline, diagnose counterexamples, drive Phase 7 fix loop |
+| `ivy-experimenter-agent` | `experiment-ops` | Configure + run IUT experiments, dispatch G5 inline, apply 9-step trace analysis |
+| `ivy-reviewer-agent` | `review-ops` | RFC coverage audit, quality scoring, traceability |
 | `ivy-triage-agent` | `triage-ops` | MCP/LSP/Serena health repair, 9-step diagnostic runbook |
 | `ivy-meta-agent` | `meta-self-mod-ops` | Plugin source modifications (skills, agents, hooks, rules, commands) |
 
@@ -247,7 +248,7 @@ Set these in your shell environment before starting Claude Code if you need to o
 ## Quick Reference
 
 **Orchestrator**: `skills/ivy/SKILL.md` — single entry point; routes to specialist agents.
-**Specialist agents**: ivy-verifier-agent, ivy-builder-agent, ivy-reviewer-agent, ivy-triage-agent, ivy-meta-agent.
+**Specialist agents**: ivy-builder-agent, ivy-refiner-agent, ivy-experimenter-agent, ivy-reviewer-agent, ivy-triage-agent, ivy-meta-agent.
 **Gate-critic agents**: g-plan-critic, g-fidelity-critic, g-knowledge-critic.
 **Shortcuts**: /nct-iut-test, /nct-health.
 **Cross-cutting knowledge skills**: verification-failures, specification-patterns, propagation-patterns, apt-attack-patterns, ivy-syntax, ivy-toolkit, methodology.

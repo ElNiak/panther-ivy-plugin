@@ -23,11 +23,11 @@ constraints that bind it.
 
 Rule loaded via `paths: ["**/skills/*/SKILL.md"]` so any skill activation
 brings the calibrated semantics into context. The rule is referenced (not
-duplicated) by scaffold-ops, verify-ops, review-ops, triage-ops, and
-meta-self-mod-ops. Glossary content for `SOUND` and `ABSTAIN` previously
-held only in `skills/verify-ops/references/glossary.md` is promoted here
-because the same semantics apply across all five ops skills, not just
-verify.
+duplicated) by scaffold-ops, refine-ops, experiment-ops, review-ops,
+triage-ops, and meta-self-mod-ops. Glossary content for `SOUND` and
+`ABSTAIN` previously held only in `skills/verify-ops/references/glossary.md`
+(now `skills/refine-ops/references/glossary.md`) is promoted here because
+the same semantics apply across all six ops skills, not just refine.
 </context>
 
 ## Three verdict states
@@ -45,11 +45,13 @@ workflow-specific and stays in the owning skill body:
 
 - `scaffold-ops`: ABSTAIN on G1 → resolve the evidence gap or escalate to
   Opus tier; do not enter Phase 3 on ABSTAIN.
-- `verify-ops`: ABSTAIN on G4 → Phase 6 Diagnose using `abstain_reason`
+- `refine-ops`: ABSTAIN on G4 → Phase 6 Diagnose using `abstain_reason`
   as the starting hypothesis; the upstream `ivy_verify` is not authoritative.
+- `experiment-ops`: ABSTAIN on G5 → return verdict with caveat naming the
+  unverifiable trace dimension; surface the abstain_reason to the user.
 - `review-ops`: ABSTAIN on G5 → append `gate_verdict{verdict: "abstain",
   abstain_reason: ...}` and ask the user whether to re-run via
-  `pending_dispatch(verify, phase_hint="iut")` or accept inconclusive.
+  `pending_dispatch(experiment, phase_hint="iut")` or accept inconclusive.
 - `triage-ops`: ABSTAIN on G7 (post-Phase-2, pre-fix) → halt; do NOT
   present the rejected diagnosis to the user; loop back to "Identify
   failures" and re-diagnose with the critic's `CITATION_FAIL` evidence
@@ -101,6 +103,6 @@ Workflow-specific routing on each verdict is allowed and lives in the
 owning ops skill (per the Workflow-specific ABSTAIN routing table above).
 
 <integration
-  cited-by="skills/scaffold-ops, skills/verify-ops, skills/review-ops, skills/triage-ops, skills/meta-self-mod-ops"
+  cited-by="skills/scaffold-ops, skills/refine-ops, skills/experiment-ops, skills/review-ops, skills/triage-ops, skills/meta-self-mod-ops"
   related-rules=".claude/rules/iron-laws.md, .claude/rules/gap-markers.md, .claude/rules/agent-dispatch.md, .claude/rules/ivy-formatting.md, .claude/rules/journaling-contract.md"
-  glossary-source-superseded="skills/verify-ops/references/glossary.md (gate-verdict subset only; MPE / iron law / pending_dispatch entries remain in the glossary)"/>
+  glossary-source-superseded="skills/refine-ops/references/glossary.md (gate-verdict subset only; MPE / iron law / pending_dispatch entries remain in the glossary)"/>

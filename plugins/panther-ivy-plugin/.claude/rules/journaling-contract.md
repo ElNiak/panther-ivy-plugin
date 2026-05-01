@@ -14,14 +14,14 @@ If the contract file is missing or unreadable, the injection hook exits with cod
 | Surface | Writes journal? | Writes active-workflow YAML? |
 |---|---|---|
 | `skills/ivy/SKILL.md` (orchestrator) | YES — `workflow_resumed`, `gate_verdict` (after critic aggregation), `context_switch`, `plan_approved` (delegated to plan-mode rule), `knowledge_captured` (after G6 SOUND) | YES — `set` on dispatch; the matching ops-skill clears at terminal |
-| `skills/{scaffold,verify,review,triage,meta-self-mod}-ops/SKILL.md` | YES — `phase_transition`, `decision`, `progress`, `gate_verdict` (for hook-internal G4/G5), `error`, `pending_dispatch` | The orchestrator wrote `set` before dispatch; ops-skill clears at terminal |
+| `skills/{scaffold,refine,experiment,review,triage,meta-self-mod}-ops/SKILL.md` | YES — `phase_transition`, `decision`, `progress`, `gate_verdict` (for hook-internal G4/G5), `error`, `pending_dispatch` | The orchestrator wrote `set` before dispatch; ops-skill clears at terminal |
 | `skills/{methodology,ivy-syntax,ivy-toolkit,specification-patterns,propagation-patterns,apt-attack-patterns,verification-failures}/SKILL.md` | NO (knowledge skills are read-only references) | NO |
 | `agents/ivy-{verifier,builder,reviewer,triage,meta}-agent.md` | NO directly — invokes its preloaded ops-skill which writes | NO directly |
 | `agents/g-{plan,fidelity,knowledge}-critic.md` | NO — returns `VERDICT_*` (or `KEEP/DROP/DEFER` for `g-knowledge-critic`); the orchestrator writes `gate_verdict` after aggregation | NO |
-| `commands/{nct-health,nct-iut-test}.md` | YES via the underlying ops-skill (triage / verify) | YES via the underlying ops-skill |
+| `commands/{nct-health,nct-iut-test}.md` | YES via the underlying ops-skill (triage / experiment) | YES via the underlying ops-skill |
 | Hook scripts | YES — `session_start` (`cleanup-stale-workflow.py`), `gate_dispatched` (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, `record-workflow-error.py` for G4), `error` (`record-workflow-error.py`), `progress{kind: mcp_retry}` (`retry-ivy-mcp.py`) | `cleanup-stale-workflow.py` clears stale; no other hook writes |
 
-`progress{kind: fix_attempt}` is written by `verify-ops/SKILL.md` Phase 7 (the fix-attempt counter loop), not by a hook. Attribution matters when grepping the journal for diagnostic context.
+`progress{kind: fix_attempt}` is written by `refine-ops/SKILL.md` Phase 7 (the fix-attempt counter loop), not by a hook. Attribution matters when grepping the journal for diagnostic context.
 
 ## 2. Per-turn lifecycle (decision tree)
 
@@ -69,10 +69,10 @@ The list below is closed. Adding a new event type requires editing `_VALID_EVENT
 | `phase_transition` | `from` (str), `to` (str) | — | ops-skill at phase boundary |
 | `decision` | `summary` (str), `context` (str) | — | ops-skill on user-driven choice |
 | `progress` | `detail` (str) OR `kind` (str) + kind-specific fields | varies by `kind` | ops-skill |
-| `progress{kind: fix_attempt}` | `kind: "fix_attempt"`, `key` (file path), `attempt` (int) | — | `verify-ops/SKILL.md` Phase 7 |
+| `progress{kind: fix_attempt}` | `kind: "fix_attempt"`, `key` (file path), `attempt` (int) | — | `refine-ops/SKILL.md` Phase 7 |
 | `progress{kind: mcp_retry}` | `kind: "mcp_retry"`, `tool` (str), `outcome` (str) | — | `hooks/scripts/retry-ivy-mcp.py` |
 | `progress{kind: agent_dispatch_*}` | `kind`, `agent`, `workflow`, `phase` | `reason` (failure mode) | per `.claude/rules/agent-dispatch.md` |
-| `progress{kind: skill_invoked}` | `kind: "skill_invoked"`, `skill` (str: full plugin-prefixed name), `workflow` (str), `phase` (str) | — | `hooks/scripts/track-skill-invocation.py` (only fires when an ops-skill — `scaffold-ops`, `verify-ops`, `review-ops`, `triage-ops`, `meta-self-mod-ops` — is invoked inside an active workflow). The orchestrator reads this on its next turn for warm-resume routing. |
+| `progress{kind: skill_invoked}` | `kind: "skill_invoked"`, `skill` (str: full plugin-prefixed name), `workflow` (str), `phase` (str) | — | `hooks/scripts/track-skill-invocation.py` (only fires when an ops-skill — `scaffold-ops`, `refine-ops`, `experiment-ops`, `review-ops`, `triage-ops`, `meta-self-mod-ops` — is invoked inside an active workflow). The orchestrator reads this on its next turn for warm-resume routing. |
 | `progress{kind: question_answered}` | `kind: "question_answered"`, `record_id` (str: 12-char id matching the JSONL line), `question_count` (int), `answer_count` (int) | — | `hooks/scripts/record-askuserquestion.py` (PostToolUse:AskUserQuestion). The full question/answer text lives in the JSONL log at `.panther-ivy/askuserquestion-log.jsonl`; the journal entry is the compact pointer so the YAML stays small. |
 | `error` | `pattern` (str), `file` (str), `line` (int) | `tool_name`, `tool_result_excerpt` | `record-workflow-error.py`; ops-skill on caught exception |
 | `context_switch` | `detection` (str), `mode` (str) | — | orchestrator on plan-mode entry / exit |
@@ -124,7 +124,7 @@ Before ending its turn, every ops-skill MUST do exactly this in this order:
 
 `pending_dispatch` is optional (no hand-off needed → just clear). Direct `Skill()` or `Agent()` calls between ops-skills are forbidden — the orchestrator owns dispatch.
 
-Per `.claude/rules/skill-conventions.md` and the project's `feedback_autoload_rule_no_pointer_stub`, ops-skill bodies (scaffold-ops, verify-ops, review-ops, triage-ops, meta-self-mod-ops) retain only their per-workflow Terminal sections with concrete `pending_dispatch` examples and per-workflow next-step phrasing. The abstract HARD-GATE rule above lives only in this contract document; it is not duplicated in the ops-skill bodies.
+Per `.claude/rules/skill-conventions.md` and the project's `feedback_autoload_rule_no_pointer_stub`, ops-skill bodies (scaffold-ops, refine-ops, experiment-ops, review-ops, triage-ops, meta-self-mod-ops) retain only their per-workflow Terminal sections with concrete `pending_dispatch` examples and per-workflow next-step phrasing. The abstract HARD-GATE rule above lives only in this contract document; it is not duplicated in the ops-skill bodies.
 
 ## 6. Subagent return shapes (canonical)
 
@@ -187,10 +187,10 @@ Every ops-skill MUST emit a one-liner before its `clear_active_workflow` call:
 
 Examples:
 
-- `[ivy-verify] Phase 4 PASS (G4 SOUND, 2-of-3). Dispatching review for coverage follow-up.`
-- `[ivy-scaffold] Phase 4 PASS. Handing off to verify (post-modeling verification).`
+- `[ivy-refine] Phase 4 PASS (G4 SOUND, 2-of-3). Dispatching review for coverage follow-up.`
+- `[ivy-scaffold] Phase 4 PASS. Handing off to refine (post-modeling verification).`
 - `[ivy-review] Phase 3 PASS (G5 SOUND). Workflow complete; no further dispatch.`
-- `[ivy-triage] Repair complete. Resuming verify (caller of preflight).`
+- `[ivy-triage] Repair complete. Resuming refine (caller of preflight).`
 
 Verdicts use the appropriate severity system per `ivy-formatting.md`: tool-outcome (`PASS / FAIL / WARN`) for mechanical results; gate-verdict (`SOUND / UNSOUND(#NN) / ABSTAIN`) for adversarial-vote outcomes.
 
@@ -201,4 +201,4 @@ The contract is load-bearing. Failure modes documented:
 - **Contract file unreadable** — the SubagentStart injection hook exits 2 and blocks the dispatch. The user sees a hook-error message and fixes the file before retrying.
 - **Unknown plugin agent name** — the injection hook logs `unknown panther-ivy-plugin agent: <name>` to stderr and emits the 5-line read-only stub as a fail-safe default. Dispatch proceeds. Adding a new agent to the plugin requires updating the gating switch in the hook script.
 - **Journal write race** — does not happen under the sequential-write assumption (§4.2). If a future change violates the assumption, `append_journal_event` will silently drop one of the racing writes (the later one wins). Add `fcntl` locking before introducing parallelism.
-- **Legacy active-workflow names** — `_KNOWN_WORKFLOWS` in `workflow_state.py` is the unprefixed set (`navigate`, `scaffold`, `verify`, `review`, `triage`, `meta`). Legacy prefixed names (`workflow-verify`, `workflow-build`, etc.) are migrated by the user-invoked one-shot `scripts/migrate_legacy_workflow.py`, NOT by `cleanup-stale-workflow.py` (per `feedback_no_backward_compat_shims`).
+- **Legacy active-workflow names** — `_KNOWN_WORKFLOWS` in `workflow_state.py` is the unprefixed set (`navigate`, `scaffold`, `refine`, `experiment`, `review`, `triage`, `meta`). Legacy prefixed names (`workflow-verify`, `workflow-build`, etc.) are migrated by the user-invoked one-shot `scripts/migrate_legacy_workflow.py`, NOT by `cleanup-stale-workflow.py` (per `feedback_no_backward_compat_shims`).

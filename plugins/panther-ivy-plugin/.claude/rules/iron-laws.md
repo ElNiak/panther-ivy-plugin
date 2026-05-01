@@ -3,7 +3,7 @@ paths: ["**/*.ivy", "**/*.spec", "**/skills/*/SKILL.md"]
 ---
 
 <purpose>
-Four canonical guidelines cited by the `build`, `verify`, and `review` skills.
+Four canonical guidelines cited by the `scaffold`, `refine`, `experiment`, and `review` skills.
 The text below is the canonical guidance; the workflow skills reference it
 rather than duplicating the wording.
 
@@ -38,16 +38,16 @@ skill detects plan mode). The G0 plan-gate enforces conformance when a plan
 is approved and the workflow re-activates at Phase 1.5.
 </context>
 
-## Iron Laws (scaffold, verify, review workflows)
+## Iron Laws (scaffold, refine, review workflows)
 
 | Law | Workflow | Enforcement site |
 |---|---|---|
-| NO_FIX_WITHOUT_VERIFY | verify | workflow self-discipline + hooks/scripts/block-direct-ivy.py (advisory hint) |
+| NO_FIX_WITHOUT_VERIFY | refine | workflow self-discipline + hooks/scripts/block-direct-ivy.py (advisory hint) |
 | NO_LAYER_WITHOUT_SCAFFOLD | scaffold | ivy_diagnostics(mode="structural") call before new-layer writes |
 | NO_QUALITY_WITHOUT_COVERAGE | review | ivy_coverage / ivy_quality citation at verdict time |
-| STALENESS RULE | scaffold, verify, review | ivy_analysis(mode="includes") closure + tool timestamp |
+| STALENESS RULE | scaffold, refine, experiment, review | ivy_analysis(mode="includes") closure + tool timestamp |
 
-<iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="workflow-verify" enforcement="hooks/scripts/block-direct-ivy.py (advisory) + workflow self-discipline">
+<iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="refine" enforcement="hooks/scripts/block-direct-ivy.py (advisory) + workflow self-discipline">
 
   <instructions>
   Before proposing a *concrete code-edit fix* (an Edit/Write tool call, or a
@@ -103,7 +103,7 @@ is approved and the workflow re-activates at Phase 1.5.
 
 </iron-law>
 
-<iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="workflow-review" enforcement="ivy_coverage / ivy_quality citation at verdict emission">
+<iron-law name="NO_QUALITY_WITHOUT_COVERAGE" workflow="review" enforcement="ivy_coverage / ivy_quality citation at verdict emission">
 
   <instructions>
   Before stating a *formal coverage or quality verdict* — claims like "this
@@ -130,7 +130,7 @@ is approved and the workflow re-activates at Phase 1.5.
 
 </iron-law>
 
-<iron-law name="STALENESS_RULE" workflow="scaffold, verify, review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp">
+<iron-law name="STALENESS_RULE" workflow="scaffold, refine, experiment, review" enforcement="ivy_analysis(mode=includes) closure + tool result timestamp">
 
   <instructions>
   A tool result for file `F` is *stale* if `F` itself or any file in `F`'s
@@ -174,7 +174,7 @@ is approved and the workflow re-activates at Phase 1.5.
 </iron-law>
 
 <integration
-  cited-by="skills/scaffold-ops, skills/verify-ops, skills/review-ops"
+  cited-by="skills/scaffold-ops, skills/refine-ops, skills/experiment-ops, skills/review-ops"
   enforcement-hook="hooks/scripts/block-direct-ivy.py (advisory hint)"
   suspended-during="plan mode (navigate Phase 0)"
   re-checked-at="G0 plan-gate on plan approval (navigate Phase 1.5)"/>

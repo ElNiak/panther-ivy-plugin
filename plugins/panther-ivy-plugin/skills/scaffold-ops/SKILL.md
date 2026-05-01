@@ -306,7 +306,7 @@ The terminal state of scaffold is one of:
 - `append_pending_dispatch(verify, reason="scaffold Phase 4 — post-modeling verification")` + clear active-workflow flag (Phase 4 hand-off).
 - `append_pending_dispatch(<next>, …)` or bare clear of active-workflow flag (Phase 6 completion routing).
 
-Do NOT invoke any other workflow's ops skill (`verify-ops`, `review-ops`,
+Do NOT invoke any other workflow's ops skill (`refine-ops`, `experiment-ops`, `review-ops`,
 `triage-ops`) directly from build. Hand-off rides on `append_pending_dispatch`
 so the causal chain stays visible in the journal. Direct skill invocation
 breaks the workflow state machine.

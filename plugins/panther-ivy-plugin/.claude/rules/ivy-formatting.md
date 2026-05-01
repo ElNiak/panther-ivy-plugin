@@ -52,8 +52,8 @@ matches the concept being labeled.
    Use for the severity of a code-level or workflow-level finding that has
    a file:line locator. Format per the existing canonical rule above
    (`ERROR: {file}:{line} -- {message}`). Used by: `ivy-reviewer-agent`
-   interactive coverage / quality output, build Phase 5 findings, review
-   Phase 3 findings, `ivy-verifier-agent` diagnostic reports.
+   interactive coverage / quality output, scaffold Phase 5 findings, review
+   Phase 3 findings, `ivy-refiner-agent` diagnostic reports.
 
 These systems do not map onto each other. A FAIL tool-outcome may correspond
 to multiple ERROR findings; an UNSOUND gate verdict may cite one or more

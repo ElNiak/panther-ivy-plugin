@@ -1,6 +1,6 @@
-# Verify-ops — glossary
+# Refine-ops — glossary
 
-Six terms `verify-ops` uses without further definition. Each is a calibrated word with a fixed meaning in the plugin; do not paraphrase.
+Six terms `refine-ops` uses without further definition. Each is a calibrated word with a fixed meaning in the plugin; do not paraphrase.
 
 | Term | Definition |
 |---|---|

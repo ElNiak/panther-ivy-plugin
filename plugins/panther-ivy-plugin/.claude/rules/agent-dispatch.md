@@ -7,7 +7,7 @@ description: "Failure-recovery contract for specialist agent dispatch (timeout, 
 
 ## Canonical `<dispatch-context>` schema
 
-Every specialist agent (`ivy-verifier-agent`, `ivy-builder-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`) must include a `<dispatch-context>` block in its body. The block is an agent capability contract: callers populate it when dispatching; the runtime uses it to verify correct dispatch. The schema specification lives here (meta-content, not duplication); the per-agent instances with specific values live in the agent files.
+Every specialist agent (`ivy-refiner-agent`, `ivy-experimenter-agent`, `ivy-builder-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`) must include a `<dispatch-context>` block in its body. The block is an agent capability contract: callers populate it when dispatching; the runtime uses it to verify correct dispatch. The schema specification lives here (meta-content, not duplication); the per-agent instances with specific values live in the agent files.
 
 ```xml
 <!-- Canonical <dispatch-context> schema. Every specialist agent must include this block. -->
@@ -18,17 +18,23 @@ Every specialist agent (`ivy-verifier-agent`, `ivy-builder-agent`, `ivy-reviewer
   <field name="workspace" required="true"
          example="Workspace: bgp  (from ivy_workspace(action=&quot;get&quot;))"/>
   <field name="phase_context" required="true"
-         example="Dispatched from verify Phase 4 — diagnosis"/>
+         example="Dispatched from refine Phase 4 — diagnosis"/>
 
   <!-- OPTIONAL: shared across specialists, populate when known -->
   <field name="prior_findings" required="false"
          example="G2 flagged missing invariant on quic_frame.ivy:78"/>
 
-  <!-- OPTIONAL: ivy-verifier-agent only — required when dispatched for verification -->
+  <!-- OPTIONAL: ivy-refiner-agent only — required when dispatched for verification -->
   <field name="verification_target" required="false"
          example="Verify protocol-testing/bgp/bgp_stack/bgp_connection.ivy"/>
   <field name="failure_context" required="false"
          example="ivy_verify returned: invariant conn_established failed at line 45"/>
+
+  <!-- OPTIONAL: ivy-experimenter-agent only — required when running an IUT experiment -->
+  <field name="iut_target" required="false"
+         example="Run protocol-testing/quic/quic_tests/server_tests/quic_server_test_handshake.ivy against picoquic"/>
+  <field name="experiment_config" required="false"
+         example="experiment-config/base/experiment_config_quic_picoquic.yaml"/>
 
   <!-- OPTIONAL: ivy-builder-agent only — required when scaffolding a new layer -->
   <field name="layer_target" required="false"
@@ -54,10 +60,10 @@ Field semantics:
 |-------|-------------|-------|
 | `target_files` | all specialists | Files or directories the agent should focus on |
 | `workspace` | all specialists | Active Ivy workspace name, obtained via `ivy_workspace(action="get")` |
-| `phase_context` | all specialists | Dispatching workflow and phase (e.g., "verify Phase 4 — diagnosis") |
+| `phase_context` | all specialists | Dispatching workflow and phase (e.g., "refine Phase 4 — diagnosis") |
 | `prior_findings` | all specialists (optional) | Findings from a preceding gate or phase that the agent should prioritize |
-| `verification_target` | `ivy-verifier-agent` (conditionally required) | Ivy file path passed to `ivy_verify`; populate when dispatched for verification |
-| `failure_context` | `ivy-verifier-agent` (optional) | `ivy_verify` / `ivy_compile` error output when dispatched for diagnosis |
+| `verification_target` | `ivy-refiner-agent` (conditionally required) | Ivy file path passed to `ivy_verify`; populate when dispatched for verification |
+| `failure_context` | `ivy-refiner-agent` (optional) | `ivy_verify` / `ivy_compile` error output when dispatched for diagnosis |
 | `layer_target` | `ivy-builder-agent` (conditionally required) | Layer to scaffold or extend; cite the predecessor layer for `NO_LAYER_WITHOUT_SCAFFOLD` |
 | `review_scope` | `ivy-reviewer-agent` (conditionally required) | Scoping for coverage / quality / traceability path |
 | `rfc_source` | `ivy-reviewer-agent` (conditionally required) | RFC citation in `[rfcNNNN:X]` form; required for extraction mode |
@@ -72,7 +78,7 @@ This schema enforces the rule from `feedback_agent_orchestrator_three_layer_spli
 
 ## Failure recovery
 
-The orchestrator (`skills/ivy/SKILL.md`) and the five ops-skills (build, verify, review, triage, meta-self-mod) dispatch specialist agents (`ivy-verifier-agent`, `ivy-builder-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`) and generic `Explore` agents for Multi-Perspective Exploration (MPE). The orchestrator additionally fans out the three gate critics (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`) at G0 / G0b / G6. This rule codifies the failure-recovery contract so callers do not have to guess what to do on timeout, context exhaustion, malformed output, or tool-not-found.
+The orchestrator (`skills/ivy/SKILL.md`) and the six ops-skills (scaffold, refine, experiment, review, triage, meta-self-mod) dispatch specialist agents (`ivy-refiner-agent`, `ivy-experimenter-agent`, `ivy-builder-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`) and generic `Explore` agents for Multi-Perspective Exploration (MPE). The orchestrator additionally fans out the three gate critics (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`) at G0 / G0b / G6. This rule codifies the failure-recovery contract so callers do not have to guess what to do on timeout, context exhaustion, malformed output, or tool-not-found.
 
 ### Canonical failure modes
 
@@ -114,38 +120,38 @@ The orchestrator (`skills/ivy/SKILL.md`) and the five ops-skills (build, verify,
 | Tier | Default timeout | Agents at this tier |
 |------|-----------------|---------------------|
 | Sonnet | 90 s | `g-fidelity-critic`, `g-knowledge-critic`, generic `Explore` for MPE |
-| Opus | 180 s | `ivy-verifier-agent`, `ivy-builder-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`, `g-plan-critic` |
+| Opus | 180 s | `ivy-refiner-agent`, `ivy-experimenter-agent`, `ivy-builder-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`, `g-plan-critic` |
 
 Per-agent Failure Modes sections may override these defaults.
 
 ### Wall-clock vs. turn-count
 
-Claude Code's `Agent` tool does not expose a hard wall-clock timeout. The "timeout" above is a caller patience threshold: use the Background Verification pattern (already documented in `verify/SKILL.md`) to run long dispatches in a background agent with completion notification, or monitor your own wait time before falling through to step 5.
+Claude Code's `Agent` tool does not expose a hard wall-clock timeout. The "timeout" above is a caller patience threshold: use the Background Verification pattern (already documented in `refine-ops/SKILL.md`) to run long dispatches in a background agent with completion notification, or monitor your own wait time before falling through to step 5.
 
-### Worked recovery — ivy-verifier-agent timeout at verify Phase 6
+### Worked recovery — ivy-refiner-agent timeout at refine Phase 6
 
 A concrete sequence of journal events showing the recovery pattern in flight, so the abstract steps above have a recognisable shape.
 
 ```text
 ivy_workflow_state(append_journal, progress,
-  '{"kind":"agent_dispatch_start","agent":"ivy-verifier-agent",
-    "workflow":"verify","phase":"diagnose"}')
+  '{"kind":"agent_dispatch_start","agent":"ivy-refiner-agent",
+    "workflow":"refine","phase":"diagnose"}')
 
-Agent.ivy-verifier-agent(<dispatch-context>…</dispatch-context>)   # 180 s budget (Opus)
+Agent.ivy-refiner-agent(<dispatch-context>…</dispatch-context>)   # 180 s budget (Opus)
 [no return at 185 s — caller patience exceeded]
 
 ivy_workflow_state(append_journal, progress,
-  '{"kind":"agent_dispatch_failure","agent":"ivy-verifier-agent",
+  '{"kind":"agent_dispatch_failure","agent":"ivy-refiner-agent",
     "reason":"timeout"}')
 ivy_workflow_state(append_journal, progress,
-  '{"kind":"agent_dispatch_retry","agent":"ivy-verifier-agent"}')
+  '{"kind":"agent_dispatch_retry","agent":"ivy-refiner-agent"}')
 
-Agent.ivy-verifier-agent(...)   # retry; returns at 124 s with diagnosis.
+Agent.ivy-refiner-agent(...)   # retry; returns at 124 s with diagnosis.
 
-→ continue verify Phase 6 with the diagnosis.
+→ continue refine Phase 6 with the diagnosis.
 ```
 
-If the retry also fails, the workflow falls through to `AskUserQuestion(retry-manually | skip | abandon)`. The "abandon" branch clears the active-workflow flag without emitting a `pending_dispatch` and appends a `decision{summary: "Abandon verify diagnose after agent dispatch failure"}`; the orchestrator's next-turn cold-start branch re-classifies user intent.
+If the retry also fails, the workflow falls through to `AskUserQuestion(retry-manually | skip | abandon)`. The "abandon" branch clears the active-workflow flag without emitting a `pending_dispatch` and appends a `decision{summary: "Abandon refine diagnose after agent dispatch failure"}`; the orchestrator's next-turn cold-start branch re-classifies user intent.
 
 ### Relationship to other rules
 

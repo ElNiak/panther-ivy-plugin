@@ -35,7 +35,7 @@
     "g4": {
       "expected_critic": "g-fidelity-critic",
       "dispatch_count": 3,
-      "dispatch_locus": "verify-ops Phase 4 verification-gate — inline post ivy_verify",
+      "dispatch_locus": "refine-ops Phase 4 verification-gate — inline post ivy_verify",
       "references_skills": [
         "verification-failures",
         "ivy-syntax",

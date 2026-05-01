@@ -103,7 +103,7 @@ class TestPluginSkill:
         constructed tree so ``sys.path``-relative imports resolve correctly.
         """
         plugin_root = tmp_path / "plugin"
-        skill_dir = plugin_root / "skills" / "verify-ops" / "references"
+        skill_dir = plugin_root / "skills" / "refine-ops" / "references"
         skill_dir.mkdir(parents=True)
         (skill_dir / "first.md").write_text("# First reference\n\nbody one\n")
         (skill_dir / "second.md").write_text("# Second reference\n\nbody two\n")
@@ -118,12 +118,12 @@ class TestPluginSkill:
             script,
             {
                 "tool_name": "Skill",
-                "tool_input": {"skill": "panther-ivy-plugin:verify-ops"},
+                "tool_input": {"skill": "panther-ivy-plugin:refine-ops"},
             },
             env={"CLAUDE_PLUGIN_ROOT": str(plugin_root)},
             cwd=tmp_path,
         )
-        assert "[ivy-skill] verify-ops loaded" in out["systemMessage"]
+        assert "[ivy-skill] refine-ops loaded" in out["systemMessage"]
         ctx = out["hookSpecificOutput"]["additionalContext"]
         assert "references/first.md" in ctx
         assert "references/second.md" in ctx

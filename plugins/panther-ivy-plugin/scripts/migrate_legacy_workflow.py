@@ -3,7 +3,11 @@
 
 Use cases:
   - Pre-Phase-C YAMLs (`workflow: workflow-verify`, etc.) are renamed to
-    the unprefixed canonical form (`workflow: verify`).
+    the post-Phase-2 canonical form. After the verify-ops split, legacy
+    `workflow-verify` maps to the new `refine` workflow (refine owns the
+    verify-cycle: compile -> ivy_verify -> diagnose -> fix). IUT execution
+    moved to `experiment`; if a legacy `workflow-verify` YAML was at IUT
+    phase, the user should manually re-set it to `experiment` post-migration.
   - The legacy `meta-plugin-self-mod` workflow is renamed to `meta`.
   - The obsolete `workflow-navigate` workflow has no canonical replacement
     (the orchestrator absorbed navigate's role); the file is DELETED rather
@@ -43,7 +47,7 @@ from workflow_state import append_journal_event  # type: ignore[import-not-found
 
 _MIGRATION_MAP: dict[str, str | None] = {
     "workflow-build": "scaffold",
-    "workflow-verify": "verify",
+    "workflow-verify": "refine",
     "workflow-review": "review",
     "workflow-triage": "triage",
     "meta-plugin-self-mod": "meta",

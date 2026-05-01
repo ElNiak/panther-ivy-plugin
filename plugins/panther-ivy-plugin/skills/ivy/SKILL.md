@@ -1,6 +1,6 @@
 ---
 name: ivy
-description: "You MUST use this on every panther-ivy-plugin session entry where the user wants to work with .ivy specs, run formal verification, build/extend protocol models, or triage MCP/LSP health. Routes to the matching specialist agent (verifier / builder / reviewer / triage / meta) or reads its own references for knowledge questions. This orchestrator runs first; the matching workflow specialist agent is invoked through this orchestrator's routing table, never directly."
+description: "You MUST use this on every panther-ivy-plugin session entry where the user wants to work with .ivy specs, run formal verification, build/extend protocol models, run IUT experiments, or triage MCP/LSP health. Routes to the matching specialist agent (refiner / experimenter / builder / reviewer / triage / meta) or reads its own references for knowledge questions. This orchestrator runs first; the matching workflow specialist agent is invoked through this orchestrator's routing table, never directly."
 version: "1.0.0"
 ---
 
@@ -16,8 +16,8 @@ Four canonical guidelines bind every dispatch decision. The full detail is in `.
 
 | Iron law | Workflow | Binding rule |
 |---|---|---|
-| `NO_FIX_WITHOUT_VERIFY` | verify | No "verification passed" claim without a fresh `ivy_verify` / `ivy_compile` tool result this turn. |
-| `NO_LAYER_WITHOUT_SCAFFOLD` | build | `ivy_diagnostics(mode="structural")` SOUND on the predecessor layer before Write/Edit on layer N. |
+| `NO_FIX_WITHOUT_VERIFY` | refine | No "verification passed" claim without a fresh `ivy_verify` / `ivy_compile` tool result this turn. |
+| `NO_LAYER_WITHOUT_SCAFFOLD` | scaffold | `ivy_diagnostics(mode="structural")` SOUND on the predecessor layer before Write/Edit on layer N. |
 | `NO_QUALITY_WITHOUT_COVERAGE` | review | Every quality verdict cites a fresh `ivy_coverage` / `ivy_quality` output. |
 | `STALENESS_RULE` | all | Re-run if the include closure was edited since the prior tool result. |
 
@@ -27,9 +27,9 @@ These laws are suspended during plan authoring (when this orchestrator detects p
 
 The plugin tests three methodologies. Decision tree based on user intent:
 
-- **NCT** (compliance testing) — RFC conformance against an Implementation Under Test. Workflow: build → verify → review.
-- **NACT** (security / APT) — attack-pattern modelling and verification. Workflow: build → verify, with attack-pattern scope.
-- **NSCT** (simulation) — protocol simulation across configurations. Workflow: build emits experiment-config sidecar.
+- **NCT** (compliance testing) — RFC conformance against an Implementation Under Test. Workflow: scaffold → refine → experiment → review.
+- **NACT** (security / APT) — attack-pattern modelling and verification. Workflow: scaffold → refine → experiment, with attack-pattern scope.
+- **NSCT** (simulation) — protocol simulation across configurations. Workflow: scaffold emits experiment-config sidecar; experiment runs the simulation.
 
 If methodology is unclear from the user prompt, ask via `AskUserQuestion`. Full reference: invoke `Skill(skill="panther-ivy-plugin:methodology")` to load on-demand.
 
@@ -79,7 +79,8 @@ Then:
 
 | User intent | Dispatch target |
 |---|---|
-| Verify / debug / interpret counterexample | `Agent(subagent_type="panther-ivy-plugin:ivy-verifier-agent", ...)` |
+| Refine / verify / debug / interpret counterexample | `Agent(subagent_type="panther-ivy-plugin:ivy-refiner-agent", ...)` |
+| Run IUT experiment / collect traces / analyse pcap | `Agent(subagent_type="panther-ivy-plugin:ivy-experimenter-agent", ...)` |
 | Build / scaffold / extend a protocol model | `Agent(subagent_type="panther-ivy-plugin:ivy-builder-agent", ...)` |
 | Coverage / traceability / quality review | `Agent(subagent_type="panther-ivy-plugin:ivy-reviewer-agent", ...)` |
 | MCP / LSP / Serena health repair | `Agent(subagent_type="panther-ivy-plugin:ivy-triage-agent", ...)` |
@@ -111,7 +112,7 @@ Schema (mirrors the critic `CITATION_*` contract):
 - `SAMPLE_FAIL(<claim>, <expected>, <observed>)` → reject; re-dispatch with falsifying evidence in `prior_findings`
 - `SAMPLE_ABSTAIN(<claim>, <reason>)` → integrate with caveat in frontmatter `description:`
 
-Gate fires for review / verify / build dispatches. Skipped for triage (G7/G8 inline gates already cover) and meta (editorial output, not assertion-dense).
+Gate fires for review / refine / experiment / scaffold dispatches. Skipped for triage (G7/G8 inline gates already cover) and meta (editorial output, not assertion-dense).
 
 ## Knowledge questions (no agent dispatch)
 
@@ -178,7 +179,7 @@ digraph orchestrator {
 | Thought | Reality |
 |---|---|
 | "User asked a question, I'll answer from memory" | Read the matching cross-cutting skill on-demand. Memory is stale. |
-| "Verify request — dispatch ivy-verifier-agent immediately" | First write active-workflow YAML; then dispatch. State must be persisted. |
+| "Refine request — dispatch ivy-refiner-agent immediately" | First write active-workflow YAML; then dispatch. State must be persisted. |
 | "G0 plan-gate already passed last turn, skip" | Re-check the journal; G0 verdict is per-plan, not per-session. |
 | "I can run `ivyc` directly via Bash" | Iron law: never run ivyc directly; use `ivy_compile` MCP tool. |
 | "verifier-agent returned SOUND, the orchestrator may declare verification passed itself" | The verifier-agent owns the G4 verdict and the `cross-cutting-completion-gate` 5-step gate. The orchestrator only relays the verifier's verdict — it never substitutes its own. |
@@ -188,7 +189,7 @@ digraph orchestrator {
 
 - `references/completion-gate.md` — 5-step IDENTIFY → RUN → READ → VERIFY → THEN-claim gate. Read at claim time.
 - `references/parallel-dispatch.md` — single-message multi-Agent dispatch pattern. Read when dispatching multiple critics.
-- `references/sample-verify.md` — post-dispatch sample-verify gate (`SAMPLE_PASS / SAMPLE_FAIL / SAMPLE_ABSTAIN`). Read after each review/verify/build specialist return, before integrating findings.
+- `references/sample-verify.md` — post-dispatch sample-verify gate (`SAMPLE_PASS / SAMPLE_FAIL / SAMPLE_ABSTAIN`). Read after each review/refine/experiment/scaffold specialist return, before integrating findings.
 - `.claude/rules/iron-laws.md` — full iron-law detail (auto-loaded on `.ivy`/`.spec` edits).
 - `.claude/rules/agent-dispatch.md` — `<dispatch-context>` schema + failure recovery contract.
 

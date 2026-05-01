@@ -27,7 +27,7 @@ workflow.
 
 <journal-note>
 Per `.claude/rules/journaling-contract.md` §1, this command writes the
-journal via the underlying `verify-ops` skill on the IUT execution path
+journal via the underlying `experiment-ops` skill on the IUT execution path
 (the `assess-trace.py` PostToolUse hook also appends `gate_dispatched`
 for G5 trace analysis, per contract §3). The terminal-state HARD-GATE
 in contract §5 binds the dispatched agent.

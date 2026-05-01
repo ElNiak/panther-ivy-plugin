@@ -329,7 +329,7 @@ The terminal state of review is one of:
 - `append_pending_dispatch(scaffold, phase_hint="layer-check", reason="review surfaced structural fixes that belong in scaffold")` + clear active-workflow flag.
 - Bare clear of active-workflow flag (default routing — the orchestrator re-activates on the next user turn).
 
-Do NOT invoke any other workflow's ops skill (`scaffold-ops`, `verify-ops`,
+Do NOT invoke any other workflow's ops skill (`scaffold-ops`, `refine-ops`, `experiment-ops`,
 `triage-ops`) directly from review. Hand-off rides on `append_pending_dispatch`
 so the causal chain stays visible in the journal. The On Completion gate
 MUST clear before any `pending_dispatch` is written. G2/G3 scaffold-time gates
@@ -361,4 +361,4 @@ For MCP tools (`ivy_coverage`, `ivy_quality`, `ivy_extract_requirements`, `ivy_w
 
 ## References
 
-This skill keeps its operating procedure inline. For canonical Ivy term definitions (`SOUND`, `ABSTAIN`, MPE, iron law, knowledge gate, `pending_dispatch`), consult `Skill(skill="panther-ivy-plugin:verify-ops")` references — the calibrated definitions are shared across ops skills. For G5 trace-analysis read order and catalog slices, consult `Skill(skill="panther-ivy-plugin:verification-failures")`.
+This skill keeps its operating procedure inline. For canonical Ivy term definitions (`SOUND`, `ABSTAIN`, MPE, iron law, knowledge gate, `pending_dispatch`), consult `Skill(skill="panther-ivy-plugin:refine-ops")` references — the calibrated definitions are shared across ops skills. For G5 trace-analysis read order and catalog slices, consult `Skill(skill="panther-ivy-plugin:experiment-ops")` references.

@@ -2,13 +2,13 @@
 
 ## Overview
 
-Skills provide reference material and operating procedures for Ivy protocol testing within the PANTHER framework. Post-Phase-F.1 (CHANGELOG 0.11.0), the plugin uses an **orchestrator + specialist-agent** layout. The 13 skills under this directory split into three roles:
+Skills provide reference material and operating procedures for Ivy protocol testing within the PANTHER framework. Post-Phase-2 of the bloat audit, the plugin uses an **orchestrator + specialist-agent** layout. The 14 skills under this directory split into three roles:
 
 - **Orchestrator (1)** — `ivy/` is the single user-invocable entry point. It routes user intent to a specialist agent or answers knowledge questions inline by reading a knowledge skill on demand.
-- **Ops skills (5)** — `verify-ops/`, `scaffold-ops/`, `review-ops/`, `triage-ops/`, `meta-self-mod-ops/` carry the operating procedures previously held by the deprecated `workflow-*` skills. They are preloaded into their owning specialist agent via the agent's `skills:` frontmatter chain at spawn time and are not user-invocable directly.
+- **Ops skills (6)** — `scaffold-ops/`, `refine-ops/`, `experiment-ops/`, `review-ops/`, `triage-ops/`, `meta-self-mod-ops/` carry the operating procedures for the mode-first NCT pipeline (scaffold → refine → experiment → review). They are preloaded into their owning specialist agent via the agent's `skills:` frontmatter chain at spawn time and are not user-invocable directly.
 - **Knowledge skills (7)** — `apt-attack-patterns/`, `ivy-toolkit/`, `ivy-syntax/`, `methodology/`, `propagation-patterns/`, `specification-patterns/`, `verification-failures/` carry on-demand reference material loaded by the orchestrator and by specialist agents.
 
-Specialist execution happens in five sibling agent files under `agents/` (`ivy-verifier-agent`, `ivy-builder-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`). Three gate-critic agents (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`) live alongside them. Agents are documented in `agents/README.md`; this file indexes the skills only.
+Specialist execution happens in six sibling agent files under `agents/` (`ivy-builder-agent`, `ivy-refiner-agent`, `ivy-experimenter-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`). Three gate-critic agents (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`) live alongside them. Agents are documented in `agents/README.md`; this file indexes the skills only.
 
 ## Runtime composition (at a glance)
 
@@ -22,7 +22,7 @@ digraph plugin_runtime {
   start    [label="SessionStart\n(detect-ivy-workspace.py\n+ inject-using-plugin.py)"];
   prompt   [label="UserPromptSubmit", style="rounded,filled", fillcolor="#e3f2fd"];
   ivy      [label="ivy orchestrator\n(intent routing, knowledge\nQ&A, active-workflow YAML)"];
-  agents   [label="specialist agents\n(verifier, builder, reviewer,\ntriage, meta)\n+ preloaded *-ops skills",
+  agents   [label="specialist agents\n(refiner, experimenter, builder,\nreviewer, triage, meta)\n+ preloaded *-ops skills",
             style="rounded,filled", fillcolor="#fff3e0"];
   critics  [label="gate critics\n(g-plan-critic,\ng-fidelity-critic,\ng-knowledge-critic)"];
   hooks    [label="PostToolUse adversarial gates\nG2/G3/G4/G5 (assess-*.py)"];
@@ -46,23 +46,24 @@ The three layers each own a unique capability: the ivy orchestrator (intent clas
 
 1. **`ivy/SKILL.md`** — the orchestrator. Iron-law primer, methodology routing (NCT/NACT/NSCT), workspace control, dispatch tables for specialist agents and gate critics, post-dispatch sample-verify gate, and the knowledge-question routing table. Read this first; everything else is reached through it.
 2. **`.claude/rules/iron-laws.md`** — the four laws (`NO_FIX_WITHOUT_VERIFY`, `NO_LAYER_WITHOUT_SCAFFOLD`, `NO_QUALITY_WITHOUT_COVERAGE`, `STALENESS_RULE`) cited by every ops skill.
-3. **One ops skill that interests you** (`verify-ops`, `scaffold-ops`, `review-ops`, `triage-ops`, or `meta-self-mod-ops`) plus its owning agent file under `../agents/` — read them as a pair, since the agent file owns the capability contract and the ops skill owns the procedure.
-4. **The knowledge skills cited by that ops skill's phase headers** (e.g. `verify-ops` cites `verification-failures` and `ivy-toolkit`).
+3. **One ops skill that interests you** (`scaffold-ops`, `refine-ops`, `experiment-ops`, `review-ops`, `triage-ops`, or `meta-self-mod-ops`) plus its owning agent file under `../agents/` — read them as a pair, since the agent file owns the capability contract and the ops skill owns the procedure.
+4. **The knowledge skills cited by that ops skill's phase headers** (e.g. `refine-ops` cites `verification-failures` and `ivy-toolkit`; `experiment-ops` cites `apt-attack-patterns` for NACT and `ivy-toolkit`).
 
 ## Orchestrator (1)
 
 | Skill | Type | Iron laws bound | Dispatches | Purpose |
 |-------|------|-----------------|------------|---------|
-| [ivy](ivy/) | rigid | all four (delegates enforcement to specialist agents) | `ivy-{verifier,builder,reviewer,triage,meta}-agent`; `g-{plan,fidelity,knowledge}-critic` | Single session entry point — detect intent, run the iron-law primer, set the active-workflow YAML, dispatch the matching specialist agent or read a knowledge skill inline. Owns the post-dispatch sample-verify gate. |
+| [ivy](ivy/) | rigid | all four (delegates enforcement to specialist agents) | `ivy-{builder,refiner,experimenter,reviewer,triage,meta}-agent`; `g-{plan,fidelity,knowledge}-critic` | Single session entry point — detect intent, run the iron-law primer, set the active-workflow YAML, dispatch the matching specialist agent or read a knowledge skill inline. Owns the post-dispatch sample-verify gate. |
 
-## Ops Skills (5)
+## Ops Skills (6)
 
-Operating procedures preloaded into a specialist agent via the agent's `skills:` frontmatter. Each `*-ops` skill is the procedure body that used to live in the deprecated `workflow-*` skill of the same role; the agent file under `../agents/` owns the capability contract (tools, model tier, `<dispatch-context>` schema, output schema). Not user-invocable.
+Operating procedures preloaded into a specialist agent via the agent's `skills:` frontmatter. Each `*-ops` skill is the procedure body for one mode of the NCT pipeline; the agent file under `../agents/` owns the capability contract (tools, model tier, `<dispatch-context>` schema, output schema). Not user-invocable.
 
 | Skill | Type | Iron laws bound | Preloaded into | Purpose |
 |-------|------|-----------------|----------------|---------|
-| [verify-ops](verify-ops/) | rigid | `NO_FIX_WITHOUT_VERIFY`, `STALENESS_RULE` | `ivy-verifier-agent` | Verify, compile, run IUT tests, and diagnose counterexamples in Ivy specifications. |
-| [scaffold-ops](scaffold-ops/) | rigid | `NO_LAYER_WITHOUT_SCAFFOLD`, `STALENESS_RULE` | `ivy-builder-agent` | Scaffold and extend protocol models (NCT 14-layer template, NACT 6-stage attack template, NSCT simulation), propagate field/variant changes across layers. |
+| [scaffold-ops](scaffold-ops/) | rigid | `NO_LAYER_WITHOUT_SCAFFOLD`, `STALENESS_RULE` | `ivy-builder-agent` | Scaffold and extend protocol models (NCT 14-layer template, NACT 6-stage attack template, NSCT simulation), propagate field/variant changes across layers. NCT phases 2-7. |
+| [refine-ops](refine-ops/) | rigid | `NO_FIX_WITHOUT_VERIFY`, `STALENESS_RULE` | `ivy-refiner-agent` | Compile, run `ivy_verify`, dispatch G4 inline, interpret counterexamples, drive the Phase 7 fix loop under attempt-counter cap. NCT phases 8-9. |
+| [experiment-ops](experiment-ops/) | rigid | `STALENESS_RULE` | `ivy-experimenter-agent` | Configure and run IUT experiments (panther run / ivy_iut_test), collect logs/pcap, dispatch G5 inline, apply the 9-step trace analysis, classify outcome. NCT phase 10. |
 | [review-ops](review-ops/) | rigid | `NO_QUALITY_WITHOUT_COVERAGE`, `STALENESS_RULE` | `ivy-reviewer-agent` | Audit RFC coverage, extract requirement manifests, score model quality, analyse IUT traces. |
 | [triage-ops](triage-ops/) | rigid | (none — diagnostic) | `ivy-triage-agent` | 9-step MCP / LSP / Serena health-check runbook and repair flow. |
 | [meta-self-mod-ops](meta-self-mod-ops/) | rigid | (none — editorial) | `ivy-meta-agent` | Plugin source modification flow (skills, agents, hooks, `.claude/rules/`, commands, output-styles) with self-audit against plugin conventions. |
@@ -75,11 +76,11 @@ On-demand reference material. Loaded by the orchestrator (for "explain X" prompt
 |-------|------|-----------|---------|
 | [apt-attack-patterns](apt-attack-patterns/) | flexible | `ivy-reviewer-agent`; `ivy-builder-agent` (NACT methodology); `ivy` orchestrator (knowledge questions) | APT 6-stage attack lifecycle, attacker entities, around-block monitor patterns. |
 | [ivy-toolkit](ivy-toolkit/) | flexible | `ivy-{verifier,builder,reviewer,triage}-agent`; `ivy` orchestrator (knowledge questions) | MCP tool catalogue (18 ivy-tools tools + Serena), parameter matrix, mode map, selection guide. |
-| [ivy-syntax](ivy-syntax/) | flexible | `ivy-verifier-agent`; `ivy-builder-agent`; `ivy` orchestrator (knowledge questions) | Ivy 1.7 syntax reference, module system, RFC annotation conventions, test-spec patterns. |
+| [ivy-syntax](ivy-syntax/) | flexible | `ivy-refiner-agent`; `ivy-builder-agent`; `ivy` orchestrator (knowledge questions) | Ivy 1.7 syntax reference, module system, RFC annotation conventions, test-spec patterns. |
 | [methodology](methodology/) | flexible | `ivy` orchestrator (NCT/NACT/NSCT selection and knowledge questions) | NCT (compliance) / NACT (security) / NSCT (simulation) selection and workflow guidance, 14-layer template overview. |
 | [propagation-patterns](propagation-patterns/) | flexible | `ivy-builder-agent` (on type change in scaffold-ops); `ivy` orchestrator (knowledge questions) | Field/variant propagation patterns across stack/entities/shims/utils with Ivy-to-C++ encoding tables. |
 | [specification-patterns](specification-patterns/) | flexible | `ivy-builder-agent` (layer scaffolding in scaffold-ops); `ivy` orchestrator (knowledge questions) | 14-layer structural template reference and formal-model pattern scaffolding. |
-| [verification-failures](verification-failures/) | flexible | `ivy-verifier-agent` (diagnose phase in verify-ops); `ivy-reviewer-agent` (contested findings); G4 / G5 gate critics; `ivy` orchestrator (knowledge questions) | Numbered verifier-pattern catalogue (#100–#599), counterexample interpretation, claim-resolution gate. |
+| [verification-failures](verification-failures/) | flexible | `ivy-refiner-agent` (diagnose phase in refine-ops); `ivy-reviewer-agent` (contested findings); G4 / G5 gate critics; `ivy` orchestrator (knowledge questions) | Numbered verifier-pattern catalogue (#100–#599), counterexample interpretation, claim-resolution gate. |
 
 ## Cross-cutting content (no longer discrete skills)
 

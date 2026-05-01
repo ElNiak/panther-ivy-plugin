@@ -14,8 +14,8 @@ Re-introduces the behavior of the previously-removed ``track-workflow-skill.py``
     8000 chars to stay well under the 10 000-char ``additionalContext``
     runtime budget; on overflow, the envelope lists file names instead of
     contents and lets the model decide which to Read.
-  * For ops-skills (``scaffold-ops``, ``verify-ops``, ``review-ops``,
-    ``triage-ops``, ``meta-self-mod-ops``) inside an active workflow,
+  * For ops-skills (``scaffold-ops``, ``refine-ops``, ``experiment-ops``,
+    ``review-ops``, ``triage-ops``, ``meta-self-mod-ops``) inside an active workflow,
     appends a ``progress{kind: "skill_invoked"}`` journal entry. The
     orchestrator reads this on its next turn for the warm-resume decision.
   * Non-plugin skills get only the status line — no journal write, no

@@ -19,8 +19,9 @@ from hook_utils import emit_hook_output
 
 
 SPECIALISTS = frozenset({
-    "panther-ivy-plugin:ivy-verifier-agent",
     "panther-ivy-plugin:ivy-builder-agent",
+    "panther-ivy-plugin:ivy-refiner-agent",
+    "panther-ivy-plugin:ivy-experimenter-agent",
     "panther-ivy-plugin:ivy-reviewer-agent",
     "panther-ivy-plugin:ivy-triage-agent",
     "panther-ivy-plugin:ivy-meta-agent",

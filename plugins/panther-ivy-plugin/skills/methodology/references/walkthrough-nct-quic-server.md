@@ -88,11 +88,11 @@ verification")`, clear `active-workflow`, end turn.
 The orchestrator skill `panther-ivy-plugin:ivy` Phase 1.5 (resume hand-off)
 reads the journal, finds the fresh `pending_dispatch`, writes a
 `workflow_resumed` event, sets the active-workflow YAML, and dispatches
-`ivy-verifier-agent` per the contract §4 consume-pair semantics.
-Verify Phase 3 (compile) → Phase 4 (verify) runs; G4 critic confirms
+`ivy-refiner-agent` per the contract §4 consume-pair semantics.
+Refine Phase 3 (compile) → Phase 4 (verify) runs; G4 critic confirms
 SOUND with calibrated 3-of-3 vote.
 
-## Step 8 — Verify Phase 5 (IUT testing)
+## Step 8 — Experiment (IUT testing)
 
 Phase 5 dispatches `ivy_iut_test(protocol="quic",
 test_name="quic_server_test_handshake", iut_name="picoquic")`. The

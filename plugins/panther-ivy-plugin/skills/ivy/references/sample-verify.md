@@ -9,8 +9,9 @@ Per workflow tag (Option 2.2-ii from the design plan):
 | Workflow | Gate fires? | Rationale |
 |---|---|---|
 | review (`ivy-reviewer-agent`) | yes | digests carry coverage tables, file:line citations, RFC quotes — assertion-dense |
-| verify (`ivy-verifier-agent`) | yes | digests carry verification verdicts and counterexample interpretations |
-| build (`ivy-builder-agent`) | yes | digests carry layer-completeness claims, scaffold paths |
+| refine (`ivy-refiner-agent`) | yes | digests carry verification verdicts and counterexample interpretations |
+| experiment (`ivy-experimenter-agent`) | yes | digests carry trace-analysis classifications and pcap-cross-validated wire claims |
+| scaffold (`ivy-builder-agent`) | yes | digests carry layer-completeness claims, scaffold paths |
 | triage (`ivy-triage-agent`) | skipped at orchestrator | G7 (post-diagnose) + G8 (post-fix) inline gates inside `triage-ops` already cover triage claims; orchestrator gate would double-check |
 | meta (`ivy-meta-agent`) | skipped | editorial output (implementer + 2 reviewers), not assertion-dense |
 
