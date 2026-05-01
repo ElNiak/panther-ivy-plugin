@@ -117,7 +117,7 @@ One line per script and the event that triggers it. Multi-handler events run in 
 - `style_utils.py` — style-composition helpers for `render-tool-result.py`
   and `render-summary.py`.
 - `workflow_state.py` — read/write wrappers around
-  `.panther-ivy/active-workflow` and `build-state.yaml`.
+  `.panther-ivy/active-workflow` and `scaffold-state.yaml`.
 - `statusline_cache.py` — populates
   `~/.claude/panther-ivy-plugin/cache/<hash>/statusline.json` consumed by
   `scripts/statusline/main.sh`.
