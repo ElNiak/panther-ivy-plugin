@@ -36,16 +36,9 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hook_utils import emit_hook_output, emit_noop, read_stdin  # noqa: E402
 from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
-from workflow_state import WorkflowContext, append_journal_event  # noqa: E402
+from workflow_state import OPS_SKILLS, WorkflowContext, append_journal_event  # noqa: E402
 
 _PLUGIN_PREFIX = "panther-ivy-plugin:"
-_OPS_SKILLS = frozenset({
-    "scaffold-ops",
-    "verify-ops",
-    "review-ops",
-    "triage-ops",
-    "meta-self-mod-ops",
-})
 
 # Per the plan: stay well below the 10 000-char additionalContext cap so the
 # combined envelope (system message + nested fields + JSON braces) doesn't
@@ -123,7 +116,7 @@ def _load_references(refs_dir: Path) -> tuple[str, int, bool]:
 def _journal_skill_invocation(skill: str, ctx: WorkflowContext) -> None:
     """Append a ``progress{kind: "skill_invoked"}`` event when ops-skill fires."""
     short = _short_name(skill)
-    if short not in _OPS_SKILLS:
+    if short not in OPS_SKILLS:
         return
     append_journal_event(
         ctx.protocol_dir,

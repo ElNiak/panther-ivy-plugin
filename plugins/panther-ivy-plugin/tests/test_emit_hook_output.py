@@ -165,6 +165,18 @@ def test_falsy_deny_reason_is_ignored(
     assert "permissionDecision" not in payload["hookSpecificOutput"]
 
 
+def test_unknown_event_name_raises_value_error() -> None:
+    """``emit_hook_output`` raises on a misspelled or unknown event name.
+
+    A typo like ``"SessiontStart"`` would silently fall outside the runtime's
+    allow-list and the additionalContext field would be dropped without
+    warning. The raise here turns that silent-failure mode into a loud
+    Python traceback that surfaces during test runs."""
+    mod = _load_module()
+    with pytest.raises(ValueError, match="unknown event_name"):
+        mod.emit_hook_output("SessiontStart", system_message="")
+
+
 def test_none_system_message_raises_type_error() -> None:
     """``emit_hook_output`` raises on a missing ``system_message``.
 

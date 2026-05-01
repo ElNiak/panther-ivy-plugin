@@ -5,10 +5,7 @@ Centralizes session ID resolution, workspace detection, MCP health state
 management, and JSON hook output formatting.
 """
 
-# `from __future__ import annotations` defers annotation evaluation so PEP-604
-# `X | Y` syntax in signatures works under the system Python 3.9 that
-# `subprocess.run(["python3", ...])` may pick up when tests pin a restricted
-# PATH (see test_hooks.py::TestDetectIvyWorkspaceHook::test_standalone_project_detected).
+# Defers PEP-604 union syntax evaluation so the module works under Python 3.9.
 from __future__ import annotations
 
 import fcntl
@@ -140,6 +137,71 @@ def read_stdin() -> dict:
         return {}
 
 
+def is_pid_alive(pid: int) -> bool:
+    """Return True iff ``ps -p <pid>`` finds the process.
+
+    Wrapped in a 2-second timeout so a hung ``ps`` cannot block a
+    SessionStart hook past Claude Code's per-hook budget. ``OSError``
+    and ``subprocess.TimeoutExpired`` both fall through to False —
+    callers treat "cannot determine liveness" as "not alive".
+    """
+    import subprocess
+
+    try:
+        return subprocess.run(
+            ["ps", "-p", str(pid)],
+            capture_output=True,
+            timeout=2,
+        ).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def read_pid_file(path) -> int | None:
+    """Read an integer PID from a file. Returns None on read or parse failure.
+
+    Accepts ``pathlib.Path`` or ``str``.
+    """
+    try:
+        from pathlib import Path
+        text = Path(path).read_text().strip()
+        return int(text) if text else None
+    except (OSError, ValueError):
+        return None
+
+
+def file_contains(path, needle: str) -> bool:
+    """True iff ``path`` is readable and contains ``needle`` (any line).
+
+    The ``try``/``except OSError`` is the only existence gate (race-free) —
+    a missing file raises ``FileNotFoundError`` which subclasses ``OSError``
+    and is swallowed below, so a TOCTOU split between an ``is_file()`` check
+    and ``open()`` cannot occur. Accepts ``pathlib.Path`` or ``str``.
+    """
+    try:
+        with open(path, "r", errors="replace") as f:
+            return any(needle in line for line in f)
+    except OSError:
+        return False
+
+
+VALID_EVENT_NAMES = frozenset({
+    "PreToolUse",
+    "PostToolUse",
+    "PostToolBatch",
+    "PostToolUseFailure",
+    "UserPromptSubmit",
+    "SessionStart",
+    "SessionEnd",
+    "Stop",
+    "SubagentStart",
+    "SubagentStop",
+    "Notification",
+    "PreCompact",
+    "PermissionRequest",
+})
+
+
 _EVENTS_WITH_HOOK_SPECIFIC_OUTPUT = frozenset({
     "PreToolUse",
     "PostToolUse",
@@ -216,6 +278,15 @@ def emit_hook_output(
             "suppress the systemMessage field; None is not allowed because "
             "every hook surface must explicitly state whether it produces "
             "a status line."
+        )
+
+    if event_name not in VALID_EVENT_NAMES:
+        raise ValueError(
+            f"emit_hook_output got unknown event_name {event_name!r}; "
+            f"expected one of {sorted(VALID_EVENT_NAMES)}. Typo guard: a "
+            "misspelled event name silently falls outside the runtime's "
+            "allow-list and the additionalContext field is dropped without "
+            "warning, so we raise here instead."
         )
 
     output: dict = {}

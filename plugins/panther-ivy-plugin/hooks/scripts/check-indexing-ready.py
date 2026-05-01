@@ -22,7 +22,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop  # noqa: E402
+from hook_utils import emit_hook_output, emit_noop, file_contains  # noqa: E402
 from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
 
 _MCP_LOG = Path(os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log"))
@@ -33,21 +33,6 @@ _DENY_STATE = Path("/tmp/ivy-lsp-pids/indexing-deny-count")
 _DENY_THRESHOLD = 6
 _STARTING_GRACE_S = 30
 _INDEXING_GRACE_S = 120
-
-
-def _file_contains(path: Path, needle: str) -> bool:
-    """True iff ``path`` is readable and contains ``needle``.
-
-    The ``try``/``except OSError`` is the only existence gate (race-free) —
-    a missing file raises ``FileNotFoundError`` which subclasses ``OSError``
-    and is swallowed below, so a TOCTOU split between an ``is_file()`` check
-    and ``open`` cannot occur.
-    """
-    try:
-        with open(path, "r", errors="replace") as f:
-            return any(needle in line for line in f)
-    except OSError:
-        return False
 
 
 def _file_age_seconds(path: Path) -> float:
@@ -120,14 +105,14 @@ def _signal_offline_index() -> bool:
 def _signal_mcp_prepopulated() -> bool:
     """Signal 3: MCP log mentions prepopulation completion."""
     return any(
-        _file_contains(_MCP_LOG, marker)
+        file_contains(_MCP_LOG, marker)
         for marker in ("Pre-populated from offline index", "pre-warmed", "PREWARM-DONE")
     )
 
 
 def _signal_mcp_ready() -> bool:
     """Signal 4: MCP log carries the ``[MCP-READY]`` sentinel."""
-    return _file_contains(_MCP_LOG, "[MCP-READY]")
+    return file_contains(_MCP_LOG, "[MCP-READY]")
 
 
 def main() -> None:
@@ -148,7 +133,7 @@ def main() -> None:
         return
 
     # --- Not ready: classify and surface ---
-    mcp_started = _file_contains(_MCP_LOG, "Starting ivy-lsp MCP server")
+    mcp_started = file_contains(_MCP_LOG, "Starting ivy-lsp MCP server")
     if mcp_started:
         lsp_age = _file_age_seconds(_LSP_LOG) if _LSP_LOG.is_file() else float("inf")
         if lsp_age < _INDEXING_GRACE_S:

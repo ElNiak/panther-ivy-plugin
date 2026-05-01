@@ -15,29 +15,10 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop  # noqa: E402
+from hook_utils import emit_hook_output, emit_noop, is_pid_alive, read_pid_file  # noqa: E402
 
 _PID_DIR = Path("/tmp/ivy-lsp-pids")
 _DENY_COUNT_FILE = _PID_DIR / "indexing-deny-count"
-
-
-def _pid_alive(pid: int) -> bool:
-    """Return True iff `ps -p <pid>` finds the process. Mirrors the bash check."""
-    try:
-        return subprocess.run(
-            ["ps", "-p", str(pid)],
-            capture_output=True,
-        ).returncode == 0
-    except OSError:
-        return False
-
-
-def _read_pid(pidfile: Path) -> int | None:
-    try:
-        text = pidfile.read_text().strip()
-        return int(text) if text else None
-    except (OSError, ValueError):
-        return None
 
 
 def _clear_dead_pidfiles() -> tuple[int, list[int]]:
@@ -45,10 +26,10 @@ def _clear_dead_pidfiles() -> tuple[int, list[int]]:
     cleared = 0
     survivors: list[int] = []
     for pidfile in sorted(_PID_DIR.glob("*.pid")):
-        pid = _read_pid(pidfile)
+        pid = read_pid_file(pidfile)
         if pid is None:
             continue
-        if _pid_alive(pid):
+        if is_pid_alive(pid):
             survivors.append(pid)
             continue
         try:

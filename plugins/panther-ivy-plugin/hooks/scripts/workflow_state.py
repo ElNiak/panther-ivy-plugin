@@ -23,6 +23,15 @@ _BUILD_STATE_FILE = "build-state.yaml"
 _JOURNAL_FILE = "workflow-journal.yaml"
 _JOURNAL_ARCHIVE_DIR = "journal-archive"
 
+OPS_SKILLS = frozenset({
+    "scaffold-ops",
+    "verify-ops",
+    "review-ops",
+    "triage-ops",
+    "meta-self-mod-ops",
+})
+
+
 _VALID_EVENT_TYPES = frozenset({
     "session_start",
     "session_end",
@@ -173,7 +182,7 @@ class WorkflowContext:
     Attributes:
         protocol_dir: Absolute path to the protocol directory (parent of
             ``.panther-ivy/``).
-        workflow: Name of the active workflow (e.g. ``"build"``, ``"verify"``).
+        workflow: Name of the active workflow (e.g. ``"scaffold"``, ``"verify"``).
         phase: Current phase within the workflow.
         started: ISO-8601 UTC timestamp when the workflow was set.
     """
@@ -262,12 +271,12 @@ def clear_active_workflow(protocol_dir: str) -> None:
 
 # Post-Phase-C canonical workflow names. routing-rules.json was archived in
 # Phase D commit 01c9adf; the orchestrator at skills/ivy/SKILL.md and the
-# specialised ops-skills (skills/{build,verify,review,triage,meta}-ops plus the
-# navigate flow inside the orchestrator) are the authoritative writers, all
-# using the unprefixed names below.
+# specialised ops-skills (skills/{scaffold,verify,review,triage,meta}-ops plus
+# the navigate flow inside the orchestrator) are the authoritative writers,
+# all using the unprefixed names below.
 _KNOWN_WORKFLOWS: frozenset[str] = frozenset({
     "navigate",
-    "build",
+    "scaffold",
     "verify",
     "review",
     "triage",

@@ -8,33 +8,14 @@ Always returns 0 — cleanup hooks must never fail the session.
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output  # noqa: E402
+from hook_utils import emit_hook_output, is_pid_alive, read_pid_file  # noqa: E402
 
 _PID_DIR = Path("/tmp/ivy-lsp-pids")
 _HEALTH_STATE_FILE = Path("/tmp/ivy-mcp-health-state.json")
-
-
-def _pid_alive(pid: int) -> bool:
-    try:
-        return subprocess.run(
-            ["ps", "-p", str(pid)],
-            capture_output=True,
-        ).returncode == 0
-    except OSError:
-        return False
-
-
-def _read_pid(pidfile: Path) -> int | None:
-    try:
-        text = pidfile.read_text().strip()
-        return int(text) if text else None
-    except (OSError, ValueError):
-        return None
 
 
 def main() -> None:
@@ -42,8 +23,8 @@ def main() -> None:
 
     if _PID_DIR.is_dir():
         for pidfile in sorted(_PID_DIR.glob("*.pid")):
-            pid = _read_pid(pidfile)
-            if pid is not None and _pid_alive(pid):
+            pid = read_pid_file(pidfile)
+            if pid is not None and is_pid_alive(pid):
                 try:
                     os.kill(pid, 15)  # SIGTERM
                     terminated.append(pid)

@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output  # noqa: E402
+from hook_utils import emit_hook_output, file_contains, is_pid_alive, read_pid_file  # noqa: E402
 from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
 
 _MCP_LOG = Path(os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log"))
@@ -36,20 +36,6 @@ _MAX_WAIT_S = int(os.environ.get("IVY_LSP_INDEX_TIMEOUT", "12"))
 _LSP_GRACE_S = 5
 
 _START = time.monotonic()
-
-# Set to True before any ``emit_hook_output`` call from main(). The SIGTERM /
-# SIGINT handler reads this flag and skips its own emit when main() already
-# wrote one — guarantees the runtime parser receives at most one JSON
-# document on stdout, even if a signal arrives mid-print.
-_EMITTED = False
-
-
-def _log_contains(path: Path, needle: str) -> bool:
-    try:
-        with open(path, "r", errors="replace") as f:
-            return any(needle in line for line in f)
-    except OSError:
-        return False
 
 
 def _last_line_with(path: Path, needle: str) -> str:
@@ -71,27 +57,16 @@ def _mcp_pid_alive() -> tuple[bool, int | None]:
     True/<pid> → an MCP PID file exists but the process is dead.
     False/None → no MCP PID files (inconclusive).
     """
-    import subprocess
-
     pid_dir = Path("/tmp/ivy-lsp-pids")
     if not pid_dir.is_dir():
         return False, None
     any_seen = False
     for pidfile in pid_dir.glob("mcp-*.pid"):
-        try:
-            pid = int(pidfile.read_text().strip())
-        except (OSError, ValueError):
+        pid = read_pid_file(pidfile)
+        if pid is None:
             continue
         any_seen = True
-        try:
-            alive = subprocess.run(
-                ["ps", "-p", str(pid)],
-                capture_output=True,
-                timeout=2,
-            ).returncode == 0
-        except (OSError, subprocess.TimeoutExpired):
-            alive = False
-        if not alive:
+        if not is_pid_alive(pid):
             return any_seen, pid
     return any_seen, None
 
@@ -100,9 +75,9 @@ def _wait_for_mcp_ready() -> tuple[bool, str]:
     """Poll the MCP log for [MCP-READY]. Returns (ready, optional_error_msg)."""
     deadline = _START + _MAX_WAIT_S
     while time.monotonic() < deadline:
-        if _MCP_LOG.is_file() and _log_contains(_MCP_LOG, "[MCP-READY]"):
+        if _MCP_LOG.is_file() and file_contains(_MCP_LOG, "[MCP-READY]"):
             return True, ""
-        if _MCP_LOG.is_file() and _log_contains(_MCP_LOG, "[MCP-FATAL]"):
+        if _MCP_LOG.is_file() and file_contains(_MCP_LOG, "[MCP-FATAL]"):
             crash = _last_line_with(_MCP_LOG, "[MCP-FATAL]")
             return False, f"[ivy-indexing] MCP server CRASHED: {crash}"
         any_pidfile, dead_pid = _mcp_pid_alive()
@@ -119,12 +94,12 @@ def _wait_for_lsp_indexed(after_mcp_ready: bool) -> tuple[bool, str]:
     if after_mcp_ready:
         deadline = time.monotonic() + _LSP_GRACE_S
         while time.monotonic() < deadline:
-            if _log_contains(_LSP_LOG, "Indexed ") and _log_contains(_LSP_LOG, " files"):
+            if file_contains(_LSP_LOG, "Indexed ") and file_contains(_LSP_LOG, " files"):
                 return True, _last_line_with(_LSP_LOG, "Indexed ")
             time.sleep(1)
         return False, "still indexing"
     # MCP not ready: do a single non-blocking probe so the report is honest.
-    if _log_contains(_LSP_LOG, "Indexed ") and _log_contains(_LSP_LOG, " files"):
+    if file_contains(_LSP_LOG, "Indexed ") and file_contains(_LSP_LOG, " files"):
         return True, _last_line_with(_LSP_LOG, "Indexed ")
     return False, ""
 
@@ -150,22 +125,18 @@ def _workspace_info() -> str:
 def _model_status() -> str:
     if not _MCP_LOG.is_file():
         return ""
-    if _log_contains(_MCP_LOG, "[INDEX-MODEL-READY]"):
+    if file_contains(_MCP_LOG, "[INDEX-MODEL-READY]"):
         return "ready"
-    if _log_contains(_MCP_LOG, "[INDEX-PREWARM]"):
+    if file_contains(_MCP_LOG, "[INDEX-PREWARM]"):
         return "building"
     return ""
 
 
 def _emit_termination(_signum: int, _frame: Any) -> None:
-    """SIGTERM handler — emit a partial envelope when ``main()`` has not yet.
-
-    Reads the module-level ``_EMITTED`` flag to avoid producing a second
-    JSON document on stdout when ``main()`` already wrote one. Two
-    envelopes on a single stdout stream confuse the runtime parser, so we
-    keep it strictly one-or-zero.
-    """
-    if not _EMITTED:
+    # Two envelopes on one stdout stream confuse the runtime parser; the
+    # ``already_emitted`` attribute lets ``main()`` claim the slot before
+    # the handler can produce its own.
+    if not getattr(_emit_termination, "already_emitted", False):
         elapsed = int(time.monotonic() - _START)
         emit_hook_output(
             "SessionStart",
@@ -180,16 +151,8 @@ def _emit_termination(_signum: int, _frame: Any) -> None:
 
 
 def _mark_emitted() -> None:
-    """Flush stdout and flip the ``_EMITTED`` flag.
-
-    Called from every ``emit_hook_output`` site in ``main()`` so the SIGTERM
-    handler can skip producing a second envelope (two JSON documents on one
-    stdout stream confuse the runtime parser). Wrapping ``emit_hook_output``
-    is more invasive — a small helper that handles flush + flag is enough.
-    """
-    global _EMITTED
     sys.stdout.flush()
-    _EMITTED = True
+    _emit_termination.already_emitted = True  # type: ignore[attr-defined]
 
 
 def main() -> None:
