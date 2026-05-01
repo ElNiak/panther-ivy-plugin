@@ -52,23 +52,24 @@ detect_ivy_workspace() {
         return 0
     fi
 
-    # 2. Walk up from CWD looking for a directory with >=3 .ivy files
+    # 2. Walk up from CWD looking for a directory with >=3 .ivy files.
+    # Avoid pipes here entirely: `find ... | head -5` would SIGPIPE find
+    # (and any printf re-emitting its output) when more than 5 hits are
+    # produced, and `set -euo pipefail` (line 5) propagates that as exit
+    # 141. Capture into a variable, then count lines via a here-string
+    # loop so no pipe ever exists.
     local check="$PWD"
     local depth=0
     while [ "$check" != "/" ] && [ $depth -lt 8 ]; do
-        local ivy_count
-        # `find ... | head -5` would SIGPIPE find when find produces more
-        # than 5 lines, and `set -euo pipefail` (line 5) propagates that as
-        # exit 141. Capture find's output to a variable first so head reads
-        # from a closed stream, never from a still-writing pipe. The empty
-        # case (no matches) yields ivy_list="" and ivy_count=0; the trailing
-        # `|| true` swallows the wc-on-empty-pipe quirk on macOS.
         local ivy_list
         ivy_list=$(find "$check" -maxdepth 2 -name "*.ivy" 2>/dev/null || true)
+        local ivy_count=0
         if [ -n "$ivy_list" ]; then
-            ivy_count=$(printf '%s\n' "$ivy_list" | head -5 | wc -l | tr -d ' ')
-        else
-            ivy_count=0
+            local _line
+            while IFS= read -r _line; do
+                [ -n "$_line" ] && ivy_count=$((ivy_count + 1))
+                [ "$ivy_count" -ge 5 ] && break
+            done <<< "$ivy_list"
         fi
         if [ "$ivy_count" -ge 3 ]; then
             DETECTED_ROOT="$check"
