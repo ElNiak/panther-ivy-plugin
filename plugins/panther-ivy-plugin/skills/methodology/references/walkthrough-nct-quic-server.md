@@ -107,7 +107,7 @@ asymmetry check. Verdict SOUND.
 Verify Phase 6 emits
 `append_pending_dispatch(build, phase_hint="quality-gate")`. Build
 re-activates at Phase 5 next turn, dispatches `ivy-reviewer-agent` and
-`traceability-agent` in parallel, surfaces ERROR/WARNING/INFO findings
+`ivy-reviewer-agent` (dual-scope) surfaces ERROR/WARNING/INFO findings
 per `.claude/rules/ivy-formatting.md` severity.
 
 ## What this walkthrough exercised
@@ -124,4 +124,4 @@ per `.claude/rules/ivy-formatting.md` severity.
 | `pending_dispatch` async hand-off | Steps 6, 9 |
 | G4 verification gate | Step 7 |
 | G5 trace-analysis gate (catalog `#501`, `#505`) | Step 8 |
-| Phase 5 quality gate (ivy-reviewer-agent + traceability-agent) | Step 9 |
+| Phase 5 quality gate (ivy-reviewer-agent, dual-scope) | Step 9 |
