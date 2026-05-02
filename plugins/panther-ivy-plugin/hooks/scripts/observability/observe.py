@@ -73,6 +73,11 @@ def _summarize_tool_input(tool_name: str, tool_input: dict) -> dict:
         }
     if tool_name == "Read":
         return {"file_path": tool_input.get("file_path", "")}
+    if tool_name == "WebFetch":
+        return {
+            "url": tool_input.get("url", "")[:200],
+            "prompt_length": len(tool_input.get("prompt", "")),
+        }
     if tool_name.startswith("mcp__"):
         server, tool = _parse_mcp_tool_name(tool_name)
         return {"mcp_server": server, "mcp_tool": tool}
@@ -114,11 +119,16 @@ def _build_payload(event_type: str, data: dict) -> dict | None:
 
     if event_type == "PostToolUseFailure":
         error = data.get("error", "")
+        tool_input = data.get("tool_input", {}) or {}
         return {
             "tool_name": tool_name,
             "tool_use_id": data.get("tool_use_id", ""),
             "error": str(error)[:500],
             "is_interrupt": data.get("is_interrupt", False),
+            "tool_summary": _summarize_tool_input(
+                tool_name,
+                tool_input if isinstance(tool_input, dict) else {},
+            ),
         }
 
     if event_type == "SessionStart":
