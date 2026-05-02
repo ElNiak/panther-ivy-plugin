@@ -28,7 +28,7 @@ After writing EACH layer:
    - Otherwise, append `progress{kind: "compile_attempt", key: "<layer>", protocol: "<protocol>"}` and proceed to step 2.
 2. Run `ivy_compile` for a compile check on the new file.
 3. **On compile error:**
-   - Dispatch the `spec-analyst` agent with the full error output.
+   - Dispatch the `ivy-refiner-agent` agent with the full error output.
    - If the error involves counterexample interpretation, load `Skill(skill="panther-ivy-plugin:verification-failures")`.
    - Fix inline. Loop back to step 1 (re-evaluate the attempt cap, then recompile).
 4. **On compile success:**

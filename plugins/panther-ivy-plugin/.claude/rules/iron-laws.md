@@ -188,7 +188,7 @@ Each iron law applied to a real artifact, so the abstract `<instructions>` block
 ```text
 Turn N    : ivy_verify(quic_server_test_handshake.ivy)
             → {"status":"FAIL","counterexample":{...},"started_at":"…14:02Z"}
-Turn N+1  : spec-analyst proposes  + require initial_received(scid);
+Turn N+1  : ivy-refiner-agent proposes  + require initial_received(scid);
             (allowed — upstream activity, not a claim)
 Turn N+2  : Edit applied. Iron law BINDS — no resolution claim yet.
 Turn N+3  : ivy_verify rerun → {"status":"OK","started_at":"…14:08Z"}

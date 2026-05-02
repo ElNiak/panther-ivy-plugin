@@ -204,3 +204,57 @@ The contract is load-bearing. Failure modes documented:
 - **Unknown plugin agent name** — the injection hook logs `unknown panther-ivy-plugin agent: <name>` to stderr and emits the 5-line read-only stub as a fail-safe default. Dispatch proceeds. Adding a new agent to the plugin requires updating the gating switch in the hook script.
 - **Journal write race** — does not happen under the sequential-write assumption (§4.2). If a future change violates the assumption, `append_journal_event` will silently drop one of the racing writes (the later one wins). Add `fcntl` locking before introducing parallelism.
 - **Legacy active-workflow names** — `_KNOWN_WORKFLOWS` in `workflow_state.py` is the unprefixed set (`navigate`, `scaffold`, `refine`, `experiment`, `review`, `triage`, `meta`). Legacy prefixed names (`workflow-verify`, `workflow-build`, etc.) are migrated by the user-invoked one-shot `scripts/migrate_legacy_workflow.py`, NOT by `cleanup-stale-workflow.py` (per `feedback_no_backward_compat_shims`).
+
+## 10. PROJECT.md as a derived view
+
+`protocol-testing/<protocol>/PROJECT.md` is a per-protocol rolled-up status view of the workflow journal. It is a *derived* artifact: never hand-edited. The journal at `.panther-ivy/workflow-journal.yaml` is the single source of truth; PROJECT.md is the convenient snapshot the orchestrator reads at session entry to drive warm-resume.
+
+Why this exists: the journal is append-only and grows linearly; the orchestrator needs a constant-time read of "current mode, current phase, last verify status, open counterexamples." Walking the full journal on every session entry would scale poorly. PROJECT.md is the rolled-up view, regenerated only when the workflow state changes.
+
+### 10.1 Schema
+
+The schema is owned by `hooks/scripts/project_md_state.py:PROJECT_MD_KEYS` (10 keys). Frontmatter shape:
+
+```yaml
+---
+protocol: <name>           # bgp, quic, apt, minip, coap
+version: <RFC version>     # e.g., rfc4271; 'unknown' if not yet inferred
+mode: scaffold | refine | experiment | idle
+phase: 0..10               # 0 = idle; 1..10 = canonical NCT phases
+journal_pointer: .panther-ivy/workflow-journal.yaml#<event_id-or-null>
+last_verify:
+  status: SAT | UNSAT | NOT_RUN
+  timestamp: <iso-or-null>
+  isolate: <name-or-null>
+rfc_sections_covered: [<payload>...]
+open_counterexamples: [{phase, isolate, last_observed}, ...]
+last_iut_run: null | {iut, verdict, timestamp}   # verdict ∈ NO_VIOLATION_FOUND / NON_COMPLIANT / TESTER_CRASH / IUT_CRASH
+deferred_layers: [<payload>...]
+---
+```
+
+### 10.2 Regeneration trigger
+
+A PostToolUse hook on `mcp__.*ivy_workflow_state` (registered as `post-workflow-render-project-md.py`) fires for `action="set"|"clear"` and invokes `scripts/render-project-md.py` against the active workspace's `protocol-testing/<workspace>/` directory. `get`/`list`/other actions skip silently.
+
+The render script reads:
+- `.panther-ivy/workflow-journal.yaml` — for the rolled-up state.
+
+The render script writes:
+- `<protocol-dir>/PROJECT.md` — frontmatter only (no body).
+
+Regeneration is idempotent: re-running on identical state produces an identical file. The hook's user-facing systemMessage uses the `[ivy-project-md]` marker.
+
+### 10.3 Cross-reference with the journal
+
+`journal_pointer` in PROJECT.md frontmatter points at the `event_id` of the journal event that produced the current view (or `null` if the journal is empty). If they disagree (orchestrator edits PROJECT.md without journal append), the journal is authoritative — re-run `scripts/render-project-md.py` to bring PROJECT.md back in sync.
+
+### 10.4 Bootstrap
+
+`scripts/migrate-bootstrap-project-md.py` is the one-shot bootstrap that seeds an idle PROJECT.md (mode=idle, phase=0, NOT_RUN, empty arrays) for every known protocol directory. Skips dirs that already have a PROJECT.md. Deletable after the first sweep per `feedback_no_backward_compat_shims`.
+
+### 10.5 Failure modes
+
+- **PROJECT.md absent or unreadable** — orchestrator's warm-resume path treats this as `mode=idle` and falls through to cold-start. Recoverable by re-running the bootstrap script.
+- **Schema validation failure** — `load_project_md` raises `ProjectMdSchemaError`; the orchestrator falls back to cold-start. Recoverable by re-running `render-project-md.py` (which writes a fresh validated frontmatter).
+- **Concurrent regen** — same sequential-write assumption as §4.2. Two workflow_state writes racing would race the regeneration hook, but the journal is the source of truth so the eventual roll-up converges.

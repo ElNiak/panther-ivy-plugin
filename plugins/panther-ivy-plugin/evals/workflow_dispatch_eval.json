@@ -172,7 +172,7 @@
     },
     {
       "case": "meta edit to a plugin agent frontmatter",
-      "input": "update agents/spec-analyst.md frontmatter to include the verification-failures skill reference",
+      "input": "update agents/ivy-refiner-agent.md frontmatter to include the verification-failures skill reference",
       "fixture": "tests/fixtures/bgp-clean-layer/",
       "expected": {
         "journal_final_entry": {

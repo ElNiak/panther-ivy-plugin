@@ -44,7 +44,7 @@ Avoid calling `ivy_verify` or `ivy_compile` in the main conversation while a bac
 When the background agent completes, read its result and integrate into the current workflow phase:
 
 - **SUCCESS**: Update `scaffold-state.yaml` layer status, proceed to next layer or Phase 4.
-- **FAILURE**: Dispatch `spec-analyst` with the error output, fix inline, recompile (synchronously, since the feedback loop is needed).
+- **FAILURE**: Dispatch `ivy-refiner-agent` with the error output, fix inline, recompile (synchronously, since the feedback loop is needed).
 - **ERROR/TIMEOUT**: Report to user, offer to retry synchronously.
 
 The staleness rule still applies: if the `.ivy` file was edited after the background compilation started, the result is stale and must be re-run.

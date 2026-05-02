@@ -71,7 +71,7 @@ module (no deps)
 - **ivy-toolkit** -- MCP tool parameters for pattern analysis
 
 **Related agents:**
-- **spec-analyst** -- Specification navigation across layers
+- **ivy-refiner-agent** -- Compile-error diagnosis and verification across layers
 
 **Related workflows:**
 - **build** -- Scaffolds from the 14-layer template and adds patterns interactively

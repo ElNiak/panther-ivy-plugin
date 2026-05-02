@@ -9,7 +9,7 @@ version: "1.1.0"
 
 **Type:** rigid — follow exactly, do not adapt away discipline.
 
-Operating procedure for the `ivy-builder-agent`. Carries a protocol model from RFC to a structurally sound, verified Ivy specification layer by layer. Dispatches `spec-analyst` for compile-error diagnosis, `ivy-reviewer-agent` and `traceability-agent` for the Phase 5 quality and coverage audits, MPE Explore agents at Phase 1 for architectural-approach exploration, and `g-fidelity-critic` ×3 inline for the G2 modeling gate. The orchestrator dispatches this agent; this body teaches the agent how to operate.
+Operating procedure for the `ivy-builder-agent`. Carries a protocol model from RFC to a structurally sound, verified Ivy specification layer by layer. Dispatches `ivy-refiner-agent` for compile-error diagnosis, `ivy-reviewer-agent` and `traceability-agent` for the Phase 5 quality and coverage audits, MPE Explore agents at Phase 1 for architectural-approach exploration, and `g-fidelity-critic` ×3 inline for the G2 modeling gate. The orchestrator dispatches this agent; this body teaches the agent how to operate.
 
 ## Phases
 
@@ -127,7 +127,7 @@ Load `references/layer-scaffolding.md` for the full per-layer scaffolding proced
 
 1. Load `Skill(skill="panther-ivy-plugin:ivy-syntax")`.
 2. Write ONE layer at a time in dependency order; run `ivy_compile` after each.
-3. On compile error: dispatch `spec-analyst`, fix inline, recompile. For the attempt-counter recovery protocol, see `references/layer-scaffolding.md` Step 2.
+3. On compile error: dispatch `ivy-refiner-agent`, fix inline, recompile. For the attempt-counter recovery protocol, see `references/layer-scaffolding.md` Step 2.
 4. On compile success: update `scaffold-state.yaml` layer status.
 5. Reflection Gate every 3 layers.
 6. Handle type propagation via `Skill(skill="panther-ivy-plugin:propagation-patterns")` if needed.
@@ -242,7 +242,7 @@ digraph build_ops {
 | "Layer compiles cleanly, structural check is overkill" | `NO_LAYER_WITHOUT_SCAFFOLD` binds `ivy_diagnostics(mode="structural")` on the predecessor layer before any Write/Edit on layer N. Compile success is necessary but not sufficient. |
 | "I can guess which layers from the 14-template" | The methodology branch (NCT / NACT / NSCT) selects layer order. Load `Skill(skill="panther-ivy-plugin:specification-patterns")` and `Skill(skill="panther-ivy-plugin:methodology")` rather than guessing. |
 | "I'll fix the [GAP] marker later, layer N+1 first" | Resolve every open `[GAP: #NN]` marker across the current Phase 3 lifecycle BEFORE starting the next layer. Each marker is fixed in place or promoted to `// DEFERRED YYYY-MM-DD`. |
-| "The RFC quote feels right from memory" | Always Read the RFC source via the `spec-analyst` agent or the `methodology` skill. Never paraphrase or quote normative text from memory. |
+| "The RFC quote feels right from memory" | Always Read the RFC source via the `ivy-refiner-agent` agent or the `methodology` skill. Never paraphrase or quote normative text from memory. |
 | "G2 will fire from the post-write hook, I'll just keep writing" | The builder dispatches G2/G3 inline after each Write/Edit on `.ivy`. The `assess-modeling.py` hook is a backstop, not the primary trigger. Inline dispatch produces the asymmetric-vote verdict the workflow consumes. |
 | "Verify failed once — bypass and ship" | Build hands off to verify via `pending_dispatch`; on verify failure the orchestrator returns control to Phase 5. Read the journal `gate_verdict`/`progress` entries before re-entering. |
 
@@ -297,7 +297,7 @@ On session resume, actual progress is inferred from the file system — which `.
 
 ## Background Compilation
 
-When `ivy_compile` would block for minutes, run it in a background subagent via `Agent(run_in_background: true, ...)` while productive work continues in the main conversation. On completion, integrate: SUCCESS → update `scaffold-state.yaml` and proceed; FAILURE → dispatch `spec-analyst` synchronously. The staleness rule applies: re-run if the source `.ivy` was edited since the background run started. Full when-to-use, spawn prompt template, and during-the-wait guidance: `references/background-compilation.md`.
+When `ivy_compile` would block for minutes, run it in a background subagent via `Agent(run_in_background: true, ...)` while productive work continues in the main conversation. On completion, integrate: SUCCESS → update `scaffold-state.yaml` and proceed; FAILURE → dispatch `ivy-refiner-agent` synchronously. The staleness rule applies: re-run if the source `.ivy` was edited since the background run started. Full when-to-use, spawn prompt template, and during-the-wait guidance: `references/background-compilation.md`.
 
 ## Terminal state
 
@@ -314,7 +314,7 @@ breaks the workflow state machine.
 
 ## Failure recovery (sub-agent dispatches)
 
-Build dispatches `spec-analyst` (Phase 3 compile-error diagnosis), `ivy-reviewer-agent` + `traceability-agent` (Phase 5 quality gate, in parallel), `g-fidelity-critic` ×3 (Phase 3 G2/G3 inline dispatch), and MPE Explore agents (Phase 1 architectural approach). Apply the canonical failure-recovery contract from `.claude/rules/agent-dispatch.md` for every dispatch:
+Build dispatches `ivy-refiner-agent` (Phase 3 compile-error diagnosis), `ivy-reviewer-agent` + `traceability-agent` (Phase 5 quality gate, in parallel), `g-fidelity-critic` ×3 (Phase 3 G2/G3 inline dispatch), and MPE Explore agents (Phase 1 architectural approach). Apply the canonical failure-recovery contract from `.claude/rules/agent-dispatch.md` for every dispatch:
 
 - Append `progress{kind: "agent_dispatch_start", agent: "<name>", workflow: "scaffold", phase: "<phase>"}` before dispatch.
 - Use the per-tier timeout (Sonnet: 90 s; Opus: 180 s; `ivy-reviewer-agent` is Opus tier with no auto-retry on `context_exhaustion`).
@@ -326,7 +326,7 @@ For MCP tools (`ivy_compile`, `ivy_diagnostics`, `ivy_workspace`, `ivy_workflow_
 
 - **Called by:** orchestrator on build dispatch (`Skill(skill="panther-ivy-plugin:ivy")` routing); user requests like "build a model", "scaffold a protocol".
 - **Shortcut command alternative:** `/nct-compile <file>` for a single-shot layer compile without workflow state.
-- **Calls:** `verify` (post-build verification), `spec-analyst` agent (compile error diagnosis), `ivy-reviewer-agent` + `traceability-agent` (Phase 5 quality gate), `g-fidelity-critic` (G2/G3 inline gates), MPE Explore agents (Phase 1).
+- **Calls:** `verify` (post-build verification), `ivy-refiner-agent` agent (compile error diagnosis), `ivy-reviewer-agent` + `traceability-agent` (Phase 5 quality gate), `g-fidelity-critic` (G2/G3 inline gates), MPE Explore agents (Phase 1).
 - **Knowledge skills loaded:** `methodology` (Phase 1), `specification-patterns` (Phase 2 — owns the 14-layer template), `ivy-syntax` (Phase 3), `propagation-patterns` (Phase 3 on type change), `ivy-toolkit` (tool selection).
 - **Inline patterns:** Multi-Perspective Exploration (Phase 1 architectural approach, Phase 2 G1 gate), Situation Briefing (Phase 2 blueprint approval, Phase 5 Quality Gate), Reflection Gate (Phase 3 every 3 layers, Phase 6 completion). G6 knowledge-capture vote (`g-knowledge-critic` ×3) at the Knowledge Gates in Phase 3 and Phase 5. Completion gate (`Skill(skill="panther-ivy-plugin:ivy")` `references/completion-gate.md`) at Phase 6.
 - **MCP tools used:** `ivy_compile`, `ivy_diagnostics`, `ivy_workspace`, `ivy_workflow_state`, `ivy_analysis`.

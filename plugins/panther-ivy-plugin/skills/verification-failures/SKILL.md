@@ -36,11 +36,11 @@ If verification fails but no counterexample is present, the failure is likely a 
 
 ## Integration
 
-- **Loaded by:** `verify` (Phase 6 Diagnose), `scaffold` (Phase 3 on compile error), `review` (Phase 3 on contested findings); G4 verification critics, G5 trace-analysis critics, and the `ivy-reviewer-agent` / `spec-analyst` agents during their dispatch phases.
+- **Loaded by:** `verify` (Phase 6 Diagnose), `scaffold` (Phase 3 on compile error), `review` (Phase 3 on contested findings); G4 verification critics, G5 trace-analysis critics, and the `ivy-reviewer-agent` / `ivy-refiner-agent` agents during their dispatch phases.
 - **Precedes:** the G4 verification gate cites `references/debugging-methodology.md` (catalog entry `#405`); fixes proposed without those steps are UNSOUND by gate criteria.
 
 **Related skills:** `ivy-syntax` (language reference), `ivy-toolkit` (MCP tool inventory), `methodology` (verification-cycle context, per-methodology counterexample interpretation), `cross-cutting-reflection-patterns` (adversarial-gate discipline layer).
 
-**Related agents:** `spec-analyst` (automated diagnosis — consumes the catalog and the debugging methodology), `ivy-reviewer-agent` (adversarial review — consumes the catalog and the claim-discussion templates).
+**Related agents:** `ivy-refiner-agent` (automated diagnosis — consumes the catalog and the debugging methodology), `ivy-reviewer-agent` (adversarial review — consumes the catalog and the claim-discussion templates).
 
 **MCP tools used:** `ivy_verify` (counterexample source), `ivy_diagnostics` (structural check + full diagnostic array), `ivy_model_info` (symbol look-up), `ivy_visualize(view="state_machine")` (state-transition view), `ivy_coverage(mode="gaps")` (gap discovery); LSP `hover` / `findReferences` / `goToDefinition` (symbol look-up across includes).

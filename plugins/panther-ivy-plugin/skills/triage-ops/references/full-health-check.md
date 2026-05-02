@@ -26,7 +26,7 @@ reviewer agent that can override step verdicts.
 
 ## Agent Dispatch
 
-When this runbook says "Dispatch a `spec-analyst` agent," use the Agent tool with:
+When this runbook says "Dispatch a `ivy-refiner-agent` agent," use the Agent tool with:
 
 1. **Identity**: Include in the prompt: "You are a specification analyst for Ivy protocol models. You have access to Read, Grep, Glob, and Bash. You MUST use these tools to independently verify the data you are given."
 2. **Raw data only**: Pass the FULL raw tool outputs (JSON, command output). Do NOT include your own PASS/FAIL/WARN assessments or analysis summaries. The reviewer must reach its own conclusions from the raw data.
@@ -88,7 +88,7 @@ Use `LSP(operation="documentSymbol", filePath="<path_to_ivy_file>", line=1, char
 
 ### Phase 1 Review
 
-Dispatch a `spec-analyst` agent with the following prompt. Follow the Agent Dispatch rules above — pass raw data only, no pre-analysis.
+Dispatch a `ivy-refiner-agent` agent with the following prompt. Follow the Agent Dispatch rules above — pass raw data only, no pre-analysis.
 
 > "You are a specification analyst for Ivy protocol models. You have access to Read, Grep, Glob, and Bash. You MUST use these tools to independently verify the data below.
 >
@@ -203,7 +203,7 @@ Classification:
 
 ### Phase 2 Review
 
-Dispatch a `spec-analyst` agent with the following prompt. Follow the Agent Dispatch rules above — pass raw data only, no pre-analysis.
+Dispatch a `ivy-refiner-agent` agent with the following prompt. Follow the Agent Dispatch rules above — pass raw data only, no pre-analysis.
 
 > "You are a specification analyst for Ivy protocol models. You have access to Read, Grep, Glob, and Bash. You MUST use these tools to independently verify the data below.
 >
@@ -296,7 +296,7 @@ Use LSP `goToDefinition` on a symbol that requires cross-directory include resol
 
 ### Phase 3 Review
 
-Dispatch a `spec-analyst` agent with the following prompt. Follow the Agent Dispatch rules above — pass raw data only, no pre-analysis.
+Dispatch a `ivy-refiner-agent` agent with the following prompt. Follow the Agent Dispatch rules above — pass raw data only, no pre-analysis.
 
 > "You are a specification analyst for Ivy protocol models. You have access to Read, Grep, Glob, and Bash. You MUST use these tools to independently verify the data below.
 >
@@ -347,16 +347,16 @@ Present the final results in this format. Add a **Validated** column to show inl
 |---|--------------------------|--------|-----------|----------------------------------|
 | 1 | MCP server alive         | PASS   | Yes       | 19 tools, 3 CLI tools (PATH OK)  |
 | 2 | LSP responding           | PASS   | Yes       | 37 symbols (file has ~30 decls)  |
-|   | **Phase 1 Review**       | OK     | —         | Confirmed by spec-analyst        |
+|   | **Phase 1 Review**       | OK     | —         | Confirmed by ivy-refiner-agent        |
 | 3 | LSP process alive        | PASS   | Yes       | PID 12345 (ivy_lsp confirmed)    |
 | 4 | LSP log health           | PASS   | Yes       | No errors, indexing milestone OK  |
 | 5 | Layer staging active     | PASS   | Yes       | 2 layers (matches .ivyworkspace) |
-|   | **Phase 2 Review**       | OK     | —         | Confirmed by spec-analyst        |
+|   | **Phase 2 Review**       | OK     | —         | Confirmed by ivy-refiner-agent        |
 | 6 | Workspace access         | PASS   | Yes       | quic_types.ivy — 0 diagnostics   |
 | 7 | Coverage pipeline        | PASS   | Yes       | 97 reqs (matches manifest)       |
 | 8 | Cross-file resolution    | PASS   | Yes       | pkt_num → quic_types.ivy:57 ✓    |
 | 9 | Cross-layer resolution   | PASS   | Yes       | cid → quic_stack/ from attacks/  |
-|   | **Phase 3 Review**       | OK     | —         | Confirmed by spec-analyst        |
+|   | **Phase 3 Review**       | OK     | —         | Confirmed by ivy-refiner-agent        |
 
 **Overall: 9/9 PASS (3/3 phase reviews confirmed)**
 ```
