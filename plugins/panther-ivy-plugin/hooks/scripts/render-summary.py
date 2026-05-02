@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, emit_noop, read_stdin, resolve_sessions_dir
+from hook_utils import emit_hook_output, emit_noop, read_stdin, resolve_session_id, resolve_sessions_dir
 from workflow_state import WorkflowContext, get_scaffold_state_safe, get_journal_entries
 
 CLAIM_PATTERNS = {
@@ -76,19 +76,34 @@ def count_claims(content: str) -> dict[str, int]:
 
 
 def gather_tool_metrics() -> str:
-    """Read observability JSONL and aggregate tool call metrics."""
+    """Read observability JSONL and aggregate tool call metrics.
+
+    Prefers the current session's ``events.jsonl`` (resolved via
+    :func:`resolve_session_id`) so concurrent Claude Code sessions sharing
+    the same observability directory cannot pollute each other's Stop
+    summaries. Falls back to the latest-mtime walk only when the session
+    id is ``"unknown"`` or its events file does not exist yet.
+    """
     events_dir = resolve_sessions_dir()
 
     if not os.path.isdir(events_dir):
         return ""
 
     latest = None
-    for root, _dirs, filenames in os.walk(events_dir):
-        for fname in filenames:
-            if fname == "events.jsonl":
-                path = os.path.join(root, fname)
-                if latest is None or os.path.getmtime(path) > os.path.getmtime(latest):
-                    latest = path
+
+    session_id = resolve_session_id()
+    if session_id and session_id != "unknown":
+        candidate = os.path.join(events_dir, session_id, "events.jsonl")
+        if os.path.isfile(candidate):
+            latest = candidate
+
+    if latest is None:
+        for root, _dirs, filenames in os.walk(events_dir):
+            for fname in filenames:
+                if fname == "events.jsonl":
+                    path = os.path.join(root, fname)
+                    if latest is None or os.path.getmtime(path) > os.path.getmtime(latest):
+                        latest = path
 
     if not latest:
         return ""
