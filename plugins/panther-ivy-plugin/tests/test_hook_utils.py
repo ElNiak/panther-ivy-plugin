@@ -1,8 +1,10 @@
 """Tests for shared hook utilities."""
 
 import importlib
+import importlib.util
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -10,6 +12,12 @@ import pytest
 pytestmark = pytest.mark.unit
 
 _HOOK_SCRIPTS_DIR = str(Path(__file__).resolve().parent.parent / "hooks" / "scripts")
+
+# Minimal hook stdin payload used across the dedup tests. The session_id
+# value is arbitrary — the dedup cache file path is keyed off it, so as
+# long as every dedup test reuses the same value, repeated calls within
+# one test see the same cache.
+_DEDUP_HOOK_INPUT = {"session_id": "test-sid"}
 
 
 @pytest.fixture(autouse=True)
@@ -131,6 +139,12 @@ class TestEmitDedup:
     """
 
     def _make_dedup_env(self, tmp_path, monkeypatch):
+        # Pinning IVY_WORKSPACE_ROOT to a fresh tmp_path is the
+        # load-bearing isolation step: _hook_dedup_cache_path derives the
+        # cache file from the workspace root, so a per-test tmp_path
+        # guarantees an empty hook-dedup.json. A future refactor that
+        # decouples cache location from workspace root would break this
+        # transitive isolation.
         monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path))
         monkeypatch.delenv("IVY_SESSION_ID", raising=False)
         monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
@@ -141,7 +155,7 @@ class TestEmitDedup:
         self, capsys, tmp_path, monkeypatch
     ):
         mod = self._make_dedup_env(tmp_path, monkeypatch)
-        hi = {"session_id": "test-sid"}
+        hi = _DEDUP_HOOK_INPUT
         mod.emit_dedup(
             "PreToolUse", "ivy-ready",
             system_message="[ivy-ready] indexed", hook_input=hi,
@@ -154,11 +168,13 @@ class TestEmitDedup:
             system_message="[ivy-ready] indexed", hook_input=hi,
         )
         second = json.loads(capsys.readouterr().out)
-        assert second["systemMessage"].startswith("[ivy-noop] deduplicated")
+        # Pin the dedup_key suffix so silently dropping the parenthesized
+        # key from the noop message would fail this test.
+        assert "[ivy-noop] deduplicated (ivy-ready)" in second["systemMessage"]
 
     def test_changed_message_re_fires(self, capsys, tmp_path, monkeypatch):
         mod = self._make_dedup_env(tmp_path, monkeypatch)
-        hi = {"session_id": "test-sid"}
+        hi = _DEDUP_HOOK_INPUT
         mod.emit_dedup(
             "PreToolUse", "ivy-health",
             system_message="[ivy-health] OK", hook_input=hi,
@@ -171,24 +187,73 @@ class TestEmitDedup:
         out = json.loads(capsys.readouterr().out)
         assert out["systemMessage"] == "[ivy-health] 2 timeouts"
 
-    def test_additional_context_bypasses_dedup(
-        self, capsys, tmp_path, monkeypatch
+    @pytest.mark.parametrize(
+        "system_message, kwarg_name, kwarg_value, expected_hook_fields",
+        [
+            (
+                "[ivy-health] OK",
+                "additional_context",
+                "hint for the model",
+                {"additionalContext": "hint for the model"},
+            ),
+            (
+                "[ivy-health] crashed",
+                "deny_reason",
+                "server crashed; run /mcp",
+                {
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": "server crashed; run /mcp",
+                },
+            ),
+        ],
+        ids=["additional_context", "deny_reason"],
+    )
+    def test_kwarg_bypasses_dedup(
+        self, capsys, tmp_path, monkeypatch,
+        system_message, kwarg_name, kwarg_value, expected_hook_fields,
     ):
+        # Both ``additional_context`` (model context) and ``deny_reason``
+        # (blocking decision) must reach the runtime every call, never
+        # replaced by ``[ivy-noop]``. Two invocations should produce two
+        # full payloads.
         mod = self._make_dedup_env(tmp_path, monkeypatch)
-        hi = {"session_id": "test-sid"}
         for _ in range(2):
             mod.emit_dedup(
                 "PreToolUse", "ivy-health",
-                system_message="[ivy-health] OK",
-                hook_input=hi,
-                additional_context="hint for the model",
+                system_message=system_message,
+                hook_input=_DEDUP_HOOK_INPUT,
+                **{kwarg_name: kwarg_value},
             )
         outputs = capsys.readouterr().out.strip().splitlines()
         assert len(outputs) == 2
         for line in outputs:
             payload = json.loads(line)
-            assert payload["systemMessage"] == "[ivy-health] OK"
-            assert payload["hookSpecificOutput"]["additionalContext"] == "hint for the model"
+            assert payload["systemMessage"] == system_message
+            hook_out = payload["hookSpecificOutput"]
+            for field, expected in expected_hook_fields.items():
+                assert hook_out[field] == expected
+
+    def test_corrupt_cache_treated_as_empty(
+        self, capsys, tmp_path, monkeypatch
+    ):
+        # A malformed cache file must not block emission. The defensive
+        # OSError/JSONDecodeError swallow in emit_dedup falls through to
+        # an empty cache, so the next emit fires unconditionally and
+        # rewrites the cache as valid JSON.
+        mod = self._make_dedup_env(tmp_path, monkeypatch)
+        hi = _DEDUP_HOOK_INPUT
+        cache_path = mod._hook_dedup_cache_path(hi)
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text("{not valid json")
+
+        mod.emit_dedup(
+            "PreToolUse", "ivy-ready",
+            system_message="[ivy-ready] indexed", hook_input=hi,
+        )
+        out = json.loads(capsys.readouterr().out)
+        assert out["systemMessage"] == "[ivy-ready] indexed"
+        rewritten = json.loads(cache_path.read_text())
+        assert rewritten == {"ivy-ready": "[ivy-ready] indexed"}
 
 
 class TestCheckMcpHealthFiltering:
@@ -198,29 +263,28 @@ class TestCheckMcpHealthFiltering:
     """
 
     def test_filter_drops_pre_floor_lines_keeps_post_floor(
-        self, tmp_path, monkeypatch
+        self, tmp_path, monkeypatch, hook_scripts_dir
     ):
-        # Place a fake mcp-*.pid file inside a tmp PID dir; its mtime
-        # becomes the live MCP start-time floor.
-        pid_dir = tmp_path / "ivy-lsp-pids"
-        pid_dir.mkdir()
-        pid_file = pid_dir / "mcp-test-12345.pid"
+        # Place the fake mcp-*.pid file directly in tmp_path. Production's
+        # _PID_DIR constant is monkeypatched below, so the directory name
+        # is irrelevant.
+        pid_file = tmp_path / "mcp-test-12345.pid"
         pid_file.write_text("12345")
         floor_ts = pid_file.stat().st_mtime
 
-        # Load check-mcp-health and override its PID dir constant.
-        import importlib.util
-        from pathlib import Path
-
+        # Load check-mcp-health fresh and override its PID dir constant.
+        # Drop any prior cmh module so test isolation does not depend on
+        # this being the only cmh test in the file (the autouse fixture
+        # only cleans hook_utils).
+        monkeypatch.delitem(sys.modules, "cmh", raising=False)
         spec = importlib.util.spec_from_file_location(
-            "cmh", str(Path(_HOOK_SCRIPTS_DIR) / "check-mcp-health.py")
+            "cmh", str(hook_scripts_dir / "check-mcp-health.py")
         )
         assert spec is not None and spec.loader is not None
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        monkeypatch.setattr(mod, "_PID_DIR", str(pid_dir))
+        monkeypatch.setattr(mod, "_PID_DIR", str(tmp_path))
 
-        from datetime import datetime
         pre = (
             datetime.fromtimestamp(floor_ts - 600).strftime("%Y-%m-%d %H:%M:%S,000")
             + " ivy ERROR pre-floor TimeoutError"
@@ -243,3 +307,60 @@ class TestCheckMcpHealthFiltering:
         # the no-timestamp continuation has ERROR but no timeout pattern, so
         # it's "other".
         assert buckets == {"crashes": 0, "timeouts": 1, "connection": 0, "other": 1}
+
+
+class TestSessionActivityHelpers:
+    """Tests for mark_session_activity / is_session_active / _session_activity_path."""
+
+    def _make_env(self, tmp_path, monkeypatch, session_id: str = "test-sa-42"):
+        monkeypatch.setenv("TMPDIR", str(tmp_path))
+        monkeypatch.setenv("IVY_SESSION_ID", session_id)
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
+        monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+        return _import_hook_utils()
+
+    def test_flag_created_on_first_call(self, tmp_path, monkeypatch):
+        mod = self._make_env(tmp_path, monkeypatch)
+        assert not mod.is_session_active()
+        mod.mark_session_activity("test:signal")
+        assert mod.is_session_active()
+
+    def test_mark_idempotent(self, tmp_path, monkeypatch):
+        mod = self._make_env(tmp_path, monkeypatch)
+        mod.mark_session_activity("test:first")
+        mod.mark_session_activity("test:second")
+        assert mod.is_session_active()
+        flag = mod._session_activity_path()
+        # Should still be a single file, not duplicated
+        assert flag.exists()
+
+    def test_fail_closed_when_session_id_unknown(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("TMPDIR", str(tmp_path))
+        monkeypatch.delenv("IVY_SESSION_ID", raising=False)
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
+        monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+        mod = _import_hook_utils()
+        monkeypatch.setattr(mod, "_canonical_resolve", None)
+        # When session_id resolves to "unknown", is_session_active must return False
+        # even if we have tried to mark activity.
+        mod.mark_session_activity("test:unknown-session")
+        # is_session_active fail-closes when sid == "unknown"
+        assert mod.is_session_active() is False
+
+    def test_flag_in_tmpdir_subdir(self, tmp_path, monkeypatch):
+        mod = self._make_env(tmp_path, monkeypatch, session_id="sess-abc")
+        mod.mark_session_activity("test:path-check")
+        flag = tmp_path / "claude-ivy" / "session-activity-sess-abc.flag"
+        assert flag.exists(), f"Expected flag at {flag}"
+
+    def test_mark_suppresses_oserror(self, tmp_path, monkeypatch):
+        """mark_session_activity must not raise even when the filesystem is unwritable."""
+        monkeypatch.setenv("TMPDIR", "/dev/null/no-such-dir")
+        monkeypatch.setenv("IVY_SESSION_ID", "test-sa-oserr")
+        mod = _import_hook_utils()
+        # Should not raise
+        mod.mark_session_activity("test:oserror")
+
+    def test_is_session_active_false_when_no_flag(self, tmp_path, monkeypatch):
+        mod = self._make_env(tmp_path, monkeypatch, session_id="fresh-session")
+        assert mod.is_session_active() is False
