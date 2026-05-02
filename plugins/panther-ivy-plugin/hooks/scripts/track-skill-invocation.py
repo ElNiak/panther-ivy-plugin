@@ -34,7 +34,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop, read_stdin  # noqa: E402
+from hook_utils import emit_hook_output, emit_noop, mark_session_activity, read_stdin  # noqa: E402
 from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
 from workflow_state import (  # noqa: E402
     OPS_SKILLS,
@@ -162,6 +162,8 @@ def main() -> None:
             system_message=f"[ivy-skill] non-plugin skill: {skill}",
         )
         return
+
+    mark_session_activity(f"skill:{skill}")
 
     # Plugin skill: update statusline, optionally load references, optionally
     # journal-record the invocation.
