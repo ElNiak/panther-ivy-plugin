@@ -146,7 +146,9 @@ class TestNoActiveYaml:
         out = run_hook(SCRIPT, payload={}, env=env_for(ws_root, cache_path))
         cached = _read_cache(cache_path)
         assert "workflow" not in cached
-        assert "[ivy-statusline] cleared stale workflow" in out["systemMessage"]
+        assert "[ivy-statusline]" in out["systemMessage"]
+        assert "cleared" in out["systemMessage"]
+        assert "scaffold" in out["systemMessage"]
 
     def test_missing_yaml_and_no_cache_emits_noop(
         self, run_hook, tmp_path: Path, env_for

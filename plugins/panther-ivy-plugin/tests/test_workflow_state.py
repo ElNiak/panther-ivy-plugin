@@ -31,10 +31,10 @@ def _import_module():
 class TestSetAndGetActiveWorkflow:
     def test_roundtrip(self, tmp_path):
         mod = _import_module()
-        mod.set_active_workflow(str(tmp_path), "workflow-verify", "init")
+        mod.set_active_workflow(str(tmp_path), "refine", "init")
         result = mod.get_active_workflow(str(tmp_path))
         assert result is not None
-        assert result["workflow"] == "workflow-verify"
+        assert result["workflow"] == "refine"
         assert result["phase"] == "init"
         assert "started" in result
         # post-refactor: active-workflow schema is 3 fields only
@@ -44,7 +44,7 @@ class TestSetAndGetActiveWorkflow:
 class TestUpdatePhase:
     def test_only_phase_changes(self, tmp_path):
         mod = _import_module()
-        mod.set_active_workflow(str(tmp_path), "workflow-build", "compile")
+        mod.set_active_workflow(str(tmp_path), "scaffold", "compile")
         original = mod.get_active_workflow(str(tmp_path))
 
         mod.update_workflow_phase(str(tmp_path), "link")
@@ -58,7 +58,7 @@ class TestUpdatePhase:
 class TestClearActiveWorkflow:
     def test_clear_removes_file(self, tmp_path):
         mod = _import_module()
-        mod.set_active_workflow(str(tmp_path), "workflow-verify", "init")
+        mod.set_active_workflow(str(tmp_path), "refine", "init")
         assert mod.get_active_workflow(str(tmp_path)) is not None
 
         mod.clear_active_workflow(str(tmp_path))
@@ -72,7 +72,7 @@ class TestClearActiveWorkflow:
 class TestIsWorkflowStale:
     def test_stale_detection(self, tmp_path):
         mod = _import_module()
-        mod.set_active_workflow(str(tmp_path), "workflow-verify", "init")
+        mod.set_active_workflow(str(tmp_path), "refine", "init")
 
         state_file = tmp_path / ".panther-ivy" / "active-workflow"
         data = yaml.safe_load(state_file.read_text())
@@ -85,7 +85,7 @@ class TestIsWorkflowStale:
 
     def test_fresh_workflow_is_not_stale(self, tmp_path):
         mod = _import_module()
-        mod.set_active_workflow(str(tmp_path), "workflow-verify", "init")
+        mod.set_active_workflow(str(tmp_path), "refine", "init")
         assert mod.is_workflow_stale(str(tmp_path), max_age_hours=2) is False
 
     def test_no_workflow_is_not_stale(self, tmp_path):
@@ -152,7 +152,7 @@ class TestGetScaffoldStateParseFailure:
 class TestValidateActiveWorkflow:
     """Tests for validate_active_workflow() (cluster-12 S8)."""
 
-    _KNOWN = {"workflow-navigate", "workflow-build", "workflow-verify", "workflow-review", "workflow-triage"}
+    _KNOWN = {"navigate", "scaffold", "refine", "review", "triage"}
 
     def test_missing_file_is_valid(self, tmp_path):
         mod = _import_module()
@@ -161,7 +161,7 @@ class TestValidateActiveWorkflow:
 
     def test_valid_3_field_schema_passes(self, tmp_path):
         mod = _import_module()
-        mod.set_active_workflow(str(tmp_path), "workflow-build", "modeling")
+        mod.set_active_workflow(str(tmp_path), "scaffold", "modeling")
         ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=self._KNOWN)
         assert (ok, reason) == (True, None)
 
@@ -192,7 +192,7 @@ class TestValidateActiveWorkflow:
         state_dir = tmp_path / ".panther-ivy"
         state_dir.mkdir()
         (state_dir / "active-workflow").write_text(
-            "workflow: workflow-build\nphase: ''\nstarted: '2026-04-23T09:00:00+00:00'\n"
+            "workflow: scaffold\nphase: ''\nstarted: '2026-04-23T09:00:00+00:00'\n"
         )
         ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=self._KNOWN)
         assert ok is False
@@ -204,7 +204,7 @@ class TestValidateActiveWorkflow:
         state_dir = tmp_path / ".panther-ivy"
         state_dir.mkdir()
         (state_dir / "active-workflow").write_text(
-            "workflow: workflow-build\nphase: modeling\nstarted: 'yesterday'\n"
+            "workflow: scaffold\nphase: modeling\nstarted: 'yesterday'\n"
         )
         ok, reason = mod.validate_active_workflow(str(tmp_path), known_workflows=self._KNOWN)
         assert ok is False
@@ -283,7 +283,7 @@ class TestAppendJournalEvent:
             str(tmp_path),
             event_type="session_start",
             payload={"resumed_from": None},
-            workflow="workflow-build",
+            workflow="scaffold",
             phase="init",
         )
         journal_path = tmp_path / ".panther-ivy" / "workflow-journal.yaml"
@@ -291,14 +291,14 @@ class TestAppendJournalEvent:
         entries = yaml.safe_load(journal_path.read_text())
         assert len(entries) == 1
         assert entries[0]["type"] == "session_start"
-        assert entries[0]["workflow"] == "workflow-build"
+        assert entries[0]["workflow"] == "scaffold"
         assert entries[0]["phase"] == "init"
         assert entries[0]["payload"] == {"resumed_from": None}
         assert "ts" in entries[0]
 
     def test_appends_to_existing_journal(self, tmp_path):
         mod = _import_module()
-        mod.append_journal_event(str(tmp_path), "session_start", {"resumed_from": None}, "workflow-build", "init")
+        mod.append_journal_event(str(tmp_path), "session_start", {"resumed_from": None}, "scaffold", "init")
         mod.append_journal_event(str(tmp_path), "decision", {"summary": "defer group D", "context": "needs 3-speaker"}, "scaffold", "scoped")
 
         journal_path = tmp_path / ".panther-ivy" / "workflow-journal.yaml"
@@ -309,7 +309,7 @@ class TestAppendJournalEvent:
 
     def test_rejects_invalid_event_type(self, tmp_path):
         mod = _import_module()
-        result = mod.append_journal_event(str(tmp_path), "invalid_type", {}, "workflow-build", "init")
+        result = mod.append_journal_event(str(tmp_path), "invalid_type", {}, "scaffold", "init")
         assert result is False
 
     def test_allows_append_without_active_workflow(self, tmp_path):
@@ -332,7 +332,7 @@ class TestGetJournalEntries:
     def test_returns_last_n_entries(self, tmp_path):
         mod = _import_module()
         for i in range(10):
-            mod.append_journal_event(str(tmp_path), "progress", {"detail": f"step {i}"}, "workflow-build", "init")
+            mod.append_journal_event(str(tmp_path), "progress", {"detail": f"step {i}"}, "scaffold", "init")
 
         entries = mod.get_journal_entries(str(tmp_path), last_n=3)
         assert len(entries) == 3
@@ -341,7 +341,7 @@ class TestGetJournalEntries:
 
     def test_returns_all_when_fewer_than_last_n(self, tmp_path):
         mod = _import_module()
-        mod.append_journal_event(str(tmp_path), "session_start", {"resumed_from": None}, "workflow-build", "init")
+        mod.append_journal_event(str(tmp_path), "session_start", {"resumed_from": None}, "scaffold", "init")
         entries = mod.get_journal_entries(str(tmp_path), last_n=20)
         assert len(entries) == 1
 
@@ -351,38 +351,38 @@ class TestAppendPendingDispatch:
 
     def test_appends_minimal_payload(self, tmp_path):
         mod = _import_module()
-        mod.set_active_workflow(str(tmp_path), "workflow-build", "phase-4")
-        result = mod.append_pending_dispatch(str(tmp_path), "workflow-verify")
+        mod.set_active_workflow(str(tmp_path), "scaffold", "phase-4")
+        result = mod.append_pending_dispatch(str(tmp_path), "refine")
         assert result is True
 
         entries = mod.get_journal_entries(str(tmp_path))
         assert len(entries) == 1
         entry = entries[0]
         assert entry["type"] == "pending_dispatch"
-        assert entry["workflow"] == "workflow-build"
+        assert entry["workflow"] == "scaffold"
         assert entry["phase"] == "phase-4"
-        assert entry["payload"] == {"workflow": "workflow-verify"}
+        assert entry["payload"] == {"workflow": "refine"}
 
     def test_includes_phase_hint_and_reason_when_provided(self, tmp_path):
         mod = _import_module()
-        mod.set_active_workflow(str(tmp_path), "workflow-build", "phase-4")
+        mod.set_active_workflow(str(tmp_path), "scaffold", "phase-4")
         mod.append_pending_dispatch(
             str(tmp_path),
-            "workflow-verify",
+            "refine",
             phase_hint="preflight",
             reason="scaffold phase 4 requires verification",
         )
         entry = mod.get_journal_entries(str(tmp_path))[0]
         assert entry["payload"] == {
-            "workflow": "workflow-verify",
+            "workflow": "refine",
             "phase_hint": "preflight",
             "reason": "scaffold phase 4 requires verification",
         }
 
     def test_omits_phase_hint_and_reason_when_none(self, tmp_path):
         mod = _import_module()
-        mod.set_active_workflow(str(tmp_path), "workflow-review", "phase-3")
-        mod.append_pending_dispatch(str(tmp_path), "workflow-verify", reason=None)
+        mod.set_active_workflow(str(tmp_path), "review", "phase-3")
+        mod.append_pending_dispatch(str(tmp_path), "refine", reason=None)
         entry = mod.get_journal_entries(str(tmp_path))[0]
         assert "phase_hint" not in entry["payload"]
         assert "reason" not in entry["payload"]
@@ -390,12 +390,12 @@ class TestAppendPendingDispatch:
     def test_emits_when_no_active_workflow(self, tmp_path):
         """Emitting workflow fields are None when active-workflow is absent."""
         mod = _import_module()
-        result = mod.append_pending_dispatch(str(tmp_path), "workflow-triage")
+        result = mod.append_pending_dispatch(str(tmp_path), "triage")
         assert result is True
         entry = mod.get_journal_entries(str(tmp_path))[0]
         assert entry["workflow"] is None
         assert entry["phase"] is None
-        assert entry["payload"] == {"workflow": "workflow-triage"}
+        assert entry["payload"] == {"workflow": "triage"}
 
 
 class TestRotateJournal:
@@ -404,7 +404,7 @@ class TestRotateJournal:
     def test_rotates_when_exceeding_max_entries(self, tmp_path):
         mod = _import_module()
         for i in range(210):
-            mod.append_journal_event(str(tmp_path), "progress", {"detail": f"step {i}"}, "workflow-build", "init")
+            mod.append_journal_event(str(tmp_path), "progress", {"detail": f"step {i}"}, "scaffold", "init")
 
         mod.rotate_journal(str(tmp_path), max_entries=200)
 
@@ -419,7 +419,7 @@ class TestRotateJournal:
     def test_no_rotation_when_under_max(self, tmp_path):
         mod = _import_module()
         for i in range(50):
-            mod.append_journal_event(str(tmp_path), "progress", {"detail": f"step {i}"}, "workflow-build", "init")
+            mod.append_journal_event(str(tmp_path), "progress", {"detail": f"step {i}"}, "scaffold", "init")
 
         mod.rotate_journal(str(tmp_path), max_entries=200)
 

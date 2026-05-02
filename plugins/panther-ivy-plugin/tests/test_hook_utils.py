@@ -336,11 +336,10 @@ class TestSessionActivityHelpers:
 
     def test_fail_closed_when_session_id_unknown(self, tmp_path, monkeypatch):
         monkeypatch.setenv("TMPDIR", str(tmp_path))
-        monkeypatch.delenv("IVY_SESSION_ID", raising=False)
-        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
-        monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
         mod = _import_hook_utils()
-        monkeypatch.setattr(mod, "_canonical_resolve", None)
+        # Patch resolve_session_id on the module to always return "unknown",
+        # bypassing the full priority chain (env vars, canonical, file read).
+        monkeypatch.setattr(mod, "resolve_session_id", lambda *a, **kw: "unknown")
         # When session_id resolves to "unknown", is_session_active must return False
         # even if we have tried to mark activity.
         mod.mark_session_activity("test:unknown-session")

@@ -149,3 +149,62 @@ class TestPluginSkill:
         assert "[ivy-skill] ivy-syntax loaded" in out["systemMessage"]
         assert "(no references/)" in out["systemMessage"]
         assert "additionalContext" not in out.get("hookSpecificOutput", {})
+
+
+# ---------------------------------------------------------------------------
+# 4. Activity flag is set for any plugin skill, not set for non-plugin skills
+# ---------------------------------------------------------------------------
+
+
+class TestActivityFlagOnSkillInvocation:
+    def test_flag_set_for_plugin_skill(self, run_hook, tmp_path):
+        """Any panther-ivy-plugin:* skill flips the session-activity flag."""
+        import os
+        session_id = "test-skill-flag-99"
+        flag_path = tmp_path / "claude-ivy" / f"session-activity-{session_id}.flag"
+        env = {
+            "CLAUDE_PLUGIN_ROOT": str(PLUGIN_ROOT),
+            "IVY_SESSION_ID": session_id,
+            "TMPDIR": str(tmp_path),
+        }
+        run_hook(
+            SCRIPT,
+            {"tool_name": "Skill", "tool_input": {"skill": "panther-ivy-plugin:ivy-syntax"}},
+            env=env,
+            cwd=tmp_path,
+        )
+        assert flag_path.exists(), "Activity flag should be set for any panther-ivy-plugin skill"
+
+    def test_flag_not_set_for_non_plugin_skill(self, run_hook, tmp_path):
+        """Non-plugin skills must NOT flip the session-activity flag."""
+        session_id = "test-skill-flag-98"
+        flag_path = tmp_path / "claude-ivy" / f"session-activity-{session_id}.flag"
+        env = {
+            "CLAUDE_PLUGIN_ROOT": str(PLUGIN_ROOT),
+            "IVY_SESSION_ID": session_id,
+            "TMPDIR": str(tmp_path),
+        }
+        run_hook(
+            SCRIPT,
+            {"tool_name": "Skill", "tool_input": {"skill": "superpowers:brainstorming"}},
+            env=env,
+            cwd=tmp_path,
+        )
+        assert not flag_path.exists(), "Activity flag must NOT be set for non-plugin skill"
+
+    def test_flag_set_for_knowledge_skill(self, run_hook, tmp_path):
+        """Knowledge-only skills (ivy-syntax, methodology, etc.) also flip the flag."""
+        session_id = "test-skill-flag-97"
+        flag_path = tmp_path / "claude-ivy" / f"session-activity-{session_id}.flag"
+        env = {
+            "CLAUDE_PLUGIN_ROOT": str(PLUGIN_ROOT),
+            "IVY_SESSION_ID": session_id,
+            "TMPDIR": str(tmp_path),
+        }
+        run_hook(
+            SCRIPT,
+            {"tool_name": "Skill", "tool_input": {"skill": "panther-ivy-plugin:methodology"}},
+            env=env,
+            cwd=tmp_path,
+        )
+        assert flag_path.exists(), "Activity flag should be set even for knowledge-only plugin skills"
