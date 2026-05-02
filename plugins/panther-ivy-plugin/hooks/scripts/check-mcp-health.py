@@ -16,11 +16,13 @@ top-level `systemMessage` field.
 
 import glob
 import os
+import re
 import socket
 import subprocess
 import sys
 import time
 from collections import deque
+from datetime import datetime
 from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
@@ -28,6 +30,7 @@ from hook_utils import (
     MAX_CONSECUTIVE_MCP_FAILURES,
     emit_hook_output,
     read_mcp_health_state,
+    read_stdin,
     write_mcp_health_state,
 )
 from statusline_cache import update_from_hook as _statusline_update
@@ -48,6 +51,11 @@ _CONNECTION_PATTERNS = (
     "connection lost",
     "reconnect",
 )
+
+# Leading log timestamp format: ``2026-05-02 09:40:31,850`` (Python logging
+# default with comma-separated milliseconds). The capture intentionally
+# allows period-separated milliseconds for any future format change.
+_LOG_TS_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[.,]\d+)")
 
 
 def _read_mcp_log_tail(n: int) -> list[str]:
@@ -73,10 +81,68 @@ def _read_mcp_log_tail(n: int) -> list[str]:
     return [line.rstrip() for line in tail]
 
 
+def _line_timestamp(line: str) -> float | None:
+    """Parse the leading ``YYYY-MM-DD HH:MM:SS,ms`` timestamp.
+
+    Returns the line's POSIX timestamp interpreted in the local timezone
+    (matching Python's logging default), or ``None`` when the line does
+    not start with a recognized timestamp (multi-line stack-trace
+    continuations, raw output without a logger prefix, etc.). Lines
+    without a parseable timestamp pass through downstream filters
+    unconditionally — better to over-count one error than to silently
+    drop a multi-line traceback's continuation lines.
+    """
+    match = _LOG_TS_RE.match(line)
+    if not match:
+        return None
+    ts_str = match.group(1).replace(",", ".")
+    try:
+        return datetime.fromisoformat(ts_str).timestamp()
+    except ValueError:
+        return None
+
+
+def _mcp_pid_start_time() -> float | None:
+    """Return mtime of the most recent ``mcp-*.pid`` file as the live
+    MCP process's start-time floor, or ``None`` when no PID files exist.
+
+    The PID file is created at MCP startup, so its mtime is a robust
+    proxy for "when did the live MCP server begin running?". Errors that
+    predate this floor came from a previous MCP process and should not
+    be reported as "recent" by ``_categorise_recent_errors``.
+    """
+    pid_files = sorted(glob.glob(os.path.join(_PID_DIR, "mcp-*.pid")))
+    if not pid_files:
+        return None
+    try:
+        return os.path.getmtime(pid_files[-1])
+    except OSError:
+        return None
+
+
+def _filter_to_current_process(log_tail: list[str]) -> list[str]:
+    """Drop log lines whose timestamp predates the live MCP PID's start.
+
+    Lines without a parseable timestamp are kept (multi-line tracebacks,
+    raw output) so the categorizer doesn't silently lose context when a
+    keyword-bearing continuation line follows a parseable header.
+    Returns ``log_tail`` unchanged when no PID file is available — the
+    caller's existing 60-second log-mtime gate already approximates
+    freshness in that degraded case.
+    """
+    floor_ts = _mcp_pid_start_time()
+    if floor_ts is None:
+        return log_tail
+    return [
+        line for line in log_tail
+        if (ts := _line_timestamp(line)) is None or ts >= floor_ts
+    ]
+
+
 def _categorise_recent_errors(log_tail: list[str]) -> dict[str, int]:
     """Bucket recent error lines into crashes/timeouts/connection/other."""
     buckets = {"crashes": 0, "timeouts": 0, "connection": 0, "other": 0}
-    for line in log_tail:
+    for line in _filter_to_current_process(log_tail):
         if not any(pat in line for pat in _ERROR_PATTERNS):
             continue
         lower = line.lower()
@@ -196,14 +262,15 @@ def _check_sidecar_alive():
 
 
 def main():
-    state = read_mcp_health_state()
+    hook_input = read_stdin()
+    state = read_mcp_health_state(hook_input)
 
     # --- Tier 1: PID check (fast, no network) ---
     pid_result = _check_pid_alive()
     if pid_result is True:
         if state["consecutive_failures"] > 0:
             state["consecutive_failures"] = 0
-            write_mcp_health_state(state)
+            write_mcp_health_state(state, hook_input)
         _statusline_update("mcp", {"status": "up"})
         _emit_health(liveness_ok=True, state=state)
         return
@@ -211,7 +278,7 @@ def main():
     if pid_result is False:
         # MCP process is dead — definitive failure
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
-        write_mcp_health_state(state)
+        write_mcp_health_state(state, hook_input)
         _statusline_update("mcp", {"status": "down", "last_error": "pid-check-failed"})
         _emit_health(liveness_ok=False, state=state)
         return
@@ -221,7 +288,7 @@ def main():
     if tcp_result is True:
         if state["consecutive_failures"] > 0:
             state["consecutive_failures"] = 0
-            write_mcp_health_state(state)
+            write_mcp_health_state(state, hook_input)
         _statusline_update("mcp", {"status": "up"})
         _emit_health(liveness_ok=True, state=state)
         return
@@ -229,7 +296,7 @@ def main():
     if tcp_result is False:
         # Fresh port file but sidecar not responding — definitive failure
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
-        write_mcp_health_state(state)
+        write_mcp_health_state(state, hook_input)
         _statusline_update("mcp", {"status": "down", "last_error": "tcp-unreachable"})
         _emit_health(liveness_ok=False, state=state)
         return
@@ -239,7 +306,7 @@ def main():
     # report the error directly on the tool result.
     if state["consecutive_failures"] > 0:
         state["consecutive_failures"] = 0
-        write_mcp_health_state(state)
+        write_mcp_health_state(state, hook_input)
     _statusline_update("mcp", {"status": "up"})
     _emit_health(liveness_ok=True, state=state)
 

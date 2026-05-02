@@ -17,22 +17,39 @@ Readiness protocol (consistent with wait-for-indexing):
 from __future__ import annotations
 
 import os
+import re
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop, file_contains  # noqa: E402
+from hook_utils import emit_hook_output, emit_noop, file_contains, is_pid_alive  # noqa: E402
 from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
 
 _MCP_LOG = Path(os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log"))
 _LSP_LOG = Path(os.environ.get("IVY_LSP_LOG_PATH", "/tmp/ivy-lsp-lsp-latest.log"))
 _WORKSPACE_ROOT = os.environ.get("IVY_WORKSPACE_ROOT", "")
 
+# Filename format for per-PID logs is ``ivy-{lsp,mcp}-<ISO-timestamp>-<pid>.log``.
+# Mirrors the regex in ``cleanup-stale-pids.py``; kept duplicated rather than
+# extracted to ``hook_utils`` because both call sites are tiny and adding a
+# shared constant for one line of regex would be premature abstraction.
+_LOG_PID_RE = re.compile(r"-(\d+)\.log$")
+
 _DENY_STATE = Path("/tmp/ivy-lsp-pids/indexing-deny-count")
 _DENY_THRESHOLD = 6
 _STARTING_GRACE_S = 30
 _INDEXING_GRACE_S = 120
+
+# Above this age, the LSP log is treated as a leftover from a previous
+# session whose process was SIGTERM'd or crashed without refreshing the
+# `/tmp/ivy-lsp-lsp-latest.log` symlink. The "Indexed N files" line in such
+# a log refers to the dead session's index and must NOT trigger a
+# `[ivy-ready]` emission for the current session. 6 h is the upper bound on
+# a normal active Claude Code session — sessions that legitimately last
+# longer will see the SessionStart hook re-run on resume and clear the
+# symlink first (see ``cleanup-stale-pids.py``).
+_LSP_LOG_STALE_THRESHOLD_S = 6 * 3600
 
 
 def _file_age_seconds(path: Path) -> float:
@@ -79,9 +96,37 @@ def _emit_ready(reason: str) -> None:
 
 
 def _signal_lsp_indexed() -> bool:
-    """Signal 1: LSP log says ``Indexed <N> files``."""
+    """Signal 1: LSP log says ``Indexed <N> files`` AND the log is fresh.
+
+    Two gates guard against the symlink-staleness scenario where
+    ``/tmp/ivy-lsp-lsp-latest.log`` still points at a previous session's
+    per-PID log file:
+
+    1. **Mtime gate** — reject when the log hasn't been touched within
+       ``_LSP_LOG_STALE_THRESHOLD_S`` (catches really-old leftovers).
+    2. **PID-alive gate** — when the log is a symlink to ``…-<pid>.log``,
+       extract the PID from the basename and reject when that process is
+       no longer alive. This catches the more common case where some
+       process keeps appending to the dead-LSP's log file (so the mtime
+       still looks fresh) but the substring match would otherwise emit
+       ``[ivy-ready]`` based on the dead session's "Indexed" line.
+
+    See ``cleanup-stale-pids.py`` which unlinks dead-PID symlinks at
+    SessionStart; the gates here are runtime defense-in-depth for the
+    mid-session window when a fresh LSP crashes between calls.
+    """
     if not _LSP_LOG.is_file():
         return False
+    if _file_age_seconds(_LSP_LOG) > _LSP_LOG_STALE_THRESHOLD_S:
+        return False
+    if _LSP_LOG.is_symlink():
+        try:
+            target_basename = os.path.basename(os.readlink(_LSP_LOG))
+            match = _LOG_PID_RE.search(target_basename)
+            if match and not is_pid_alive(int(match.group(1))):
+                return False
+        except (OSError, ValueError):
+            pass
     try:
         with open(_LSP_LOG, "r", errors="replace") as f:
             for line in f:

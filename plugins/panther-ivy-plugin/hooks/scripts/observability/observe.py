@@ -232,8 +232,20 @@ def _session_end_tool_summary(session_id: str) -> dict:
     return {}
 
 
-def _handle_mcp_health_circuit_breaker(tool_name: str) -> None:
-    """Increment the MCP health failure counter for ivy tools and warn when threshold is reached."""
+def _handle_mcp_health_circuit_breaker(
+    tool_name: str, hook_input: dict | None = None
+) -> None:
+    """Increment the MCP health failure counter for ivy tools and warn when threshold is reached.
+
+    Args:
+        tool_name: Name of the tool whose call just failed.
+        hook_input: Parsed stdin payload from the spawning ``observe.py``
+            invocation. Threaded through to ``read_mcp_health_state`` /
+            ``write_mcp_health_state`` so the circuit-breaker counter
+            writes to the *current* session's per-session state file
+            instead of the workspace-shared file (which can hold a sibling
+            session's id under concurrent Claude Code sessions).
+    """
     if "ivy" not in tool_name.lower():
         return
 
@@ -241,9 +253,9 @@ def _handle_mcp_health_circuit_breaker(tool_name: str) -> None:
         return
 
     try:
-        state = read_mcp_health_state()
+        state = read_mcp_health_state(hook_input)
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
-        write_mcp_health_state(state)
+        write_mcp_health_state(state, hook_input)
 
         if state["consecutive_failures"] >= MAX_CONSECUTIVE_MCP_FAILURES:
             emit_hook_output(
@@ -295,7 +307,7 @@ def main():
         pass
 
     if args.event == "PostToolUseFailure":
-        _handle_mcp_health_circuit_breaker(tool_name)
+        _handle_mcp_health_circuit_breaker(tool_name, hook_input=data)
 
     if _HAS_HOOK_UTILS:
         emit_hook_output(

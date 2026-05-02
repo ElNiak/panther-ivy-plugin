@@ -111,7 +111,22 @@ class TestLogEvent:
         # Should return a path or None, but not raise
         assert result is None or isinstance(result, Path)
 
-    def test_missing_session_id_normalized_to_unknown(self, tmp_path):
+    def test_missing_session_id_normalized_to_unknown(self, tmp_path, monkeypatch):
+        # The resolver now consults a workspace-scoped session-id file as a
+        # fallback (added in the 2026-05-02 hook-fix pass). Pin the
+        # workspace root to a fresh tmp dir whose hash will not match any
+        # /tmp/ivy-session-<hash>.id written by another session, so both
+        # the canonical resolver's file lookup AND the new local file
+        # fallback miss — the test exercises the "ultimate unknown"
+        # branch under controlled conditions. Robust against import-cache
+        # / module-reload state leaking from earlier tests.
+        ws_root = tmp_path / "fresh-workspace"
+        ws_root.mkdir()
+        monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(ws_root))
+        monkeypatch.delenv("IVY_SESSION_ID", raising=False)
+        monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
+        monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+
         log_dir = tmp_path / "sessions" / "unknown"
         log_event("Stop", "", log_dir_override=log_dir)
         event = _read_last_event(log_dir / "events.jsonl")

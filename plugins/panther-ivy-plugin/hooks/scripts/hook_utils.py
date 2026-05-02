@@ -23,12 +23,24 @@ except ImportError:
 def resolve_session_id(hook_input: dict | None = None) -> str:
     """Resolve Claude session ID using canonical priority chain.
 
-    Priority: ivy-lsp canonical > hook_payload > IVY_SESSION_ID >
-    CLAUDE_SESSION_ID > CLAUDE_CODE_SESSION_ID > session file > "unknown"
+    Priority: hook_payload (canonical or local) > CLAUDE_SESSION_ID /
+    CLAUDE_CODE_SESSION_ID > IVY_SESSION_ID > /tmp/ivy-session-<ws_hash>.id
+    file scoped to the panther_ivy workspace root > "unknown".
+
+    Earlier revisions returned canonical's "unknown" verdict without
+    trying the local fallback chain; the panther_ivy workspace path
+    differs from os.getcwd() when the hook is spawned by the outer
+    Claude Code worktree, so canonical's cwd-based file lookup misses
+    a session-id file the SessionStart hook DID write at the panther_ivy
+    workspace root. We therefore fall through on "unknown" and consult
+    `get_workspace_root()` (which knows how to walk up to panther_ivy)
+    before giving up.
     """
     if _canonical_resolve is not None:
         try:
-            return _canonical_resolve(hook_payload=hook_input)
+            sid = _canonical_resolve(hook_payload=hook_input)
+            if sid and sid != "unknown":
+                return sid
         except Exception:
             pass
 
@@ -41,6 +53,18 @@ def resolve_session_id(hook_input: dict | None = None) -> str:
         value = os.environ.get(var, "").strip()
         if value:
             return value
+
+    try:
+        from ivy_lsp.infra.observability.session import _read_session_file
+        ws_root = get_workspace_root()
+        sid = _read_session_file(ws_root)
+        if sid:
+            return sid
+    except (ImportError, OSError):
+        # ImportError covers ivy-lsp not installed; OSError covers
+        # `os.getcwd()` failure inside `get_workspace_root()` (cwd unlinked,
+        # EACCES) and any unexpected I/O fall-through from `_read_session_file`.
+        pass
 
     return "unknown"
 
@@ -121,10 +145,20 @@ def read_active_workspace(state_path: str | None) -> str:
     return str(data.get("active_group", "") or "").strip()
 
 
-def get_mcp_health_state_path() -> str:
-    """Get the path to the MCP health state file for the current session."""
+def get_mcp_health_state_path(hook_input: dict | None = None) -> str:
+    """Get the path to the MCP health state file for the current session.
+
+    Args:
+        hook_input: Parsed hook stdin payload from the spawning Claude Code
+            event. When provided, ``hook_input["session_id"]`` is the
+            highest-priority source for the session id (matching canonical
+            resolver order). Without it, callers fall back to env vars and
+            the workspace-scoped session-id file, which is shared across
+            concurrent Claude Code sessions on the same workspace and can
+            therefore hold another session's id.
+    """
     ws_root = get_workspace_root()
-    sid = resolve_session_id()
+    sid = resolve_session_id(hook_input)
     state_dir = os.path.join(ws_root, ".observability", "sessions", sid)
     os.makedirs(state_dir, exist_ok=True)
     return os.path.join(state_dir, "mcp-health-state.json")
@@ -135,7 +169,7 @@ MAX_CONSECUTIVE_MCP_FAILURES = 3
 _MCP_HEALTH_STATE_TTL = 300  # Reset the circuit breaker after 5 min of no activity.
 
 
-def read_mcp_health_state() -> dict:
+def read_mcp_health_state(hook_input: dict | None = None) -> dict:
     """Read the MCP health state file under a shared fcntl lock.
 
     Returns a fresh defaults dict when the file is missing, unreadable,
@@ -145,10 +179,16 @@ def read_mcp_health_state() -> dict:
     and the caller's next write will overwrite it — the circuit breaker
     prefers self-healing over preserving a broken state across sessions.
 
+    Args:
+        hook_input: Threaded through to :func:`get_mcp_health_state_path`
+            so the per-session path matches the spawning hook's session id
+            even when env vars are unset and the shared session-id file
+            holds another session's value.
+
     Returns:
         A ``{"consecutive_failures": int, "last_update": float}`` dict.
     """
-    path = get_mcp_health_state_path()
+    path = get_mcp_health_state_path(hook_input)
     try:
         with open(path) as f:
             fcntl.flock(f, fcntl.LOCK_SH)
@@ -163,7 +203,7 @@ def read_mcp_health_state() -> dict:
         return {"consecutive_failures": 0, "last_update": time.time()}
 
 
-def write_mcp_health_state(state: dict) -> None:
+def write_mcp_health_state(state: dict, hook_input: dict | None = None) -> None:
     """Write the MCP health state file under an exclusive fcntl lock.
 
     Always stamps ``last_update`` before writing so the TTL-based
@@ -173,8 +213,10 @@ def write_mcp_health_state(state: dict) -> None:
     Args:
         state: Mutable dict written as JSON. ``last_update`` is set
             before writing; any caller-provided value is overwritten.
+        hook_input: Threaded through to :func:`get_mcp_health_state_path`
+            so the per-session path matches the spawning hook's session id.
     """
-    path = get_mcp_health_state_path()
+    path = get_mcp_health_state_path(hook_input)
     state["last_update"] = time.time()
     try:
         with open(path, "w") as f:
