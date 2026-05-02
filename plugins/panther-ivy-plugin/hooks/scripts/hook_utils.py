@@ -419,6 +419,98 @@ def emit_noop(event_name: str, reason: str) -> None:
     emit_hook_output(event_name, system_message=f"[ivy-noop] {reason}")
 
 
+def _hook_dedup_cache_path(hook_input: dict | None = None) -> Path | None:
+    """Return the per-session ``hook-dedup.json`` path or None on error.
+
+    Uses the same workspace + session-id resolution as the MCP health
+    state so the dedup cache lives next to the per-session circuit
+    breaker. Returns ``None`` when the directory chain can't be
+    resolved (degraded callers fall back to emitting unconditionally).
+    """
+    try:
+        ws_root = get_workspace_root()
+        sid = resolve_session_id(hook_input)
+        return Path(ws_root) / ".observability" / "sessions" / sid / "hook-dedup.json"
+    except (OSError, ValueError):
+        return None
+
+
+def emit_dedup(
+    event_name: str,
+    dedup_key: str,
+    *,
+    system_message: str,
+    hook_input: dict | None = None,
+    additional_context: str | None = None,
+    deny_reason: str | None = None,
+) -> None:
+    """Emit ``system_message`` only when it differs from the previous
+    emission for ``dedup_key`` in this session.
+
+    Suppresses chatter when the same hook fires repeatedly with the
+    same status line (the canonical case is the panther-ivy MCP
+    PreToolUse hooks firing on every ``ivy_workflow_state`` call).
+    State persists in ``.observability/sessions/<sid>/hook-dedup.json``
+    so suppression survives across hook process boundaries — every hook
+    invocation spawns a fresh Python process and would otherwise have
+    no way to compare against the previous emission.
+
+    Important: model-facing context (``additional_context``) and
+    blocking decisions (``deny_reason``) are NEVER deduplicated. The
+    model needs the context every call regardless of repetition, and a
+    blocking decision must always reach the runtime. Only the
+    ``system_message``-only path is suppressed.
+
+    Args:
+        event_name: Hook event name (passed through to :func:`emit_hook_output`).
+        dedup_key: Stable per-call-site identifier (typically the bracket
+            tag — ``"ivy-ready"`` / ``"ivy-health"``). Two emissions
+            sharing this key are duplicates iff their ``system_message``
+            is identical.
+        system_message: User-visible status line. Compared verbatim
+            against the cached value; any change re-fires the emission
+            and updates the cache.
+        hook_input: Threaded to :func:`_hook_dedup_cache_path` for
+            session resolution.
+        additional_context: Optional model-facing context. Forces
+            emission regardless of cache state.
+        deny_reason: Optional blocking reason. Forces emission and
+            never deduplicates.
+    """
+    if deny_reason is not None or additional_context is not None:
+        emit_hook_output(
+            event_name,
+            system_message=system_message,
+            additional_context=additional_context,
+            deny_reason=deny_reason,
+        )
+        return
+
+    cache_path = _hook_dedup_cache_path(hook_input)
+    cache: dict[str, str] = {}
+    if cache_path is not None and cache_path.exists():
+        try:
+            data = json.loads(cache_path.read_text())
+            if isinstance(data, dict):
+                cache = data
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    if cache.get(dedup_key) == system_message:
+        emit_noop(event_name, f"deduplicated ({dedup_key})")
+        return
+
+    cache[dedup_key] = system_message
+    if cache_path is not None:
+        try:
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_text(json.dumps(cache))
+        except OSError:
+            pass
+
+    emit_hook_output(event_name, system_message=system_message)
+
+
 def resolve_log_dir(session_id: str) -> str:
     """Determine the log directory for a session.
 
@@ -447,3 +539,52 @@ def resolve_sessions_dir() -> str:
     Uses the same 3-level fallback as ``resolve_log_dir``.
     """
     return os.path.dirname(resolve_log_dir("_"))
+
+
+def _session_activity_path() -> Path:
+    """Return the per-session activity flag path.
+
+    Path: ``${TMPDIR or /tmp}/claude-ivy/session-activity-<sid>.flag``.
+    When ``resolve_session_id()`` returns ``"unknown"``, the literal string
+    ``unknown`` is used so back-to-back writes within a broken-session-id
+    condition still cohere, but ``is_session_active()`` treats that path as
+    absent (fail-closed).
+    """
+    tmpdir = os.environ.get("TMPDIR", "/tmp")
+    sid = resolve_session_id()
+    return Path(tmpdir) / "claude-ivy" / f"session-activity-{sid}.flag"
+
+
+def mark_session_activity(signal: str) -> None:
+    """Touch the per-session activity flag. Idempotent. Safe under parallel hooks.
+
+    Args:
+        signal: Human-readable string describing what triggered the activity
+            mark (e.g. ``"skill:panther-ivy-plugin:ivy"``). Used only for the
+            optional diagnostic log; not read by ``is_session_active()``.
+    """
+    flag = _session_activity_path()
+    try:
+        flag.parent.mkdir(parents=True, exist_ok=True)
+        flag.touch(exist_ok=True)
+        if os.environ.get("IVY_SESSION_ACTIVITY_LOG") == "1":
+            import datetime
+            log = flag.parent / f"signals-{flag.stem.removeprefix('session-activity-')}.log"
+            entry = json.dumps({"ts": datetime.datetime.utcnow().isoformat(), "signal": signal})
+            with open(log, "a") as f:
+                f.write(entry + "\n")
+    except OSError:
+        pass
+
+
+def is_session_active() -> bool:
+    """Return True iff the per-session activity flag exists.
+
+    Fail-closed: returns False when ``resolve_session_id()`` returns
+    ``"unknown"`` so Stop hooks remain silent rather than producing
+    false-positive journal writes on sessions where the session ID could
+    not be resolved.
+    """
+    if resolve_session_id() == "unknown":
+        return False
+    return _session_activity_path().exists()
