@@ -157,3 +157,87 @@ class TestNoActiveYaml:
         out = run_hook(SCRIPT, payload={}, env=env_for(ws_root, cache_path))
         assert out["systemMessage"].startswith("[ivy-noop]")
         assert "no active-workflow YAML and no cache" in out["systemMessage"]
+
+
+class TestSeedFreshCache:
+    """Canonical YAML, no prior cache section -> seed (review-spawned coverage
+    for the formerly-uncovered first-time-session branch).
+    """
+
+    def test_canonical_yaml_no_prior_cache_seeds(
+        self, run_hook, tmp_path: Path, env_for
+    ):
+        ws_root, cache_path = _setup_workspace(tmp_path, workflow_value="scaffold")
+        out = run_hook(SCRIPT, payload={}, env=env_for(ws_root, cache_path))
+        cached = _read_cache(cache_path)
+        assert cached["workflow"]["name"] == "scaffold"
+        # T3 with sentinel <none> for the prior value.
+        assert "workflow: scaffold (was: <none>)" in out["systemMessage"]
+        assert "seeded" in out["systemMessage"]
+
+
+class TestLegacyNameNoPriorCache:
+    """Legacy YAML + no prior cache: nothing to clear; message must not claim
+    a clear happened (Important #2 from code review).
+    """
+
+    def test_legacy_yaml_no_prior_cache_does_not_claim_clear(
+        self, run_hook, tmp_path: Path, env_for
+    ):
+        ws_root, cache_path = _setup_workspace(
+            tmp_path, workflow_value="workflow-triage"
+        )
+        out = run_hook(SCRIPT, payload={}, env=env_for(ws_root, cache_path))
+        cached = _read_cache(cache_path)
+        assert "workflow" not in cached
+        assert "non-canonical workflow 'workflow-triage'" in out["systemMessage"]
+        assert "no cache section to clear" in out["systemMessage"]
+        # Must NOT claim a clear happened when none did.
+        assert "cleared cache section" not in out["systemMessage"]
+
+
+class TestMalformedInputs:
+    """Edge cases around malformed YAML / cache shapes (Minor #4 coverage)."""
+
+    def test_empty_workflow_string_emits_noop(
+        self, run_hook, tmp_path: Path, env_for
+    ):
+        ws_root, cache_path = _setup_workspace(tmp_path, workflow_value="")
+        out = run_hook(SCRIPT, payload={}, env=env_for(ws_root, cache_path))
+        assert out["systemMessage"].startswith("[ivy-noop]")
+        assert "missing 'workflow' field" in out["systemMessage"]
+
+    def test_cache_workflow_not_a_dict_treated_as_missing(
+        self, run_hook, tmp_path: Path, env_for
+    ):
+        ws_root, cache_path = _setup_workspace(tmp_path, workflow_value="scaffold")
+        # Pre-seed cache with a non-dict workflow value (shape corruption).
+        cache_path.write_text(json.dumps({"version": 1, "workflow": "scaffold"}))
+        out = run_hook(SCRIPT, payload={}, env=env_for(ws_root, cache_path))
+        cached = _read_cache(cache_path)
+        assert cached["workflow"]["name"] == "scaffold"  # rewritten as proper dict
+        # Treated as "no prior cache_workflow" -> seed branch fires.
+        assert "seeded" in out["systemMessage"]
+
+    def test_missing_workspace_emits_noop(
+        self, run_hook, tmp_path: Path, env_for
+    ):
+        # IVY_WORKSPACE_ROOT pointing at a dir without protocol-testing/.
+        # Pass cwd=ws_root explicitly so the cwd walk-up fallback in
+        # _resolve_workspace_root cannot land on the real worktree.
+        ws_root = tmp_path / "empty"
+        ws_root.mkdir()
+        cache_path = tmp_path / "cache_root" / "ws" / "statusline.json"
+        cache_path.parent.mkdir(parents=True)
+        env = {
+            "IVY_WORKSPACE_ROOT": str(ws_root),
+            "PANTHER_IVY_STATUSLINE_CACHE_PATH": str(cache_path),
+            "CLAUDE_PLUGIN_ROOT": str(PLUGIN_ROOT),
+        }
+        out = run_hook(SCRIPT, payload={}, env=env, cwd=ws_root)
+        assert out["systemMessage"].startswith("[ivy-noop]")
+        # Either workspace or protocol-dir branch — both legitimate outcomes.
+        assert (
+            "no panther_ivy workspace detected" in out["systemMessage"]
+            or "no protocol directory detected" in out["systemMessage"]
+        )
