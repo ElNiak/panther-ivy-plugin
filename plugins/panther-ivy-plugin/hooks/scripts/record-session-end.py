@@ -18,6 +18,7 @@ from hook_utils import emit_hook_output, emit_noop, read_stdin
 from workflow_state import (
     WorkflowContext,
     append_journal_event,
+    journal_path,
     rotate_journal,
 )
 
@@ -46,7 +47,10 @@ def main() -> None:
 
     emit_hook_output(
         "Stop",
-        system_message=f"[ivy-session] recorded clean={str(clean).lower()}",
+        system_message=(
+            f"[ivy-session] recorded clean={str(clean).lower()}; "
+            f"session_end appended to journal at {journal_path(ctx.protocol_dir)}"
+        ),
     )
 
 

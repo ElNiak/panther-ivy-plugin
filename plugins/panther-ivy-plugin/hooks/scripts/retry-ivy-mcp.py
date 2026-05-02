@@ -16,7 +16,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hook_utils import emit_hook_output, emit_noop, read_stdin
-from workflow_state import WorkflowContext, append_journal_event
+from workflow_state import WorkflowContext, append_journal_event, journal_path
 
 _ALLOWLIST = frozenset({
     "mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_status",
@@ -49,6 +49,10 @@ def main() -> None:
             phase=ctx.phase,
         )
 
+    journal_suffix = (
+        f"; mcp_retry appended to journal at {journal_path(ctx.protocol_dir)}"
+        if ctx is not None else ""
+    )
     emit_hook_output(
         "PostToolUseFailure",
         additional_context=(
@@ -58,7 +62,7 @@ def main() -> None:
             "a single retry is safe. If the retry also fails, apply the manual "
             "recovery pattern from the mcp-tool-reliability rule."
         ),
-        system_message=f"[ivy-retry] retried {short_name} after failure",
+        system_message=f"[ivy-retry] retried {short_name} after failure{journal_suffix}",
     )
 
 

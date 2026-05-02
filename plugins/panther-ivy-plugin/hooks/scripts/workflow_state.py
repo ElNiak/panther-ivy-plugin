@@ -23,6 +23,28 @@ _SCAFFOLD_STATE_FILE = "scaffold-state.yaml"
 _JOURNAL_FILE = "workflow-journal.yaml"
 _JOURNAL_ARCHIVE_DIR = "journal-archive"
 
+
+def journal_path(protocol_dir: str) -> str:
+    """Return the absolute path to the workflow journal for a protocol directory.
+
+    Hooks following the T2 (``appended to journal at <path>``) template
+    in ``output-style.md`` use this to cite the journal location in
+    their ``system_message``. Centralising the path construction keeps
+    every retrofit consistent and survives a future rename of the
+    journal filename.
+
+    Args:
+        protocol_dir: Absolute path to the protocol directory whose
+            ``.panther-ivy/`` subdirectory holds the workflow state files.
+
+    Returns:
+        Absolute path to ``<protocol_dir>/.panther-ivy/workflow-journal.yaml``.
+        The file may not exist yet; callers cite the path regardless
+        because it is the canonical location whether or not anything has
+        been appended.
+    """
+    return os.path.join(protocol_dir, STATE_DIR_NAME, _JOURNAL_FILE)
+
 OPS_SKILLS = frozenset({
     "scaffold-ops",
     "refine-ops",

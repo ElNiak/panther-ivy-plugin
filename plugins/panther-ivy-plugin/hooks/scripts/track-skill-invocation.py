@@ -36,7 +36,12 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hook_utils import emit_hook_output, emit_noop, read_stdin  # noqa: E402
 from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
-from workflow_state import OPS_SKILLS, WorkflowContext, append_journal_event  # noqa: E402
+from workflow_state import (  # noqa: E402
+    OPS_SKILLS,
+    WorkflowContext,
+    append_journal_event,
+    journal_path,
+)
 
 _PLUGIN_PREFIX = "panther-ivy-plugin:"
 
@@ -171,12 +176,19 @@ def main() -> None:
     ctx = WorkflowContext.current()
     if ctx is not None:
         _journal_skill_invocation(skill, ctx)
+    journal_suffix = (
+        f"; skill_invoked appended to journal at {journal_path(ctx.protocol_dir)}"
+        if ctx is not None else ""
+    )
 
     refs_dir = _references_dir(skill)
     if refs_dir is None:
         emit_hook_output(
             "PostToolUse",
-            system_message=f"[ivy-skill] {_short_name(skill)} loaded (no references/)",
+            system_message=(
+                f"[ivy-skill] {_short_name(skill)} loaded (no references/)"
+                f"{journal_suffix}"
+            ),
         )
         return
 
@@ -186,6 +198,7 @@ def main() -> None:
             "PostToolUse",
             system_message=(
                 f"[ivy-skill] {_short_name(skill)} loaded (empty references/)"
+                f"{journal_suffix}"
             ),
         )
         return
@@ -196,7 +209,7 @@ def main() -> None:
         system_message=(
             f"[ivy-skill] {_short_name(skill)} loaded "
             f"({files_loaded} ref{'s' if files_loaded != 1 else ''}, "
-            f"{len(payload)}B{overflow_tag})"
+            f"{len(payload)}B{overflow_tag}){journal_suffix}"
         ),
         additional_context=payload,
     )

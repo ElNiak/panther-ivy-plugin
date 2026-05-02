@@ -26,6 +26,7 @@ from workflow_state import (
     find_protocol_dir,
     get_active_workflow,
     get_scaffold_state_safe,
+    journal_path,
 )
 
 
@@ -132,9 +133,16 @@ def main() -> None:
             phase=state.get("phase"),
         )
 
+    journal_suffix = (
+        f"; gate_dispatched appended to journal at {journal_path(protocol_dir)}"
+        if protocol_dir else ""
+    )
     emit_hook_output(
         "PostToolUse",
-        system_message=f"[G5 trace-analysis gate] dispatched on run_id={artifacts.get('run_id', '<unknown>')}",
+        system_message=(
+            f"[G5 trace-analysis gate] dispatched on "
+            f"run_id={artifacts.get('run_id', '<unknown>')}{journal_suffix}"
+        ),
         additional_context=_build_directive(
             artifacts=artifacts,
             methodology=methodology,

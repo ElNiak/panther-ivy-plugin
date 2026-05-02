@@ -26,6 +26,7 @@ from workflow_state import (
     WorkflowContext,
     append_journal_event,
     get_scaffold_state_safe,
+    journal_path,
 )
 
 _ERROR_PATTERNS = [
@@ -126,7 +127,11 @@ def main() -> None:
         status_hint = "OK" if '"status":"OK"' in tool_result.replace(" ", "") else "FAIL"
         emit_hook_output(
             "PostToolUse",
-            system_message=f"[G4 verification gate] dispatched after ivy_verify ({status_hint}) on protocol={protocol}",
+            system_message=(
+                f"[G4 verification gate] dispatched after ivy_verify "
+                f"({status_hint}) on protocol={protocol}; "
+                f"gate_dispatched appended to journal at {journal_path(ctx.protocol_dir)}"
+            ),
             additional_context=_build_g4_directive(tool_result, protocol, methodology),
         )
     elif error_summary:

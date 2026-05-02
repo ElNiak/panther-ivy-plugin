@@ -352,10 +352,12 @@ def main() -> None:
         )
 
     status_protocol = active_group or "none"
+    env_file_target = os.environ.get("CLAUDE_ENV_FILE", "").strip()
+    env_suffix = f" Env file: {env_file_target}." if env_file_target else ""
     status_line = (
         f"[ivy-workspace] detected: {detected_root}. Active workspace: "
-        f"{status_protocol}. Invoke /panther-ivy-plugin:ivy or describe "
-        "your task in plain text."
+        f"{status_protocol}.{env_suffix} Invoke /panther-ivy-plugin:ivy "
+        "or describe your task in plain text."
     )
 
     _seed_statusline(detected_root, detected_type, active_group, mcp_status_text)

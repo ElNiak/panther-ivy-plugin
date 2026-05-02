@@ -43,6 +43,7 @@ from workflow_state import (
     WorkflowContext,
     append_journal_event,
     get_scaffold_state_safe,
+    journal_path,
 )
 
 _WATCHED_TOOLS = {"Edit", "Write", "NotebookEdit"}
@@ -123,7 +124,10 @@ def main() -> None:
 
     emit_hook_output(
         "PostToolUse",
-        system_message=f"[G3 test-spec gate] dispatched on {os.path.basename(file_path)}",
+        system_message=(
+            f"[G3 test-spec gate] dispatched on {os.path.basename(file_path)}; "
+            f"gate_dispatched appended to journal at {journal_path(ctx.protocol_dir)}"
+        ),
         additional_context=_build_directive(
             file_path=file_path,
             protocol=protocol,

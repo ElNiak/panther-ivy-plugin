@@ -17,6 +17,7 @@ from workflow_state import (
     find_protocol_dir,
     get_active_workflow,
     is_workflow_stale,
+    journal_path,
 )
 
 
@@ -57,7 +58,8 @@ def main() -> None:
             ),
             system_message=(
                 f"[ivy-cleanup] cleared stale workflow '{workflow_name}' "
-                f"(phase: {phase_name})"
+                f"(phase: {phase_name}); session_start appended to journal "
+                f"at {journal_path(protocol_dir)}"
             ),
         )
     else:
