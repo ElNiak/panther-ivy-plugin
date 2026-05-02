@@ -272,6 +272,33 @@ def update_sections_from_hook(sections: dict) -> None:
     update_sections(ws_root, sections)
 
 
+def read_section_from_hook(section: str) -> dict | None:
+    """Convenience reader: resolve workspace root and return a cache section.
+
+    Mirrors :func:`update_from_hook` for the read path. Used by hooks
+    that need to compare current state against the last-known statusline
+    value (e.g. the mid-session workspace-change hook computes
+    ``(was: <prev>)`` from this).
+
+    Args:
+        section: Cache section name (e.g. ``"workspace"``, ``"mcp"``).
+
+    Returns:
+        The section dict, or ``None`` when the workspace cannot be
+        resolved or the cache/section is missing or non-dict.
+    """
+    ws_root = _resolve_workspace_root()
+    if not ws_root:
+        return None
+    try:
+        path = cache_path_for(ws_root)
+        cache = _read_cache(path)
+        section_data = cache.get(section)
+        return section_data if isinstance(section_data, dict) else None
+    except Exception:
+        return None
+
+
 def clear_cache(workspace_root: str) -> None:
     """Delete the cache file for ``workspace_root``. Used for test setup."""
     try:
