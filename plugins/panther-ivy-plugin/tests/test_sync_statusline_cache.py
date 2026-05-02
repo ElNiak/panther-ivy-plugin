@@ -159,6 +159,38 @@ class TestNoActiveYaml:
         assert "no active-workflow YAML and no cache" in out["systemMessage"]
 
 
+class TestNoOpWhenCacheMatches:
+    """Cache value already equals canonical payload -> emit_noop, no rewrite
+    (efficiency: avoid fsync per fire on hot path).
+    """
+
+    def test_cache_already_matches_yaml_emits_noop(
+        self, run_hook, tmp_path: Path, env_for
+    ):
+        ws_root, cache_path = _setup_workspace(tmp_path, workflow_value="scaffold")
+        # Pre-seed cache with the EXACT canonical payload the hook would write.
+        _write_cache(
+            cache_path,
+            {
+                "name": "scaffold",
+                "phase": "init",
+                "invocation_depth": 0,
+                "caller": None,
+                "started": "2026-05-02T12:00:00+00:00",
+            },
+        )
+        before_mtime = cache_path.stat().st_mtime_ns
+        out = run_hook(SCRIPT, payload={}, env=env_for(ws_root, cache_path))
+        after_mtime = cache_path.stat().st_mtime_ns
+        assert out["systemMessage"].startswith("[ivy-noop]")
+        assert "already mirrors active-workflow (scaffold)" in out["systemMessage"]
+        # Strongest check: the cache file was NOT rewritten.
+        assert before_mtime == after_mtime, (
+            "cache file mtime changed despite no-op match; update_section "
+            "should be skipped when payload equals existing cache_workflow"
+        )
+
+
 class TestSeedFreshCache:
     """Canonical YAML, no prior cache section -> seed (review-spawned coverage
     for the formerly-uncovered first-time-session branch).

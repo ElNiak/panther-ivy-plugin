@@ -54,6 +54,7 @@ from hook_utils import (  # noqa: E402
     read_stdin,
 )
 from statusline_cache import (  # noqa: E402
+    _resolve_active_group,
     _resolve_workspace_root,
     cache_path_for,
     clear_section,
@@ -66,9 +67,17 @@ from workflow_state import (  # noqa: E402
 )
 
 
-def _read_cache_workflow(workspace_root: str) -> dict | None:
-    """Return the existing cache ``workflow`` section, or ``None``."""
-    path = cache_path_for(workspace_root)
+def _read_cache_workflow(
+    workspace_root: str,
+    active_group: str,
+) -> dict | None:
+    """Return the existing cache ``workflow`` section for this active_group.
+
+    The lookup is partition-scoped so a session in ``active_group=quic`` does
+    not see ``active_group=bgp``'s prior workflow value when computing the
+    ``(was: <prev>)`` chunk of the T3 banner.
+    """
+    path = cache_path_for(workspace_root, active_group)
     if not path.exists():
         return None
     try:
@@ -117,14 +126,20 @@ def main() -> None:
         )
         return
 
+    # Resolve the active panther-ivy protocol selection once per hook fire so
+    # every cache read/write below targets the same partition. When the user
+    # has not called `ivy_workspace(action="set", ...)` this returns
+    # `_DEFAULT_GROUP`, preserving the pre-partitioning behaviour.
+    active_group = _resolve_active_group(workspace_root)
+
     active = get_active_workflow(protocol_dir)
-    cache_workflow = _read_cache_workflow(workspace_root)
-    cache_path = cache_path_for(workspace_root)
+    cache_workflow = _read_cache_workflow(workspace_root, active_group)
+    cache_path = cache_path_for(workspace_root, active_group)
 
     if not active:
         if cache_workflow:
             prev_name = cache_workflow.get("name") or "<unknown>"
-            clear_section(workspace_root, "workflow")
+            clear_section(workspace_root, "workflow", active_group=active_group)
             emit_hook_output(
                 event_name,
                 additional_context=(
@@ -152,60 +167,59 @@ def main() -> None:
         return
 
     if yaml_workflow not in _KNOWN_WORKFLOWS:
-        cleared = cache_workflow is not None
-        if cleared:
-            clear_section(workspace_root, "workflow")
-        action_phrase = (
-            f"cleared cache section in {cache_path}"
-            if cleared
-            else "no cache section to clear"
+        migrate_hint = (
+            "Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/migrate_legacy_workflow.py` "
+            "to migrate legacy YAMLs to canonical names."
         )
-        ac_phrase = (
-            "section was cleared rather than render an unknown name"
-            if cleared
-            else "section is empty so nothing was rendered"
+        non_canonical_prefix = (
+            f"Active-workflow YAML at {protocol_dir}/.panther-ivy/active-workflow "
+            f"holds non-canonical name '{yaml_workflow}'."
         )
-        emit_hook_output(
+        if cache_workflow is not None:
+            clear_section(workspace_root, "workflow", active_group=active_group)
+            emit_hook_output(
+                event_name,
+                additional_context=(
+                    f"{non_canonical_prefix} The statusline 'workflow' section was "
+                    f"cleared rather than render an unknown name. {migrate_hint}"
+                ),
+                system_message=(
+                    f"[ivy-statusline] non-canonical workflow '{yaml_workflow}' detected; "
+                    f"cleared cache section in {cache_path}"
+                ),
+            )
+        else:
+            emit_hook_output(
+                event_name,
+                additional_context=(
+                    f"{non_canonical_prefix} The statusline 'workflow' section is empty "
+                    f"so nothing was rendered. {migrate_hint}"
+                ),
+                system_message=(
+                    f"[ivy-statusline] non-canonical workflow '{yaml_workflow}' detected; "
+                    "no cache section to clear"
+                ),
+            )
+        return
+
+    new_payload = {
+        "name": yaml_workflow,
+        "phase": str(active.get("phase", "init")),
+        "invocation_depth": int(active.get("invocation_depth", 0) or 0),
+        "caller": active.get("caller"),
+        "started": active.get("started"),
+    }
+
+    if cache_workflow == new_payload:
+        emit_noop(
             event_name,
-            additional_context=(
-                f"Active-workflow YAML at {protocol_dir}/.panther-ivy/active-workflow "
-                f"holds non-canonical name '{yaml_workflow}'. The statusline 'workflow' "
-                f"{ac_phrase}. Run "
-                "`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/migrate_legacy_workflow.py` to "
-                "migrate legacy YAMLs to canonical names."
-            ),
-            system_message=(
-                f"[ivy-statusline] non-canonical workflow '{yaml_workflow}' detected; "
-                f"{action_phrase}"
-            ),
+            f"statusline cache already mirrors active-workflow ({yaml_workflow})",
         )
         return
 
-    update_section(
-        workspace_root,
-        "workflow",
-        {
-            "name": yaml_workflow,
-            "phase": str(active.get("phase", "init")),
-            "invocation_depth": int(active.get("invocation_depth", 0) or 0),
-            "caller": active.get("caller"),
-            "started": active.get("started"),
-        },
-    )
+    update_section(workspace_root, "workflow", new_payload, active_group=active_group)
 
-    if cache_workflow and cache_workflow.get("name") != yaml_workflow:
-        emit_hook_output(
-            event_name,
-            additional_context=(
-                f"Statusline cache workflow synced "
-                f"'{cache_workflow.get('name')}' -> '{yaml_workflow}' in {cache_path}."
-            ),
-            system_message=(
-                f"[ivy-statusline] workflow: {yaml_workflow} "
-                f"(was: {cache_workflow.get('name')})"
-            ),
-        )
-    elif not cache_workflow:
+    if not cache_workflow:
         emit_hook_output(
             event_name,
             additional_context=(
@@ -217,9 +231,16 @@ def main() -> None:
             ),
         )
     else:
-        emit_noop(
+        prev_name = cache_workflow.get("name") or "<unknown>"
+        emit_hook_output(
             event_name,
-            f"statusline cache already mirrors active-workflow ({yaml_workflow})",
+            additional_context=(
+                f"Statusline cache workflow synced "
+                f"'{prev_name}' -> '{yaml_workflow}' in {cache_path}."
+            ),
+            system_message=(
+                f"[ivy-statusline] workflow: {yaml_workflow} (was: {prev_name})"
+            ),
         )
 
 
