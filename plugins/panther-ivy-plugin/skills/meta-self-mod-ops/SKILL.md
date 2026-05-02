@@ -15,7 +15,7 @@ Operating procedure for the `ivy-meta-agent`. Governs every change to `panther-i
 
 Plugin self-modification is bound by the local `PLUGIN_3LOOP` discipline declared inline below. The four file-targeted iron laws in `.claude/rules/iron-laws.md` (`NO_FIX_WITHOUT_VERIFY`, `NO_LAYER_WITHOUT_SCAFFOLD`, `NO_QUALITY_WITHOUT_COVERAGE`, `STALENESS_RULE`) bind `.ivy` / `.spec` work and do not apply to plugin-source modifications.
 
-<iron-law name="PLUGIN_3LOOP" workflow="meta" enforcement="implementer / spec-compliance-reviewer / plugin-conventions-reviewer dispatch per task; all three SOUND before ship">
+<iron-law name="PLUGIN_3LOOP" workflow="meta" enforcement="implementer / spec-compliance review / plugin-conventions review dispatch per task; all three SOUND before ship">
 
   <instructions>
   No plugin-source change ships without all three loops returning SOUND on
@@ -98,7 +98,7 @@ Returns SOUND / UNSOUND(#NN, reason, file:line) / ABSTAIN per the gate-verdict s
 
 #### Step 3 — Plugin-conventions review
 
-Dispatch the dedicated `plugin-conventions-reviewer` agent with `review_scope="plugin-conventions"` populated in the `<dispatch-context>` block. Sonnet tier, 90 s default budget. The reviewer audits the diff against plugin conventions:
+Dispatch `ivy-reviewer-agent` with `review_scope="plugin-conventions"` populated in the `<dispatch-context>` block — mirroring the spec-compliance pattern from Step 2 with a different scope. Opus tier, 180 s default budget. The reviewer audits the diff against plugin conventions:
 
 - `skill-conventions.md` §1–§7 (frontmatter, type, HARD-GATE, Red Flags, Process Flow, Step Tracking, CSO).
 - Three-layer split (agent owns capability contract, orchestrator owns usage intent, `agent-dispatch.md` owns fault handling).
@@ -108,9 +108,9 @@ Dispatch the dedicated `plugin-conventions-reviewer` agent with `review_scope="p
 - Cross-skill access via the `Skill` tool (no hardcoded paths into another skill's `references/`).
 
 ```
-Agent(subagent_type="panther-ivy-plugin:plugin-conventions-reviewer",
+Agent(subagent_type="panther-ivy-plugin:ivy-reviewer-agent",
       description="Plugin-conventions review of <task>",
-      prompt="<diff + plugin-conventions checklist>")
+      prompt="<diff + plugin-conventions checklist + review_scope=plugin-conventions>")
 ```
 
 Returns SOUND / UNSOUND(#NN, reason, file:line) / ABSTAIN.
@@ -138,7 +138,7 @@ The terminal state of meta-self-mod-ops is one of:
   reviewer.
 
 Do NOT ship plugin-source changes without all three loops SOUND. Bypassing
-is the convention drift the plugin-conventions-reviewer is designed to
+is the convention drift the plugin-conventions review scope is designed to
 catch.
 </HARD-GATE>
 
@@ -154,7 +154,7 @@ digraph meta_self_mod_flow {
   exit [shape=box, label="Exit; route to\nmatching specialist"];
   impl [shape=box, label="Step 1: Implementer\n(Explore, Sonnet)"];
   spec [shape=box, label="Step 2: Spec-compliance\n(ivy-reviewer-agent, Opus)"];
-  conv [shape=box, label="Step 3: Plugin-conventions\n(plugin-conventions-reviewer, Sonnet)"];
+  conv [shape=box, label="Step 3: Plugin-conventions\n(ivy-reviewer-agent / plugin-conventions, Opus)"];
   verdict [shape=diamond, label="All 3 SOUND?"];
   fix [shape=box, label="Implementer fixes\ncited issues"];
   gate [shape=box, label="completion-gate\nIDENTIFY -> RUN -> READ\n-> VERIFY -> THEN"];
@@ -181,10 +181,10 @@ The `spec` and `conv` reviewers run as parallel siblings of the implementer's di
 | Thought | Reality |
 |---|---|
 | "Quick fix, skip the loop." | Quick fixes are where convention drift accumulates. The 3-loop is the calibrated source of truth, not personal heuristic. |
-| "Implementer ran cleanly, ship it." | Implementer output is a candidate; spec-reviewer + plugin-conventions-reviewer verdicts are mandatory before claim. |
+| "Implementer ran cleanly, ship it." | Implementer output is a candidate; spec-compliance + plugin-conventions reviewer verdicts are mandatory before claim. |
 | "I'm the implementer + reviewer in one context." | Single-context dispatch loses the dual-context isolation that catches drift. Three context-isolated agents catch what one in-context Claude misses. |
 | "Plugin conventions are 'soft' guidelines." | The plugin-local `skill-conventions.md`, three-layer split, and audit doc make drift detectable. The PostToolUse hooks make it loud. |
-| "Both reviewers will say the same thing." | spec-compliance-reviewer audits change-vs-spec; plugin-conventions-reviewer audits change-vs-conventions. Different axes, different verdicts. |
+| "Both reviewers will say the same thing." | spec-compliance review scope audits change-vs-spec; plugin-conventions review scope audits change-vs-conventions. Different axes, different verdicts. |
 | "This file isn't really 'plugin source'." | If it lives under `skills/`, `agents/`, `hooks/`, `.claude/rules/`, `commands/`, `output-styles/`, or `plugin.json`, it is plugin source — run the loop. |
 
 ## Step Tracking
@@ -215,7 +215,7 @@ The two reviewer tasks share a single `addBlockedBy` on the implementer task —
 ## Integration
 
 - **Called by:** the `ivy` orchestrator when the user intent or PostToolUse path matches plugin-source globs (classified inline in the orchestrator dispatch table); never invoked by users directly.
-- **Calls:** generic `Explore` (implementer), `panther-ivy-plugin:ivy-reviewer-agent` (spec-compliance review), `panther-ivy-plugin:plugin-conventions-reviewer` (plugin-conventions review).
+- **Calls:** generic `Explore` (implementer), `panther-ivy-plugin:ivy-reviewer-agent` (dispatched twice: spec-compliance review and plugin-conventions review, with `review_scope` distinguishing).
 - **Inline patterns:** Completion gate (`Skill(skill="panther-ivy-plugin:ivy")` `references/completion-gate.md`) for final claim emission. Multi-Agent single-message dispatch (`Skill(skill="panther-ivy-plugin:ivy")` `references/parallel-dispatch.md`) when the two reviewer dispatches run as siblings.
 - **Cross-references:** `.claude/rules/agent-dispatch.md` (fault handling for any of the three dispatches); `.claude/rules/skill-conventions.md` (the audit checklist the plugin-conventions reviewer applies).
 - **MCP tool reliability:** N/A — this skill does not invoke MCP tools directly. Reviewers may invoke MCP tools; their failures follow `.claude/rules/mcp-tool-reliability.md`.

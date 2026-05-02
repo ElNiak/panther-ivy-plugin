@@ -30,7 +30,7 @@ Per `.claude/rules/journaling-contract.md` §1, this agent does NOT write the jo
   <field name="phase_context" required="true"
          example="Dispatched from ivy orchestrator — plugin-self-mod request"/>
   <field name="prior_findings" required="false"
-         example="plugin-conventions-reviewer flagged stale skill name in references/layer-scaffolding.md:32"/>
+         example="harness-audit flagged stale skill name in references/layer-scaffolding.md:32"/>
 </dispatch-context>
 
 Your operating procedure is preloaded from `skills/meta-self-mod-ops/SKILL.md` (via the `skills:` frontmatter chain). Do not duplicate procedure here; this file owns the agent capability contract only.
