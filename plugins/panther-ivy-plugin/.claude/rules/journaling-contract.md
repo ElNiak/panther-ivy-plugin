@@ -19,9 +19,11 @@ If the contract file is missing or unreadable, the injection hook exits with cod
 | `agents/ivy-{refiner,experimenter,builder,reviewer,triage,meta}-agent.md` | NO directly — invokes its preloaded ops-skill which writes | NO directly |
 | `agents/g-{plan,fidelity,knowledge}-critic.md` | NO — returns `VERDICT_*` (or `KEEP/DROP/DEFER` for `g-knowledge-critic`); the orchestrator writes `gate_verdict` after aggregation | NO |
 | `commands/{nct-health,nct-iut-test}.md` | YES via the underlying ops-skill (triage / experiment) | YES via the underlying ops-skill |
-| Hook scripts | YES — `session_start` (`cleanup-stale-workflow.py`), `gate_dispatched` (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, `record-workflow-error.py` for G4), `error` (`record-workflow-error.py`), `progress{kind: mcp_retry}` (`retry-ivy-mcp.py`) | `cleanup-stale-workflow.py` clears stale; no other hook writes |
+| Hook scripts | YES — `session_start` (`cleanup-stale-workflow.py`, only on actual resume or stale-clear), `gate_dispatched` (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, `record-workflow-error.py` for G4), `error` (`record-workflow-error.py`), `progress{kind: mcp_retry}` (`retry-ivy-mcp.py`) | `cleanup-stale-workflow.py` clears stale; no other hook writes |
 
 `progress{kind: fix_attempt}` is written by `refine-ops/SKILL.md` Phase 7 (the fix-attempt counter loop), not by a hook. Attribution matters when grepping the journal for diagnostic context.
+
+Several Stop-hook readers (`record-session-end.py`, `render-summary.py` main, `render-summary.audit_journal`) gate their output on a **per-session activity flag** (see §11). When the flag is absent, those hooks emit the one-line confirmation `[ivy-session] no ivy activity this session — skipping summary` and return without journal writes or lint output. The activity flag is **not** a journal event; it is a side-channel state file documented in §11.
 
 ## 2. Per-turn lifecycle (decision tree)
 
@@ -64,7 +66,7 @@ The list below is closed. Adding a new event type requires editing `_VALID_EVENT
 
 | Event type | Required fields | Optional fields | Writer |
 |---|---|---|---|
-| `session_start` | `resumed_from` (str or null) | `stale_cleared` (bool) | `cleanup-stale-workflow.py` |
+| `session_start` | `resumed_from` (str or null) | `stale_cleared` (bool) | `cleanup-stale-workflow.py` — written **only** on actual resume (non-stale active workflow present) or stale-clear; **not** on idle session start (no active workflow). |
 | `session_end` | `reason` (str) | — | `record-session-end.py` |
 | `phase_transition` | `from` (str), `to` (str) | — | ops-skill at phase boundary |
 | `decision` | `summary` (str), `context` (str) | — | ops-skill on user-driven choice |
@@ -258,3 +260,47 @@ Regeneration is idempotent: re-running on identical state produces an identical 
 - **PROJECT.md absent or unreadable** — orchestrator's warm-resume path treats this as `mode=idle` and falls through to cold-start. Recoverable by re-running the bootstrap script.
 - **Schema validation failure** — `load_project_md` raises `ProjectMdSchemaError`; the orchestrator falls back to cold-start. Recoverable by re-running `render-project-md.py` (which writes a fresh validated frontmatter).
 - **Concurrent regen** — same sequential-write assumption as §4.2. Two workflow_state writes racing would race the regeneration hook, but the journal is the source of truth so the eventual roll-up converges.
+
+## 11. Session-activity flag
+
+The session-activity flag is a side-channel state file that answers the question "did the user actually touch Ivy in this session?" without reading the journal or inspecting git history. It is separate from the journal and from the active-workflow YAML.
+
+### 11.1 Location and format
+
+```
+${TMPDIR}/claude-ivy/session-activity-<resolved_session_id>.flag
+```
+
+- The session ID is resolved via `resolve_session_id()` from `hook_utils.py` (same helper used by `render-summary.py` and `gather_tool_metrics()`).
+- The file is empty. Existence is the signal; content is not read.
+- When `resolve_session_id()` returns `"unknown"`, `is_session_active()` returns **False** (fail-closed). Writers still touch a `session-activity-unknown.flag` path for back-to-back coherence within a broken-session-id condition, but readers in Stop hooks treat that path as absent.
+- Lifetime: created on first signal; deleted by OS `${TMPDIR}` cleanup (no manual GC). Sessions spanning a `${TMPDIR}` cleanup boundary lose the flag mid-session and will see the one-line confirmation at Stop — a known, accepted limitation (sessions rarely span days).
+
+### 11.2 Writers (4 sites)
+
+| Hook | Signal | When |
+|---|---|---|
+| `track-skill-invocation.py` | `skill:<full-prefixed-name>` | Any `panther-ivy-plugin:*` skill invoked (knowledge skills included) |
+| `post-write-ivy-lint.py` | `file:<path>` | Any `.ivy` file written or edited |
+| `mark-mcp-activity.py` | `mcp:<tool_name>` | Any `mcp__plugin_panther-ivy-plugin_*` tool call (broad matcher covers workspace, workflow_state, status, and all testing tools) |
+| `post-write-workflow-aware.py` | `agent:<subagent_type>` | Specialist-agent dispatch (`ivy-{refiner,experimenter,builder,reviewer,triage,meta}-agent`); critic agents (`g-*-critic`) do **not** flip the flag |
+
+All writes are idempotent: `Path.touch(exist_ok=True)` is atomic on POSIX, safe under parallel-firing PostToolUse hooks.
+
+### 11.3 Readers (Stop hooks)
+
+| Hook | Behavior when flag absent | Behavior when flag present |
+|---|---|---|
+| `record-session-end.py` | Emits `[ivy-noop] no ivy activity this session — skipping summary` and returns; no journal write. | Three-way dispatch on `WorkflowContext.current()`: (a) non-None → appends `session_end` + rotates journal + emits T2 message; (b) None → emits `[ivy-noop] activity recorded; no orchestrator workflow — skipping journal append`. |
+| `render-summary.py` main | Emits `[ivy-noop] no ivy activity this session` and returns. | Proceeds to `find_modified_ivy_files()` (path-scoped); if no files, another noop; else builds and emits the session summary. |
+| `render-summary.audit_journal` | Returns `[]` immediately (no "no journal entries" warning). | Proceeds with the existing journal-gap checks. |
+
+### 11.4 Relationship to the journal
+
+The activity flag is **not** a journal event. It lives in `${TMPDIR}`, not in `.panther-ivy/`. It is not read by the orchestrator, not included in `journal_pointer` computations, and not archived by `rotate_journal`. It is purely a Stop-hook gate to prevent false-positive output in non-Ivy sessions.
+
+Debuggers looking for "why did no summary appear at Stop?" should check: (a) `ls ${TMPDIR}/claude-ivy/` for the expected flag file, and (b) that the session ID resolved correctly (non-`unknown`).
+
+### 11.5 Optional diagnostic log
+
+When `IVY_SESSION_ACTIVITY_LOG=1` is set, `mark_session_activity()` appends a JSONL line to a sibling `signals-<session_id>.log` file recording `{"ts": "<iso>", "signal": "<signal>"}`. This file is not read by any gate logic; it exists only for debugging signal provenance.
