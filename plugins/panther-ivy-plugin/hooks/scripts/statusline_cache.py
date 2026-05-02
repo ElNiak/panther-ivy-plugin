@@ -212,6 +212,43 @@ def update_section(workspace_root: str, section: str, data: dict) -> None:
         pass
 
 
+def clear_section(workspace_root: str, section: str) -> None:
+    """Remove ``section`` from the workspace's statusline cache.
+
+    Hooks use this when they want a section to fall back to the cold-start
+    visual (no key set → renderer shows the dim ``?`` or skips the segment)
+    without wiping the entire cache (which :func:`clear_cache` does and
+    which would lose unrelated keys like ``workspace`` and ``active_skill``).
+
+    No-op when the cache file does not yet exist or already lacks the
+    section. Acquires the same sibling lockfile as :func:`update_section`
+    so a concurrent writer in a different hook cannot race a partial read.
+
+    Args:
+        workspace_root: Absolute path to the Ivy workspace root.
+        section: Top-level cache key to remove.
+    """
+    if not workspace_root or not section:
+        return
+    try:
+        path = cache_path_for(workspace_root)
+        if not path.exists():
+            return
+
+        def _apply() -> None:
+            cache = _read_cache(path)
+            if section not in cache:
+                return
+            del cache[section]
+            cache["version"] = CACHE_VERSION
+            _atomic_write(path, cache)
+
+        _with_cache_lock(path, _apply)
+    except Exception:
+        # Statusline cache is best-effort; never let it break a hook.
+        pass
+
+
 def _resolve_workspace_root() -> str:
     """Resolve the panther_ivy directory without importing hook_utils.
 
