@@ -20,7 +20,6 @@ and outcome. Always exits 0.
 
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 import sys
@@ -29,24 +28,13 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hook_utils import (  # noqa: E402
     emit_hook_output,
+    read_active_workspace,
     read_stdin,
     resolve_workspace_state_path,
 )
+from project_md_state import resolve_protocol_dir  # noqa: E402
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[2]
-
-
-def _read_active_group(state_path: str | None) -> str:
-    """Return the active workspace name from .ivy-workspace-state.json, or empty."""
-    if state_path is None:
-        return ""
-    try:
-        data = json.loads(Path(state_path).read_text())
-    except (OSError, json.JSONDecodeError):
-        return ""
-    if not isinstance(data, dict):
-        return ""
-    return str(data.get("active_group", "") or "")
 
 
 def main() -> int:
@@ -57,7 +45,7 @@ def main() -> int:
         return 0
 
     cwd = os.getcwd()
-    workspace = _read_active_group(resolve_workspace_state_path(cwd))
+    workspace = read_active_workspace(resolve_workspace_state_path(cwd))
     if not workspace:
         emit_hook_output(
             "PostToolUse",
@@ -65,7 +53,7 @@ def main() -> int:
         )
         return 0
 
-    protocol_dir = Path(cwd) / "protocol-testing" / workspace
+    protocol_dir = resolve_protocol_dir(Path(cwd), workspace)
     if not protocol_dir.is_dir():
         emit_hook_output(
             "PostToolUse",

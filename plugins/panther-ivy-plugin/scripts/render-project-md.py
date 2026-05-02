@@ -22,10 +22,18 @@ import yaml
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
-from project_md_state import write_project_md  # noqa: E402
+from project_md_state import (  # noqa: E402
+    _VALID_IUT_VERDICT,
+    _VALID_VERIFY_STATUS,
+    resolve_project_md_path,
+    write_project_md,
+)
 
 _PHASE_TRANSITION_TYPES = {"phase_transition"}
 _GATE_TYPES = {"gate_verdict"}
+# Subset of project_md_state._VALID_MODES — excludes "idle" because idle is
+# the fallback when no transition exists, not a workflow that gets recorded
+# in the journal as a phase_transition.workflow value.
 _MODE_FROM_WORKFLOW = {"scaffold", "refine", "experiment"}
 
 
@@ -109,23 +117,22 @@ def derive_state(protocol_dir: Path) -> Dict[str, Any]:
         mode = "idle"
         phase = 0
 
+    last_verify_status = (g4 or {}).get("verdict") if g4 else None
+    if last_verify_status not in _VALID_VERIFY_STATUS:
+        last_verify_status = "NOT_RUN"
     last_verify = {
-        "status": (g4 or {}).get("verdict", "NOT_RUN") if g4 else "NOT_RUN",
+        "status": last_verify_status,
         "timestamp": (g4 or {}).get("timestamp"),
         "isolate": (g4 or {}).get("isolate"),
     }
-    if last_verify["status"] not in {"SAT", "UNSAT", "NOT_RUN"}:
-        last_verify["status"] = "NOT_RUN"
 
     last_iut_run: Optional[Dict[str, Any]] = None
-    if g5:
-        verdict = g5.get("verdict")
-        if verdict in {"NO_VIOLATION_FOUND", "NON_COMPLIANT", "TESTER_CRASH", "IUT_CRASH"}:
-            last_iut_run = {
-                "iut": g5.get("iut"),
-                "verdict": verdict,
-                "timestamp": g5.get("timestamp"),
-            }
+    if g5 and g5.get("verdict") in _VALID_IUT_VERDICT:
+        last_iut_run = {
+            "iut": g5.get("iut"),
+            "verdict": g5.get("verdict"),
+            "timestamp": g5.get("timestamp"),
+        }
 
     return {
         "protocol": protocol_dir.name,
@@ -160,11 +167,9 @@ def main() -> int:
         return 2
 
     state = derive_state(protocol_dir)
-    write_project_md(protocol_dir / "PROJECT.md", state)
-    print(
-        f"wrote {protocol_dir / 'PROJECT.md'} "
-        f"(mode={state['mode']}, phase={state['phase']})"
-    )
+    target = resolve_project_md_path(protocol_dir)
+    write_project_md(target, state)
+    print(f"wrote {target} (mode={state['mode']}, phase={state['phase']})")
     return 0
 
 

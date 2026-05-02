@@ -12,6 +12,26 @@ from typing import Any, Dict, FrozenSet
 
 import yaml
 
+_PROTOCOL_TESTING_DIR = "protocol-testing"
+_PROJECT_MD_NAME = "PROJECT.md"
+
+
+def resolve_protocol_dir(root: Path, protocol: str) -> Path:
+    """Return the absolute path to ``<root>/protocol-testing/<protocol>/``.
+
+    Centralised so render-project-md.py, the PostToolUse hook, the
+    statusline segment, and the bootstrap migration all converge on the
+    same path. ``protocol`` is taken verbatim from the workspace state
+    (``active_group``) without further normalization.
+    """
+    return root / _PROTOCOL_TESTING_DIR / protocol
+
+
+def resolve_project_md_path(protocol_dir: Path) -> Path:
+    """Return the absolute path to ``<protocol_dir>/PROJECT.md``."""
+    return protocol_dir / _PROJECT_MD_NAME
+
+
 PROJECT_MD_KEYS: FrozenSet[str] = frozenset(
     {
         "protocol",

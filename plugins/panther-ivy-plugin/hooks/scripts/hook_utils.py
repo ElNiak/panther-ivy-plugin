@@ -13,6 +13,7 @@ import json
 import os
 import sys
 import time
+from pathlib import Path
 try:
     from ivy_lsp.infra.observability.session import resolve_session_id as _canonical_resolve
 except ImportError:
@@ -90,6 +91,34 @@ def resolve_workspace_state_path(detected_root: os.PathLike[str] | str) -> str |
         if os.path.isfile(path):
             return path
     return None
+
+
+def read_active_workspace(state_path: str | None) -> str:
+    """Read the active workspace name from the workspace-state JSON file.
+
+    Centralised so every reader (notify-workspace-change.py, the
+    PROJECT.md PostToolUse hook, the statusline segment) converges on
+    the same parser. Returns the empty string when the file is missing,
+    unparseable, or has no ``active_group`` set — callers that need to
+    distinguish "no workspace" from "parse error" can do their own read.
+
+    Args:
+        state_path: Path returned by :func:`resolve_workspace_state_path`,
+            or None when no candidate state file exists. Both inputs map
+            to the empty string.
+
+    Returns:
+        The active workspace name, or ``""`` when no workspace is set.
+    """
+    if state_path is None:
+        return ""
+    try:
+        data = json.loads(Path(state_path).read_text())
+    except (OSError, json.JSONDecodeError):
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    return str(data.get("active_group", "") or "").strip()
 
 
 def get_mcp_health_state_path() -> str:

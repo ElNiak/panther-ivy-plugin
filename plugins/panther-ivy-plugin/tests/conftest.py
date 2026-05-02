@@ -96,3 +96,68 @@ def run_hook():
         return json.loads(proc.stdout) if proc.stdout.strip() else {}
 
     return _run_hook
+
+
+@pytest.fixture
+def project_md_idle_state():
+    """Return a callable producing a fresh PROJECT.md idle state dict.
+
+    Consolidates the per-file ``_idle_state`` helpers across
+    ``test_project_md_state.py``, ``test_render_mode_phase.py``, and the
+    bootstrap migration tests. Each call returns a new dict so tests can
+    mutate freely without bleeding into each other.
+    """
+
+    def _make(protocol: str = "bgp", version: str = "rfc4271") -> dict:
+        return {
+            "protocol": protocol,
+            "version": version,
+            "mode": "idle",
+            "phase": 0,
+            "journal_pointer": ".panther-ivy/workflow-journal.yaml#null",
+            "last_verify": {"status": "NOT_RUN", "timestamp": None, "isolate": None},
+            "rfc_sections_covered": [],
+            "open_counterexamples": [],
+            "last_iut_run": None,
+            "deferred_layers": [],
+        }
+
+    return _make
+
+
+@pytest.fixture
+def seed_workspace_state():
+    """Return a callable that writes ``.ivy-workspace-state.json`` under a root.
+
+    Consolidates the per-file ``_seed_workspace_state`` helpers used by the
+    PROJECT.md hook + statusline tests.
+    """
+
+    def _seed(root, active_group: str) -> None:
+        from pathlib import Path
+
+        state_path = Path(root) / ".ivy-workspace-state.json"
+        state_path.write_text(json.dumps({"active_group": active_group}))
+
+    return _seed
+
+
+@pytest.fixture
+def seed_journal():
+    """Return a callable that writes ``.panther-ivy/workflow-journal.yaml``.
+
+    Consolidates the per-file ``_seed_journal`` helpers used by the
+    render-project-md and PROJECT.md hook tests.
+    """
+    import yaml
+
+    def _seed(protocol_dir, events: list) -> None:
+        from pathlib import Path
+
+        panther_dir = Path(protocol_dir) / ".panther-ivy"
+        panther_dir.mkdir(parents=True, exist_ok=True)
+        (panther_dir / "workflow-journal.yaml").write_text(
+            yaml.safe_dump({"events": events})
+        )
+
+    return _seed

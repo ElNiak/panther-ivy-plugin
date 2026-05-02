@@ -22,7 +22,6 @@ any segment exits non-zero.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 from pathlib import Path
@@ -31,7 +30,13 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
-from project_md_state import load_project_md, ProjectMdSchemaError  # noqa: E402
+from hook_utils import read_active_workspace  # noqa: E402
+from project_md_state import (  # noqa: E402
+    ProjectMdSchemaError,
+    load_project_md,
+    resolve_project_md_path,
+    resolve_protocol_dir,
+)
 
 _PHASE_NAMES = {
     1: "RFC ingest",
@@ -56,35 +61,20 @@ def _resolve_root(arg_root: Path | None) -> Path:
     return Path.cwd()
 
 
-def _active_workspace(root: Path) -> str | None:
-    state_path = root / ".ivy-workspace-state.json"
-    if not state_path.exists():
-        return None
-    try:
-        data = json.loads(state_path.read_text())
-    except (OSError, json.JSONDecodeError):
-        return None
-    if not isinstance(data, dict):
-        return None
-    workspace = str(data.get("active_group", "") or "").strip()
-    return workspace or None
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render Mode/Phase statusline segment.")
     parser.add_argument("--root", type=Path, default=None)
     args = parser.parse_args()
 
     root = _resolve_root(args.root)
-    workspace = _active_workspace(root)
+    state_path = root / ".ivy-workspace-state.json"
+    workspace = read_active_workspace(str(state_path) if state_path.exists() else None)
     if not workspace:
         return 0
-    project_md = root / "protocol-testing" / workspace / "PROJECT.md"
-    if not project_md.exists():
-        return 0
+    project_md = resolve_project_md_path(resolve_protocol_dir(root, workspace))
     try:
         state = load_project_md(project_md)
-    except ProjectMdSchemaError:
+    except (OSError, ProjectMdSchemaError):
         return 0
     if state["mode"] == "idle":
         return 0
