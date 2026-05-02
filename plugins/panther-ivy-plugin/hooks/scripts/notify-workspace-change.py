@@ -68,14 +68,25 @@ def main() -> None:
         )
         return
 
-    cache_section = statusline_cache.read_section_from_hook("workspace") or {}
+    # The `workspace.protocol` section tracks "what was the last-seen
+    # active group" — it's cross-protocol metadata, not per-protocol state.
+    # Pin it to the `default` partition explicitly so the diff against
+    # `new_group` is correct across switches: writing it to whatever
+    # partition `_resolve_active_group()` returns would store the value
+    # under the *new* group's bucket and lose visibility of the prior one.
+    cache_section = (
+        statusline_cache.read_section_from_hook("workspace", active_group="default")
+        or {}
+    )
     prev_group = str(cache_section.get("protocol", "") or "")
 
     if prev_group == new_group:
         emit_noop("PostToolUse", "workspace unchanged")
         return
 
-    statusline_cache.update_from_hook("workspace", {"protocol": new_group})
+    statusline_cache.update_from_hook(
+        "workspace", {"protocol": new_group}, active_group="default"
+    )
 
     new_label = new_group or "(none)"
     prev_label = prev_group or "(none)"

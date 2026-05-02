@@ -23,8 +23,34 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop, file_contains, is_pid_alive  # noqa: E402
+from hook_utils import (  # noqa: E402
+    emit_dedup,
+    emit_hook_output,
+    emit_noop,
+    file_contains,
+    is_pid_alive,
+    read_stdin,
+)
+from statusline_cache import (  # noqa: E402
+    _resolve_active_group,
+    _resolve_workspace_root,
+)
 from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
+
+
+def _active_group() -> str | None:
+    """Resolve the active ``ivy_workspace`` selection for partition routing.
+
+    Returns the group from ``<workspace_root>/.ivy-workspace-state.json``
+    so the ``lsp`` cache segment lands in the partition the renderer is
+    reading. Returns ``None`` (which the cache layer maps to ``default``)
+    when the workspace cannot be resolved or no selection is set. The
+    underlying LSP server is workspace-shared but the rendered ``lsp``
+    segment is per-protocol; a brief flicker on ``ivy_workspace`` switches
+    is expected — the next ready probe re-populates the new partition.
+    """
+    ws = _resolve_workspace_root()
+    return _resolve_active_group(ws) if ws else None
 
 _MCP_LOG = Path(os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log"))
 _LSP_LOG = Path(os.environ.get("IVY_LSP_LOG_PATH", "/tmp/ivy-lsp-lsp-latest.log"))
@@ -86,12 +112,14 @@ def _reset_deny() -> None:
         )
 
 
-def _emit_ready(reason: str) -> None:
+def _emit_ready(reason: str, hook_input: dict | None = None) -> None:
     _reset_deny()
-    _statusline_update("lsp", {"status": "ready"})
-    emit_hook_output(
+    _statusline_update("lsp", {"status": "ready"}, active_group=_active_group())
+    emit_dedup(
         "PreToolUse",
+        "ivy-ready",
         system_message=f"[ivy-ready] {reason}",
+        hook_input=hook_input,
     )
 
 
@@ -161,20 +189,22 @@ def _signal_mcp_ready() -> bool:
 
 
 def main() -> None:
+    hook_input = read_stdin()
+
     if _signal_lsp_indexed():
-        _emit_ready("LSP Phase 1 indexing finished")
+        _emit_ready("LSP Phase 1 indexing finished", hook_input=hook_input)
         return
 
     if _signal_offline_index():
-        _emit_ready("offline index present")
+        _emit_ready("offline index present", hook_input=hook_input)
         return
 
     if _signal_mcp_prepopulated():
-        _emit_ready("MCP prepopulated from offline index")
+        _emit_ready("MCP prepopulated from offline index", hook_input=hook_input)
         return
 
     if _signal_mcp_ready():
-        _emit_ready("MCP-READY sentinel observed")
+        _emit_ready("MCP-READY sentinel observed", hook_input=hook_input)
         return
 
     # --- Not ready: classify and surface ---
@@ -184,7 +214,7 @@ def main() -> None:
         if lsp_age < _INDEXING_GRACE_S:
             deny_count = _increment_deny()
             if deny_count > _DENY_THRESHOLD:
-                _statusline_update("lsp", {"status": "ready"})
+                _statusline_update("lsp", {"status": "ready"}, active_group=_active_group())
                 emit_hook_output(
                     "PreToolUse",
                     system_message=(
@@ -200,7 +230,7 @@ def main() -> None:
                 )
                 return
 
-            _statusline_update("lsp", {"status": "indexing"})
+            _statusline_update("lsp", {"status": "indexing"}, active_group=_active_group())
             emit_hook_output(
                 "PreToolUse",
                 system_message=(

@@ -28,12 +28,32 @@ from typing import Any
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from hook_utils import (
     MAX_CONSECUTIVE_MCP_FAILURES,
+    emit_dedup,
     emit_hook_output,
     read_mcp_health_state,
     read_stdin,
     write_mcp_health_state,
 )
+from statusline_cache import (
+    _resolve_active_group,
+    _resolve_workspace_root,
+)
 from statusline_cache import update_from_hook as _statusline_update
+
+
+def _active_group() -> str | None:
+    """Resolve the active ``ivy_workspace`` selection for partition routing.
+
+    Returns the value found in ``<workspace_root>/.ivy-workspace-state.json``
+    so the ``mcp`` cache segment lands in the partition the renderer is
+    reading. Returns ``None`` (which the cache layer treats as ``default``)
+    when the workspace cannot be resolved or no selection is set. The
+    underlying MCP server is workspace-shared but the rendered ``mcp``
+    segment is per-protocol; a brief flicker on ``ivy_workspace`` switches
+    is expected — the next health probe re-populates the new partition.
+    """
+    ws = _resolve_workspace_root()
+    return _resolve_active_group(ws) if ws else None
 
 _STALE_PORT_AGE = 120  # Port file older than 2 min with no TCP → stale
 _PID_DIR = "/tmp/ivy-lsp-pids"
@@ -271,16 +291,20 @@ def main():
         if state["consecutive_failures"] > 0:
             state["consecutive_failures"] = 0
             write_mcp_health_state(state, hook_input)
-        _statusline_update("mcp", {"status": "up"})
-        _emit_health(liveness_ok=True, state=state)
+        _statusline_update("mcp", {"status": "up"}, active_group=_active_group())
+        _emit_health(liveness_ok=True, state=state, hook_input=hook_input)
         return
 
     if pid_result is False:
         # MCP process is dead — definitive failure
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
         write_mcp_health_state(state, hook_input)
-        _statusline_update("mcp", {"status": "down", "last_error": "pid-check-failed"})
-        _emit_health(liveness_ok=False, state=state)
+        _statusline_update(
+            "mcp",
+            {"status": "down", "last_error": "pid-check-failed"},
+            active_group=_active_group(),
+        )
+        _emit_health(liveness_ok=False, state=state, hook_input=hook_input)
         return
 
     # --- Tier 2: TCP sidecar fallback (only when no PID files) ---
@@ -289,16 +313,20 @@ def main():
         if state["consecutive_failures"] > 0:
             state["consecutive_failures"] = 0
             write_mcp_health_state(state, hook_input)
-        _statusline_update("mcp", {"status": "up"})
-        _emit_health(liveness_ok=True, state=state)
+        _statusline_update("mcp", {"status": "up"}, active_group=_active_group())
+        _emit_health(liveness_ok=True, state=state, hook_input=hook_input)
         return
 
     if tcp_result is False:
         # Fresh port file but sidecar not responding — definitive failure
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
         write_mcp_health_state(state, hook_input)
-        _statusline_update("mcp", {"status": "down", "last_error": "tcp-unreachable"})
-        _emit_health(liveness_ok=False, state=state)
+        _statusline_update(
+            "mcp",
+            {"status": "down", "last_error": "tcp-unreachable"},
+            active_group=_active_group(),
+        )
+        _emit_health(liveness_ok=False, state=state, hook_input=hook_input)
         return
 
     # tcp_result is None — no sidecar expected (stdio mode) or stale port cleaned
@@ -307,12 +335,25 @@ def main():
     if state["consecutive_failures"] > 0:
         state["consecutive_failures"] = 0
         write_mcp_health_state(state, hook_input)
-    _statusline_update("mcp", {"status": "up"})
+    _statusline_update("mcp", {"status": "up"}, active_group=_active_group())
     _emit_health(liveness_ok=True, state=state)
 
 
-def _emit_health(*, liveness_ok: bool, state: dict[str, Any]) -> None:
-    """Emit the canonical hook envelope for the current health snapshot."""
+def _emit_health(
+    *,
+    liveness_ok: bool,
+    state: dict[str, Any],
+    hook_input: dict | None = None,
+) -> None:
+    """Emit the canonical hook envelope for the current health snapshot.
+
+    Uses :func:`emit_dedup` for the non-blocking path so identical
+    summary lines emitted on consecutive ``mcp__.*ivy`` tool calls are
+    suppressed (the user's complaint about chatter). The blocking path
+    (consecutive failures threshold reached) bypasses dedup — a deny
+    decision must always reach the runtime, and a degraded-state hint
+    must always reach the model.
+    """
     summary, hint = _build_health_summary(liveness_ok)
     failures = state.get("consecutive_failures", 0)
 
@@ -329,9 +370,11 @@ def _emit_health(*, liveness_ok: bool, state: dict[str, Any]) -> None:
         )
         return
 
-    emit_hook_output(
+    emit_dedup(
         "PreToolUse",
+        "ivy-health",
         system_message=summary,
+        hook_input=hook_input,
         additional_context=hint,
     )
 

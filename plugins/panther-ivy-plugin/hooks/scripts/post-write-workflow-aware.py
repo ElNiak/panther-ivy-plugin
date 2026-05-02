@@ -18,9 +18,26 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
 from hook_utils import emit_hook_output, emit_noop, mark_session_activity, read_stdin
+from statusline_cache import (
+    _resolve_active_group,
+    _resolve_workspace_root,
+    update_overlay_from_hook as _overlay_update,
+)
 from statusline_cache import update_from_hook as _statusline_update
 
 from workflow_state import WorkflowContext
+
+
+def _active_group() -> str | None:
+    """Resolve the active ``ivy_workspace`` selection for partition routing.
+
+    Returns the group from ``<workspace_root>/.ivy-workspace-state.json`` so
+    the ``active_agent`` and (fallback-path) ``test_file`` cache segments
+    land in the partition the renderer reads. ``None`` (which the cache
+    layer maps to ``default``) when the workspace cannot be resolved.
+    """
+    ws = _resolve_workspace_root()
+    return _resolve_active_group(ws) if ws else None
 
 
 _TARGET_RE = re.compile(r"[\w/.\-]+\.(?:ivy|spec)")
@@ -71,6 +88,7 @@ def _handle_agent(tool_input: dict[str, Any]) -> None:
     _statusline_update(
         "active_agent",
         {"name": subagent_type, "target_file": target_file},
+        active_group=_active_group(),
     )
 
     if WorkflowContext.current() is None:
@@ -114,14 +132,31 @@ def main():
         emit_noop("PostToolUse", "non-.ivy file or empty path")
         return
 
-    # Track the most recently written .ivy file as the statusline "active test
-    # file" — a best-effort hint; the workflow skill may override this with a
-    # more authoritative focus target.
+    # Track the most recently written .ivy file in this session's per-session
+    # overlay (cache/<wsHash>/<active_group>/sessions/<session_id>/overlay.json)
+    # rather than the workspace-shared cache. Two Claude Code windows editing
+    # different .ivy files in the same workspace previously overwrote each
+    # other's `test_file` segment because they wrote to one shared file; the
+    # overlay write is keyed by `session_id` from stdin so each window keeps
+    # its own view. Falls back to a no-op when the harness omits session_id
+    # (offline smoke-test invocation) — the renderer's testfile segment
+    # falls through to the shared cache value when the overlay is missing.
     from os.path import basename
-    _statusline_update("test_file", {
-        "basename": basename(file_path),
-        "source": "last-edited",
-    })
+    session_id = str(hook_input.get("session_id", "")).strip()
+    payload = {
+        "test_file": {
+            "basename": basename(file_path),
+            "source": "last-edited",
+        }
+    }
+    if session_id:
+        _overlay_update(session_id, payload)
+    else:
+        # Harness payload missing session_id → keep legacy shared-cache write
+        # so the segment is still populated in offline / smoke-test runs.
+        _statusline_update(
+            "test_file", payload["test_file"], active_group=_active_group()
+        )
 
     if WorkflowContext.current() is not None:
         emit_noop(
