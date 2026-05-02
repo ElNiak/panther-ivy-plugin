@@ -58,13 +58,13 @@ class TestWithActiveWorkflow:
         state_dir = proto_dir / ".panther-ivy"
         state_dir.mkdir()
         (state_dir / "active-workflow").write_text(
-            yaml.safe_dump({"workflow": "workflow-verify", "phase": "compile"})
+            yaml.safe_dump({"workflow": "refine", "phase": "compile"})
         )
         output = run_hook(env_overrides={"IVY_WORKSPACE_ROOT": str(tmp_path)})
         if output is None:
             pytest.skip("No styles dir in plugin root yet")
         ctx = output["hookSpecificOutput"]["additionalContext"]
-        assert "Verify Workflow" in ctx
+        assert "Refine Mode" in ctx
 
     def test_highlights_active_phase(self, tmp_path):
         """The active phase section gets [ACTIVE PHASE] marker."""
@@ -73,7 +73,7 @@ class TestWithActiveWorkflow:
         state_dir = proto_dir / ".panther-ivy"
         state_dir.mkdir()
         (state_dir / "active-workflow").write_text(
-            yaml.safe_dump({"workflow": "workflow-verify", "phase": "compile"})
+            yaml.safe_dump({"workflow": "refine", "phase": "compile"})
         )
         output = run_hook(env_overrides={"IVY_WORKSPACE_ROOT": str(tmp_path)})
         if output is None:
