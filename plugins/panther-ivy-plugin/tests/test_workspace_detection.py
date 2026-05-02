@@ -69,7 +69,8 @@ class TestDetectIvyWorkspace:
     def test_panther_project_detection(self, workspace_common_sh, tmp_path):
         """A directory tree with the PANTHER structure should be detected
         as 'panther' type, with DETECTED_ROOT pointing to the panther_ivy
-        directory."""
+        directory.
+        """
         # Create the expected PANTHER directory structure
         panther_ivy = (
             tmp_path
@@ -90,7 +91,8 @@ class TestDetectIvyWorkspace:
 
     def test_standalone_project_detection(self, workspace_common_sh):
         """A directory with 3+ .ivy files (no PANTHER structure) should be
-        detected as 'standalone' type."""
+        detected as 'standalone' type.
+        """
         with tempfile.TemporaryDirectory() as td:
             isolated = Path(td).resolve()
             for i in range(4):
@@ -127,7 +129,8 @@ class TestDetectIvyWorkspace:
 
     def test_few_ivy_files_not_standalone(self, workspace_common_sh):
         """Only 1-2 .ivy files in the immediate directory should NOT trigger
-        standalone detection on their own."""
+        standalone detection on their own.
+        """
         with tempfile.TemporaryDirectory() as td:
             isolated = Path(td) / "deep" / "isolated"
             isolated.mkdir(parents=True)
@@ -145,7 +148,8 @@ class TestDetectIvyWorkspace:
         self, workspace_common_sh, tmp_path
     ):
         """If both PANTHER structure and 3+ .ivy files exist, PANTHER
-        detection should take priority."""
+        detection should take priority.
+        """
         panther_ivy = (
             tmp_path
             / "panther"
@@ -167,8 +171,9 @@ class TestDetectIvyWorkspace:
         assert info["type"] == "panther"
 
     def test_nested_ivy_files_detected(self, workspace_common_sh):
-        """ivy files in subdirectories (up to maxdepth 2) should count
-        toward standalone detection."""
+        """Ivy files in subdirectories (up to maxdepth 2) should count
+        toward standalone detection.
+        """
         with tempfile.TemporaryDirectory() as td:
             isolated = Path(td)
             subdir = isolated / "models"
@@ -193,7 +198,8 @@ class TestFindPantherIvy:
 
     def test_direct_match(self, workspace_common_sh, tmp_path):
         """find_panther_ivy should find the panther_ivy directory when
-        called from the project root."""
+        called from the project root.
+        """
         panther_ivy = (
             tmp_path
             / "panther"
@@ -222,7 +228,8 @@ echo "FOUND=$result"
 
     def test_walk_up_from_subdirectory(self, workspace_common_sh, tmp_path):
         """find_panther_ivy should walk up from a subdirectory to find
-        the panther_ivy directory."""
+        the panther_ivy directory.
+        """
         panther_ivy = (
             tmp_path
             / "panther"
@@ -255,7 +262,8 @@ echo "FOUND=$result"
 
     def test_not_found_returns_nonzero(self, workspace_common_sh):
         """find_panther_ivy should return non-zero when no panther_ivy
-        directory exists."""
+        directory exists.
+        """
         with tempfile.TemporaryDirectory() as td:
             isolated = Path(td)
             script = f"""
@@ -288,7 +296,8 @@ class TestResolveIvyLspSource:
 
     def test_explicit_dev_root(self, workspace_common_sh, tmp_path):
         """When IVY_LSP_DEV_ROOT is set and contains ivy_lsp/, that
-        path should be used as the source."""
+        path should be used as the source.
+        """
         dev_root = tmp_path / "dev-lsp"
         (dev_root / "ivy_lsp").mkdir(parents=True)
 
@@ -391,3 +400,49 @@ class TestSerenaOptIn:
         )
         # Script should fail because panther-serena is not found
         assert result.returncode != 0
+
+
+# ---------------------------------------------------------------------------
+# 2026-05-02: SessionStart workspace banner regression
+# ---------------------------------------------------------------------------
+
+
+class TestActiveWorkspaceResolution:
+    """Regression for the 2026-05-02 SessionStart workspace bug.
+
+    Pre-fix: detect-ivy-workspace.py:_active_workspace looked only at
+    detected_root for .ivy-workspace-state.json, but the MCP ivy_workspace
+    tool writes the file at the panther_ivy submodule root. The two
+    differ by six directory segments in PANTHER worktrees, so the banner
+    always rendered 'Active workspace: none' even with an explicitly
+    set workspace. Fix delegates resolution to
+    hook_utils.resolve_workspace_state_path.
+    """
+
+    def test_active_workspace_resolves_panther_ivy_root_fallback(
+        self, run_hook, plugin_root: Path, tmp_path: Path
+    ):
+        """SessionStart banner finds bgp state file written at panther_ivy
+        root when detected_root resolves elsewhere.
+        """
+        panther_ivy = tmp_path / "panther_ivy"
+        (panther_ivy / "protocol-testing").mkdir(parents=True)
+        state_file = panther_ivy / ".ivy-workspace-state.json"
+        state_file.write_text('{"active_group": "bgp", "set_by": "explicit"}')
+
+        cwd = tmp_path / "elsewhere"
+        cwd.mkdir()
+        script = plugin_root / "hooks" / "scripts" / "detect-ivy-workspace.py"
+        out = run_hook(
+            script,
+            {"session_id": "test-regression"},
+            env={
+                "IVY_WORKSPACE_ROOT": str(panther_ivy),
+                "CLAUDE_PLUGIN_ROOT": str(plugin_root),
+            },
+            cwd=cwd,
+        )
+        msg = out.get("systemMessage", "")
+        assert "bgp" in msg, (
+            f"Expected 'bgp' in systemMessage, got: {msg!r}"
+        )

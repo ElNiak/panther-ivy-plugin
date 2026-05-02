@@ -62,6 +62,36 @@ def get_workspace_root() -> str:
     return os.getcwd()
 
 
+def resolve_workspace_state_path(detected_root: os.PathLike[str] | str) -> str | None:
+    """Return the first existing .ivy-workspace-state.json across two candidate roots.
+
+    The MCP ``ivy_workspace`` tool writes the state file at the
+    panther_ivy submodule root (its LSP scope root), while SessionStart
+    often resolves the session's detected workspace to the PANTHER
+    project root one or more directories above. Callers that read
+    workspace state cannot assume a single canonical location, so this
+    helper centralises the two-root walk: every reader (SessionStart
+    banner, mid-session change hook, future statusline poller)
+    converges on the same resolution rule.
+
+    Args:
+        detected_root: The session's detected workspace root, typically
+            the PANTHER project root or a standalone Ivy project. Path
+            or str.
+
+    Returns:
+        Absolute path to the first existing state file, or ``None`` if
+        neither candidate resolves.
+    """
+    detected = str(detected_root)
+    panther_ivy = get_workspace_root()
+    for candidate in (detected, panther_ivy):
+        path = os.path.join(candidate, ".ivy-workspace-state.json")
+        if os.path.isfile(path):
+            return path
+    return None
+
+
 def get_mcp_health_state_path() -> str:
     """Get the path to the MCP health state file for the current session."""
     ws_root = get_workspace_root()

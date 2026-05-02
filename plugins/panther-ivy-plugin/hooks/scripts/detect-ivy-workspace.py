@@ -44,6 +44,7 @@ from hook_utils import (  # noqa: E402
     get_workspace_root as _hook_utils_workspace_root,
     read_stdin,
     resolve_session_id,
+    resolve_workspace_state_path,
 )
 from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
 
@@ -224,12 +225,18 @@ def _mcp_status(mcp_log: Path) -> str:
 
 
 def _active_workspace(detected_root: Path) -> tuple[str, str]:
-    """Return (active_group, set_by) from .ivy-workspace-state.json. Empty if none."""
-    state_file = detected_root / ".ivy-workspace-state.json"
-    if not state_file.is_file():
+    """Return (active_group, set_by) from .ivy-workspace-state.json. Empty if none.
+
+    Delegates path resolution to ``hook_utils.resolve_workspace_state_path``
+    so that the banner finds state files written by the MCP tool at the
+    panther_ivy submodule root even when ``detected_root`` resolves to
+    the PANTHER project root above it.
+    """
+    state_file = resolve_workspace_state_path(detected_root)
+    if state_file is None:
         return "", ""
     try:
-        data = json.loads(state_file.read_text())
+        data = json.loads(Path(state_file).read_text())
     except (OSError, json.JSONDecodeError):
         return "", ""
     return str(data.get("active_group", "")), str(data.get("set_by", ""))
