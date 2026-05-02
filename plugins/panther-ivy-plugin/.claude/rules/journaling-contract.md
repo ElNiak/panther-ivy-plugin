@@ -177,6 +177,8 @@ Hook scripts emit twin-key output via `hook_utils.emit_hook_output` (per `output
 | `[ivy-journal]` | SubagentStart (or PreToolUse(matcher="Agent") fallback) | The journaling-contract injection hook fired for a dispatched specialist. Critics receive the marker plus the read-only stub; non-plugin agents receive nothing. |
 | `[ivy-resume]` | orchestrator user-visible message | The orchestrator consumed a fresh `pending_dispatch` and is warm-resuming a workflow. Format: `[ivy-resume] resuming <workflow> (<phase>) from <source_workflow>'s pending_dispatch`. |
 
+Hooks that *write* journal events (or any other persistent state) compose their `systemMessage` from one of the three canonical templates documented in `output-style.md` § "State-persistence message templates (T1 / T2 / T3)". `T2 (journal)` is the relevant template for journal writes — example: `[ivy-gate] G2 modeling-gate dispatched appended to journal at .panther-ivy/workflow-journal.yaml (entry=#42)`. The discipline is enforced by `tests/test_observability_write_discipline.py`.
+
 ## 8. User-facing terminal-state message format
 
 Every ops-skill MUST emit a one-liner before its `clear_active_workflow` call:
