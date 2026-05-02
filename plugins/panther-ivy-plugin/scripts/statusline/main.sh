@@ -38,9 +38,10 @@ source "$SCRIPT_DIR/cache.sh"
 
 # Load segment renderers. Each exports a `render_<name>` function that prints
 # its segment or nothing (empty output = hide).
-for seg in protocol workflow lsp mcp testfile; do
+for seg in protocol workflow project_md lsp mcp testfile; do
     # shellcheck source=segments/protocol.sh
     # shellcheck source=segments/workflow.sh
+    # shellcheck source=segments/project_md.sh
     # shellcheck source=segments/lsp.sh
     # shellcheck source=segments/mcp.sh
     # shellcheck source=segments/testfile.sh
@@ -178,7 +179,7 @@ else
     # segment renderer then runs subprocess-free.
     statusline_cache_load "$CACHE_FILE" || _log "cache_load returned non-zero"
     parts=()
-    for render_fn in render_protocol render_workflow render_lsp render_mcp render_testfile; do
+    for render_fn in render_protocol render_workflow render_project_md render_lsp render_mcp render_testfile; do
         out="$("$render_fn" 2>/dev/null || true)"
         [ -n "$out" ] && parts+=("$out")
     done
