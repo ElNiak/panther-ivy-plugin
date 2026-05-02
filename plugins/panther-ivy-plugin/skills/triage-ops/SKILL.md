@@ -340,9 +340,9 @@ Other workflows (build, verify, review) silently call triage Phase 1 before thei
 
 The deep `full-health-check` runbook dispatches `ivy-refiner-agent` for per-phase reviews (see `references/full-health-check.md` Phase 1/2/3 Review sections). Apply the canonical failure-recovery contract from `.claude/rules/agent-dispatch.md` for every dispatch:
 
-- Append `progress{kind: "agent_dispatch_start", agent: "ivy-refiner-agent", workflow: "workflow-triage", phase: "<phase>"}` before dispatch.
+- Append `progress{kind: "agent_dispatch_start", agent: "ivy-refiner-agent", workflow: "triage", phase: "<phase>"}` before dispatch.
 - Use the per-tier timeout (Sonnet: 90 s).
-- On `timeout`/`context_exhaustion`/`partial`/`malformed`: classify, append `agent_dispatch_failure`, auto-retry once. On second failure or `tool_not_found`/`explicit_error`: present `AskUserQuestion(retry-manually | skip | abandon)`. The "abandon" branch emits `append_pending_dispatch(target_workflow="workflow-navigate", reason="agent dispatch failed: ivy-refiner-agent")` and clears the active-workflow flag.
+- On `timeout`/`context_exhaustion`/`partial`/`malformed`: classify, append `agent_dispatch_failure`, auto-retry once. On second failure or `tool_not_found`/`explicit_error`: present `AskUserQuestion(retry-manually | skip | abandon)`. The "abandon" branch emits `append_pending_dispatch(target_workflow="navigate", reason="agent dispatch failed: ivy-refiner-agent")` and clears the active-workflow flag.
 
 For the underlying MCP tools (`ivy_status`, `ivy_diagnostics`, `ivy_coverage`), apply `.claude/rules/mcp-tool-reliability.md`: on `InputValidationError`, re-load the schema via `ToolSearch({query: "select:<tool>"})` and retry once; on second failure, route to direct triage (recursive call is forbidden — escalate to user instead).
 

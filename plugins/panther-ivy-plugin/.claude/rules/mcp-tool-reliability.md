@@ -43,7 +43,7 @@ given tool call succeeds.
        decision{summary: "Skip <tool_name> due to unavailability", context: <why>}
        ```
      - **Abandon phase** — emit
-       `append_pending_dispatch(target_workflow="workflow-navigate", reason="MCP tool unavailable")`
+       `append_pending_dispatch(target_workflow="navigate", reason="MCP tool unavailable")`
        and clear the active-workflow flag. Navigate re-enters on the next
        turn and routes the user.
 
