@@ -14,7 +14,7 @@ sys.path.insert(
         os.environ.get("CLAUDE_PLUGIN_ROOT", "."), "hooks", "scripts"
     ),
 )
-from hook_utils import emit_hook_output, emit_noop, read_stdin
+from hook_utils import emit_hook_output, emit_noop, is_session_active, read_stdin
 from workflow_state import (
     WorkflowContext,
     append_journal_event,
@@ -26,9 +26,16 @@ from workflow_state import (
 def main() -> None:
     read_stdin()
 
+    if not is_session_active():
+        emit_noop("Stop", "no ivy activity this session — skipping summary")
+        return
+
     ctx = WorkflowContext.current()
     if ctx is None:
-        emit_noop("Stop", "no active workflow")
+        emit_noop(
+            "Stop",
+            "activity recorded; no orchestrator workflow — skipping journal append",
+        )
         return
 
     clean = True

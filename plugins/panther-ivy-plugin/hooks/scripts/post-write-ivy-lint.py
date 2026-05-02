@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop, read_stdin  # noqa: E402
+from hook_utils import emit_hook_output, emit_noop, mark_session_activity, read_stdin  # noqa: E402
 
 _COMMENT = re.compile(r"#.*")
 _STRING = re.compile(r'"[^"]*"')
@@ -60,6 +60,8 @@ def main() -> None:
     if not file_path.is_file():
         emit_noop("PostToolUse", f"file no longer exists: {file_path.name}")
         return
+
+    mark_session_activity(f"file:{raw_path}")
 
     findings = _check(file_path)
     if not findings:
