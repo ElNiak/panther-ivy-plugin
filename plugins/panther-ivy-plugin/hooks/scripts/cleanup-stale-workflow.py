@@ -29,13 +29,6 @@ def main() -> None:
 
     active = get_active_workflow(protocol_dir)
     if not active:
-        append_journal_event(
-            protocol_dir,
-            event_type="session_start",
-            payload={"resumed_from": None},
-            workflow=None,
-            phase=None,
-        )
         emit_noop("SessionStart", "no active workflow to clean up")
         return
 
