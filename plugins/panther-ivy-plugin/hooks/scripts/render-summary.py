@@ -14,6 +14,7 @@ import os
 import re
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -30,13 +31,67 @@ CLAIM_PATTERNS = {
 }
 
 
+def _resolve_session_start_mtime() -> float | None:
+    """Return the current session's SessionStart timestamp as a Unix epoch.
+
+    Reads the first ``SessionStart`` event from
+    ``<events_dir>/<session_id>/events.jsonl`` and converts its ISO-8601
+    ``timestamp`` field. Returns ``None`` when the session id is unknown,
+    the events file is missing, or no ``SessionStart`` event has been
+    written yet. Callers should treat ``None`` as "do not filter" and
+    keep all files (fail-open).
+    """
+    session_id = resolve_session_id()
+    if not session_id or session_id == "unknown":
+        return None
+    events_dir = resolve_sessions_dir()
+    if not events_dir:
+        return None
+    events_file = os.path.join(events_dir, session_id, "events.jsonl")
+    if not os.path.isfile(events_file):
+        return None
+    try:
+        with open(events_file) as f:
+            for line in f:
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if event.get("event_type") != "SessionStart":
+                    continue
+                ts = event.get("timestamp", "")
+                if not ts:
+                    continue
+                if ts.endswith("Z"):
+                    ts = ts[:-1] + "+00:00"
+                try:
+                    return datetime.fromisoformat(ts).timestamp()
+                except ValueError:
+                    return None
+    except OSError:
+        return None
+    return None
+
+
 def find_modified_ivy_files() -> list[str]:
-    """Find .ivy files modified in the working tree."""
+    """Find .ivy files modified, staged, or newly created in this session.
+
+    Modified (vs HEAD) and staged files are returned unconditionally so
+    legitimate uncommitted git deltas always surface. Untracked files
+    are additionally filtered by mtime against the current session's
+    ``SessionStart`` timestamp, so pre-existing scratch files that
+    predate the session do not pollute every Stop summary.
+
+    The mtime filter is fail-open: when the session-start timestamp
+    cannot be resolved (no events.jsonl, unknown session id, malformed
+    timestamp, or stat() error on the file), the untracked file is
+    kept rather than silently dropped.
+    """
     files: set[str] = set()
+
     for cmd in (
         ["git", "diff", "--name-only", "HEAD"],
         ["git", "diff", "--cached", "--name-only"],
-        ["git", "ls-files", "--others", "--exclude-standard"],
     ):
         try:
             result = subprocess.run(
@@ -47,6 +102,28 @@ def find_modified_ivy_files() -> list[str]:
                     files.add(line.strip())
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
+
+    session_start = _resolve_session_start_mtime()
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard"],
+            capture_output=True, text=True, timeout=5,
+        )
+        for line in result.stdout.splitlines():
+            path = line.strip()
+            if not path.endswith(".ivy"):
+                continue
+            if session_start is None:
+                files.add(path)
+                continue
+            try:
+                if os.path.getmtime(path) >= session_start:
+                    files.add(path)
+            except OSError:
+                files.add(path)
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
     return sorted(files)
 
 
