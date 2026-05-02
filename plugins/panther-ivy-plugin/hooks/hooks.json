@@ -139,6 +139,16 @@
         ]
       },
       {
+        "matcher": "mcp__.*ivy_workflow_state",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-workflow-render-project-md.py",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "mcp__|Bash|Write|Edit|Agent",
         "hooks": [
           {
