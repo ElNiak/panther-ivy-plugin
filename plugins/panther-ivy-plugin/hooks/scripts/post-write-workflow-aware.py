@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, emit_noop, read_stdin
+from hook_utils import emit_hook_output, emit_noop, mark_session_activity, read_stdin
 from statusline_cache import update_from_hook as _statusline_update
 
 from workflow_state import WorkflowContext
@@ -25,6 +25,17 @@ from workflow_state import WorkflowContext
 
 _TARGET_RE = re.compile(r"[\w/.\-]+\.(?:ivy|spec)")
 _PLUGIN_AGENT_PREFIX = "panther-ivy-plugin:"
+
+# Specialist agents flip the session-activity flag; critic agents do not —
+# they are gate machinery, not user-initiated ivy work.
+_SPECIALIST_AGENTS = frozenset({
+    "ivy-refiner-agent",
+    "ivy-experimenter-agent",
+    "ivy-builder-agent",
+    "ivy-reviewer-agent",
+    "ivy-triage-agent",
+    "ivy-meta-agent",
+})
 
 
 def _extract_target_file(prompt: str | None) -> str | None:
@@ -49,6 +60,10 @@ def _handle_agent(tool_input: dict[str, Any]) -> None:
             f"non-plugin agent dispatch ({subagent_type or 'unspecified'})",
         )
         return
+
+    short_type = subagent_type[len(_PLUGIN_AGENT_PREFIX):]
+    if short_type in _SPECIALIST_AGENTS:
+        mark_session_activity(f"agent:{subagent_type}")
 
     prompt = tool_input.get("prompt", "") or ""
     target_file = _extract_target_file(prompt)

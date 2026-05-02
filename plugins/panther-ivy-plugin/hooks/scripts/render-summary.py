@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, emit_noop, read_stdin, resolve_session_id, resolve_sessions_dir
+from hook_utils import emit_hook_output, emit_noop, is_session_active, read_stdin, resolve_session_id, resolve_sessions_dir
 from workflow_state import WorkflowContext, get_scaffold_state_safe, get_journal_entries
 
 CLAIM_PATTERNS = {
@@ -73,6 +73,20 @@ def _resolve_session_start_mtime() -> float | None:
     return None
 
 
+def _is_under_protocol_testing(path: str) -> bool:
+    """Return True if path is under a protocol-testing work tree.
+
+    Walks ancestors of the given path looking for a ``.panther-ivy/``
+    marker directory. Any ``.ivy`` file outside such a tree (e.g. scratch
+    files at the repo root) is excluded from the lint pass.
+    """
+    p = Path(path).resolve()
+    for ancestor in p.parents:
+        if (ancestor / ".panther-ivy").is_dir():
+            return True
+    return False
+
+
 def find_modified_ivy_files() -> list[str]:
     """Find .ivy files modified, staged, or newly created in this session.
 
@@ -86,6 +100,10 @@ def find_modified_ivy_files() -> list[str]:
     cannot be resolved (no events.jsonl, unknown session id, malformed
     timestamp, or stat() error on the file), the untracked file is
     kept rather than silently dropped.
+
+    Only files whose ancestor tree contains a ``.panther-ivy/`` marker
+    directory are included. Scratch ``.ivy`` files at the repo root are
+    excluded.
     """
     files: set[str] = set()
 
@@ -98,8 +116,9 @@ def find_modified_ivy_files() -> list[str]:
                 cmd, capture_output=True, text=True, timeout=5
             )
             for line in result.stdout.splitlines():
-                if line.strip().endswith(".ivy"):
-                    files.add(line.strip())
+                p = line.strip()
+                if p.endswith(".ivy") and _is_under_protocol_testing(p):
+                    files.add(p)
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
 
@@ -112,6 +131,8 @@ def find_modified_ivy_files() -> list[str]:
         for line in result.stdout.splitlines():
             path = line.strip()
             if not path.endswith(".ivy"):
+                continue
+            if not _is_under_protocol_testing(path):
                 continue
             if session_start is None:
                 files.add(path)
@@ -216,6 +237,8 @@ def audit_journal(protocol_dir: str, workflow: str | None) -> list[str]:
     Returns:
         List of warning strings (empty if no issues found).
     """
+    if not is_session_active():
+        return []
     if not workflow:
         return []
 
@@ -349,6 +372,10 @@ def build_summary(
 
 def main():
     read_stdin()  # consume stdin
+
+    if not is_session_active():
+        emit_noop("Stop", "no ivy activity this session")
+        return
 
     ivy_files = find_modified_ivy_files()
     if not ivy_files:
