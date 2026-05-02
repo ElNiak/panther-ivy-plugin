@@ -106,7 +106,7 @@ def _read_journal(path: str) -> "list[dict[str, Any]]":
 
 def test_g2_emits_on_layer_edit_during_build():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="write")
+        ws = _make_workspace(tmpdir, workflow="scaffold", phase="write")
         out = _run(
             ASSESS_MODELING,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["layer_file"]}},
@@ -133,7 +133,7 @@ def _is_noop_envelope(out: "dict | None") -> bool:
 
 def test_g2_silent_on_test_spec_edit():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="write")
+        ws = _make_workspace(tmpdir, workflow="scaffold", phase="write")
         out = _run(
             ASSESS_MODELING,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["test_file"]}},
@@ -160,7 +160,7 @@ def test_g2_silent_when_no_workflow():
 
 def test_g3_emits_on_test_spec_edit_during_build():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="write")
+        ws = _make_workspace(tmpdir, workflow="scaffold", phase="write")
         out = _run(
             ASSESS_TESTSPEC,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["test_file"]}},
@@ -176,7 +176,7 @@ def test_g3_emits_on_test_spec_edit_during_build():
 
 def test_g3_silent_on_layer_edit():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="workflow-build", phase="write")
+        ws = _make_workspace(tmpdir, workflow="scaffold", phase="write")
         out = _run(
             ASSESS_TESTSPEC,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["layer_file"]}},
