@@ -47,9 +47,9 @@ PROJECT_MD_KEYS: FrozenSet[str] = frozenset(
     }
 )
 
-_VALID_MODES: FrozenSet[str] = frozenset({"scaffold", "refine", "experiment", "idle"})
-_VALID_VERIFY_STATUS: FrozenSet[str] = frozenset({"SAT", "UNSAT", "NOT_RUN"})
-_VALID_IUT_VERDICT: FrozenSet[str] = frozenset(
+VALID_MODES: FrozenSet[str] = frozenset({"scaffold", "refine", "experiment", "idle"})
+VALID_VERIFY_STATUS: FrozenSet[str] = frozenset({"SAT", "UNSAT", "NOT_RUN"})
+VALID_IUT_VERDICT: FrozenSet[str] = frozenset(
     {"NO_VIOLATION_FOUND", "NON_COMPLIANT", "TESTER_CRASH", "IUT_CRASH"}
 )
 
@@ -65,24 +65,32 @@ def _validate(state: Dict[str, Any]) -> None:
     extra = state.keys() - PROJECT_MD_KEYS
     if extra:
         raise ProjectMdSchemaError(f"unknown keys: {sorted(extra)}")
-    if state["mode"] not in _VALID_MODES:
+    if state["mode"] not in VALID_MODES:
         raise ProjectMdSchemaError(
-            f"mode must be one of {sorted(_VALID_MODES)}; got {state['mode']!r}"
+            f"mode must be one of {sorted(VALID_MODES)}; got {state['mode']!r}"
         )
     if not isinstance(state["phase"], int) or not 0 <= state["phase"] <= 10:
         raise ProjectMdSchemaError(
             f"phase must be int in [0, 10]; got {state['phase']!r}"
         )
-    lv = state["last_verify"]
-    if not isinstance(lv, dict) or lv.get("status") not in _VALID_VERIFY_STATUS:
+    if state["mode"] == "idle" and state["phase"] != 0:
         raise ProjectMdSchemaError(
-            f"last_verify.status must be one of {sorted(_VALID_VERIFY_STATUS)}; got {lv!r}"
+            f"mode=idle requires phase=0; got phase={state['phase']!r}"
+        )
+    if state["mode"] != "idle" and state["phase"] == 0:
+        raise ProjectMdSchemaError(
+            f"mode={state['mode']!r} requires phase in [1, 10]; got phase=0"
+        )
+    lv = state["last_verify"]
+    if not isinstance(lv, dict) or lv.get("status") not in VALID_VERIFY_STATUS:
+        raise ProjectMdSchemaError(
+            f"last_verify.status must be one of {sorted(VALID_VERIFY_STATUS)}; got {lv!r}"
         )
     iut = state["last_iut_run"]
     if iut is not None:
-        if not isinstance(iut, dict) or iut.get("verdict") not in _VALID_IUT_VERDICT:
+        if not isinstance(iut, dict) or iut.get("verdict") not in VALID_IUT_VERDICT:
             raise ProjectMdSchemaError(
-                f"last_iut_run.verdict must be one of {sorted(_VALID_IUT_VERDICT)} or null; got {iut!r}"
+                f"last_iut_run.verdict must be one of {sorted(VALID_IUT_VERDICT)} or null; got {iut!r}"
             )
 
 

@@ -23,18 +23,19 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
 from project_md_state import (  # noqa: E402
-    _VALID_IUT_VERDICT,
-    _VALID_VERIFY_STATUS,
+    VALID_IUT_VERDICT,
+    VALID_MODES,
+    VALID_VERIFY_STATUS,
     resolve_project_md_path,
     write_project_md,
 )
 
 _PHASE_TRANSITION_TYPES = {"phase_transition"}
 _GATE_TYPES = {"gate_verdict"}
-# Subset of project_md_state._VALID_MODES — excludes "idle" because idle is
-# the fallback when no transition exists, not a workflow that gets recorded
-# in the journal as a phase_transition.workflow value.
-_MODE_FROM_WORKFLOW = {"scaffold", "refine", "experiment"}
+# Subset of VALID_MODES — excludes "idle" because idle is the fallback
+# when no transition exists, not a workflow that gets recorded in the
+# journal as a phase_transition.workflow value.
+_MODE_FROM_WORKFLOW = VALID_MODES - {"idle"}
 
 
 def _load_journal(protocol_dir: Path) -> List[Dict[str, Any]]:
@@ -60,17 +61,19 @@ def _latest_gate(events: List[Dict[str, Any]], gate_id: str) -> Optional[Dict[st
 
 
 def _read_protocol_version(protocol_dir: Path) -> str:
-    """Best-effort: read first RFC banner line from any .ivy file in the dir.
+    """Read the protocol's RFC version, or fall back to 'unknown'.
 
-    Falls back to 'unknown'. Bootstrap path: migrate-bootstrap-project-md.py
-    sets 'unknown' explicitly; subsequent renders may upgrade as files appear.
+    Honours an optional ``.panther-ivy/version`` file in the protocol
+    directory if present (single line, e.g. ``rfc4271``). Falls back to
+    'unknown' when the file is absent — the bootstrap migration sets
+    'unknown' explicitly, and a future contributor can populate the
+    version file when the protocol's RFC stabilises. Avoids a scan of
+    every ``*.ivy`` file (which would be N syscalls per regen and a
+    loose regex match).
     """
-    for candidate in protocol_dir.glob("*.ivy"):
-        head = candidate.read_text(errors="ignore")[:1024]
-        for line in head.splitlines():
-            stripped = line.strip("# ").strip()
-            if "rfc" in stripped.lower():
-                return stripped
+    candidate = protocol_dir / ".panther-ivy" / "version"
+    if candidate.is_file():
+        return candidate.read_text().strip() or "unknown"
     return "unknown"
 
 
@@ -113,12 +116,14 @@ def derive_state(protocol_dir: Path) -> Dict[str, Any]:
     if transition and transition.get("workflow") in _MODE_FROM_WORKFLOW:
         mode = transition["workflow"]
         phase = int(transition.get("phase", 0))
+        if phase == 0:
+            mode = "idle"
     else:
         mode = "idle"
         phase = 0
 
     last_verify_status = (g4 or {}).get("verdict") if g4 else None
-    if last_verify_status not in _VALID_VERIFY_STATUS:
+    if last_verify_status not in VALID_VERIFY_STATUS:
         last_verify_status = "NOT_RUN"
     last_verify = {
         "status": last_verify_status,
@@ -127,7 +132,7 @@ def derive_state(protocol_dir: Path) -> Dict[str, Any]:
     }
 
     last_iut_run: Optional[Dict[str, Any]] = None
-    if g5 and g5.get("verdict") in _VALID_IUT_VERDICT:
+    if g5 and g5.get("verdict") in VALID_IUT_VERDICT:
         last_iut_run = {
             "iut": g5.get("iut"),
             "verdict": g5.get("verdict"),

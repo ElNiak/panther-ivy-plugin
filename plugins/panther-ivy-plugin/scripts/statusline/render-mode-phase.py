@@ -30,7 +30,10 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
-from hook_utils import read_active_workspace  # noqa: E402
+from hook_utils import (  # noqa: E402
+    read_active_workspace,
+    resolve_workspace_state_path,
+)
 from project_md_state import (  # noqa: E402
     ProjectMdSchemaError,
     load_project_md,
@@ -67,8 +70,7 @@ def main() -> int:
     args = parser.parse_args()
 
     root = _resolve_root(args.root)
-    state_path = root / ".ivy-workspace-state.json"
-    workspace = read_active_workspace(str(state_path) if state_path.exists() else None)
+    workspace = read_active_workspace(resolve_workspace_state_path(root))
     if not workspace:
         return 0
     project_md = resolve_project_md_path(resolve_protocol_dir(root, workspace))
@@ -78,9 +80,10 @@ def main() -> int:
         return 0
     if state["mode"] == "idle":
         return 0
-    phase_name = _PHASE_NAMES.get(state["phase"], "")
-    suffix = f" ({phase_name})" if phase_name else ""
-    print(f"Mode: {state['mode'].upper()} | Phase: {state['phase']}/10{suffix}")
+    # Schema validation guarantees mode != idle implies phase in [1, 10],
+    # so _PHASE_NAMES always has a hit; no fallback needed.
+    phase_name = _PHASE_NAMES[state["phase"]]
+    print(f"Mode: {state['mode'].upper()} | Phase: {state['phase']}/10 ({phase_name})")
     return 0
 
 

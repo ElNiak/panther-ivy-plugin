@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """One-shot bootstrap of PROJECT.md for every protocol-testing/<protocol>/.
 
-Skips dirs that already have a PROJECT.md. Writes mode=idle, phase=0
-defaults so subsequent renders by the workflow-state hook always have a
-file to overwrite.
+Discovers protocol directories by scanning ``<root>/protocol-testing/`` for
+subdirectories. Skips dirs that already have a PROJECT.md. Writes
+mode=idle, phase=0 defaults so subsequent renders by the workflow-state
+hook always have a file to overwrite.
 
-Per ``feedback_no_backward_compat_shims``: deletable after the first
-sweep. Re-running is a no-op for already-bootstrapped directories.
+Per ``feedback_no_backward_compat_shims``: this script is intentionally
+one-shot and deletable after the first sweep across all known protocols.
+Re-running is a no-op for already-bootstrapped directories.
 
 Usage:
   python3 migrate-bootstrap-project-md.py             # cwd is the worktree root
@@ -23,7 +25,13 @@ sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
 from project_md_state import write_project_md  # noqa: E402
 
-_KNOWN_PROTOCOLS = ("bgp", "quic", "apt", "minip", "coap")
+
+def _discover_protocol_dirs(root: Path) -> list[Path]:
+    """Return every immediate subdirectory of ``<root>/protocol-testing/``."""
+    parent = root / "protocol-testing"
+    if not parent.is_dir():
+        return []
+    return sorted(p for p in parent.iterdir() if p.is_dir())
 
 
 def _idle_state(protocol: str) -> dict:
@@ -50,16 +58,13 @@ def main() -> int:
 
     bootstrapped = 0
     skipped = 0
-    for protocol in _KNOWN_PROTOCOLS:
-        target_dir = args.root / "protocol-testing" / protocol
-        if not target_dir.exists():
-            continue
+    for target_dir in _discover_protocol_dirs(args.root):
         target = target_dir / "PROJECT.md"
         if target.exists():
             print(f"skip {target} (already exists)")
             skipped += 1
             continue
-        write_project_md(target, _idle_state(protocol))
+        write_project_md(target, _idle_state(target_dir.name))
         print(f"wrote {target}")
         bootstrapped += 1
 

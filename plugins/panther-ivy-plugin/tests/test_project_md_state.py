@@ -138,6 +138,34 @@ def test_last_iut_run_with_valid_verdict(tmp_path):
     assert loaded["last_iut_run"]["verdict"] == "NO_VIOLATION_FOUND"
 
 
+def test_mode_idle_with_nonzero_phase_rejected(tmp_path):
+    target = tmp_path / "PROJECT.md"
+    state = _idle_state()
+    state["phase"] = 4
+    with pytest.raises(ProjectMdSchemaError, match="mode=idle requires phase=0"):
+        write_project_md(target, state)
+
+
+def test_mode_nonidle_with_zero_phase_rejected(tmp_path):
+    target = tmp_path / "PROJECT.md"
+    state = _idle_state()
+    state["mode"] = "scaffold"
+    state["phase"] = 0
+    with pytest.raises(ProjectMdSchemaError, match="requires phase in"):
+        write_project_md(target, state)
+
+
+def test_mode_scaffold_with_valid_phase_accepted(tmp_path):
+    target = tmp_path / "PROJECT.md"
+    state = _idle_state()
+    state["mode"] = "scaffold"
+    state["phase"] = 4
+    write_project_md(target, state)
+    loaded = load_project_md(target)
+    assert loaded["mode"] == "scaffold"
+    assert loaded["phase"] == 4
+
+
 def test_last_iut_run_rejects_invalid_verdict(tmp_path):
     target = tmp_path / "PROJECT.md"
     state = _idle_state()

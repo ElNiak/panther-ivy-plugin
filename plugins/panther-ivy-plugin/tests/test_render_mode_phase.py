@@ -76,18 +76,6 @@ def test_silent_when_project_md_absent(tmp_path):
     assert proc.stdout.strip() == ""
 
 
-def test_phase_name_omitted_for_unknown_phase(tmp_path):
-    _seed_workspace_state(tmp_path, "bgp")
-    _write_project_md(tmp_path, "bgp", "scaffold", 0)
-    # phase 0 is idle by definition; mode != idle with phase 0 is not in _PHASE_NAMES
-    proc = _run(tmp_path)
-    assert proc.returncode == 0
-    # Mode != idle so we still print, but no phase name suffix
-    assert "Mode: SCAFFOLD | Phase: 0/10" in proc.stdout
-    # No parenthetical suffix
-    assert "Phase: 0/10\n" in proc.stdout or "Phase: 0/10 \n" in proc.stdout
-
-
 def test_silent_on_invalid_project_md(tmp_path):
     _seed_workspace_state(tmp_path, "bgp")
     target = tmp_path / "protocol-testing" / "bgp" / "PROJECT.md"
