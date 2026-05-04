@@ -149,6 +149,51 @@ class TestGetScaffoldStateParseFailure:
             mod.get_scaffold_state(str(tmp_path))
 
 
+class TestGetScaffoldStateSafeWarning:
+    """Tests for get_scaffold_state_safe() once-per-process push_warning gate.
+
+    Regression guard for the post-PR1-split state where the original
+    disjunctive gate ``"workflow_state" not in sys.modules`` was permanently
+    True (the module is now ``lib.workflow_state.scaffold``), so every parse
+    failure flooded stderr instead of warning once. The 2026-05-04 audit
+    follow-up migrated the warning to ``push_warning`` and tightened the gate
+    to the local ``_SCAFFOLD_STATE_WARNED`` flag only.
+    """
+
+    def test_warns_once_via_push_warning(self, tmp_path, monkeypatch, capsys):
+        mod = _import_module()
+        # Force get_scaffold_state to raise by writing malformed YAML.
+        state_dir = tmp_path / ".panther-ivy"
+        state_dir.mkdir()
+        (state_dir / "scaffold-state.yaml").write_text(
+            "phase: compile\n  : bad-yaml\nlayers: [unclosed\n"
+        )
+
+        # Capture push_warning calls and reset the once-per-process flag so the
+        # test is independent of any prior import that may have tripped it.
+        calls: list[str] = []
+        scaffold_mod = sys.modules["lib.workflow_state.scaffold"]
+        monkeypatch.setattr(scaffold_mod, "push_warning", lambda msg: calls.append(msg))
+        monkeypatch.setattr(
+            scaffold_mod, "_SCAFFOLD_STATE_WARNED", False, raising=False
+        )
+
+        # Both calls swallow the parse error and return None.
+        assert mod.get_scaffold_state_safe(str(tmp_path)) is None
+        assert mod.get_scaffold_state_safe(str(tmp_path)) is None
+
+        # Only the first call emits a warning (once-per-process gate).
+        assert len(calls) == 1, f"expected 1 push_warning call, got {len(calls)}: {calls}"
+        assert "swallowed parse failure" in calls[0]
+        assert str(tmp_path) in calls[0]
+
+        # And nothing leaks to stderr — the warning travels through the
+        # push_warning buffer, not raw print().
+        captured = capsys.readouterr()
+        assert "WARN:" not in captured.err
+        assert "swallowed parse failure" not in captured.err
+
+
 class TestValidateActiveWorkflow:
     """Tests for validate_active_workflow() (cluster-12 S8)."""
 

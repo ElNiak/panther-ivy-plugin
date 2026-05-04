@@ -9,6 +9,7 @@ from pathlib import Path
 
 import yaml
 
+from lib.hook_utils.io import push_warning
 from lib.workflow_state.context import (
     _SCAFFOLD_STATE_FILE,
     _state_dir,
@@ -76,18 +77,18 @@ def get_scaffold_state_safe(protocol_dir: str) -> dict | None:
     file (scaffold Phase 2 Step 2) should call :func:`get_scaffold_state` directly
     and handle :class:`ScaffoldStateParseError` with user-visible recovery.
 
-    The parse failure is swallowed but reported once per process to
-    ``sys.stderr`` so the user can investigate, without the hook itself
-    raising.
+    The parse failure is swallowed but reported once per process via
+    :func:`lib.hook_utils.io.push_warning`, so the calling hook's
+    ``emit_hook_output`` drains the warning into ``systemMessage`` where
+    the user can see it; the hook itself does not raise.
     """
     try:
         return get_scaffold_state(protocol_dir)
     except ScaffoldStateParseError as exc:
-        if "workflow_state" not in sys.modules or not getattr(
-            sys.modules[__name__], "_SCAFFOLD_STATE_WARNED", False
-        ):
-            msg = f"WARN: get_scaffold_state_safe swallowed parse failure at {protocol_dir}: {exc}"
-            print(msg, file=sys.stderr)
+        if not getattr(sys.modules[__name__], "_SCAFFOLD_STATE_WARNED", False):
+            push_warning(
+                f"get_scaffold_state_safe swallowed parse failure at {protocol_dir}: {exc}"
+            )
             setattr(sys.modules[__name__], "_SCAFFOLD_STATE_WARNED", True)
         return None
 

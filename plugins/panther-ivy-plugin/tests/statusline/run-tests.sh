@@ -220,8 +220,8 @@ concurrency_result="$(
     "${TEST_PYTHON:-python3}" - <<'PY'
 import json, os, sys, threading, time, pathlib
 sys.path.insert(0, os.environ.get("STATUSLINE_HOOK_DIR", "hooks/scripts"))
-from statusline_cache import update_section
-import statusline_cache as sc
+from lib.statusline_cache import update_section
+import lib.statusline_cache as sc
 _orig = sc._read_cache
 def _slow(p):
     d = _orig(p); time.sleep(0.02); return d
