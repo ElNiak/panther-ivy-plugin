@@ -44,6 +44,10 @@ def _extract_script_paths(hooks_json: dict) -> list[str]:
                     continue
                 rel = command.split(_CLAUDE_PLUGIN_ROOT_TOKEN, 1)[1].split()[0]
                 paths.append(rel)
+    emit_noop(
+        "SessionStart",
+        f"extracted {len(paths)} script path(s) from hooks.json for verification",
+    )
     return paths
 
 

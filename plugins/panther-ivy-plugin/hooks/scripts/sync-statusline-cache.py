@@ -63,6 +63,7 @@ from statusline_cache import (  # noqa: E402
 )
 from workflow_state import (  # noqa: E402
     _KNOWN_WORKFLOWS,
+    active_workflow_path,
     find_protocol_dir,
     get_active_workflow,
 )
@@ -182,7 +183,7 @@ def main() -> None:
             "to migrate legacy YAMLs to canonical names."
         )
         non_canonical_prefix = (
-            f"Active-workflow YAML at {protocol_dir}/.panther-ivy/active-workflow "
+            f"Active-workflow YAML at {active_workflow_path(protocol_dir)} "
             f"holds non-canonical name '{yaml_workflow}'."
         )
         if cache_workflow is not None:

@@ -16,6 +16,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hook_utils import emit_hook_output
+from workflow_state import journal_path_template
 
 
 SPECIALISTS = frozenset({
@@ -60,7 +61,7 @@ def specialist_directive() -> str:
 def critic_stub() -> str:
     return (
         "[ivy-journal] You are a panther-ivy-plugin critic. Return verdicts "
-        "only. Do not write to .panther-ivy/workflow-journal.yaml. The "
+        f"only. Do not write to {journal_path_template()}. The "
         "orchestrator writes gate_verdict after aggregating your fan-out per "
         "the journaling contract §6.2."
     )

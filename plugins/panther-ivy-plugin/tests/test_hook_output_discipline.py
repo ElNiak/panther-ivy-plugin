@@ -112,3 +112,69 @@ def test_no_private_envelope_construction() -> None:
         "(use emit_hook_output() from hook_utils instead):\n  "
         + "\n  ".join(failures)
     )
+
+
+def test_no_hardcoded_workflow_journal_path_literals() -> None:
+    """Enforce centralized workflow-journal path ownership.
+
+    The workflow journal filename/path literal belongs in workflow_state.py,
+    where journal_path(...) centralizes path construction. Hook scripts must
+    not hardcode the path.
+    """
+    forbidden = ("workflow-journal.yaml", ".panther-ivy/workflow-journal")
+    failures: list[str] = []
+    for path in _all_hook_scripts():
+        text = path.read_text()
+        lines = text.splitlines()
+        for idx, line in enumerate(lines, start=1):
+            if any(token in line for token in forbidden):
+                failures.append(f"{path.relative_to(HOOKS_DIR)}:{idx}: {line.strip()}")
+
+    assert not failures, (
+        "Hardcoded workflow journal path literals detected in hook scripts "
+        "(use workflow_state.journal_path(...) or workflow_state.journal_path_template()):\n  "
+        + "\n  ".join(failures)
+    )
+
+
+def test_appended_to_journal_messages_use_journal_path_helper() -> None:
+    """Ensure T2-style appended-to-journal messages come from journal_path helpers."""
+    failures: list[str] = []
+    for path in _all_hook_scripts():
+        text = path.read_text()
+        if "appended to journal at" not in text:
+            continue
+        if "journal_path(" in text or "journal_path_template(" in text:
+            continue
+        failures.append(
+            f"{path.relative_to(HOOKS_DIR)}: has 'appended to journal at' but no journal_path helper call"
+        )
+
+    assert not failures, (
+        "T2 journal messages must use workflow_state helpers for path construction:\n  "
+        + "\n  ".join(failures)
+    )
+
+
+def test_no_hardcoded_active_workflow_path_literals() -> None:
+    """Enforce centralized active-workflow path ownership.
+
+    The active-workflow filename/path literal belongs in workflow_state.py,
+    where active_workflow_path(...) centralizes path construction. Hook scripts
+    must not hardcode the path fragment '/.panther-ivy/active-workflow' in
+    string expressions.
+    """
+    forbidden = ("/.panther-ivy/active-workflow",)
+    failures: list[str] = []
+    for path in _all_hook_scripts():
+        text = path.read_text()
+        lines = text.splitlines()
+        for idx, line in enumerate(lines, start=1):
+            if any(token in line for token in forbidden):
+                failures.append(f"{path.relative_to(HOOKS_DIR)}:{idx}: {line.strip()}")
+
+    assert not failures, (
+        "Hardcoded active-workflow path literals detected in hook scripts "
+        "(use workflow_state.active_workflow_path(...)):\n  "
+        + "\n  ".join(failures)
+    )

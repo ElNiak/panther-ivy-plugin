@@ -445,8 +445,7 @@ def emit_dedup(
     additional_context: str | None = None,
     deny_reason: str | None = None,
 ) -> None:
-    """Emit ``system_message`` only when it differs from the previous
-    emission for ``dedup_key`` in this session.
+    """Emit ``system_message`` only when it differs from the previous emission for ``dedup_key`` in this session.
 
     Suppresses chatter when the same hook fires repeatedly with the
     same status line (the canonical case is the panther-ivy MCP

@@ -15,7 +15,7 @@ from pathlib import Path
 
 import yaml
 
-from hook_utils import get_workspace_root
+from hook_utils import emit_noop, get_workspace_root
 
 STATE_DIR_NAME = ".panther-ivy"
 _ACTIVE_WORKFLOW_FILE = "active-workflow"
@@ -44,6 +44,34 @@ def journal_path(protocol_dir: str) -> str:
         been appended.
     """
     return os.path.join(protocol_dir, STATE_DIR_NAME, _JOURNAL_FILE)
+
+
+def journal_path_template() -> str:
+    """Return the canonical journal path string with a protocol placeholder.
+
+    This helper exists for hook directives that need to reference the
+    canonical journal location but do not have a concrete protocol
+    directory at runtime.
+
+    Returns:
+        Canonical journal location expressed as
+        ``<protocol_dir>/.panther-ivy/workflow-journal.yaml``.
+    """
+    return journal_path("<protocol_dir>")
+
+
+def active_workflow_path(protocol_dir: str) -> str:
+    """Return the absolute path to the active-workflow file for a protocol directory.
+
+    Args:
+        protocol_dir: Absolute path to the protocol directory whose
+            ``.panther-ivy/`` subdirectory holds the workflow state files.
+
+    Returns:
+        Absolute path to ``<protocol_dir>/.panther-ivy/active-workflow``.
+    """
+    return os.path.join(protocol_dir, STATE_DIR_NAME, _ACTIVE_WORKFLOW_FILE)
+
 
 OPS_SKILLS = frozenset({
     "scaffold-ops",
@@ -101,8 +129,7 @@ def _find_protocol_testing_root() -> tuple[str | None, str | None]:
     Returns:
         (protocol_testing_root, workspace_root) or (None, None).
     """
-    ws_root = os.environ.get("IVY_WORKSPACE_ROOT", "").strip()
-    if ws_root:
+    if ws_root := os.environ.get("IVY_WORKSPACE_ROOT", "").strip():
         candidate = os.path.join(ws_root, "protocol-testing")
         if os.path.isdir(candidate):
             return candidate, ws_root
@@ -146,8 +173,7 @@ def find_protocol_dir(protocol: str | None = None) -> str | None:
 
     # Resolve protocol from active workspace state
     if ws_root:
-        ws_protocol = resolve_protocol_from_workspace(ws_root)
-        if ws_protocol:
+        if ws_protocol := resolve_protocol_from_workspace(ws_root):
             specific = os.path.join(root, ws_protocol)
             if os.path.isdir(specific):
                 return specific
@@ -161,7 +187,7 @@ def find_protocol_dir(protocol: str | None = None) -> str | None:
                 if os.path.isfile(state):
                     return subdir
     except OSError:
-        pass
+        emit_noop("WorkflowState", f"error scanning for protocol dirs in {root}")
 
     return root
 
@@ -236,11 +262,10 @@ class WorkflowContext:
             k: v for k, v in state.items() if k in _WORKFLOW_CONTEXT_FIELDS
         }
         unknown = set(state.keys()) - _WORKFLOW_CONTEXT_FIELDS
-        new_unknown = unknown - _WARNED_UNKNOWN_FIELDS
-        if new_unknown:
-            print(
-                f"WARN: WorkflowContext dropped unknown fields: {sorted(new_unknown)}",
-                file=sys.stderr,
+        if new_unknown := unknown - _WARNED_UNKNOWN_FIELDS:
+            emit_noop(
+                "WorkflowState",  
+                f"WARN - active-workflow file at {protocol_dir} has unknown fields: {sorted(unknown)}",  
             )
             _WARNED_UNKNOWN_FIELDS.update(new_unknown)
         if "workflow" not in filtered:
