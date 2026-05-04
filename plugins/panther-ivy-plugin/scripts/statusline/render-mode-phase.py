@@ -49,7 +49,7 @@ _PHASE_NAMES = {
     5: "entities",
     6: "behaviors",
     7: "test specs",
-    8: "verify",
+    8: "refine",
     9: "compile",
     10: "IUT",
 }
