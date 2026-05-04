@@ -78,11 +78,11 @@ class TestComposeStyle:
         styles_dir = tmp_path / "styles"
         (styles_dir / "overlays").mkdir(parents=True)
         (styles_dir / "base.md").write_text("# Base\nbase rules\n")
-        (styles_dir / "overlays" / "workflow-verify.md").write_text(
+        (styles_dir / "overlays" / "refine.md").write_text(
             "# Verify\nverify rules\n\n## Phase Modifiers\n\n"
             "### compile\ncompile stuff\n\n### diagnose\ndiagnose stuff\n"
         )
-        result = mod.compose_style(str(tmp_path), workflow="workflow-verify", phase="compile")
+        result = mod.compose_style(str(tmp_path), workflow="refine", phase="compile")
         assert "base rules" not in result
         assert "verify rules" in result
         assert "[ACTIVE PHASE]" in result
@@ -93,8 +93,8 @@ class TestComposeStyle:
         styles_dir = tmp_path / "styles"
         (styles_dir / "overlays").mkdir(parents=True)
         (styles_dir / "base.md").write_text("# Base\nbase rules\n")
-        (styles_dir / "overlays" / "workflow-verify.md").write_text("# Verify\nverify rules\n")
-        result = mod.compose_style(str(tmp_path), workflow="workflow-verify", phase="unknown")
+        (styles_dir / "overlays" / "refine.md").write_text("# Verify\nverify rules\n")
+        result = mod.compose_style(str(tmp_path), workflow="refine", phase="unknown")
         assert "verify rules" in result
         assert "[ACTIVE PHASE]" not in result
 

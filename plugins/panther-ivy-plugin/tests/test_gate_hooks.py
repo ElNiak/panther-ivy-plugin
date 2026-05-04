@@ -189,7 +189,7 @@ def test_g3_silent_on_layer_edit():
 
 def test_g5_emits_on_iut_test_completion():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="workflow-verify", phase="iut-pass")
+        ws = _make_workspace(tmpdir, workflow="refine", phase="iut-pass")
         tool_result = {
             "output_dir": str(Path(tmpdir) / "outputs" / "run-001"),
             "logs_path": str(Path(tmpdir) / "outputs" / "run-001" / "logs"),
@@ -229,7 +229,7 @@ def test_g5_silent_on_other_tools():
 
 def test_g4_emits_on_ivy_verify_completion_during_workflow():
     with tempfile.TemporaryDirectory() as tmpdir:
-        ws = _make_workspace(tmpdir, workflow="workflow-verify", phase="executed")
+        ws = _make_workspace(tmpdir, workflow="refine", phase="executed")
         out = _run(
             RECORD_WORKFLOW_ERROR,
             {"tool_name": "ivy_verify",
@@ -259,7 +259,7 @@ def test_g4_silent_when_no_workflow():
 
 def test_g4_silent_on_other_tools():
     with tempfile.TemporaryDirectory() as tmpdir:
-        _make_workspace(tmpdir, workflow="workflow-verify", phase="compiled")
+        _make_workspace(tmpdir, workflow="refine", phase="compiled")
         out = _run(
             RECORD_WORKFLOW_ERROR,
             {"tool_name": "ivy_compile",

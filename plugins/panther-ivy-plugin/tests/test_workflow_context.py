@@ -48,11 +48,11 @@ class TestWorkflowContextCurrent:
         monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path))
         monkeypatch.chdir(tmp_path)
         mod = _import_module()
-        mod.set_active_workflow(str(protocol_dir), "workflow-build", "modeling")
+        mod.set_active_workflow(str(protocol_dir), "scaffold", "modeling")
         ctx = mod.WorkflowContext.current(protocol="bgp")
         assert ctx is not None
         assert ctx.protocol_dir == str(protocol_dir)
-        assert ctx.workflow == "workflow-build"
+        assert ctx.workflow == "scaffold"
         assert ctx.phase == "modeling"
         assert ctx.started is not None  # Set by set_active_workflow
         # post-refactor: WorkflowContext exposes only 3 state fields + protocol_dir
@@ -61,7 +61,8 @@ class TestWorkflowContextCurrent:
 
     def test_warns_and_drops_unknown_yaml_keys(self, monkeypatch, tmp_path, capfd):
         """Schema drift: unknown keys (including legacy invocation_depth / caller
-        from the pre-cluster-1 schema) are dropped, and a WARN is emitted once."""
+        from the pre-cluster-1 schema) are dropped, and a WARN is emitted once.
+        """
         import yaml
 
         protocol_dir = tmp_path / "protocol-testing" / "bgp"
@@ -70,7 +71,7 @@ class TestWorkflowContextCurrent:
         with open(state_dir / "active-workflow", "w") as f:
             yaml.safe_dump(
                 {
-                    "workflow": "workflow-verify",
+                    "workflow": "refine",
                     "phase": "exec",
                     "invocation_depth": 2,
                     "caller": "scaffold",
@@ -84,7 +85,7 @@ class TestWorkflowContextCurrent:
         mod = _import_module()
         ctx = mod.WorkflowContext.current(protocol="bgp")
         assert ctx is not None
-        assert ctx.workflow == "workflow-verify"
+        assert ctx.workflow == "refine"
         assert ctx.phase == "exec"
         assert not hasattr(ctx, "invocation_depth")
         assert not hasattr(ctx, "caller")
@@ -127,11 +128,11 @@ class TestWorkflowContextCurrent:
         state_dir = protocol_dir / ".panther-ivy"
         state_dir.mkdir(parents=True)
         with open(state_dir / "active-workflow", "w") as f:
-            yaml.safe_dump({"workflow": "workflow-verify"}, f)
+            yaml.safe_dump({"workflow": "refine"}, f)
         monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path))
         monkeypatch.chdir(tmp_path)
         mod = _import_module()
         ctx = mod.WorkflowContext.current(protocol="bgp")
         assert ctx is not None
-        assert ctx.workflow == "workflow-verify"
+        assert ctx.workflow == "refine"
         assert ctx.phase is None
