@@ -84,7 +84,12 @@ class TestWorkflowContextCurrent:
         monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path))
         monkeypatch.chdir(tmp_path)
         mod = _import_module()
-        # Drain any pre-test residue so we measure only what this test pushes.
+        # Reset cross-test residue: the autouse fixture deletes the package
+        # entry from sys.modules but the loaded submodule keeps its module-
+        # level state, so the once-per-key warning suppression set bleeds
+        # between tests.
+        from lib.workflow_state.context import _WARNED_UNKNOWN_FIELDS
+        _WARNED_UNKNOWN_FIELDS.clear()
         from lib.hook_utils import drain_warnings
         drain_warnings()
 
