@@ -206,7 +206,7 @@ directory in fixed read order: `analysis/ivy_tester_results.json` → compile
 log → tester log → IUT log → pcap. Primary checks: `#501` (Ivy trace claims
 event, pcap shows nothing) and `#505` (model bug misattributed to IUT).
 Critics may NOT re-invoke `ivy_iut_test`. The PostToolUse hook
-(`posttooluse/gates/g5-trace.py`) is a backstop — the reviewer is responsible for inline
+(`posttooluse/gates/run-gate.py --id g5`) is a backstop — the reviewer is responsible for inline
 dispatch and must not defer to the hook for the primary G5 invocation.
 Dispatch shape: `Skill(skill="panther-ivy-plugin:ivy")`
 `references/parallel-dispatch.md`.
@@ -345,7 +345,7 @@ For MCP tools (`ivy_coverage`, `ivy_quality`, `ivy_extract_requirements`, `ivy_w
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/journal/*.jsonl`.
 - **Failure-recovery contract:** `.claude/rules/agent-dispatch.md` for sub-agent dispatches; `.claude/rules/mcp-tool-reliability.md` for MCP tool failures.
 - **Iron laws:** `NO_QUALITY_WITHOUT_COVERAGE`, `STALENESS_RULE` (`.claude/rules/iron-laws.md`).
-- **Hook backstop:** `posttooluse/gates/g5-trace.py` (G5 PostToolUse on `ivy_iut_test`) fires as backstop for trace analysis. Primary G5 dispatch is inline in Phase 4.
+- **Hook backstop:** `posttooluse/gates/run-gate.py --id g5` (G5 PostToolUse on `ivy_iut_test`) fires as backstop for trace analysis. Primary G5 dispatch is inline in Phase 4.
 
 ## References
 

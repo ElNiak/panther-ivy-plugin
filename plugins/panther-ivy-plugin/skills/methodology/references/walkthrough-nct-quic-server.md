@@ -71,7 +71,7 @@ Iron law `NO_LAYER_WITHOUT_SCAFFOLD` binds: before writing
 
 PostToolUse hooks fire on the Write:
 - `posttooluse/lint/ivy.py` — fast structural check (passes).
-- `posttooluse/gates/g3-testspec.py` — G3 test-spec gate dispatches 3 critics; verdict
+- `posttooluse/gates/run-gate.py --id g3` — G3 test-spec gate dispatches 3 critics; verdict
   SOUND.
 
 The role-inversion rule applies: testing a QUIC *server* means Ivy plays

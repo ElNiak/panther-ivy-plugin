@@ -66,9 +66,9 @@ One line per script and the event that triggers it. Multi-handler events run in 
 ### PostToolUse
 - `post-write-workflow-aware.py` — `Write|Edit|Agent` — updates workflow state after edits and Agent dispatches.
 - `post-write-ivy-lint.py` — `Write|Edit` — runs three structural checks (`#lang` header, balanced braces, non-empty) after `.ivy` edits.
-- `assess-modeling.py` — `Write|Edit` — dispatches the G2 modeling gate critic.
-- `assess-testspec.py` — `Write|Edit` — dispatches the G3 test-spec gate critic.
-- `assess-trace.py` — `ivy_iut_test` — dispatches the G5 trace-analysis gate critic.
+- `posttooluse/gates/run-gate.py --id g2` — `Write|Edit` — dispatches the G2 modeling gate critic.
+- `posttooluse/gates/run-gate.py --id g3` — `Write|Edit` — dispatches the G3 test-spec gate critic.
+- `posttooluse/gates/run-gate.py --id g5` — `ivy_iut_test` — dispatches the G5 trace-analysis gate critic.
 - `record-workflow-error.py` — `ivy_verify|ivy_compile|ivy_diagnostics|ivy_coverage|ivy_iut_test|ivy_quality` — records failures to the workflow journal.
 - `render-tool-result.py` — same MCP-tool matcher — renders structured MCP results into prose/tables.
 - `track-skill-invocation.py` — `Skill` — surfaces a `[ivy-skill]` line, updates the statusline `active_skill` section, auto-loads each plugin skill's `references/*.md` into `additionalContext` (capped at 8000 chars), and appends `progress{kind: "skill_invoked"}` to the journal when an ops-skill fires inside an active workflow.

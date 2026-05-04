@@ -51,9 +51,9 @@ Fire after tool execution, before the result is returned to Claude. Hooks are gr
 |------|-----------|--------|
 | render/workflow-aware-annotation.py | `Write`, `Edit`, or `Agent` | For `Agent` dispatches records the active specialist agent in the statusline; for `.ivy` writes outside an active workflow surfaces an orientation hint |
 | posttooluse/lint/ivy.py | `Write` or `Edit` on `.ivy` files | Three structural checks (`#lang` header, balanced braces, non-empty); emits `[ivy-lint]` summary on findings |
-| posttooluse/gates/g2-modeling.py | `Write` or `Edit` | Adversarial G2 critic: analyses modeling quality, emits `[GAP: #NN]` markers for model-layer findings |
-| posttooluse/gates/g3-testspec.py | `Write` or `Edit` | Adversarial G3 critic: analyses test-spec quality, emits `[GAP: #NN]` markers for testspec-layer findings |
-| posttooluse/gates/g5-trace.py | `ivy_iut_test` | Analyses IUT trace after each test run; surfaces assertion failures and unexpected event sequences |
+| posttooluse/gates/run-gate.py --id g2 | `Write` or `Edit` | Adversarial G2 critic (parametric runner; logic in `posttooluse/gates/gate_handlers.py::dispatch_g2`): analyses modeling quality, emits `[GAP: #NN]` markers for model-layer findings |
+| posttooluse/gates/run-gate.py --id g3 | `Write` or `Edit` | Adversarial G3 critic (`dispatch_g3`): analyses test-spec quality, emits `[GAP: #NN]` markers for testspec-layer findings |
+| posttooluse/gates/run-gate.py --id g5 | `ivy_iut_test` | Analyses IUT trace after each test run (`dispatch_g5`); surfaces assertion failures and unexpected event sequences |
 | render/tool-result.py | `ivy_verify`, `ivy_coverage`, `ivy_diagnostics`, `ivy_compile`, `ivy_quality` | Reformats raw JSON result to workflow-appropriate prose or tables; style adapts to active overlay |
 | record/workflow-error.py | `ivy_verify`, `ivy_compile`, `ivy_diagnostics`, `ivy_coverage`, `ivy_iut_test`, `ivy_quality` | Captures tool errors to the session error log; emits the G4 verification-gate dispatch directive after `ivy_verify` |
 | record/skill-invocation.py | `Skill` | Surfaces `[ivy-skill]` system message; updates statusline `active_skill`; for plugin skills auto-loads `references/*.md` (cap 8000 chars); for ops-skill invocations inside an active workflow appends `progress{kind: "skill_invoked"}` to the journal |

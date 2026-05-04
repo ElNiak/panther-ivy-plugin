@@ -117,7 +117,7 @@ If the IUT reports "invalid value":
 
 ## G5 trace-analysis gate
 
-Fires PostToolUse on every `ivy_iut_test` return. A PostToolUse hook (`posttooluse/gates/g5-trace.py`) spawns G5 trace-analysis critics from the `cross-cutting-reflection-patterns` skill.
+Fires PostToolUse on every `ivy_iut_test` return. A PostToolUse hook (`posttooluse/gates/run-gate.py --id g5`) spawns G5 trace-analysis critics from the `cross-cutting-reflection-patterns` skill.
 
 ### Trigger and catalog slice
 

@@ -141,7 +141,7 @@ read-order paths (Phase 5) but may NOT re-invoke `ivy_iut_test` or
 `panther run`. Verdict actions: SOUND advances; UNSOUND writes
 `[GAP: #NN]` markers and surfaces them in the user-facing report;
 ABSTAIN proceeds with `abstain_reason` cited in the digest.
-The PostToolUse hook (`posttooluse/gates/g5-trace.py`) is a backstop — the experimenter
+The PostToolUse hook (`posttooluse/gates/run-gate.py --id g5`) is a backstop — the experimenter
 is responsible for inline dispatch and must not defer to the hook for
 the primary G5 invocation. Dispatch shape:
 `Skill(skill="panther-ivy-plugin:ivy")` `references/parallel-dispatch.md`.
@@ -271,7 +271,7 @@ For MCP tools (`ivy_iut_test`, `ivy_workflow_state`), apply `.claude/rules/mcp-t
 - **MCP tools used:** `ivy_iut_test`, `ivy_workspace`, `ivy_workflow_state`, `ivy_diagnostics`. Bash for `panther run` long-form experiments.
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/journal/*.jsonl`. Outputs land at `outputs/<experiment_date>/<experiment_id>/`.
 - **Failure-recovery contract:** `.claude/rules/agent-dispatch.md` for sub-agent dispatches; `.claude/rules/mcp-tool-reliability.md` for MCP tool failures.
-- **Hook backstop:** `posttooluse/gates/g5-trace.py` (G5 PostToolUse on `ivy_iut_test`) fires as backstop for trace analysis. Primary G5 dispatch is inline in Phase 6.
+- **Hook backstop:** `posttooluse/gates/run-gate.py --id g5` (G5 PostToolUse on `ivy_iut_test`) fires as backstop for trace analysis. Primary G5 dispatch is inline in Phase 6.
 
 ## References
 

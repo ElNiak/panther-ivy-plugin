@@ -16,7 +16,7 @@ every experiment-ops skill entry.
 |---|---|
 | "The IUT trace matches the Ivy log, skip pcap" | Ivy log events do not guarantee wire transmission. Always cross-validate via pcap (G5 catalog `#501`). |
 | "This counterexample is a model bug, not the IUT" | Distinguish IUT bug vs. model bug via the G5 trace gate (`#505`). Do not classify without the gate. |
-| "G5 will fire from the post-tool hook, I'll skip the inline dispatch" | The experimenter dispatches G5 inline on every IUT-test outcome. The `posttooluse/gates/g5-trace.py` hook is a backstop only; inline dispatch is what the workflow consumes for its verdict. |
+| "G5 will fire from the post-tool hook, I'll skip the inline dispatch" | The experimenter dispatches G5 inline on every IUT-test outcome. The `posttooluse/gates/run-gate.py --id g5` hook is a backstop only; inline dispatch is what the workflow consumes for its verdict. |
 | "I'll just run ivyc directly to compile the test" | Per `feedback_never_run_ivyc_directly`: always use `ivy_compile` MCP (or `panther run` for full experiments). The CLI lacks staging and include setup. |
 | "I'll execute the Ivy binary directly" | Per `feedback_use_panther_run`: never execute Ivy binaries directly. Use `panther run` (preferred for long-form) or `ivy_iut_test` (MCP shortcut). |
 | "panther run is taking a while, let me kill it and retry" | Per `feedback_monitor_background_panther`: spawn a Monitor or background subagent on any panther run that may exceed 60 seconds. Do not kill mid-run; outputs are partial and the failure may be intermittent. |

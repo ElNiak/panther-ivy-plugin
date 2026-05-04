@@ -143,7 +143,7 @@ G2 modeling gate (non-test `.ivy` files): dispatch `g-fidelity-critic` ×3 in pa
 Pattern B verbatim G2 prompts (`skills/ivy/references/critic_prompts/g2_modeling.md`).
 G3 test-spec gate (`*_test_*.ivy`): same dispatch shape with G3 verbatim prompts
 (`skills/ivy/references/critic_prompts/g3_testspec.md`).
-The `posttooluse/gates/g2-modeling.py` PostToolUse hook is a backstop; the builder is responsible
+The `posttooluse/gates/run-gate.py --id g2` PostToolUse hook is a backstop; the builder is responsible
 for inline dispatch and must not defer to the hook for primary G2 invocation.
 On `VERDICT_UNSOUND`, write `[GAP: #NN <reason>]` markers inline at cited locations
 and resolve every open marker (per `.claude/rules/gap-markers.md`) before starting
@@ -243,7 +243,7 @@ digraph build_ops {
 | "I can guess which layers from the 14-template" | The methodology branch (NCT / NACT / NSCT) selects layer order. Load `Skill(skill="panther-ivy-plugin:specification-patterns")` and `Skill(skill="panther-ivy-plugin:methodology")` rather than guessing. |
 | "I'll fix the [GAP] marker later, layer N+1 first" | Resolve every open `[GAP: #NN]` marker across the current Phase 3 lifecycle BEFORE starting the next layer. Each marker is fixed in place or promoted to `// DEFERRED YYYY-MM-DD`. |
 | "The RFC quote feels right from memory" | Always Read the RFC source via the `ivy-refiner-agent` agent or the `methodology` skill. Never paraphrase or quote normative text from memory. |
-| "G2 will fire from the post-write hook, I'll just keep writing" | The builder dispatches G2/G3 inline after each Write/Edit on `.ivy`. The `posttooluse/gates/g2-modeling.py` hook is a backstop, not the primary trigger. Inline dispatch produces the asymmetric-vote verdict the workflow consumes. |
+| "G2 will fire from the post-write hook, I'll just keep writing" | The builder dispatches G2/G3 inline after each Write/Edit on `.ivy`. The `posttooluse/gates/run-gate.py --id g2` hook is a backstop, not the primary trigger. Inline dispatch produces the asymmetric-vote verdict the workflow consumes. |
 | "Verify failed once — bypass and ship" | Build hands off to verify via `pending_dispatch`; on verify failure the orchestrator returns control to Phase 5. Read the journal `gate_verdict`/`progress` entries before re-entering. |
 
 ## Step Tracking
@@ -333,7 +333,7 @@ For MCP tools (`ivy_compile`, `ivy_diagnostics`, `ivy_workspace`, `ivy_workflow_
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/scaffold-state.yaml`.
 - **Failure-recovery contract:** `.claude/rules/agent-dispatch.md` for sub-agent dispatches; `.claude/rules/mcp-tool-reliability.md` for MCP tool failures.
 - **Iron laws:** `NO_LAYER_WITHOUT_SCAFFOLD`, `STALENESS_RULE` (`.claude/rules/iron-laws.md`).
-- **Hook backstop:** `posttooluse/gates/g2-modeling.py` (G2) and `posttooluse/gates/g3-testspec.py` (G3) PostToolUse hooks fire as backstop; primary dispatch is inline in Phase 3.
+- **Hook backstop:** `posttooluse/gates/run-gate.py --id g2` (G2) and `posttooluse/gates/run-gate.py --id g3` (G3) PostToolUse hooks fire as backstop; primary dispatch is inline in Phase 3.
 
 ## References
 

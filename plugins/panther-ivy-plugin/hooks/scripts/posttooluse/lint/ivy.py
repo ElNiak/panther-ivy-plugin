@@ -10,13 +10,13 @@ Always exits 0 — non-blocking.
 
 from __future__ import annotations
 
-import os
 import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from lib.hook_utils import emit_hook_output, emit_noop, mark_session_activity, read_stdin  # noqa: E402
+from lib.ivy_path import resolve_ivy_path  # noqa: E402
 
 _COMMENT = re.compile(r"#.*")
 _STRING = re.compile(r'"[^"]*"')
@@ -50,18 +50,12 @@ def _check(file_path: Path) -> list[str]:
 def main() -> None:
     data = read_stdin()
     tool_input = data.get("tool_input", {})
-    raw_path = tool_input.get("file_path", "")
 
-    if not raw_path or not raw_path.endswith(".ivy"):
-        emit_noop("PostToolUse", "non-.ivy file or empty path")
+    file_path = resolve_ivy_path(tool_input, event="PostToolUse")
+    if file_path is None:
         return
 
-    file_path = Path(raw_path)
-    if not file_path.is_file():
-        emit_noop("PostToolUse", f"file no longer exists: {file_path.name}")
-        return
-
-    mark_session_activity(f"file:{raw_path}")
+    mark_session_activity(f"file:{file_path}")
 
     findings = _check(file_path)
     if not findings:

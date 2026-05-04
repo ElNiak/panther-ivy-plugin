@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""Tests for adversarial-gate dispatch hooks (G1-G5).
+"""Tests for adversarial-gate dispatch hooks (G2-G5).
 
 Verifies the trigger-detector hooks emit the expected `additionalContext`
 directive when their conditions are met and stay silent otherwise. Also
 verifies they write `gate_dispatched` breadcrumbs to the workflow journal.
+
+After PR3, G2/G3/G5 are dispatched via the parametric runner
+`posttooluse/gates/run-gate.py --id g{2,3,5}` (logic in
+`posttooluse/gates/gate_handlers.py`). G4 remains in
+`record/workflow-error.py` (not collapsed; G4 is a verify-time gate
+not part of the G2/G3/G5 pattern).
 """
 
 import json
@@ -19,20 +25,27 @@ import yaml
 PLUGIN_ROOT = str(Path(__file__).resolve().parent.parent)
 SCRIPTS = Path(PLUGIN_ROOT) / "hooks" / "scripts"
 
-ASSESS_MODELING = str(SCRIPTS / "posttooluse/gates/g2-modeling.py")
-ASSESS_TESTSPEC = str(SCRIPTS / "posttooluse/gates/g3-testspec.py")
-ASSESS_TRACE = str(SCRIPTS / "posttooluse/gates/g5-trace.py")
+RUN_GATE = str(SCRIPTS / "posttooluse/gates/run-gate.py")
 RECORD_WORKFLOW_ERROR = str(SCRIPTS / "record/workflow-error.py")
 
 
-def _run(script: str, payload: dict, env_overrides: "dict[str, str] | None" = None) -> "dict | None":
+def _run(
+    script: str,
+    payload: dict,
+    *,
+    extra_argv: "list[str] | None" = None,
+    env_overrides: "dict[str, str] | None" = None,
+) -> "dict | None":
     env = os.environ.copy()
     env["CLAUDE_PLUGIN_ROOT"] = PLUGIN_ROOT
     env.pop("IVY_WORKSPACE_ROOT", None)
     if env_overrides:
         env.update(env_overrides)
+    cmd = [sys.executable, script]
+    if extra_argv:
+        cmd.extend(extra_argv)
     result = subprocess.run(
-        [sys.executable, script],
+        cmd,
         input=json.dumps(payload),
         capture_output=True,
         text=True,
@@ -102,14 +115,15 @@ def _read_journal(path: str) -> "list[dict[str, Any]]":
     return data or []
 
 
-# ----- posttooluse/gates/g2-modeling.py (G2) -----
+# ----- posttooluse/gates/run-gate.py --id g2 (G2 modeling) -----
 
 def test_g2_emits_on_layer_edit_during_build():
     with tempfile.TemporaryDirectory() as tmpdir:
         ws = _make_workspace(tmpdir, workflow="scaffold", phase="write")
         out = _run(
-            ASSESS_MODELING,
+            RUN_GATE,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["layer_file"]}},
+            extra_argv=["--id", "g2"],
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert out is not None
@@ -135,8 +149,9 @@ def test_g2_silent_on_test_spec_edit():
     with tempfile.TemporaryDirectory() as tmpdir:
         ws = _make_workspace(tmpdir, workflow="scaffold", phase="write")
         out = _run(
-            ASSESS_MODELING,
+            RUN_GATE,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["test_file"]}},
+            extra_argv=["--id", "g2"],
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert _is_noop_envelope(out)
@@ -149,21 +164,23 @@ def test_g2_silent_when_no_workflow():
         layer = proto / "bgp_stack" / "bgp_open.ivy"
         layer.write_text("#lang ivy1.7\n")
         out = _run(
-            ASSESS_MODELING,
+            RUN_GATE,
             {"tool_name": "Edit", "tool_input": {"file_path": str(layer)}},
+            extra_argv=["--id", "g2"],
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert _is_noop_envelope(out)
 
 
-# ----- posttooluse/gates/g3-testspec.py (G3) -----
+# ----- posttooluse/gates/run-gate.py --id g3 (G3 test-spec) -----
 
 def test_g3_emits_on_test_spec_edit_during_build():
     with tempfile.TemporaryDirectory() as tmpdir:
         ws = _make_workspace(tmpdir, workflow="scaffold", phase="write")
         out = _run(
-            ASSESS_TESTSPEC,
+            RUN_GATE,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["test_file"]}},
+            extra_argv=["--id", "g3"],
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert out is not None
@@ -178,14 +195,15 @@ def test_g3_silent_on_layer_edit():
     with tempfile.TemporaryDirectory() as tmpdir:
         ws = _make_workspace(tmpdir, workflow="scaffold", phase="write")
         out = _run(
-            ASSESS_TESTSPEC,
+            RUN_GATE,
             {"tool_name": "Edit", "tool_input": {"file_path": ws["layer_file"]}},
+            extra_argv=["--id", "g3"],
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert _is_noop_envelope(out)
 
 
-# ----- posttooluse/gates/g5-trace.py (G5) -----
+# ----- posttooluse/gates/run-gate.py --id g5 (G5 trace-analysis) -----
 
 def test_g5_emits_on_iut_test_completion():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -202,8 +220,9 @@ def test_g5_emits_on_iut_test_completion():
             "summary": {"test_passed": True},
         }
         out = _run(
-            ASSESS_TRACE,
+            RUN_GATE,
             {"tool_name": "ivy_iut_test", "tool_result": tool_result},
+            extra_argv=["--id", "g5"],
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert out is not None
@@ -218,8 +237,9 @@ def test_g5_emits_on_iut_test_completion():
 def test_g5_silent_on_other_tools():
     with tempfile.TemporaryDirectory() as tmpdir:
         out = _run(
-            ASSESS_TRACE,
+            RUN_GATE,
             {"tool_name": "ivy_verify", "tool_result": {"status": "OK"}},
+            extra_argv=["--id", "g5"],
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert _is_noop_envelope(out)

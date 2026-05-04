@@ -68,7 +68,7 @@ This is an inline interpretation by the verifier agent — no separate diagnosti
 
 ## Phase 7 — Fix (apply diff)
 
-Attempt counter is at 0 (first fix on this file this session), well below the cap of 3. The verifier appends `progress{kind: "fix_attempt", key: "quic_server_test_handshake.ivy", attempt: 1}` and applies the unified diff via the `Edit` tool. The PostToolUse `posttooluse/gates/g2-modeling.py` hook does NOT fire G2 on Phase 7 verify-time edits (G2 is scaffold-time only — see `cross-cutting-reflection-patterns/references/gates.md` § "G2/G3 workflow scope").
+Attempt counter is at 0 (first fix on this file this session), well below the cap of 3. The verifier appends `progress{kind: "fix_attempt", key: "quic_server_test_handshake.ivy", attempt: 1}` and applies the unified diff via the `Edit` tool. The PostToolUse `posttooluse/gates/run-gate.py --id g2` hook does NOT fire G2 on Phase 7 verify-time edits (G2 is scaffold-time only — see `cross-cutting-reflection-patterns/references/gates.md` § "G2/G3 workflow scope").
 
 ## Phase 4 — Re-verify (SOUND)
 

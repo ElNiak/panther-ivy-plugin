@@ -16,8 +16,15 @@ def _patch_sys_path():
     sys.path.insert(0, _HOOK_SCRIPTS_DIR)
     yield
     sys.path.remove(_HOOK_SCRIPTS_DIR)
-    if "lib.workflow_state" in sys.modules:
-        del sys.modules["lib.workflow_state"]
+    # Drop the package AND every loaded submodule so the next test gets a
+    # fresh module-level state for things like _WARNED_UNKNOWN_FIELDS.
+    # Without this, any test (including collection-time imports from peer
+    # test files) that loads lib.workflow_state.context leaves a populated
+    # warned-fields set behind, and the subsequent unknown-keys assertion
+    # finds zero new warnings.
+    for mod_name in list(sys.modules):
+        if mod_name == "lib.workflow_state" or mod_name.startswith("lib.workflow_state."):
+            del sys.modules[mod_name]
 
 
 def _import_module():

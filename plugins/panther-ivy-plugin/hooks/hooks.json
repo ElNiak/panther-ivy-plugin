@@ -73,12 +73,12 @@
           },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/g2-modeling.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/run-gate.py --id g2",
             "timeout": 10
           },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/g3-testspec.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/run-gate.py --id g3",
             "timeout": 10
           }
         ]
@@ -88,7 +88,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/g5-trace.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/run-gate.py --id g5",
             "timeout": 15
           }
         ]
