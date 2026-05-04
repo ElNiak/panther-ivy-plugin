@@ -11,7 +11,7 @@ from pathlib import Path
 
 import yaml
 
-from hook_utils import emit_noop, get_workspace_root
+from lib.hook_utils import emit_noop, get_workspace_root
 
 STATE_DIR_NAME = ".panther-ivy"
 _ACTIVE_WORKFLOW_FILE = "active-workflow"

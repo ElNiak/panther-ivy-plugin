@@ -126,7 +126,7 @@ def resolve_active_group_for_hook() -> str | None:
     # Local import keeps the dependency one-way: statusline_cache imports
     # nothing from hook_utils, hook_utils imports statusline_cache lazily
     # so a circular bootstrap path stays impossible.
-    from statusline_cache import _resolve_active_group, _resolve_workspace_root
+    from lib.statusline_cache import _resolve_active_group, _resolve_workspace_root
 
     ws = _resolve_workspace_root()
     return _resolve_active_group(ws) if ws else None
