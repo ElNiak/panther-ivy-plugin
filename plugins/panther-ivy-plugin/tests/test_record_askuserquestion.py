@@ -1,4 +1,4 @@
-"""Tests for the PostToolUse:AskUserQuestion hook ``record-askuserquestion.py``.
+"""Tests for the PostToolUse:AskUserQuestion hook ``record/askuserquestion.py``.
 
 The hook records every ``AskUserQuestion`` invocation to a JSONL log under
 ``.panther-ivy/askuserquestion-log.jsonl`` (always) and additionally appends
@@ -21,7 +21,7 @@ import yaml
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "record-askuserquestion.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "record/askuserquestion.py"
 
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 from lib.workflow_state import set_active_workflow  # noqa: E402

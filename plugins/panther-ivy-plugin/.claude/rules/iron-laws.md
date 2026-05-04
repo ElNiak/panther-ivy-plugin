@@ -24,7 +24,7 @@ canonical source — the primer is a summary derived from the rule body.
 Edits here propagate to the orchestrator on the next refactor pass.
 
 The advisory surface is the project-scoped `PreToolUse` hook at
-`hooks/scripts/block-direct-ivy.py` (registered in `hooks/hooks.json` for
+`hooks/scripts/pretooluse/block-direct-ivy.py` (registered in `hooks/hooks.json` for
 the `Bash` matcher). It surfaces an `[ivy-block] direct CLI call detected`
 status line plus an MCP-tool suggestion table when `ivyc`, `ivy_check`,
 `ivy_show`, or `ivy_to_cpp` is invoked from Bash, and **always exits 0**.
@@ -42,12 +42,12 @@ is approved and the workflow re-activates at Phase 1.5.
 
 | Law | Workflow | Enforcement site |
 |---|---|---|
-| NO_FIX_WITHOUT_VERIFY | refine | workflow self-discipline + hooks/scripts/block-direct-ivy.py (advisory hint) |
+| NO_FIX_WITHOUT_VERIFY | refine | workflow self-discipline + hooks/scripts/pretooluse/block-direct-ivy.py (advisory hint) |
 | NO_LAYER_WITHOUT_SCAFFOLD | scaffold | ivy_diagnostics(mode="structural") call before new-layer writes |
 | NO_QUALITY_WITHOUT_COVERAGE | review | ivy_coverage / ivy_quality citation at verdict time |
 | STALENESS RULE | scaffold, refine, experiment, review | ivy_analysis(mode="includes") closure + tool timestamp |
 
-<iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="refine" enforcement="hooks/scripts/block-direct-ivy.py (advisory) + workflow self-discipline">
+<iron-law name="NO_FIX_WITHOUT_VERIFY" workflow="refine" enforcement="hooks/scripts/pretooluse/block-direct-ivy.py (advisory) + workflow self-discipline">
 
   <instructions>
   Before proposing a *concrete code-edit fix* (an Edit/Write tool call, or a
@@ -175,7 +175,7 @@ is approved and the workflow re-activates at Phase 1.5.
 
 <integration
   cited-by="skills/scaffold-ops, skills/refine-ops, skills/experiment-ops, skills/review-ops"
-  enforcement-hook="hooks/scripts/block-direct-ivy.py (advisory hint)"
+  enforcement-hook="hooks/scripts/pretooluse/block-direct-ivy.py (advisory hint)"
   suspended-during="plan mode (navigate Phase 0)"
   re-checked-at="G0 plan-gate on plan approval (navigate Phase 1.5)"/>
 
@@ -195,7 +195,7 @@ Turn N+3  : ivy_verify rerun → {"status":"OK","started_at":"…14:08Z"}
             → "verification passed" claim is now licensed.
 ```
 
-Direct CLI alternative `ivy_check quic_server_test_handshake.ivy` is warned by `hooks/scripts/block-direct-ivy.py` (PreToolUse, exit 0 advisory hint with MCP-tool suggestion table).
+Direct CLI alternative `ivy_check quic_server_test_handshake.ivy` is warned by `hooks/scripts/pretooluse/block-direct-ivy.py` (PreToolUse, exit 0 advisory hint with MCP-tool suggestion table).
 
 ### NO_LAYER_WITHOUT_SCAFFOLD in flight
 

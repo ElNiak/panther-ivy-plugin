@@ -1,4 +1,4 @@
-"""Tests for post-write-ivy-lint.py PostToolUse hook.
+"""Tests for posttooluse/lint/ivy.py PostToolUse hook.
 
 Verifies:
   - Activity flag is touched on .ivy file edits.
@@ -19,7 +19,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "post-write-ivy-lint.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "posttooluse/lint/ivy.py"
 
 
 def _run_hook(tmp_path: Path, file_path: str, *, session_id: str = "test-ivy-lint-42") -> dict:

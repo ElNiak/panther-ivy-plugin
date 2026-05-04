@@ -1,4 +1,4 @@
-"""Tests for the PostToolUse:Write|Edit hook ``post-edit-python-format.py``.
+"""Tests for the PostToolUse:Write|Edit hook ``posttooluse/lint/python-format.py``.
 
 The hook runs ``ruff check --fix --output-format json`` on edited Python
 files and surfaces a status line indicating how many issues were auto-fixed.
@@ -22,7 +22,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "post-edit-python-format.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "posttooluse/lint/python-format.py"
 
 
 class TestNonPythonFile:

@@ -19,7 +19,7 @@ digraph plugin_runtime {
   rankdir=LR;
   node [shape=box, style=rounded, fontsize=10];
 
-  start    [label="SessionStart\n(detect-ivy-workspace.py\n+ inject-using-plugin.py)"];
+  start    [label="SessionStart\n(workspace/detect.py\n+ prompt/using-plugin.py)"];
   prompt   [label="UserPromptSubmit", style="rounded,filled", fillcolor="#e3f2fd"];
   ivy      [label="ivy orchestrator\n(intent routing, knowledge\nQ&A, active-workflow YAML)"];
   agents   [label="specialist agents\n(refiner, experimenter, builder,\nreviewer, triage, meta)\n+ preloaded *-ops skills",

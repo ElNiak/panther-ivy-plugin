@@ -1,4 +1,4 @@
-"""Tests for hooks/scripts/post-workflow-render-project-md.py."""
+"""Tests for hooks/scripts/render/project-md.py."""
 from __future__ import annotations
 
 import json
@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-HOOK = PLUGIN_ROOT / "hooks" / "scripts" / "post-workflow-render-project-md.py"
+HOOK = PLUGIN_ROOT / "hooks" / "scripts" / "render/project-md.py"
 
 
 def _seed_workspace_state(root: Path, active_group: str) -> None:

@@ -3,7 +3,7 @@
 Standardized per-tool reference. Timeout, Tier, and Rendering values come from
 `_TOOL_TIMEOUTS` and `_TOOL_METADATA` in `ivy_lsp/mcp/tools/__init__.py`.
 
-**Rendering note:** Tools marked `hook` are post-processed by `render-tool-result.py`.
+**Rendering note:** Tools marked `hook` are post-processed by `render/tool-result.py`.
 Do not reformat their output. Tools marked `raw` return JSON — format per ivy-formatting.md.
 
 ---
@@ -418,9 +418,9 @@ Manage workflow state files for multi-session tracking.
 | `decision` | workflow skills and user-confirmed choices | `summary`, arbitrary decision-specific keys |
 | `phase_transition` | workflow skills at phase boundaries | `from`, `to` |
 | `progress` | workflow skills during long-running steps | `detail` |
-| `error` | `record-workflow-error.py` hook and workflow skills | `detail`, `implication`, `summary` |
+| `error` | `record/workflow-error.py` hook and workflow skills | `detail`, `implication`, `summary` |
 | `context_switch` | navigate Phase 0 (plan-mode detection), other skills | `detection`, `mode` |
-| `gate_dispatched` | gate-trigger hooks (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, `record-workflow-error.py`) | `gate`, `trigger`, `artifact`, `layer`, `methodology` |
+| `gate_dispatched` | gate-trigger hooks (`posttooluse/gates/g2-modeling.py`, `posttooluse/gates/g3-testspec.py`, `posttooluse/gates/g5-trace.py`, `record/workflow-error.py`) | `gate`, `trigger`, `artifact`, `layer`, `methodology` |
 | `gate_verdict` | orchestrator after critic fan-out | `gate` ("g0".."g5"), `verdict`, `vote`, `patterns`, `cycle`, `tier`, `duration_s` |
 | `plan_approved` | navigate Plan-Author Branch on ExitPlanMode | `workflow` (caller), `phase_before_plan`, `plan_file`, `supersedes` |
 | `workflow_resumed` | navigate Phase 1.5 after G0 SOUND verdict | `workflow` (caller), `phase_after_resume`, `g0_cycle` |

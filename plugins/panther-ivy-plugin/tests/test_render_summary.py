@@ -1,4 +1,4 @@
-"""Tests for render-summary.py Stop hook."""
+"""Tests for render/summary.py Stop hook."""
 
 import json
 import os
@@ -12,7 +12,7 @@ import yaml
 pytestmark = pytest.mark.unit
 
 SCRIPT = str(
-    Path(__file__).resolve().parent.parent / "hooks" / "scripts" / "render-summary.py"
+    Path(__file__).resolve().parent.parent / "hooks" / "scripts" / "render/summary.py"
 )
 PLUGIN_ROOT = str(Path(__file__).resolve().parent.parent)
 

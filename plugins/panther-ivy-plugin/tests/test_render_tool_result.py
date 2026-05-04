@@ -1,4 +1,4 @@
-"""Tests for render-tool-result.py PostToolUse hook."""
+"""Tests for render/tool-result.py PostToolUse hook."""
 
 import json
 import os
@@ -12,7 +12,7 @@ import yaml
 pytestmark = pytest.mark.unit
 
 SCRIPT = str(
-    Path(__file__).resolve().parent.parent / "hooks" / "scripts" / "render-tool-result.py"
+    Path(__file__).resolve().parent.parent / "hooks" / "scripts" / "render/tool-result.py"
 )
 PLUGIN_ROOT = str(Path(__file__).resolve().parent.parent)
 

@@ -4,7 +4,7 @@ Phase 5 quality-gate procedure plus the related per-file G2/G3 gate semantics th
 
 ## G2 / G3 Gates Fire Per-File (Phase 3 prerequisite)
 
-After each `Write`/`Edit` on a `.ivy` file, the builder agent dispatches critics inline (per `scaffold-ops/SKILL.md` Phase 3 G2/G3 hard-gate); the PostToolUse hooks `assess-modeling.py` and `assess-testspec.py` are a backstop. Critic prompts come from the verbatim G2/G3 catalog templates kept under `skills/ivy/references/critic_prompts/`:
+After each `Write`/`Edit` on a `.ivy` file, the builder agent dispatches critics inline (per `scaffold-ops/SKILL.md` Phase 3 G2/G3 hard-gate); the PostToolUse hooks `posttooluse/gates/g2-modeling.py` and `posttooluse/gates/g3-testspec.py` are a backstop. Critic prompts come from the verbatim G2/G3 catalog templates kept under `skills/ivy/references/critic_prompts/`:
 
 - `*.ivy` (non-test): G2 modeling critics (catalog slice `#200-249` + `#250-299` + NSCT `#260-289`).
 - `*_test_*.ivy`: G3 test-spec critics (catalog slice `#200-208` + `#256-259` + `#300-399`).

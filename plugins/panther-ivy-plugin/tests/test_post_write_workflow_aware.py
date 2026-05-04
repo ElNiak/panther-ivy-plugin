@@ -1,4 +1,4 @@
-"""Tests for post-write-workflow-aware.py PostToolUse hook.
+"""Tests for render/workflow-aware-annotation.py PostToolUse hook.
 
 Activity-flag assertions per plan Task 5:
   - Specialist agent dispatch flips the flag.
@@ -19,7 +19,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "post-write-workflow-aware.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "render/workflow-aware-annotation.py"
 
 _SPECIALIST_AGENTS = [
     "panther-ivy-plugin:ivy-refiner-agent",

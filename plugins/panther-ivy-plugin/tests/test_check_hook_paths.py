@@ -1,4 +1,4 @@
-"""Tests for the SessionStart self-test ``check-hook-paths.py``.
+"""Tests for the SessionStart self-test ``session/start/check-hook-paths.py``.
 
 Three scenarios cover the hook's contract:
 
@@ -21,7 +21,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "check-hook-paths.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "session/start/check-hook-paths.py"
 
 
 def test_clean_plugin_tree_emits_noop(run_hook):

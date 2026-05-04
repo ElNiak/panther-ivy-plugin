@@ -213,7 +213,7 @@ Ask via `AskUserQuestion`: "Fix it yourself, or want me to attempt the fix?" Wai
 
 #### Post-Edit workspace-block recovery
 
-If a Phase 7 `Edit` on a `.ivy` file is blocked by the `check-workspace-scope.py` PreToolUse hook, append a `progress` journal entry (`{kind: "workspace_edit_blocked"}`) and present `AskUserQuestion` with three options: switch workspace, clear workspace restrictions, or abandon the edit. Full journal payload, AskUserQuestion phrasing, and the platform-limitation note: `references/workspace-block-recovery.md`.
+If a Phase 7 `Edit` on a `.ivy` file is blocked by the `workspace/scope.py` PreToolUse hook, append a `progress` journal entry (`{kind: "workspace_edit_blocked"}`) and present `AskUserQuestion` with three options: switch workspace, clear workspace restrictions, or abandon the edit. Full journal payload, AskUserQuestion phrasing, and the platform-limitation note: `references/workspace-block-recovery.md`.
 
 ### Phase 7 — Fix loop (attempt-counter accountability)
 

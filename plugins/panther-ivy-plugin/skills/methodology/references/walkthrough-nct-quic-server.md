@@ -17,7 +17,7 @@ packets) and §19.6 (CRYPTO frame) compliance.
 ```
 
 The hook chain writes `IVY_ACTIVE_WORKSPACE=quic` to `$CLAUDE_ENV_FILE`.
-The PreToolUse `check-workspace-scope.py` hook now blocks any
+The PreToolUse `workspace/scope.py` hook now blocks any
 `Write`/`Edit` outside `protocol-testing/quic/`. Reads across protocols
 remain free.
 
@@ -70,8 +70,8 @@ Iron law `NO_LAYER_WITHOUT_SCAFFOLD` binds: before writing
 (layers 1-4). All return SOUND. Layer 7 is authored.
 
 PostToolUse hooks fire on the Write:
-- `post-write-ivy-lint.py` — fast structural check (passes).
-- `assess-testspec.py` — G3 test-spec gate dispatches 3 critics; verdict
+- `posttooluse/lint/ivy.py` — fast structural check (passes).
+- `posttooluse/gates/g3-testspec.py` — G3 test-spec gate dispatches 3 critics; verdict
   SOUND.
 
 The role-inversion rule applies: testing a QUIC *server* means Ivy plays

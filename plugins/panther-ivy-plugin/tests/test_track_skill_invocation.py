@@ -1,4 +1,4 @@
-"""Tests for the PostToolUse:Skill hook ``track-skill-invocation.py``.
+"""Tests for the PostToolUse:Skill hook ``record/skill-invocation.py``.
 
 The hook tracks every ``Skill`` tool call:
 
@@ -24,10 +24,10 @@ import pytest
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "track-skill-invocation.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "record/skill-invocation.py"
 
 _SCRIPT_DEPS = (
-    "track-skill-invocation.py",
+    "record/skill-invocation.py",
 )
 
 
@@ -46,9 +46,11 @@ def _materialise_scripts(plugin_root: Path) -> Path:
     scripts_dst = plugin_root / "hooks" / "scripts"
     scripts_dst.mkdir(parents=True)
     for name in _SCRIPT_DEPS:
-        (scripts_dst / name).write_bytes((scripts_src / name).read_bytes())
+        target = scripts_dst / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((scripts_src / name).read_bytes())
     shutil.copytree(scripts_src / "lib", scripts_dst / "lib")
-    return scripts_dst / "track-skill-invocation.py"
+    return scripts_dst / "record/skill-invocation.py"
 
 
 # ---------------------------------------------------------------------------

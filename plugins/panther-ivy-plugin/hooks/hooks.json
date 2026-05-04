@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-direct-ivy.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/pretooluse/block-direct-ivy.py",
             "timeout": 5
           }
         ]
@@ -16,12 +16,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-mcp-health.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/mcp/health.py",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-indexing-ready.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/mcp/indexing-ready.py",
             "timeout": 5
           }
         ]
@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-workspace-scope.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/workspace/scope.py",
             "timeout": 5
           }
         ]
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-write-workflow-aware.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render/workflow-aware-annotation.py",
             "timeout": 5
           }
         ]
@@ -63,22 +63,22 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-write-ivy-lint.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/lint/ivy.py",
             "timeout": 10
           },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-edit-python-format.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/lint/python-format.py",
             "timeout": 15
           },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/assess-modeling.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/g2-modeling.py",
             "timeout": 10
           },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/assess-testspec.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/g3-testspec.py",
             "timeout": 10
           }
         ]
@@ -88,7 +88,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/assess-trace.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/g5-trace.py",
             "timeout": 15
           }
         ]
@@ -98,12 +98,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record-workflow-error.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record/workflow-error.py",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render-tool-result.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render/tool-result.py",
             "timeout": 10
           }
         ]
@@ -113,7 +113,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/mark-mcp-activity.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/mcp/activity.py",
             "timeout": 5
           }
         ]
@@ -123,7 +123,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/track-skill-invocation.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record/skill-invocation.py",
             "timeout": 10
           }
         ]
@@ -133,7 +133,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record-askuserquestion.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record/askuserquestion.py",
             "timeout": 5
           }
         ]
@@ -143,7 +143,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/notify-workspace-change.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/workspace/change-notify.py",
             "timeout": 5
           }
         ]
@@ -153,12 +153,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-workflow-render-project-md.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render/project-md.py",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/sync-statusline-cache.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/statusline/sync.py",
             "timeout": 5
           }
         ]
@@ -180,7 +180,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/retry-ivy-mcp.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/mcp/retry.py",
             "timeout": 5
           }
         ]
@@ -201,7 +201,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-journaling-contract.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/journaling/contract-check.py",
             "timeout": 5
           }
         ]
@@ -210,7 +210,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-hook-paths.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session/start/check-hook-paths.py",
             "timeout": 5
           }
         ]
@@ -219,7 +219,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/detect-ivy-workspace.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/workspace/detect.py",
             "timeout": 10
           }
         ]
@@ -228,7 +228,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/cleanup-stale-pids.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/cleanup/stale-pids.py",
             "timeout": 5
           }
         ]
@@ -237,7 +237,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/cleanup-stale-workflow.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/cleanup/stale-workflow.py",
             "timeout": 5
           }
         ]
@@ -246,7 +246,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/sync-statusline-cache.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/statusline/sync.py",
             "timeout": 5
           }
         ]
@@ -255,7 +255,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/inject-using-plugin.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prompt/using-plugin.py",
             "timeout": 5
           }
         ]
@@ -264,7 +264,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/wait-for-indexing.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/mcp/indexing-wait.py",
             "timeout": 30
           }
         ]
@@ -284,7 +284,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/cleanup-ivy-lsp.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/cleanup/ivy-lsp.py",
             "timeout": 5
           }
         ]
@@ -304,7 +304,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record-session-end.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/record/session-end.py",
             "timeout": 5
           }
         ]
@@ -313,7 +313,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render-summary.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render/summary.py",
             "timeout": 10
           }
         ]
@@ -334,7 +334,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/inject-journaling-contract.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/journaling/contract-inject.py",
             "timeout": 5
           },
           {
@@ -374,7 +374,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/compose-style.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prompt/style.py",
             "timeout": 5
           },
           {
@@ -391,7 +391,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/notify-mcp-disconnect.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/mcp/disconnect-notify.py",
             "timeout": 5
           }
         ]

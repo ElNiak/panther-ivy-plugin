@@ -3,7 +3,7 @@
 `emit_hook_output` is the single point through which every blocking PreToolUse
 hook emits its deny decision and every informational hook emits context to the
 model. The function's contract (Claude Code advanced-protocol hook JSON, exit 0
-required) is load-bearing for workspace edit isolation (check-workspace-scope.py)
+required) is load-bearing for workspace edit isolation (workspace/scope.py)
 and the MCP-CLI block hook (block-direct-ivy.sh). These tests pin the JSON
 envelope shape so accidental changes surface immediately.
 """

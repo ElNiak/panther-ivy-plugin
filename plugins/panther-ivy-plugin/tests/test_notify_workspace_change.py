@@ -23,7 +23,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "notify-workspace-change.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "workspace/change-notify.py"
 HOOK_SCRIPTS_DIR = PLUGIN_ROOT / "hooks" / "scripts"
 
 

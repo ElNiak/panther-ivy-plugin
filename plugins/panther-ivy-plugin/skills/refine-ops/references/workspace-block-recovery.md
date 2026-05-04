@@ -1,10 +1,10 @@
 # Verify-ops — post-Edit workspace-block recovery
 
-Recovery flow when `check-workspace-scope.py` PreToolUse hook blocks an `Edit` / `Write` on a `.ivy` file outside the active workspace during a Phase 7 fix application.
+Recovery flow when `workspace/scope.py` PreToolUse hook blocks an `Edit` / `Write` on a `.ivy` file outside the active workspace during a Phase 7 fix application.
 
 ## Detection
 
-After every `Write` / `Edit` on a `.ivy` file during Phase 7 (fix application), inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. The hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file) when the target `.ivy` is outside the active workspace.
+After every `Write` / `Edit` on a `.ivy` file during Phase 7 (fix application), inspect the tool-result for a workspace-scope violation from the `workspace/scope.py` PreToolUse hook. The hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file) when the target `.ivy` is outside the active workspace.
 
 ## Recovery flow
 

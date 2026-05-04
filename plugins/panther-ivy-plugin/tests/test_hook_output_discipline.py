@@ -9,7 +9,7 @@ Two checks:
 
   2. No hook script constructs a ``hookSpecificOutput`` envelope by hand.
      This is the regression-prevention check for the
-     ``inject-journaling-contract.py`` bug pattern, where a private
+     ``journaling/contract-inject.py`` bug pattern, where a private
      ``emit()`` function nested ``systemMessage`` inside
      ``hookSpecificOutput`` (the runtime expects it top-level).
 
@@ -91,7 +91,7 @@ def test_every_emit_call_passes_system_message() -> None:
 
 
 def test_no_private_envelope_construction() -> None:
-    """Catch regressions like inject-journaling-contract.py's old emit().
+    """Catch regressions like journaling/contract-inject.py's old emit().
 
     A hook script that constructs the literal string ``hookSpecificOutput``
     is bypassing the canonical envelope helper and risks shape drift.

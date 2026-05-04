@@ -30,7 +30,7 @@ def _full_text(out: dict) -> str:
 
 
 # ===================================================================
-# PreToolUse hook: block-direct-ivy.py
+# PreToolUse hook: pretooluse/block-direct-ivy.py
 # ===================================================================
 
 
@@ -38,7 +38,7 @@ class TestBlockDirectIvyHook:
     """Tests for the PreToolUse hook that warns about direct Ivy CLI calls."""
 
     def _script(self, hook_scripts_dir: Path) -> Path:
-        return hook_scripts_dir / "block-direct-ivy.py"
+        return hook_scripts_dir / "pretooluse/block-direct-ivy.py"
 
     def test_ivy_check_triggers_mcp_suggestion(self, run_hook, hook_scripts_dir):
         """Bash command containing 'ivy_check model.ivy' should produce a
@@ -105,7 +105,7 @@ class TestBlockDirectIvyHook:
 
 
 # ===================================================================
-# PostToolUse hook: post-write-ivy-lint.py
+# PostToolUse hook: posttooluse/lint/ivy.py
 # ===================================================================
 
 
@@ -113,7 +113,7 @@ class TestPostWriteIvyLintHook:
     """Tests for the PostToolUse hook that checks .ivy files after writes."""
 
     def _script(self, hook_scripts_dir: Path) -> Path:
-        return hook_scripts_dir / "post-write-ivy-lint.py"
+        return hook_scripts_dir / "posttooluse/lint/ivy.py"
 
     def test_valid_ivy_file_no_issues(self, run_hook, hook_scripts_dir, tmp_path):
         """Writing a valid .ivy file with #lang header and balanced braces
@@ -219,7 +219,7 @@ class TestPostWriteIvyLintHook:
 
 
 # ===================================================================
-# SessionStart hook: detect-ivy-workspace.py
+# SessionStart hook: workspace/detect.py
 # ===================================================================
 
 
@@ -227,7 +227,7 @@ class TestDetectIvyWorkspaceHook:
     """Tests for the SessionStart hook that detects Ivy workspace type."""
 
     def _script(self, hook_scripts_dir: Path) -> Path:
-        return hook_scripts_dir / "detect-ivy-workspace.py"
+        return hook_scripts_dir / "workspace/detect.py"
 
     def test_panther_project_detected(self, run_hook, hook_scripts_dir, tmp_path):
         """A directory with panther/plugins/services/testers/panther_ivy/protocol-testing/

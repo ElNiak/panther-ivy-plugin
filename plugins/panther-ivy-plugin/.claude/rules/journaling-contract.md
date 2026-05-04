@@ -5,7 +5,7 @@ This is the canonical contract for how every routable surface in the panther-ivy
 The contract is delivered to two surfaces:
 
 - **Main thread** — this file has no `paths:` frontmatter, so the harness auto-loads it on the first Read of any file in the plugin tree.
-- **Subagent thread** — `hooks/scripts/inject-journaling-contract.py` (registered on the SubagentStart event, or on PreToolUse(matcher="Agent") if SubagentStart cannot deliver `additionalContext`) reads this file and injects it into a dispatched plugin specialist's context. Critic agents receive only a 5-line read-only stub; non-plugin agents receive nothing.
+- **Subagent thread** — `hooks/scripts/journaling/contract-inject.py` (registered on the SubagentStart event, or on PreToolUse(matcher="Agent") if SubagentStart cannot deliver `additionalContext`) reads this file and injects it into a dispatched plugin specialist's context. Critic agents receive only a 5-line read-only stub; non-plugin agents receive nothing.
 
 If the contract file is missing or unreadable, the injection hook exits with code 2 and blocks the dispatch — the contract is a hard requirement, not advisory.
 
@@ -19,11 +19,11 @@ If the contract file is missing or unreadable, the injection hook exits with cod
 | `agents/ivy-{refiner,experimenter,builder,reviewer,triage,meta}-agent.md` | NO directly — invokes its preloaded ops-skill which writes | NO directly |
 | `agents/g-{plan,fidelity,knowledge}-critic.md` | NO — returns `VERDICT_*` (or `KEEP/DROP/DEFER` for `g-knowledge-critic`); the orchestrator writes `gate_verdict` after aggregation | NO |
 | `commands/{nct-health,nct-iut-test}.md` | YES via the underlying ops-skill (triage / experiment) | YES via the underlying ops-skill |
-| Hook scripts | YES — `session_start` (`cleanup-stale-workflow.py`, only on actual resume or stale-clear), `gate_dispatched` (`assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, `record-workflow-error.py` for G4), `error` (`record-workflow-error.py`), `progress{kind: mcp_retry}` (`retry-ivy-mcp.py`) | `cleanup-stale-workflow.py` clears stale; no other hook writes |
+| Hook scripts | YES — `session_start` (`cleanup/stale-workflow.py`, only on actual resume or stale-clear), `gate_dispatched` (`posttooluse/gates/g2-modeling.py`, `posttooluse/gates/g3-testspec.py`, `posttooluse/gates/g5-trace.py`, `record/workflow-error.py` for G4), `error` (`record/workflow-error.py`), `progress{kind: mcp_retry}` (`mcp/retry.py`) | `cleanup/stale-workflow.py` clears stale; no other hook writes |
 
 `progress{kind: fix_attempt}` is written by `refine-ops/SKILL.md` Phase 7 (the fix-attempt counter loop), not by a hook. Attribution matters when grepping the journal for diagnostic context.
 
-Several Stop-hook readers (`record-session-end.py`, `render-summary.py` main, `render-summary.audit_journal`) gate their output on a **per-session activity flag** (see §11). When the flag is absent, those hooks emit the one-line confirmation `[ivy-session] no ivy activity this session — skipping summary` and return without journal writes or lint output. The activity flag is **not** a journal event; it is a side-channel state file documented in §11.
+Several Stop-hook readers (`record/session-end.py`, `render/summary.py` main, `render-summary.audit_journal`) gate their output on a **per-session activity flag** (see §11). When the flag is absent, those hooks emit the one-line confirmation `[ivy-session] no ivy activity this session — skipping summary` and return without journal writes or lint output. The activity flag is **not** a journal event; it is a side-channel state file documented in §11.
 
 ## 2. Per-turn lifecycle (decision tree)
 
@@ -66,19 +66,19 @@ The list below is closed. Adding a new event type requires editing `_VALID_EVENT
 
 | Event type | Required fields | Optional fields | Writer |
 |---|---|---|---|
-| `session_start` | `resumed_from` (str or null) | `stale_cleared` (bool) | `cleanup-stale-workflow.py` — written **only** on actual resume (non-stale active workflow present) or stale-clear; **not** on idle session start (no active workflow). |
-| `session_end` | `reason` (str) | — | `record-session-end.py` |
+| `session_start` | `resumed_from` (str or null) | `stale_cleared` (bool) | `cleanup/stale-workflow.py` — written **only** on actual resume (non-stale active workflow present) or stale-clear; **not** on idle session start (no active workflow). |
+| `session_end` | `reason` (str) | — | `record/session-end.py` |
 | `phase_transition` | `from` (str), `to` (str) | — | ops-skill at phase boundary |
 | `decision` | `summary` (str), `context` (str) | — | ops-skill on user-driven choice |
 | `progress` | `detail` (str) OR `kind` (str) + kind-specific fields | varies by `kind` | ops-skill |
 | `progress{kind: fix_attempt}` | `kind: "fix_attempt"`, `key` (file path), `attempt` (int) | — | `refine-ops/SKILL.md` Phase 7 |
-| `progress{kind: mcp_retry}` | `kind: "mcp_retry"`, `tool` (str), `outcome` (str) | — | `hooks/scripts/retry-ivy-mcp.py` |
+| `progress{kind: mcp_retry}` | `kind: "mcp_retry"`, `tool` (str), `outcome` (str) | — | `hooks/scripts/mcp/retry.py` |
 | `progress{kind: agent_dispatch_*}` | `kind`, `agent`, `workflow`, `phase` | `reason` (failure mode) | per `.claude/rules/agent-dispatch.md` |
-| `progress{kind: skill_invoked}` | `kind: "skill_invoked"`, `skill` (str: full plugin-prefixed name), `workflow` (str), `phase` (str) | — | `hooks/scripts/track-skill-invocation.py` (only fires when an ops-skill — `scaffold-ops`, `refine-ops`, `experiment-ops`, `review-ops`, `triage-ops`, `meta-self-mod-ops` — is invoked inside an active workflow). The orchestrator reads this on its next turn for warm-resume routing. |
-| `progress{kind: question_answered}` | `kind: "question_answered"`, `record_id` (str: 12-char id matching the JSONL line), `question_count` (int), `answer_count` (int) | — | `hooks/scripts/record-askuserquestion.py` (PostToolUse:AskUserQuestion). The full question/answer text lives in the JSONL log at `.panther-ivy/askuserquestion-log.jsonl`; the journal entry is the compact pointer so the YAML stays small. |
-| `error` | `pattern` (str), `file` (str), `line` (int) | `tool_name`, `tool_result_excerpt` | `record-workflow-error.py`; ops-skill on caught exception |
+| `progress{kind: skill_invoked}` | `kind: "skill_invoked"`, `skill` (str: full plugin-prefixed name), `workflow` (str), `phase` (str) | — | `hooks/scripts/record/skill-invocation.py` (only fires when an ops-skill — `scaffold-ops`, `refine-ops`, `experiment-ops`, `review-ops`, `triage-ops`, `meta-self-mod-ops` — is invoked inside an active workflow). The orchestrator reads this on its next turn for warm-resume routing. |
+| `progress{kind: question_answered}` | `kind: "question_answered"`, `record_id` (str: 12-char id matching the JSONL line), `question_count` (int), `answer_count` (int) | — | `hooks/scripts/record/askuserquestion.py` (PostToolUse:AskUserQuestion). The full question/answer text lives in the JSONL log at `.panther-ivy/askuserquestion-log.jsonl`; the journal entry is the compact pointer so the YAML stays small. |
+| `error` | `pattern` (str), `file` (str), `line` (int) | `tool_name`, `tool_result_excerpt` | `record/workflow-error.py`; ops-skill on caught exception |
 | `context_switch` | `detection` (str), `mode` (str) | — | orchestrator on plan-mode entry / exit |
-| `gate_dispatched` | `gate` (str: `g0`/`g0b`/`g2`/`g3`/`g4`/`g5`/`g6`), `trigger` (str), `artifact` (str) | `layer`, `methodology` | `assess-modeling.py`, `assess-testspec.py`, `assess-trace.py`, `record-workflow-error.py` (G4) |
+| `gate_dispatched` | `gate` (str: `g0`/`g0b`/`g2`/`g3`/`g4`/`g5`/`g6`), `trigger` (str), `artifact` (str) | `layer`, `methodology` | `posttooluse/gates/g2-modeling.py`, `posttooluse/gates/g3-testspec.py`, `posttooluse/gates/g5-trace.py`, `record/workflow-error.py` (G4) |
 | `gate_verdict` | `gate` (str), `verdict` (str: `sound`/`unsound`/`abstain`), `vote` (str: e.g. `2-of-3`) | `patterns` (list of `#NN`), `cycle` (int), `tier` (str), `duration_s` (number), `abstain_reason` (str if `verdict=abstain`) | orchestrator after critic fan-out aggregation |
 | `plan_approved` | `workflow` (str: caller), `phase_before_plan` (str), `plan_file` (str: abs path) | `supersedes` (list of str) | plan-mode procedure (per `plan-mode.md` Step 4) |
 | `workflow_resumed` | `workflow` (str: caller being resumed), `phase_after_resume` (str), `source_pending_dispatch_index` (int) | `g0_cycle` (int) if traced from G0 SOUND | orchestrator on `pending_dispatch` consumption (Phase 1.5) |
@@ -205,7 +205,7 @@ The contract is load-bearing. Failure modes documented:
 - **Contract file unreadable** — the SubagentStart injection hook exits 2 and blocks the dispatch. The user sees a hook-error message and fixes the file before retrying.
 - **Unknown plugin agent name** — the injection hook logs `unknown panther-ivy-plugin agent: <name>` to stderr and emits the 5-line read-only stub as a fail-safe default. Dispatch proceeds. Adding a new agent to the plugin requires updating the gating switch in the hook script.
 - **Journal write race** — does not happen under the sequential-write assumption (§4.2). If a future change violates the assumption, `append_journal_event` will silently drop one of the racing writes (the later one wins). Add `fcntl` locking before introducing parallelism.
-- **Legacy active-workflow names** — `_KNOWN_WORKFLOWS` in `workflow_state.py` is the unprefixed set (`navigate`, `scaffold`, `refine`, `experiment`, `review`, `triage`, `meta`). Legacy prefixed names (`workflow-verify`, `workflow-build`, etc.) are migrated by the user-invoked one-shot `scripts/migrate_legacy_workflow.py`, NOT by `cleanup-stale-workflow.py` (per `feedback_no_backward_compat_shims`).
+- **Legacy active-workflow names** — `_KNOWN_WORKFLOWS` in `workflow_state.py` is the unprefixed set (`navigate`, `scaffold`, `refine`, `experiment`, `review`, `triage`, `meta`). Legacy prefixed names (`workflow-verify`, `workflow-build`, etc.) are migrated by the user-invoked one-shot `scripts/migrate_legacy_workflow.py`, NOT by `cleanup/stale-workflow.py` (per `feedback_no_backward_compat_shims`).
 
 ## 10. PROJECT.md as a derived view
 
@@ -237,7 +237,7 @@ deferred_layers: [<payload>...]
 
 ### 10.2 Regeneration trigger
 
-A PostToolUse hook on `mcp__.*ivy_workflow_state` (registered as `post-workflow-render-project-md.py`) fires for `action="set"|"clear"` and invokes `scripts/render-project-md.py` against the active workspace's `protocol-testing/<workspace>/` directory. `get`/`list`/other actions skip silently.
+A PostToolUse hook on `mcp__.*ivy_workflow_state` (registered as `render/project-md.py`) fires for `action="set"|"clear"` and invokes `scripts/render-project-md.py` against the active workspace's `protocol-testing/<workspace>/` directory. `get`/`list`/other actions skip silently.
 
 The render script reads:
 - `.panther-ivy/workflow-journal.yaml` — for the rolled-up state.
@@ -271,7 +271,7 @@ The session-activity flag is a side-channel state file that answers the question
 ${TMPDIR}/claude-ivy/session-activity-<resolved_session_id>.flag
 ```
 
-- The session ID is resolved via `resolve_session_id()` from `hook_utils.py` (same helper used by `render-summary.py` and `gather_tool_metrics()`).
+- The session ID is resolved via `resolve_session_id()` from `hook_utils.py` (same helper used by `render/summary.py` and `gather_tool_metrics()`).
 - The file is empty. Existence is the signal; content is not read.
 - When `resolve_session_id()` returns `"unknown"`, `is_session_active()` returns **False** (fail-closed). Writers still touch a `session-activity-unknown.flag` path for back-to-back coherence within a broken-session-id condition, but readers in Stop hooks treat that path as absent.
 - Lifetime: created on first signal; deleted by OS `${TMPDIR}` cleanup (no manual GC). Sessions spanning a `${TMPDIR}` cleanup boundary lose the flag mid-session and will see the one-line confirmation at Stop — a known, accepted limitation (sessions rarely span days).
@@ -280,10 +280,10 @@ ${TMPDIR}/claude-ivy/session-activity-<resolved_session_id>.flag
 
 | Hook | Signal | When |
 |---|---|---|
-| `track-skill-invocation.py` | `skill:<full-prefixed-name>` | Any `panther-ivy-plugin:*` skill invoked (knowledge skills included) |
-| `post-write-ivy-lint.py` | `file:<path>` | Any `.ivy` file written or edited |
-| `mark-mcp-activity.py` | `mcp:<tool_name>` | Any `mcp__plugin_panther-ivy-plugin_*` tool call (broad matcher covers workspace, workflow_state, status, and all testing tools) |
-| `post-write-workflow-aware.py` | `agent:<subagent_type>` | Specialist-agent dispatch (`ivy-{refiner,experimenter,builder,reviewer,triage,meta}-agent`); critic agents (`g-*-critic`) do **not** flip the flag |
+| `record/skill-invocation.py` | `skill:<full-prefixed-name>` | Any `panther-ivy-plugin:*` skill invoked (knowledge skills included) |
+| `posttooluse/lint/ivy.py` | `file:<path>` | Any `.ivy` file written or edited |
+| `mcp/activity.py` | `mcp:<tool_name>` | Any `mcp__plugin_panther-ivy-plugin_*` tool call (broad matcher covers workspace, workflow_state, status, and all testing tools) |
+| `render/workflow-aware-annotation.py` | `agent:<subagent_type>` | Specialist-agent dispatch (`ivy-{refiner,experimenter,builder,reviewer,triage,meta}-agent`); critic agents (`g-*-critic`) do **not** flip the flag |
 
 All writes are idempotent: `Path.touch(exist_ok=True)` is atomic on POSIX, safe under parallel-firing PostToolUse hooks.
 
@@ -291,8 +291,8 @@ All writes are idempotent: `Path.touch(exist_ok=True)` is atomic on POSIX, safe 
 
 | Hook | Behavior when flag absent | Behavior when flag present |
 |---|---|---|
-| `record-session-end.py` | Emits `[ivy-noop] no ivy activity this session — skipping summary` and returns; no journal write. | Three-way dispatch on `WorkflowContext.current()`: (a) non-None → appends `session_end` + rotates journal + emits T2 message; (b) None → emits `[ivy-noop] activity recorded; no orchestrator workflow — skipping journal append`. |
-| `render-summary.py` main | Emits `[ivy-noop] no ivy activity this session` and returns. | Proceeds to `find_modified_ivy_files()` (path-scoped); if no files, another noop; else builds and emits the session summary. |
+| `record/session-end.py` | Emits `[ivy-noop] no ivy activity this session — skipping summary` and returns; no journal write. | Three-way dispatch on `WorkflowContext.current()`: (a) non-None → appends `session_end` + rotates journal + emits T2 message; (b) None → emits `[ivy-noop] activity recorded; no orchestrator workflow — skipping journal append`. |
+| `render/summary.py` main | Emits `[ivy-noop] no ivy activity this session` and returns. | Proceeds to `find_modified_ivy_files()` (path-scoped); if no files, another noop; else builds and emits the session summary. |
 | `render-summary.audit_journal` | Returns `[]` immediately (no "no journal entries" warning). | Proceeds with the existing journal-gap checks. |
 
 ### 11.4 Relationship to the journal
@@ -326,7 +326,7 @@ Like the session-activity flag (§11) the overlay is **not** a journal event. It
 
 | Hook | Section | When |
 |---|---|---|
-| `post-write-workflow-aware.py` | `test_file` | Any `Write`/`Edit` of a `.ivy` file when `session_id` is present on stdin. Falls back to the shared cache write when `session_id` is absent (offline / smoke-test invocations). |
+| `render/workflow-aware-annotation.py` | `test_file` | Any `Write`/`Edit` of a `.ivy` file when `session_id` is present on stdin. Falls back to the shared cache write when `session_id` is absent (offline / smoke-test invocations). |
 
 Future hooks that need session-private rather than workspace-shared statusline state should call `statusline_cache.update_overlay_from_hook(session_id, sections)` rather than `update_from_hook`.
 
@@ -336,7 +336,7 @@ The bash renderer (`scripts/statusline/main.sh` plus `scripts/statusline/cache.s
 
 ### 12.4 Migration from pre-partitioning installs
 
-Pre-partitioning caches at `<wsHash>/statusline.json` are moved under `<wsHash>/default/statusline.json` on the first `SessionStart` after Phase 4 lands, via `statusline_cache.migrate_legacy_cache(workspace_root)` invoked from `sync-statusline-cache.py`. Idempotent — once the legacy file is gone the migration is a no-op. Concurrent SessionStart hooks are safe: the move is fcntl-locked, and a sibling session that races the migration finds the new file already present and deletes the legacy file rather than overwriting.
+Pre-partitioning caches at `<wsHash>/statusline.json` are moved under `<wsHash>/default/statusline.json` on the first `SessionStart` after Phase 4 lands, via `statusline_cache.migrate_legacy_cache(workspace_root)` invoked from `statusline/sync.py`. Idempotent — once the legacy file is gone the migration is a no-op. Concurrent SessionStart hooks are safe: the move is fcntl-locked, and a sibling session that races the migration finds the new file already present and deletes the legacy file rather than overwriting.
 
 Per `feedback_no_backward_compat_shims` the migration code is one-shot. A follow-up commit removes `migrate_legacy_cache` and its call site once enough time has passed that no live install still has a legacy file. The function and its test (`tests/test_statusline_cache_migration.py`) are tagged for that follow-up cleanup.
 

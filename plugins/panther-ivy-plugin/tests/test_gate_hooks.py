@@ -19,10 +19,10 @@ import yaml
 PLUGIN_ROOT = str(Path(__file__).resolve().parent.parent)
 SCRIPTS = Path(PLUGIN_ROOT) / "hooks" / "scripts"
 
-ASSESS_MODELING = str(SCRIPTS / "assess-modeling.py")
-ASSESS_TESTSPEC = str(SCRIPTS / "assess-testspec.py")
-ASSESS_TRACE = str(SCRIPTS / "assess-trace.py")
-RECORD_WORKFLOW_ERROR = str(SCRIPTS / "record-workflow-error.py")
+ASSESS_MODELING = str(SCRIPTS / "posttooluse/gates/g2-modeling.py")
+ASSESS_TESTSPEC = str(SCRIPTS / "posttooluse/gates/g3-testspec.py")
+ASSESS_TRACE = str(SCRIPTS / "posttooluse/gates/g5-trace.py")
+RECORD_WORKFLOW_ERROR = str(SCRIPTS / "record/workflow-error.py")
 
 
 def _run(script: str, payload: dict, env_overrides: "dict[str, str] | None" = None) -> "dict | None":
@@ -102,7 +102,7 @@ def _read_journal(path: str) -> "list[dict[str, Any]]":
     return data or []
 
 
-# ----- assess-modeling.py (G2) -----
+# ----- posttooluse/gates/g2-modeling.py (G2) -----
 
 def test_g2_emits_on_layer_edit_during_build():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -156,7 +156,7 @@ def test_g2_silent_when_no_workflow():
         assert _is_noop_envelope(out)
 
 
-# ----- assess-testspec.py (G3) -----
+# ----- posttooluse/gates/g3-testspec.py (G3) -----
 
 def test_g3_emits_on_test_spec_edit_during_build():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -185,7 +185,7 @@ def test_g3_silent_on_layer_edit():
         assert _is_noop_envelope(out)
 
 
-# ----- assess-trace.py (G5) -----
+# ----- posttooluse/gates/g5-trace.py (G5) -----
 
 def test_g5_emits_on_iut_test_completion():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -225,7 +225,7 @@ def test_g5_silent_on_other_tools():
         assert _is_noop_envelope(out)
 
 
-# ----- record-workflow-error.py G4 branch -----
+# ----- record/workflow-error.py G4 branch -----
 
 def test_g4_emits_on_ivy_verify_completion_during_workflow():
     with tempfile.TemporaryDirectory() as tmpdir:

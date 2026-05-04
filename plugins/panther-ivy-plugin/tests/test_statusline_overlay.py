@@ -9,7 +9,7 @@ overlay first for any session-private segment and falls back to the
 shared cache when the overlay is missing.
 
 These tests exercise the overlay API directly. Phase 2 will switch the
-``test_file`` writer (``post-write-workflow-aware.py``) from the shared
+``test_file`` writer (``render/workflow-aware-annotation.py``) from the shared
 cache to the overlay; that hook-side wiring is tested in
 ``test_post_write_overlay.py`` (Phase 2).
 """

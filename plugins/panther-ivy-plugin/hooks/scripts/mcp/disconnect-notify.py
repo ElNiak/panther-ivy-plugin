@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Notification hook: detect MCP server disconnection and advise reconnection.
+
+When Claude Code fires a Notification event for an MCP server disconnect,
+this hook outputs additionalContext instructing Claude to suggest the user
+run /mcp to reconnect.
+"""
+
+import os
+import sys
+from typing import Any
+
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from lib.hook_utils import emit_hook_output, emit_noop, read_stdin
+from lib.statusline_cache import update_from_hook as _statusline_update
+
+# Substrings that indicate an MCP server disconnection notification.
+_DISCONNECT_SIGNALS = (
+    "disconnected",
+    "no longer available",
+    "server crashed",
+    "connection lost",
+    "connection closed",
+    "server stopped",
+    "MCP server",
+)
+
+_IVY_SERVER_NAMES = ("ivy-tools", "ivy_tools", "panther-ivy", "serena")
+
+
+def _identify_server(data: dict[str, Any]) -> str:
+    """Return the first matching ivy server name found in the notification text.
+
+    Args:
+        data: Notification payload from stdin.
+
+    Returns:
+        The matched server name, or ``"ivy-mcp"`` as a generic fallback.
+    """
+    message = str(data.get("message", "")).lower()
+    title = str(data.get("title", "")).lower()
+    combined = f"{title} {message}"
+    for name in _IVY_SERVER_NAMES:
+        if name in combined:
+            return name
+    return "ivy-mcp"
+
+
+def _is_ivy_mcp_disconnect(data: dict[str, Any]) -> bool:
+    """Check if this notification is about an Ivy MCP server disconnecting."""
+    message = str(data.get("message", "")).lower()
+    title = str(data.get("title", "")).lower()
+    notification_type = str(data.get("notification_type", "")).lower()
+    combined = f"{title} {message} {notification_type}"
+
+    has_disconnect_signal = any(sig in combined for sig in _DISCONNECT_SIGNALS)
+    has_ivy_reference = any(name in combined for name in _IVY_SERVER_NAMES)
+
+    # Also match generic MCP disconnect if it mentions "mcp" broadly
+    has_mcp_reference = "mcp" in combined
+
+    return has_disconnect_signal and (has_ivy_reference or has_mcp_reference)
+
+
+def main():
+    data = read_stdin()
+
+    if not _is_ivy_mcp_disconnect(data):
+        emit_noop("Notification", "non-MCP-disconnect notification")
+        return
+
+    _statusline_update("mcp", {"status": "down", "last_error": "notification"})
+
+    server_name = _identify_server(data)
+    emit_hook_output(
+        "Notification",
+        system_message=(
+            f"[ivy-mcp] disconnected from {server_name} -- "
+            "the Ivy MCP server has disconnected. Run /mcp to reconnect "
+            "before calling ivy_verify, ivy_coverage, ivy_diagnostics, "
+            "or other MCP-dependent tools."
+        ),
+    )
+
+
+if __name__ == "__main__":
+    main()

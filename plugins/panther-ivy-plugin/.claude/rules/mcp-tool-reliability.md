@@ -64,7 +64,7 @@ class differently:
 
 ## Automated retry for read-only tools
 
-Read-only ivy_* MCP tools (`ivy_status`, `ivy_diagnostics`, `ivy_model_info`, `ivy_coverage`) trigger an automated retry once via the `retry-ivy-mcp.py` PostToolUseFailure hook. The hook emits a `progress{kind: "mcp_retry", tool: "..."}` journal entry regardless of retry outcome, so retried failures are visible in `ivy_observability(action="get_journal")`.
+Read-only ivy_* MCP tools (`ivy_status`, `ivy_diagnostics`, `ivy_model_info`, `ivy_coverage`) trigger an automated retry once via the `mcp/retry.py` PostToolUseFailure hook. The hook emits a `progress{kind: "mcp_retry", tool: "..."}` journal entry regardless of retry outcome, so retried failures are visible in `ivy_observability(action="get_journal")`.
 
 Write-side tools (`ivy_compile`, `ivy_verify`, `ivy_iut_test`) are NOT auto-retried (not idempotent); their failures surface immediately to the agent, which falls back to the manual retry + AskUserQuestion pattern documented above.
 

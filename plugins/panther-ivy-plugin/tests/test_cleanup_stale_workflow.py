@@ -1,4 +1,4 @@
-"""Tests for cleanup-stale-workflow.py SessionStart hook.
+"""Tests for cleanup/stale-workflow.py SessionStart hook.
 
 Per plan Task 8: the idle path (no active workflow) should NOT write
 session_start to the journal. Only stale-clear and real resume paths write.
@@ -19,7 +19,7 @@ import yaml
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "cleanup-stale-workflow.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "cleanup/stale-workflow.py"
 
 
 def _run_hook(tmp_path: Path, *, workflow: str | None = None, phase: str | None = None) -> dict:

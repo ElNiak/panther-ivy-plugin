@@ -25,7 +25,7 @@ Serena runs as a second MCP server (registered in `.mcp.json` alongside ivy-tool
 - `references/tool-catalog.md` — per-tool reference (parameters, returns, timeout, tier, rendering, errors, when-to-use) for all 18 ivy-tools MCP tools, plus the Quick Tool Reference summary table, the FAST/DEEP mode mapping, and the `ivy_coverage` scoping decision table (`relative_path` / `test_file` / `protocol`).
 - `references/error-reference.md` — cross-cutting MCP error patterns and recovery procedures.
 - `references/timing-and-concurrency.md` — performance tiers, timeouts, and the concurrency model (semaphores, in-flight dedup).
-- `references/hook-lifecycle.md` — tool invocation pipeline and rendering rules (`render-tool-result.py` post-processing).
+- `references/hook-lifecycle.md` — tool invocation pipeline and rendering rules (`render/tool-result.py` post-processing).
 - `references/lsp-coordination.md` — LSP operations table, multi-tool coordination workflows, and the tool-selection decision matrix.
 - `references/lsp-patterns.md` — LSP scoping policy and per-operation usage notes.
 - `references/tool-invocation-examples.md` — canonical multi-line invocation shapes for `ivy_diagnostics`, `ivy_verify`, `ivy_propagation`, `ivy_iut_test`, `ivy_compile`.

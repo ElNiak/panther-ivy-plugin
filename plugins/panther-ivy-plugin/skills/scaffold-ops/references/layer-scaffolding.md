@@ -71,7 +71,7 @@ After all layers are written and compile, update phase to `"written"` via `ivy_w
 
 ## Post-Edit Workspace-Block Recovery
 
-After every `Write` / `Edit` on a `.ivy` file during Phase 3 (layer writes), inspect the tool-result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. If the hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file), the layer was not written to disk:
+After every `Write` / `Edit` on a `.ivy` file during Phase 3 (layer writes), inspect the tool-result for a workspace-scope violation from the `workspace/scope.py` PreToolUse hook. If the hook emits a "workspace scope violation" error (or an `additionalContext` marker naming the blocked file), the layer was not written to disk:
 
 1. Append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal.
 2. Present `AskUserQuestion` with three options (per `.claude/rules/mcp-tool-reliability.md`):

@@ -1,4 +1,4 @@
-"""Tests for mark-mcp-activity.py PostToolUse hook.
+"""Tests for mcp/activity.py PostToolUse hook.
 
 Verifies the flag flips on every mcp__plugin_panther-ivy-plugin_* tool call,
 including ivy_workspace, ivy_workflow_state, and ivy_status (the three tools
@@ -18,7 +18,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "mark-mcp-activity.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "mcp/activity.py"
 
 
 def _run_hook(tmp_path: Path, tool_name: str, *, session_id: str = "test-mcp-activity-42") -> dict:

@@ -264,7 +264,7 @@ class TestEmitDedup:
 
 class TestCheckMcpHealthFiltering:
     """Regression test for the PID-start-time filter on error
-    categorisation in check-mcp-health.py, added 2026-05-02 to fix
+    categorisation in mcp/health.py, added 2026-05-02 to fix
     Issue B (old log lines reported as 'recent' indefinitely).
     """
 
@@ -284,7 +284,7 @@ class TestCheckMcpHealthFiltering:
         # only cleans hook_utils).
         monkeypatch.delitem(sys.modules, "cmh", raising=False)
         spec = importlib.util.spec_from_file_location(
-            "cmh", str(hook_scripts_dir / "check-mcp-health.py")
+            "cmh", str(hook_scripts_dir / "mcp/health.py")
         )
         assert spec is not None and spec.loader is not None
         mod = importlib.util.module_from_spec(spec)

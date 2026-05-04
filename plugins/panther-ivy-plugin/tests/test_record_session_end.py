@@ -1,4 +1,4 @@
-"""Tests for record-session-end.py Stop hook.
+"""Tests for record/session-end.py Stop hook.
 
 Three scenarios per the plan's Decisions locked table:
   1. Activity flag absent → one-line confirmation noop, no journal write.
@@ -20,7 +20,7 @@ import yaml
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "record-session-end.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "record/session-end.py"
 HOOK_SCRIPTS_DIR = PLUGIN_ROOT / "hooks" / "scripts"
 
 
@@ -32,7 +32,7 @@ def _run_hook(
     phase: str | None = None,
     session_id: str = "test-session-42",
 ) -> dict:
-    """Run record-session-end.py with controlled session-activity and workflow state."""
+    """Run record/session-end.py with controlled session-activity and workflow state."""
     env = os.environ.copy()
     env["CLAUDE_PLUGIN_ROOT"] = str(PLUGIN_ROOT)
     env["IVY_SESSION_ID"] = session_id

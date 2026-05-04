@@ -21,8 +21,8 @@ Two exemption groups:
   ``observability/log_event.py``) fire on every Claude tool event;
   citing the JSONL path each time would flood the scrollback. The path
   is documented in their docstrings instead.
-* **Internal-state writers** (``check-indexing-ready.py``,
-  ``check-workspace-scope.py``) maintain ephemeral session-scratch
+* **Internal-state writers** (``mcp/indexing-ready.py``,
+  ``workspace/scope.py``) maintain ephemeral session-scratch
   files (deny-state counter, inferred-scope tracker) that are not
   user-facing audit data. Their existing ``systemMessage`` payloads
   serve different purposes (scope decisions, indexing status).
@@ -56,8 +56,8 @@ _EXEMPT_HOOKS = frozenset({
     # Internal-state writers — write ephemeral session scratch, not
     # user-facing audit trails. Their systemMessages serve unrelated
     # purposes (scope decisions, indexing readiness signals).
-    "check-indexing-ready",
-    "check-workspace-scope",
+    "indexing-ready",
+    "scope",
 })
 
 # Three canonical templates from output-style.md §"State-persistence
@@ -71,7 +71,7 @@ _TEMPLATE_PATTERNS = (
     # T3: "<thing>: <new> (was: <prev>)"
     re.compile(r":\s*\S+\s*\(was:\s*\S+\)", re.IGNORECASE),
     # T1-extended: "<descriptor>: <value>" — matches the SessionStart
-    # banner shape "Env file: <path>" used by detect-ivy-workspace.py.
+    # banner shape "Env file: <path>" used by workspace/detect.py.
     # The descriptor word ("env file"/"wrote"/etc.) signals the intent
     # to cite a write target; the value after the colon is asserted at
     # runtime (the AST stringifier substitutes "<expr>" for f-string

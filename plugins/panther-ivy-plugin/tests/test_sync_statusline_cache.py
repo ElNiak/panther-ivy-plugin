@@ -1,4 +1,4 @@
-"""Tests for the SessionStart hook ``sync-statusline-cache.py``.
+"""Tests for the SessionStart hook ``statusline/sync.py``.
 
 The hook mirrors the canonical active-workflow YAML into the per-workspace
 statusline cache at SessionStart. It is intentionally NOT a legacy-name
@@ -29,7 +29,7 @@ import yaml
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "sync-statusline-cache.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "statusline/sync.py"
 
 
 def _setup_workspace(

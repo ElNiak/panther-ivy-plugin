@@ -410,7 +410,7 @@ class TestSerenaOptIn:
 class TestActiveWorkspaceResolution:
     """Regression for the 2026-05-02 SessionStart workspace bug.
 
-    Pre-fix: detect-ivy-workspace.py:_active_workspace looked only at
+    Pre-fix: workspace/detect.py:_active_workspace looked only at
     detected_root for .ivy-workspace-state.json, but the MCP ivy_workspace
     tool writes the file at the panther_ivy submodule root. The two
     differ by six directory segments in PANTHER worktrees, so the banner
@@ -432,7 +432,7 @@ class TestActiveWorkspaceResolution:
 
         cwd = tmp_path / "elsewhere"
         cwd.mkdir()
-        script = plugin_root / "hooks" / "scripts" / "detect-ivy-workspace.py"
+        script = plugin_root / "hooks" / "scripts" / "workspace/detect.py"
         out = run_hook(
             script,
             {"session_id": "test-regression"},

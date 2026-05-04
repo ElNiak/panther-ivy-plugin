@@ -16,7 +16,7 @@ Use cases:
 
 Per `feedback_no_backward_compat_shims`, this script is one-shot: the user
 invokes it explicitly to clean up legacy YAMLs after upgrading the plugin.
-It is NOT called from any hook; in particular, `cleanup-stale-workflow.py`
+It is NOT called from any hook; in particular, `cleanup/stale-workflow.py`
 does not perform normalize-on-read. This script is removable in a follow-up
 commit once all known legacy YAMLs are migrated.
 

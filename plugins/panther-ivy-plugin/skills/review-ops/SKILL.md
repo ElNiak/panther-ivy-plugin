@@ -167,7 +167,7 @@ Apply the **Reflection Gate** pattern (pause and re-evaluate before escalating):
 
 **If the user wants fixes:** Adversarial gates G2 (layer modeling) and G3 (test-spec) do NOT fire on review-inline fixes — they are scaffold-time gates by design. For structural concerns that warrant G2/G3 re-run, dispatch back to `scaffold` via `append_pending_dispatch(target_workflow="scaffold", phase_hint="layer-check")` and clear the active-workflow flag; review is for audit, not construction. Otherwise guide fixes inline using the structural-audit recommendations, then re-run the analysis that found the issue (fresh `ivy_coverage` or `ivy_quality` citation) to confirm resolution.
 
-After any `Write` / `Edit` on a `.ivy` file during this inline-fix path, inspect the tool result for a workspace-scope violation from the `check-workspace-scope.py` PreToolUse hook. If blocked, append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal and present `AskUserQuestion` per `.claude/rules/mcp-tool-reliability.md`: switch workspace to the file's protocol, clear workspace restrictions, or abandon the fix.
+After any `Write` / `Edit` on a `.ivy` file during this inline-fix path, inspect the tool result for a workspace-scope violation from the `workspace/scope.py` PreToolUse hook. If blocked, append `progress{kind: "workspace_edit_blocked", file: "<path>", workspace_active: "<current>"}` to the journal and present `AskUserQuestion` per `.claude/rules/mcp-tool-reliability.md`: switch workspace to the file's protocol, clear workspace restrictions, or abandon the fix.
 
 **If the user wants verification:** Emit a `pending_dispatch` naming `refine` and let the orchestrator route the hand-off on the next turn — review does not dispatch refine directly:
 
@@ -206,7 +206,7 @@ directory in fixed read order: `analysis/ivy_tester_results.json` → compile
 log → tester log → IUT log → pcap. Primary checks: `#501` (Ivy trace claims
 event, pcap shows nothing) and `#505` (model bug misattributed to IUT).
 Critics may NOT re-invoke `ivy_iut_test`. The PostToolUse hook
-(`assess-trace.py`) is a backstop — the reviewer is responsible for inline
+(`posttooluse/gates/g5-trace.py`) is a backstop — the reviewer is responsible for inline
 dispatch and must not defer to the hook for the primary G5 invocation.
 Dispatch shape: `Skill(skill="panther-ivy-plugin:ivy")`
 `references/parallel-dispatch.md`.
@@ -333,7 +333,7 @@ Review dispatches `Explore` MPE agents (Phase 2 quality path, three roles) and `
 - Use the per-tier timeout (Sonnet: 90 s; Opus: 180 s).
 - On `timeout` / `context_exhaustion` / `partial` / `malformed`: classify, append `agent_dispatch_failure`, auto-retry once. On second failure or `tool_not_found` / `explicit_error`: present `AskUserQuestion(retry-manually | skip | abandon)`.
 
-For MCP tools (`ivy_coverage`, `ivy_quality`, `ivy_extract_requirements`, `ivy_workspace`, `ivy_workflow_state`, `ivy_analysis`), apply `.claude/rules/mcp-tool-reliability.md`: on `InputValidationError`, re-load the schema via `ToolSearch({query: "select:<tool>"})` and retry once; on second failure, route to triage. Read-only ivy_* tools (`ivy_coverage`, `ivy_status`, `ivy_diagnostics`, `ivy_model_info`) are auto-retried once via the `retry-ivy-mcp.py` PostToolUseFailure hook; write-side tools are not.
+For MCP tools (`ivy_coverage`, `ivy_quality`, `ivy_extract_requirements`, `ivy_workspace`, `ivy_workflow_state`, `ivy_analysis`), apply `.claude/rules/mcp-tool-reliability.md`: on `InputValidationError`, re-load the schema via `ToolSearch({query: "select:<tool>"})` and retry once; on second failure, route to triage. Read-only ivy_* tools (`ivy_coverage`, `ivy_status`, `ivy_diagnostics`, `ivy_model_info`) are auto-retried once via the `mcp/retry.py` PostToolUseFailure hook; write-side tools are not.
 
 ## Integration
 
@@ -345,7 +345,7 @@ For MCP tools (`ivy_coverage`, `ivy_quality`, `ivy_extract_requirements`, `ivy_w
 - **State files:** `.panther-ivy/active-workflow`, `.panther-ivy/journal/*.jsonl`.
 - **Failure-recovery contract:** `.claude/rules/agent-dispatch.md` for sub-agent dispatches; `.claude/rules/mcp-tool-reliability.md` for MCP tool failures.
 - **Iron laws:** `NO_QUALITY_WITHOUT_COVERAGE`, `STALENESS_RULE` (`.claude/rules/iron-laws.md`).
-- **Hook backstop:** `assess-trace.py` (G5 PostToolUse on `ivy_iut_test`) fires as backstop for trace analysis. Primary G5 dispatch is inline in Phase 4.
+- **Hook backstop:** `posttooluse/gates/g5-trace.py` (G5 PostToolUse on `ivy_iut_test`) fires as backstop for trace analysis. Primary G5 dispatch is inline in Phase 4.
 
 ## References
 

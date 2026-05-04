@@ -14,7 +14,7 @@ POST_WRITE_SCRIPT = str(
     Path(__file__).resolve().parent.parent
     / "hooks"
     / "scripts"
-    / "post-write-workflow-aware.py"
+    / "render/workflow-aware-annotation.py"
 )
 
 

@@ -1,4 +1,4 @@
-"""Tests for compose-style.py UserPromptSubmit hook."""
+"""Tests for prompt/style.py UserPromptSubmit hook."""
 
 import json
 import os
@@ -12,7 +12,7 @@ import yaml
 pytestmark = pytest.mark.unit
 
 SCRIPT = str(
-    Path(__file__).resolve().parent.parent / "hooks" / "scripts" / "compose-style.py"
+    Path(__file__).resolve().parent.parent / "hooks" / "scripts" / "prompt/style.py"
 )
 PLUGIN_ROOT = str(Path(__file__).resolve().parent.parent)
 

@@ -1,4 +1,4 @@
-"""Tests for post-write-workflow-aware.py session-overlay routing.
+"""Tests for render/workflow-aware-annotation.py session-overlay routing.
 
 The hook tracks the most-recently-edited ``.ivy`` file as a statusline
 ``test_file`` segment. Pre-Phase-2 it wrote to the workspace-shared cache,
@@ -34,7 +34,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "post-write-workflow-aware.py"
+SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "render/workflow-aware-annotation.py"
 HOOK_SCRIPTS_DIR = PLUGIN_ROOT / "hooks" / "scripts"
 
 # Constants copied from the hook so the tests are self-contained — if the
