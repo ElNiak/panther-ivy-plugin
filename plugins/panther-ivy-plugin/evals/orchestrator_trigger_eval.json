@@ -1,14 +1,14 @@
 {
   "eval": "orchestrator_trigger",
-  "description": "Tests that the panther-ivy-plugin:ivy orchestrator activates on intent matching prior session prompts and does NOT activate on non-Ivy work. should_trigger phrases are drawn from prior session prompts that should activate the orchestrator and route into one of: verify, scaffold, review, triage, knowledge. should_not_trigger phrases are non-Ivy or non-plugin work where the orchestrator must abstain.",
+  "description": "Tests that the panther-ivy-plugin:ivy orchestrator activates on intent matching prior session prompts and does NOT activate on non-Ivy work. should_trigger phrases are drawn from prior session prompts that should activate the orchestrator and route into one of: refine, scaffold, review, triage, knowledge. should_not_trigger phrases are non-Ivy or non-plugin work where the orchestrator must abstain.",
   "should_trigger": [
-    {"prompt": "verify the spec", "expected_phase": "verify"},
-    {"prompt": "check this Ivy model", "expected_phase": "verify"},
-    {"prompt": "I have a counterexample", "expected_phase": "verify"},
+    {"prompt": "verify the spec", "expected_phase": "refine"},
+    {"prompt": "check this Ivy model", "expected_phase": "refine"},
+    {"prompt": "I have a counterexample", "expected_phase": "refine"},
     {"prompt": "build a BGP layer", "expected_phase": "scaffold"},
-    {"prompt": "what's the verifier saying", "expected_phase": "verify"},
+    {"prompt": "what's the verifier saying", "expected_phase": "refine"},
     {"prompt": "the test is failing", "expected_phase": "triage"},
-    {"prompt": "ivy_compile error", "expected_phase": "verify"},
+    {"prompt": "ivy_compile error", "expected_phase": "refine"},
     {"prompt": "the gate said UNSOUND", "expected_phase": "review"},
     {"prompt": "set the workspace to bgp", "expected_phase": "triage"},
     {"prompt": "what should I do next", "expected_phase": "knowledge"}
