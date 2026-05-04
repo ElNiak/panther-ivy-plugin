@@ -14,6 +14,14 @@ Re-introduces the behavior of the previously-removed ``track-workflow-skill.py``
     8000 chars to stay well under the 10 000-char ``additionalContext``
     runtime budget; on overflow, the envelope lists file names instead of
     contents and lets the model decide which to Read.
+
+    Load order is alphabetical (``sorted(refs_dir.glob("*.md"))``). The
+    first ``_REFERENCES_MAX_FILES`` files are concatenated until the
+    cumulative byte count would exceed ``_REFERENCES_BUDGET``; any
+    remaining files become a name-only listing in the same envelope. On
+    overflow, a ``[references-cap-hit]`` debug line is emitted to stderr
+    so contributors investigating reference rot can see which skill hit
+    the cap and how many files were inlined vs listed.
   * For ops-skills (``scaffold-ops``, ``refine-ops``, ``experiment-ops``,
     ``review-ops``, ``triage-ops``, ``meta-self-mod-ops``) inside an active workflow,
     appends a ``progress{kind: "skill_invoked"}`` journal entry. The
@@ -79,6 +87,13 @@ def _references_dir(skill: str) -> Path | None:
 def _load_references(refs_dir: Path) -> tuple[str, int, bool]:
     """Concatenate up to N reference files, capped at the budget.
 
+    Files load in alphabetical order (``sorted(refs_dir.glob("*.md"))``).
+    Iteration stops when either the file count reaches
+    ``_REFERENCES_MAX_FILES`` or the cumulative byte count would exceed
+    ``_REFERENCES_BUDGET``. On overflow, the caller switches to a
+    name-only listing envelope and a ``[references-cap-hit]`` line is
+    emitted to stderr (see caller).
+
     Returns ``(payload, files_loaded, overflowed)``. ``overflowed`` is True
     when the directory had more than the per-file or per-byte limit and the
     caller should switch to the listing form.
@@ -116,6 +131,23 @@ def _load_references(refs_dir: Path) -> tuple[str, int, bool]:
         return listing_payload, len(md_files), True
 
     return "".join(chunks), files_loaded, False
+
+
+def _log_cap_hit(skill: str, refs_dir: Path, files_loaded: int) -> None:
+    """Emit a stderr debug line when the references auto-load cap is hit.
+
+    Stderr is captured by the harness's hook log; the line lets a
+    contributor investigating reference rot see which skill hit the cap
+    and how many files were inlined vs listed-only. The line is plain
+    text (no additionalContext), so it does not consume model context.
+    """
+    md_files = sorted(refs_dir.glob("*.md"))
+    msg = (
+        f"[references-cap-hit] skill={_short_name(skill)}"
+        f" files_total={len(md_files)} files_inlined={files_loaded}"
+        f" budget={_REFERENCES_BUDGET}"
+    )
+    print(msg, file=sys.stderr)
 
 
 def _journal_skill_invocation(skill: str, ctx: WorkflowContext) -> None:
@@ -204,6 +236,9 @@ def main() -> None:
             ),
         )
         return
+
+    if overflowed:
+        _log_cap_hit(skill, refs_dir, files_loaded)
 
     overflow_tag = " — listing only" if overflowed else ""
     emit_hook_output(
