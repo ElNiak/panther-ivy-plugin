@@ -248,3 +248,22 @@ class TestLintScopeFilter:
         assert msg.startswith("[ivy-noop]"), (
             f"Repo-root .ivy files should be excluded from scope-filtered lint; got: {msg!r}"
         )
+
+
+def test_render_summary_package_has_no_lazy_getattr() -> None:
+    """Guard against the c26c734 PEP 562 recursion bug.
+
+    The render.summary package previously declared a __getattr__ that
+    triggered RecursionError on `from render.summary import build_summary`.
+    Hook tests never imported the package directly, so the bug was caught
+    only by spec review. This test pins the surface so a future re-add
+    fails loudly.
+    """
+    sys.path.insert(0, str(Path(PLUGIN_ROOT) / "hooks" / "scripts"))
+    try:
+        import render.summary as pkg
+    finally:
+        sys.path.pop(0)
+    assert not hasattr(pkg, "__getattr__"), (
+        "render.summary must not declare __getattr__ — see commit c26c734."
+    )
