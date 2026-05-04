@@ -6,21 +6,51 @@
 # segment renderers free of subprocess spawns. Total cost for a healthy
 # render drops from ~N×40 ms (ten jq spawns + two python spawns) to ~2×40 ms.
 
-# Resolve the cache path for the current workspace.
+# Resolve the cache path for a (workspace_root, active_group) bucket.
 # Priority:
-#   1. $PANTHER_IVY_STATUSLINE_CACHE_PATH (test override)
-#   2. $PANTHER_IVY_STATUSLINE_CACHE_ROOT/<hash>/statusline.json (test override)
-#   3. ~/.claude/panther-ivy-plugin/cache/<hash>/statusline.json (default)
+#   1. $PANTHER_IVY_STATUSLINE_CACHE_PATH (test override — short-circuits all path computation)
+#   2. $PANTHER_IVY_STATUSLINE_CACHE_ROOT/<hash>/<active_group>/statusline.json (test override)
+#   3. ~/.claude/panther-ivy-plugin/cache/<hash>/<active_group>/statusline.json (default)
+#
+# The active_group component matches the Python writer side
+# (statusline_cache.cache_path_for): when the second argument is empty or
+# missing, the path falls through to the "default" partition, mirroring
+# Python's `_normalize_active_group(None) -> "default"`.
 statusline_cache_path() {
     local workspace_root="$1"
+    local active_group="${2:-default}"
     if [ -n "${PANTHER_IVY_STATUSLINE_CACHE_PATH:-}" ]; then
         echo "$PANTHER_IVY_STATUSLINE_CACHE_PATH"
         return 0
     fi
+    [ -n "$active_group" ] || active_group="default"
     local hash
     hash="$(printf '%s' "$workspace_root" | shasum -a 1 | cut -c1-12)"
     local root="${PANTHER_IVY_STATUSLINE_CACHE_ROOT:-$HOME/.claude/panther-ivy-plugin/cache}"
-    echo "$root/$hash/statusline.json"
+    echo "$root/$hash/$active_group/statusline.json"
+}
+
+# Resolve the per-session overlay path within a (workspace_root, active_group,
+# session_id) bucket. The overlay holds session-private statusline state
+# (per-session test_file, badge metadata) so two Claude Code windows in the
+# same workspace+protocol do not overwrite each other's transient view.
+#
+# Priority:
+#   1. $PANTHER_IVY_STATUSLINE_OVERLAY_PATH (test override)
+#   2. <cache_root>/<hash>/<active_group>/sessions/<session_id>/overlay.json
+statusline_overlay_path() {
+    local workspace_root="$1"
+    local session_id="$2"
+    local active_group="${3:-default}"
+    if [ -n "${PANTHER_IVY_STATUSLINE_OVERLAY_PATH:-}" ]; then
+        echo "$PANTHER_IVY_STATUSLINE_OVERLAY_PATH"
+        return 0
+    fi
+    [ -n "$active_group" ] || active_group="default"
+    local hash
+    hash="$(printf '%s' "$workspace_root" | shasum -a 1 | cut -c1-12)"
+    local root="${PANTHER_IVY_STATUSLINE_CACHE_ROOT:-$HOME/.claude/panther-ivy-plugin/cache}"
+    echo "$root/$hash/$active_group/sessions/$session_id/overlay.json"
 }
 
 # Load all fields from the cache into shell variables. Sets:
@@ -111,6 +141,43 @@ PY
         STC_LSP_STATUS STC_LSP_IDX_DONE STC_LSP_IDX_TOTAL STC_LSP_AGE \
         STC_MCP_STATUS STC_MCP_LATENCY STC_MCP_AGE \
         STC_TESTFILE
+    return 0
+}
+
+# Load session-private overlay fields for the given session_id. Sets:
+#   STC_SESSION_TEST_FILE   — overlay's test_file.basename, or "" when absent
+#   STC_SESSION_TEST_SOURCE — overlay's test_file.source, or "" when absent
+#   STC_SESSION_ACTIVE_SKILL — overlay's active_skill.name, or "" when absent
+#
+# The overlay is best-effort: missing file, missing jq, or version mismatch
+# all leave STC_SESSION_* empty so the segment renderers can fall through
+# to the workspace-shared cache values from statusline_cache_load.
+statusline_overlay_load() {
+    local overlay_file="$1"
+    STC_SESSION_TEST_FILE=""
+    STC_SESSION_TEST_SOURCE=""
+    STC_SESSION_ACTIVE_SKILL=""
+
+    [ -n "$overlay_file" ] || return 0
+    [ -f "$overlay_file" ] || return 0
+    command -v jq >/dev/null 2>&1 || return 0
+
+    local -a fields=()
+    local _line
+    while IFS= read -r _line; do
+        fields[${#fields[@]}]="$_line"
+    done < <(jq -r '
+        (.test_file.basename // ""),
+        (.test_file.source // ""),
+        (.active_skill.name // "")
+    ' "$overlay_file" 2>/dev/null)
+    [ "${#fields[@]}" -ge 3 ] || return 0
+
+    STC_SESSION_TEST_FILE="${fields[0]}"
+    STC_SESSION_TEST_SOURCE="${fields[1]}"
+    STC_SESSION_ACTIVE_SKILL="${fields[2]}"
+
+    export STC_SESSION_TEST_FILE STC_SESSION_TEST_SOURCE STC_SESSION_ACTIVE_SKILL
     return 0
 }
 

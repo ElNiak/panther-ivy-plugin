@@ -38,9 +38,10 @@ source "$SCRIPT_DIR/cache.sh"
 
 # Load segment renderers. Each exports a `render_<name>` function that prints
 # its segment or nothing (empty output = hide).
-for seg in protocol workflow project_md lsp mcp testfile; do
+for seg in protocol workflow session project_md lsp mcp testfile; do
     # shellcheck source=segments/protocol.sh
     # shellcheck source=segments/workflow.sh
+    # shellcheck source=segments/session.sh
     # shellcheck source=segments/project_md.sh
     # shellcheck source=segments/lsp.sh
     # shellcheck source=segments/mcp.sh
@@ -75,18 +76,41 @@ if [ ! -t 0 ]; then
     INPUT_JSON="$(cat || true)"
 fi
 
-_extract_cwd_from_input() {
+# Extract cwd + session_id from the stdin JSON in ONE jq pass.
+#
+# Each subprocess (jq, python, timeout-wrapped global) costs ~30-50 ms in
+# steady-state. Coalescing the two extractions into a single jq invocation
+# saves one full subprocess on every render, directly affecting the
+# render-budget test (cap defaults to 200 ms but clamps the user's
+# perceived statusline freshness).
+#
+# Output: two newline-separated fields, in this fixed order:
+#   <cwd-or-pwd>
+#   <session_id-or-empty>
+_extract_inputs_from_stdin() {
     local cwd="$PWD"
+    local sid=""
     if [ -n "$INPUT_JSON" ] && command -v jq >/dev/null 2>&1; then
-        local from_json
-        from_json="$(printf '%s' "$INPUT_JSON" | \
-            jq -r '.workspace.current_dir // .cwd // empty' 2>/dev/null)" || from_json=""
-        [ -n "$from_json" ] && cwd="$from_json"
+        local out
+        out="$(printf '%s' "$INPUT_JSON" | jq -r \
+            '.workspace.current_dir // .cwd // empty,
+             .session_id // empty' 2>/dev/null)" || out=""
+        if [ -n "$out" ]; then
+            local _cwd _sid
+            { IFS= read -r _cwd; IFS= read -r _sid; } <<< "$out"
+            [ -n "$_cwd" ] && cwd="$_cwd"
+            sid="${_sid:-}"
+        fi
     fi
-    printf '%s' "$cwd"
+    # session_id sanitization: must be filesystem-safe (matches the Python
+    # validator regex). An unsafe value silently drops the per-session
+    # overlay path so a malformed payload cannot escape the cache directory.
+    [[ "$sid" =~ ^[A-Za-z0-9_-]+$ ]] || sid=""
+    printf '%s\n%s\n' "$cwd" "$sid"
 }
 
-CWD="$(_extract_cwd_from_input)"
+{ IFS= read -r CWD; IFS= read -r STATUSLINE_SESSION_ID; } <<< "$(_extract_inputs_from_stdin)"
+export STATUSLINE_SESSION_ID
 
 # --- Workspace gate: outside-workspace delegation --------------------------
 # We never inject an error token here. If the global script exits non-zero,
@@ -165,7 +189,25 @@ if [ "$MODE" != "ivy-only" ]; then
 fi
 
 # --- Render Ivy segments ----------------------------------------------------
-CACHE_FILE="$(statusline_cache_path "$STATUSLINE_WORKSPACE_ROOT")"
+STATUSLINE_ACTIVE_GROUP="$(resolve_active_group "$STATUSLINE_WORKSPACE_ROOT")"
+export STATUSLINE_ACTIVE_GROUP
+# STC_PROTOCOL is the renderer-side authoritative protocol display value:
+# the explicit `ivy_workspace` selection from .ivy-workspace-state.json,
+# not the cwd-walked protocol_dir. Falls back to "" so segments/protocol.sh
+# can hide the segment when no selection exists (default partition).
+if [ "$STATUSLINE_ACTIVE_GROUP" = "default" ]; then
+    STC_PROTOCOL=""
+else
+    STC_PROTOCOL="$STATUSLINE_ACTIVE_GROUP"
+fi
+export STC_PROTOCOL
+
+CACHE_FILE="$(statusline_cache_path "$STATUSLINE_WORKSPACE_ROOT" "$STATUSLINE_ACTIVE_GROUP")"
+OVERLAY_FILE=""
+if [ -n "$STATUSLINE_SESSION_ID" ]; then
+    OVERLAY_FILE="$(statusline_overlay_path \
+        "$STATUSLINE_WORKSPACE_ROOT" "$STATUSLINE_SESSION_ID" "$STATUSLINE_ACTIVE_GROUP")"
+fi
 IVY_SEGMENTS=""
 if ! command -v jq >/dev/null 2>&1; then
     IVY_SEGMENTS="${EMO_PROTOCOL}${C_DIM}[ivy: jq missing]${C_RESET}"
@@ -178,8 +220,14 @@ else
     # One jq pass + one python age call populates STC_* variables; each
     # segment renderer then runs subprocess-free.
     statusline_cache_load "$CACHE_FILE" || _log "cache_load returned non-zero"
+    # Per-session overlay load is best-effort: missing overlay leaves
+    # STC_SESSION_* empty so segments fall through to the shared cache.
+    if [ -n "$OVERLAY_FILE" ]; then
+        statusline_overlay_load "$OVERLAY_FILE" || \
+            _log "overlay_load returned non-zero"
+    fi
     parts=()
-    for render_fn in render_protocol render_workflow render_project_md render_lsp render_mcp render_testfile; do
+    for render_fn in render_protocol render_workflow render_session render_project_md render_lsp render_mcp render_testfile; do
         out="$("$render_fn" 2>/dev/null || true)"
         [ -n "$out" ] && parts+=("$out")
     done

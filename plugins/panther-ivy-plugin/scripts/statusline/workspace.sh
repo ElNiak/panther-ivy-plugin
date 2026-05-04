@@ -44,3 +44,38 @@ detect_statusline_workspace() {
     export STATUSLINE_WORKSPACE_ROOT
     return 0
 }
+
+# Resolve the active panther-ivy protocol selection (the value
+# `ivy_workspace(action="set", target=...)` writes to
+# `<workspace_root>/.ivy-workspace-state.json::active_group`).
+#
+# Echoes the validated group name (e.g. "bgp", "quic") on stdout, or the
+# sentinel "default" when:
+#   - the state file is missing
+#   - jq is not installed (no JSON parser available)
+#   - the file is unreadable / malformed
+#   - active_group is null or absent in the JSON
+#   - active_group fails the safety regex (must be [A-Za-z0-9_-]+)
+#
+# This mirrors `statusline_cache._normalize_active_group` so the bash
+# renderer and the Python writers agree on the partition key.
+resolve_active_group() {
+    local workspace_root="${1:-$STATUSLINE_WORKSPACE_ROOT}"
+    [ -n "$workspace_root" ] || { echo "default"; return 0; }
+
+    local state_file="$workspace_root/.ivy-workspace-state.json"
+    [ -f "$state_file" ] || { echo "default"; return 0; }
+    command -v jq >/dev/null 2>&1 || { echo "default"; return 0; }
+
+    local raw
+    raw="$(jq -r '.active_group // "default"' "$state_file" 2>/dev/null || echo "default")"
+    [ -n "$raw" ] && [ "$raw" != "null" ] || raw="default"
+
+    # Path-safe sanitization: anything outside [A-Za-z0-9_-] collapses to
+    # "default" so a malformed state file cannot escape the cache directory.
+    if [[ "$raw" =~ ^[A-Za-z0-9_-]+$ ]]; then
+        echo "$raw"
+    else
+        echo "default"
+    fi
+}
