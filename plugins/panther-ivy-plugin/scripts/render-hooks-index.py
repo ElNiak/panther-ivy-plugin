@@ -72,9 +72,22 @@ def _one_line_purpose(script_path: Optional[Path], display: str) -> str:
     if script_path is not None:
         doc = _extract_docstring(script_path)
         if doc:
-            # Strip common "PreToolUse hook: " / "PostToolUse hook: " prefixes
-            doc = re.sub(r"^(Pre|Post|Session|Stop|SubagentStart|UserPromptSubmit|Notification|PreCompact|PermissionRequest)\w*\s+hook:\s*", "", doc, flags=re.IGNORECASE)
-            return doc.rstrip(".")
+            # Strip common event-name hook prefixes, including backtick-quoted
+            # matcher variants (single or double backtick, rst-style):
+            #   "PostToolUse hook: "
+            #   "PostToolUse hook on the `Skill` matcher: "
+            #   "PostToolUse hook on the ``Skill`` matcher: "
+            doc = re.sub(
+                r"^(Pre|Post|Session|Stop|SubagentStart|UserPromptSubmit|Notification|PreCompact|PermissionRequest)\w*"
+                r"(\s+hook(?:\s+on\s+the\s+`{1,2}[^`]+`{1,2}\s+matcher)?)?\s*:\s*",
+                "",
+                doc,
+                flags=re.IGNORECASE,
+            )
+            # Strip trailing punctuation that signals the sentence was split
+            # across multiple docstring lines (comma, colon, semicolon).
+            doc = doc.rstrip(".,:")
+            return doc
     return display.split("/")[-1].replace(".py", "")
 
 

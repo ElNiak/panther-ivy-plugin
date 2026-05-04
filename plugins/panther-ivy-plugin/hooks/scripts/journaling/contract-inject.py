@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""SubagentStart hook: emit a short directive pointing plugin specialists at
-the journaling contract.
+"""SubagentStart hook: inject the journaling-contract directive into dispatched plugin specialists.
 
 Per Phase 0 verification (2026-04-30, see feedback_subagent_start_semantics):
 SubagentStart additionalContext is truncated at ~2KB and exit-2 does NOT
