@@ -99,10 +99,10 @@ Classify every broken reference into one of these five classes; severity follows
 | Class | Definition | Severity | Example |
 |---|---|---|---|
 | **Runtime-fatal** | The named target is invoked at runtime (`Skill(...)`, `Agent(...)`); call returns "Unknown skill / agent not found" | CRITICAL | A skill body dispatches a renamed-but-still-cited agent. Concrete historical case: `meta-self-mod-ops/SKILL.md:111` once dispatched a non-existent conventions-reviewer agent before the three-loop dispatch was refactored to reuse `ivy-reviewer-agent` with `review_scope` distinguishing. |
-| **Hook-emitted** | A hook script prints a string that names a non-existent target; the user/Claude is told to invoke something that does not exist | CRITICAL | `render/summary.py:253` prints `Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture")` |
+| **Hook-emitted** | A hook script prints a string that names a non-existent target; the user/Claude is told to invoke something that does not exist | CRITICAL | Historical case (now resolved): `render/summary/main.py` once printed `Skill(skill="panther-ivy-plugin:cross-cutting-knowledge-capture")` for a skill that did not exist; the offending emit-site has since been removed. |
 | **Documentation drift** | A non-code reference (auto-loaded rule, glossary, README) names an agent/skill that does not exist; not runtime-fatal but pollutes context every session | WARNING | An auto-loaded rule body cites a retired agent name that was renamed; the rule teaches Claude wrong names every session (injected on every skill invocation via the `paths:` glob). |
 | **Schema drift** | Tests, evals, or fixtures use an old name format that the production code no longer accepts | WARNING | `tests/test_workflow_state.py:155` declares `_KNOWN = {"workflow-verify", ...}`; production uses unprefixed `verify` |
-| **Code-level orphan** | A Python `elif`, `case`, or dispatch table branch names a target that has been renamed; the branch is dead code | INFO | `hooks/scripts/render/summary.py:221` has `elif workflow == "navigate":` (orphan post-rename) |
+| **Code-level orphan** | A Python `elif`, `case`, or dispatch table branch names a target that has been renamed; the branch is dead code | INFO | `hooks/scripts/render/summary/main.py:101` has `elif workflow == "navigate":` (orphan post-rename) |
 
 ## Judgment call — orphan vs intentional reserved name
 

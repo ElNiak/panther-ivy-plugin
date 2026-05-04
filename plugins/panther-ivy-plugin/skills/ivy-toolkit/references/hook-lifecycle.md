@@ -142,7 +142,7 @@ Fire when Claude Code surfaces a permission prompt to the user. No matcher.
 | Event | Hook | Effect |
 |-------|------|--------|
 | Stop | record/session-end.py | Finalizes session log entry |
-| Stop | render/summary.py | Renders session summary (workflow phases completed, errors encountered) |
+| Stop | render/summary/main.py | Renders session summary (workflow phases completed, errors encountered) |
 | Stop | observe.py --event Stop | Observability: records session end |
 | SessionEnd | cleanup/ivy-lsp.py | Stops the LSP server and cleans up socket/PID files |
 | SessionEnd | observe.py --event SessionEnd | Observability: records session end metadata |

@@ -23,7 +23,7 @@ If the contract file is missing or unreadable, the injection hook exits with cod
 
 `progress{kind: fix_attempt}` is written by `refine-ops/SKILL.md` Phase 7 (the fix-attempt counter loop), not by a hook. Attribution matters when grepping the journal for diagnostic context.
 
-Several Stop-hook readers (`record/session-end.py`, `render/summary.py` main, `render-summary.audit_journal`) gate their output on a **per-session activity flag** (see §11). When the flag is absent, those hooks emit the one-line confirmation `[ivy-session] no ivy activity this session — skipping summary` and return without journal writes or lint output. The activity flag is **not** a journal event; it is a side-channel state file documented in §11.
+Several Stop-hook readers (`record/session-end.py`, `render/summary/main.py`, `render.summary.audit_journal`) gate their output on a **per-session activity flag** (see §11). When the flag is absent, those hooks emit the one-line confirmation `[ivy-session] no ivy activity this session — skipping summary` and return without journal writes or lint output. The activity flag is **not** a journal event; it is a side-channel state file documented in §11.
 
 ## 2. Per-turn lifecycle (decision tree)
 
@@ -271,7 +271,7 @@ The session-activity flag is a side-channel state file that answers the question
 ${TMPDIR}/claude-ivy/session-activity-<resolved_session_id>.flag
 ```
 
-- The session ID is resolved via `resolve_session_id()` from `hook_utils.py` (same helper used by `render/summary.py` and `gather_tool_metrics()`).
+- The session ID is resolved via `resolve_session_id()` from `lib.hook_utils` (same helper used by `render/summary/main.py` and `gather_tool_metrics()`).
 - The file is empty. Existence is the signal; content is not read.
 - When `resolve_session_id()` returns `"unknown"`, `is_session_active()` returns **False** (fail-closed). Writers still touch a `session-activity-unknown.flag` path for back-to-back coherence within a broken-session-id condition, but readers in Stop hooks treat that path as absent.
 - Lifetime: created on first signal; deleted by OS `${TMPDIR}` cleanup (no manual GC). Sessions spanning a `${TMPDIR}` cleanup boundary lose the flag mid-session and will see the one-line confirmation at Stop — a known, accepted limitation (sessions rarely span days).
@@ -292,8 +292,8 @@ All writes are idempotent: `Path.touch(exist_ok=True)` is atomic on POSIX, safe 
 | Hook | Behavior when flag absent | Behavior when flag present |
 |---|---|---|
 | `record/session-end.py` | Emits `[ivy-noop] no ivy activity this session — skipping summary` and returns; no journal write. | Three-way dispatch on `WorkflowContext.current()`: (a) non-None → appends `session_end` + rotates journal + emits T2 message; (b) None → emits `[ivy-noop] activity recorded; no orchestrator workflow — skipping journal append`. |
-| `render/summary.py` main | Emits `[ivy-noop] no ivy activity this session` and returns. | Proceeds to `find_modified_ivy_files()` (path-scoped); if no files, another noop; else builds and emits the session summary. |
-| `render-summary.audit_journal` | Returns `[]` immediately (no "no journal entries" warning). | Proceeds with the existing journal-gap checks. |
+| `render/summary/main.py` | Emits `[ivy-noop] no ivy activity this session` and returns. | Proceeds to `find_modified_ivy_files()` (path-scoped); if no files, another noop; else builds and emits the session summary. |
+| `render.summary.audit_journal` | Returns `[]` immediately (no "no journal entries" warning). | Proceeds with the existing journal-gap checks. |
 
 ### 11.4 Relationship to the journal
 

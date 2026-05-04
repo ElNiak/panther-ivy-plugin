@@ -148,17 +148,17 @@ Output formatting is a 2-layer stack:
 2. **Output style** (`output-styles/ivy-guided.md`) — dimension defaults (verbosity, tone, structure).
    User-selected at session level. NOT inherited by subagents.
 
-Tool result formatting is handled programmatically by `render-tool-result.py`
+Tool result formatting is handled programmatically by `render/tool-result.py`
 (PostToolUse hook). Do not duplicate tool formatting rules in the output style.
 
 Two subdirectories of `styles/` carry per-artifact templates consumed by the hooks:
 
-- `styles/tool-renderers/` — one file per rendered MCP tool (e.g. `ivy_verify.md`, `ivy_coverage.md`). Each file specifies the output phrasing per workflow / phase; `render-tool-result.py` selects the right section at runtime.
-- `styles/summaries/` — one summary template per workflow, loaded by `render-summary.py` (Stop hook) to produce the end-of-session recap.
+- `styles/tool-renderers/` — one file per rendered MCP tool (e.g. `ivy_verify.md`, `ivy_coverage.md`). Each file specifies the output phrasing per workflow / phase; `render/tool-result.py` selects the right section at runtime.
+- `styles/summaries/` — one summary template per workflow, loaded by `render/summary/main.py` (Stop hook) to produce the end-of-session recap.
 
 Neither directory is user-facing; changes there propagate through hooks only.
 
-A third subdirectory, `styles/overlays/`, contains workflow-overlay templates referenced by `hooks/scripts/style_utils.py` but no longer wired into any kept hook (Phase D archived `compose-style.py`, the prior consumer). It is legacy infrastructure pending cleanup; runtime behaviour is unaffected.
+A third subdirectory, `styles/overlays/`, contains workflow-overlay templates referenced by `hooks/scripts/style_utils.py` but no longer wired into any kept hook (Phase D archived the overlay-consumer logic from `prompt/style.py`, the prior consumer). It is legacy infrastructure pending cleanup; runtime behaviour is unaffected.
 
 ### Style Precedence Rules
 
@@ -215,7 +215,7 @@ Most settings are configured through Claude Code's `userConfig` (see `plugin.jso
 
 ### Runtime-set (populated by SessionStart hooks)
 
-These are written to `$CLAUDE_ENV_FILE` by `detect-ivy-workspace.py` so downstream hooks and the MCP / LSP server processes inherit them. Do not set them manually.
+These are written to `$CLAUDE_ENV_FILE` by `workspace/detect.py` so downstream hooks and the MCP / LSP server processes inherit them. Do not set them manually.
 
 | Variable | Purpose |
 |---|---|

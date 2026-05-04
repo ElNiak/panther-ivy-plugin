@@ -18,7 +18,8 @@ pytestmark = pytest.mark.unit
 # Helpers
 # ---------------------------------------------------------------------------
 
-# Resolve log_event.py so we can import it directly for unit tests
+# Resolve the observability/ hook directory; log_event itself is imported
+# from lib.log_event via _SCRIPTS_DIR after PR4 moved it into the lib/ package.
 _OBS_DIR = (
     Path(__file__).resolve().parent.parent
     / "hooks"

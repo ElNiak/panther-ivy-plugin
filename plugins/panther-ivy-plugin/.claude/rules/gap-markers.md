@@ -65,7 +65,7 @@ grep -rn "\[GAP:" protocol-testing/bgp/
 
 ## GAP count in workflow-journal
 
-Each `gate_verdict` event with `verdict: UNSOUND` records the number of `[GAP:]` markers written. The `render/summary.py` Stop hook can aggregate these counts across a session so the final summary reports: "N GAPs across M files, L of which were resolved this session".
+Each `gate_verdict` event with `verdict: UNSOUND` records the number of `[GAP:]` markers written. The `render/summary/main.py` Stop hook can aggregate these counts across a session so the final summary reports: "N GAPs across M files, L of which were resolved this session".
 
 ## Interaction with the trigger-eval
 

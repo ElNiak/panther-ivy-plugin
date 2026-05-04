@@ -112,7 +112,7 @@ def main() -> None:
             event_type="gate_dispatched",
             payload={
                 "gate": "g4",
-                "trigger": "record-workflow-error.py",
+                "trigger": "record/workflow-error.py",
                 "tool": tool_name,
                 "methodology": methodology,
             },
