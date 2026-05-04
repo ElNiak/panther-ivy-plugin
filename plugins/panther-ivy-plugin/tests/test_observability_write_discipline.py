@@ -18,7 +18,7 @@ Two exemption groups:
 * **Library modules** (``hook_utils``, ``workflow_state``,
   ``statusline_cache``, ``style_utils``) are not invoked as hooks.
 * **High-frequency observers** (``observability/observe.py``,
-  ``observability/log_event.py``) fire on every Claude tool event;
+  ``lib/log_event.py``) fire on every Claude tool event;
   citing the JSONL path each time would flood the scrollback. The path
   is documented in their docstrings instead.
 * **Internal-state writers** (``mcp/indexing-ready.py``,

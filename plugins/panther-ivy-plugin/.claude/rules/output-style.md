@@ -56,4 +56,4 @@ When to use which:
 
 The `<surface>` slot follows the existing `[ivy-<surface>]` prefix table above. New surfaces should be added to that table when introduced.
 
-These templates are enforced by `tests/test_observability_write_discipline.py` — an AST + regex scan that flags hook scripts containing a write marker (`write_text`, `Path.open(... 'w'/'a' ...)`, `json.dump`, `yaml.dump`, `append_journal_event`, `statusline_cache.update_from_hook`) but emitting no `systemMessage` matching T1/T2/T3. Two scripts (`observability/observe.py`, `observability/log_event.py`) are exempt because they fire on every event and would flood the scrollback if they cited paths.
+These templates are enforced by `tests/test_observability_write_discipline.py` — an AST + regex scan that flags hook scripts containing a write marker (`write_text`, `Path.open(... 'w'/'a' ...)`, `json.dump`, `yaml.dump`, `append_journal_event`, `statusline_cache.update_from_hook`) but emitting no `systemMessage` matching T1/T2/T3. Two scripts (`observability/observe.py`, `lib/log_event.py`) are exempt because they fire on every event and would flood the scrollback if they cited paths.

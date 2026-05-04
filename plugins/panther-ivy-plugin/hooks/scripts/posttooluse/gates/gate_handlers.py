@@ -138,7 +138,7 @@ def dispatch_g2(ctx: dict) -> None:
     protocol_dir = ctx.get("protocol_dir") or ""
     workflow_ctx = ctx.get("workflow_ctx")
 
-    scaffold_state = get_scaffold_state_safe(protocol_dir) or {} if protocol_dir else {}
+    scaffold_state = (get_scaffold_state_safe(protocol_dir) or {}) if protocol_dir else {}
     protocol = (
         scaffold_state.get("protocol")
         or (os.path.basename(protocol_dir.rstrip("/")) if protocol_dir else "<unknown>")
@@ -228,7 +228,7 @@ def dispatch_g3(ctx: dict) -> None:
     protocol_dir = ctx.get("protocol_dir") or ""
     workflow_ctx = ctx.get("workflow_ctx")
 
-    scaffold_state = get_scaffold_state_safe(protocol_dir) or {} if protocol_dir else {}
+    scaffold_state = (get_scaffold_state_safe(protocol_dir) or {}) if protocol_dir else {}
     protocol = (
         scaffold_state.get("protocol")
         or (os.path.basename(protocol_dir.rstrip("/")) if protocol_dir else "<unknown>")
@@ -288,7 +288,7 @@ def dispatch_g3(ctx: dict) -> None:
 
 
 def parse_g5(hook_input: dict) -> Optional[dict]:
-    """Extract artifacts from ivy_iut_test tool_result. Return None if unparseable."""
+    """Extract artifacts from ivy_iut_test tool_result. Return None if tool_result is unparseable."""
     tool_result = _parse_tool_result(hook_input.get("tool_result"))
     if not tool_result:
         return None
@@ -303,13 +303,15 @@ def parse_g5(hook_input: dict) -> Optional[dict]:
         "run_id": tool_result.get("run_id", ""),
         "summary": tool_result.get("summary", {}),
     }
-    if not artifacts["output_dir"]:
-        return None
     return {"artifacts": artifacts}
 
 
 def predicate_g5(ctx: dict) -> bool:
-    """G5 always fires once parse_g5 succeeded (output_dir non-empty was the parse gate)."""
+    """G5 fires when output_dir is present in artifacts.
+
+    parse_g5 only checks structural shape (is tool_result parseable?);
+    predicate_g5 owns the gate condition (output_dir non-empty).
+    """
     return bool(ctx.get("artifacts", {}).get("output_dir"))
 
 
@@ -319,7 +321,7 @@ def dispatch_g5(ctx: dict) -> None:
     protocol_dir = ctx.get("protocol_dir") or ""
     workflow_ctx = ctx.get("workflow_ctx")  # always None for G5 (no workflow_required)
 
-    scaffold_state = get_scaffold_state_safe(protocol_dir) or {} if protocol_dir else {}
+    scaffold_state = (get_scaffold_state_safe(protocol_dir) or {}) if protocol_dir else {}
     methodology = scaffold_state.get("methodology")
 
     if protocol_dir:

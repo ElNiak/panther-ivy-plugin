@@ -117,3 +117,24 @@ def test_gate_handlers_module_exposes_per_gate_functions():
                 f"gate_handlers.{attr} missing — registry.py reference would break"
             )
             assert callable(getattr(gate_handlers, attr))
+
+
+def test_g5_predicate_gates_missing_output_dir():
+    """Missing output_dir: parse_g5 returns a ctx; predicate_g5 blocks dispatch.
+
+    After F1 (parse_g5 no longer enforces non-empty output_dir), the gate
+    condition is owned entirely by predicate_g5. A parseable tool_result
+    with no output_dir must yield parse_g5(...) != None (parse succeeds)
+    and predicate_g5(ctx) == False (gate blocks dispatch).
+    """
+    hook_input = {
+        "tool_result": '{"protocol": "quic", "test": "t1", "iut": "picoquic", "run_id": "r1"}'
+    }
+    ctx = gate_handlers.parse_g5(hook_input)
+    assert ctx is not None, "parse_g5 must succeed when tool_result is parseable"
+    assert ctx.get("artifacts", {}).get("output_dir", "") == "", (
+        "output_dir must be empty string when absent from tool_result"
+    )
+    assert gate_handlers.predicate_g5(ctx) is False, (
+        "predicate_g5 must return False (block dispatch) when output_dir is empty"
+    )
