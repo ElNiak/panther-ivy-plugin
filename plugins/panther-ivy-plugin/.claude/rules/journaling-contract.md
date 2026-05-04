@@ -304,3 +304,45 @@ Debuggers looking for "why did no summary appear at Stop?" should check: (a) `ls
 ### 11.5 Optional diagnostic log
 
 When `IVY_SESSION_ACTIVITY_LOG=1` is set, `mark_session_activity()` appends a JSONL line to a sibling `signals-<session_id>.log` file recording `{"ts": "<iso>", "signal": "<signal>"}`. This file is not read by any gate logic; it exists only for debugging signal provenance.
+
+## 12. Per-session statusline overlay
+
+The per-session statusline overlay is the second side-channel state file the plugin maintains. It holds session-private statusline state — the per-session ``test_file`` segment, badge metadata, and last-invoked specialist agent — so two Claude Code windows in the same workspace+protocol see their own transient view rather than overwriting each other's segments.
+
+Like the session-activity flag (§11) the overlay is **not** a journal event. It lives under the panther-ivy-plugin cache directory rather than in `.panther-ivy/`. The orchestrator does not read it, `rotate_journal` does not touch it, and `journal_pointer` computations ignore it. It exists only so the bash renderer can compose per-session segments alongside the workspace-shared ones.
+
+### 12.1 Location and format
+
+```
+~/.claude/panther-ivy-plugin/cache/<sha1(workspace_root)[:12]>/<active_group>/sessions/<session_id>/overlay.json
+```
+
+- `workspace_root` is the panther_ivy/ directory (mirrors the shared cache key).
+- `active_group` is the value at `<workspace_root>/.ivy-workspace-state.json::active_group`, written by `ivy_workspace(action="set", target=...)`. Falls back to the literal string `default` when no selection is set, when the state file is missing, or when the value fails the `[A-Za-z0-9_-]+` safety regex.
+- `session_id` is the stable Claude Code session UUID from the hook's stdin payload (always present per the harness; see https://code.claude.com/docs/en/hooks "Common input fields"). Same `[A-Za-z0-9_-]+` safety regex.
+- File schema: section-merge JSON identical to the shared cache. Sections currently used: `test_file`, `active_skill`, `session`. Top-level `version` field for future schema evolution; readers drop the file silently on version mismatch.
+
+### 12.2 Writers
+
+| Hook | Section | When |
+|---|---|---|
+| `post-write-workflow-aware.py` | `test_file` | Any `Write`/`Edit` of a `.ivy` file when `session_id` is present on stdin. Falls back to the shared cache write when `session_id` is absent (offline / smoke-test invocations). |
+
+Future hooks that need session-private rather than workspace-shared statusline state should call `statusline_cache.update_overlay_from_hook(session_id, sections)` rather than `update_from_hook`.
+
+### 12.3 Readers
+
+The bash renderer (`scripts/statusline/main.sh` plus `scripts/statusline/cache.sh::statusline_overlay_load`) reads the overlay once per render and populates `STC_SESSION_*` variables for the segment scripts. Each session-private segment prefers the overlay value with fallback to the shared cache value, so a session whose overlay is missing (no session_id, fresh session, reaper just ran) still sees the workspace-shared content.
+
+### 12.4 Migration from pre-partitioning installs
+
+Pre-partitioning caches at `<wsHash>/statusline.json` are moved under `<wsHash>/default/statusline.json` on the first `SessionStart` after Phase 4 lands, via `statusline_cache.migrate_legacy_cache(workspace_root)` invoked from `sync-statusline-cache.py`. Idempotent — once the legacy file is gone the migration is a no-op. Concurrent SessionStart hooks are safe: the move is fcntl-locked, and a sibling session that races the migration finds the new file already present and deletes the legacy file rather than overwriting.
+
+Per `feedback_no_backward_compat_shims` the migration code is one-shot. A follow-up commit removes `migrate_legacy_cache` and its call site once enough time has passed that no live install still has a legacy file. The function and its test (`tests/test_statusline_cache_migration.py`) are tagged for that follow-up cleanup.
+
+### 12.5 Failure modes
+
+- **Overlay file unreadable** — the renderer's `statusline_overlay_load` returns no-op and segments fall through to the shared cache. Same graceful-degradation pattern as the shared `statusline_cache_load`.
+- **Unsafe `session_id`** — the writer (`update_overlay`) and reader (`read_overlay`) both validate against `[A-Za-z0-9_-]+`; a malformed payload silently no-ops rather than escaping the cache directory.
+- **Concurrent writers in the same session** — fcntl-locked on a sibling `overlay.lock` file, identical pattern to the shared cache.
+- **Reaping** — overlays accumulate over time as session UUIDs cycle. A future reaper (not yet implemented) will sweep `cache/<wsHash>/<active_group>/sessions/` for entries older than 7 days on `SessionStart`. Until that lands, the directory grows unbounded but with negligible disk impact (each overlay is ~200 B).

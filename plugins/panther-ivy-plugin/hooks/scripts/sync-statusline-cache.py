@@ -58,6 +58,7 @@ from statusline_cache import (  # noqa: E402
     _resolve_workspace_root,
     cache_path_for,
     clear_section,
+    migrate_legacy_cache,
     update_section,
 )
 from workflow_state import (  # noqa: E402
@@ -117,6 +118,15 @@ def main() -> None:
             "no panther_ivy workspace detected; skipping statusline-cache mirror",
         )
         return
+
+    # One-shot migration of pre-partitioning cache files. The first
+    # SessionStart after Phase 4 lands moves any legacy
+    # `<wsHash>/statusline.json` under `<wsHash>/default/statusline.json`
+    # so the renderer's cold-start visual reflects the user's preserved
+    # state rather than `[ivy: initializing]`. Idempotent: a no-op once
+    # the legacy file is gone. Best-effort: a migration failure does not
+    # break the SessionStart mirror.
+    migrate_legacy_cache(workspace_root)
 
     protocol_dir = find_protocol_dir()
     if not protocol_dir:
