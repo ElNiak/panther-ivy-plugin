@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""SessionStart precondition hook: verify the journaling contract is present
-and parseable before the panther-ivy-plugin loads.
+"""SessionStart hook: verify the journaling contract is present and parseable before the panther-ivy-plugin loads.
 
 This is the fail-loud surface for the journaling contract. Phase 0 verification
 (2026-04-30) showed SubagentStart exit-2 does NOT block dispatch, so the hook

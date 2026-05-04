@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SessionStart + PostToolUse hook: mirror active-workflow into statusline cache.
+"""SessionStart hook: mirror active-workflow into statusline cache (also fires on PostToolUse).
 
 The per-workspace statusline cache JSON at
 ``~/.claude/panther-ivy-plugin/cache/<sha1>/statusline.json`` holds the

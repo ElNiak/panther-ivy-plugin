@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PostToolUse hook on the ivy_workspace MCP tool: surface workspace changes.
+"""PostToolUse hook on the ``mcp__.*ivy_workspace`` matcher: surface workspace changes.
 
 After every ``ivy_workspace(action=...)`` MCP call, compare the current
 state file against the last value cached for the statusline. If they
