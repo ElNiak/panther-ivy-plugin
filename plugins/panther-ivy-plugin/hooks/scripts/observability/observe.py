@@ -16,8 +16,7 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 try:
     from lib.hook_utils import (
@@ -288,7 +287,7 @@ def main():
     if args.event not in _KNOWN_EVENTS:
         print(f"[ivy-obs] unknown event type: {args.event}", file=sys.stderr)
 
-    from log_event import log_event
+    from lib.log_event import log_event
     from lib.hook_utils import read_stdin
 
     data = read_stdin()

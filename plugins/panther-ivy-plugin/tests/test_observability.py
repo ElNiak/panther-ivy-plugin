@@ -63,10 +63,16 @@ def _read_last_event(events_file: Path) -> dict:
 
 import sys
 
-sys.path.insert(0, str(_OBS_DIR))
-sys.path.insert(0, str(_OBS_DIR.parent))
+_LIB_DIR = (
+    Path(__file__).resolve().parent.parent
+    / "hooks"
+    / "scripts"
+    / "lib"
+)
+
+sys.path.insert(0, str(_LIB_DIR.parent))
 from lib.hook_utils import resolve_log_dir
-from log_event import log_event
+from lib.log_event import log_event
 
 
 class TestLogEvent:
