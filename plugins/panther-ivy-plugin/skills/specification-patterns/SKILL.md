@@ -18,17 +18,40 @@ This skill owns *layer-decomposition* decisions (which file does a type belong i
 
 ## 14-Layer template (canonical reference)
 
-The 14-layer formal model template (Types / Application / Security / Frame / Packet / Protection / Connection / Transport Params / Error / Entity Defs / Entity Behavior / Shims / Serialization / Utilities) lives canonically in user auto-memory at `~/.claude/projects/<project>/memory/reference_nct_methodology.md`, mirrored by the `methodology` skill body. This skill does not restate the table.
+### Inline minimal-viable reference
 
-The memory file also carries:
+A compact one-line-per-layer summary so cold-start sessions (no memory file present) have an immediate decomposition reference. The richer canonical content (decision matrices, optional layers, per-protocol directory templates) lives in the auto-memory file linked below.
 
-- Optional (protocol-dependent) layers — Security Sub-Protocol, FSM Modules, Recovery & Congestion, Extensions, Attacks Stack, Stream/Flow Management.
+| # | Layer | Purpose | Typical file |
+|---|-------|---------|--------------|
+| 1 | Types | Primitive types, opaque domains, type aliases (sequence numbers, identifiers, enums) | `<prot>_1_types.ivy` |
+| 2 | Application | Protocol-level payload types (QUIC stream payload, BGP NLRI, CoAP option) | `<prot>_2_application.ivy` |
+| 3 | Security | Cryptographic primitives, key schedule, AEAD / HMAC modules (when in scope) | `<prot>_3_security.ivy` |
+| 4 | Frame | Per-PDU variant hierarchy (`frame.ivy` in QUIC; `message.ivy` in BGP) | `<prot>_4_frame.ivy` |
+| 5 | Packet | Outer wire envelope (long / short header; BGP message envelope; CoAP header) | `<prot>_5_packet.ivy` |
+| 6 | Protection | Header / body protection, AEAD wrap-unwrap, integrity (where layered on framing) | `<prot>_6_protection.ivy` |
+| 7 | Connection | Session / connection state machine (open / established / closed) | `<prot>_7_connection.ivy` |
+| 8 | Transport Params | Negotiated parameters, capabilities, hold-time / version / extensions | `<prot>_8_params.ivy` |
+| 9 | Error | Error codes and error propagation actions | `<prot>_9_error.ivy` |
+| 10 | Entity Defs | Roles (client / server / speaker / peer) and identity types | `<prot>_10_entity.ivy` |
+| 11 | Entity Behavior | Per-role action wiring, before / after monitors, generated-event guards | `<prot>_11_behavior.ivy` |
+| 12 | Shims | Socket I/O bridge between Ivy actions and the runtime network | `<prot>_shims/` |
+| 13 | Serialization | Wire serdes (`ivy_binary_ser_*`) for variant types declared in layer 4 | `<prot>_13_ser.ivy` |
+| 14 | Utilities | Helpers shared across layers (logging, randomness, time) | `<prot>_utils.ivy` |
+
+Layer numbering is canonical: lower numbers depend on nothing higher. When a protocol omits an optional concept (e.g., no protection for clear-text protocols), the layer number is left as a gap rather than renumbered, so cross-protocol comparison stays straightforward.
+
+### Auto-memory authoritative source
+
+The richer canonical reference lives in user auto-memory at `~/.claude/projects/<project>/memory/reference_nct_methodology.md`, mirrored by the `methodology` skill body. The auto-memory file additionally carries:
+
+- Optional (protocol-dependent) layers — Security Sub-Protocol, FSM Modules, Recovery & Congestion, Extensions, Attacks Stack, Stream / Flow Management.
 - Genuinely reusable components across protocols.
 - Decision matrix for template selection (connection-oriented, built-in reliability, multiplexed streams, integrated security, peer-to-peer, pub/sub, extensions, stateless, tunneling, real-time).
 - Minimal viable 7-layer set for a new protocol model.
 - Per-protocol directory-structure template.
 
-`Read` the memory file when designing a new protocol's layer structure or choosing optional layers. `references/pattern-library-detail.md` in this skill holds the expanded formal-model pattern library; `references/frame-queuing-pattern.md` covers the frame-queuing composition pattern.
+`Read` the memory file when designing a new protocol's layer structure or choosing optional layers. `references/pattern-library-detail.md` in this skill holds the expanded formal-model pattern library; `references/frame-queuing-pattern.md` covers the frame-queuing composition pattern. The inline table above is the cold-start fallback when the memory file is unreachable; it is not a substitute for the rich canonical reference.
 
 ---
 
