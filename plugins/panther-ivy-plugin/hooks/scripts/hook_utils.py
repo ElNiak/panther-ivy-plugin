@@ -9,6 +9,7 @@ management, and JSON hook output formatting.
 from __future__ import annotations
 
 import fcntl
+import functools
 import json
 import os
 import sys
@@ -588,3 +589,28 @@ def is_session_active() -> bool:
     if resolve_session_id() == "unknown":
         return False
     return _session_activity_path().exists()
+
+
+@functools.lru_cache(maxsize=1)
+def resolve_active_group_for_hook() -> str | None:
+    """Resolve the current ``ivy_workspace`` selection for partition routing.
+
+    Reads ``<workspace_root>/.ivy-workspace-state.json::active_group`` via
+    :mod:`statusline_cache` and returns the validated group name, or
+    ``None`` (which the cache layer maps to the ``default`` partition)
+    when the workspace cannot be resolved.
+
+    Hooks that update partition-aware statusline cache sections call this
+    to compute the ``active_group`` argument once per process invocation;
+    the ``lru_cache`` ensures repeated calls within a single hook
+    subprocess do not re-walk the cwd or re-parse the JSON state file.
+    Each Claude Code hook spawns a fresh subprocess so the cache is bound
+    to one hook invocation and there is no test-isolation hazard.
+    """
+    # Local import keeps the dependency one-way: statusline_cache imports
+    # nothing from hook_utils, hook_utils imports statusline_cache lazily
+    # so a circular bootstrap path stays impossible.
+    from statusline_cache import _resolve_active_group, _resolve_workspace_root
+
+    ws = _resolve_workspace_root()
+    return _resolve_active_group(ws) if ws else None

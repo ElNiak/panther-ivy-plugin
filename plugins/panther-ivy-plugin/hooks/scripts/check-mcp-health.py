@@ -32,28 +32,10 @@ from hook_utils import (
     emit_hook_output,
     read_mcp_health_state,
     read_stdin,
+    resolve_active_group_for_hook as _active_group,
     write_mcp_health_state,
 )
-from statusline_cache import (
-    _resolve_active_group,
-    _resolve_workspace_root,
-)
 from statusline_cache import update_from_hook as _statusline_update
-
-
-def _active_group() -> str | None:
-    """Resolve the active ``ivy_workspace`` selection for partition routing.
-
-    Returns the value found in ``<workspace_root>/.ivy-workspace-state.json``
-    so the ``mcp`` cache segment lands in the partition the renderer is
-    reading. Returns ``None`` (which the cache layer treats as ``default``)
-    when the workspace cannot be resolved or no selection is set. The
-    underlying MCP server is workspace-shared but the rendered ``mcp``
-    segment is per-protocol; a brief flicker on ``ivy_workspace`` switches
-    is expected — the next health probe re-populates the new partition.
-    """
-    ws = _resolve_workspace_root()
-    return _resolve_active_group(ws) if ws else None
 
 _STALE_PORT_AGE = 120  # Port file older than 2 min with no TCP → stale
 _PID_DIR = "/tmp/ivy-lsp-pids"

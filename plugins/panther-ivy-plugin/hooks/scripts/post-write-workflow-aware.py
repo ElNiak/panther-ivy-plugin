@@ -17,27 +17,17 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, emit_noop, mark_session_activity, read_stdin
-from statusline_cache import (
-    _resolve_active_group,
-    _resolve_workspace_root,
-    update_overlay_from_hook as _overlay_update,
+from hook_utils import (
+    emit_hook_output,
+    emit_noop,
+    mark_session_activity,
+    read_stdin,
+    resolve_active_group_for_hook as _active_group,
 )
+from statusline_cache import update_overlay_from_hook as _overlay_update
 from statusline_cache import update_from_hook as _statusline_update
 
 from workflow_state import WorkflowContext
-
-
-def _active_group() -> str | None:
-    """Resolve the active ``ivy_workspace`` selection for partition routing.
-
-    Returns the group from ``<workspace_root>/.ivy-workspace-state.json`` so
-    the ``active_agent`` and (fallback-path) ``test_file`` cache segments
-    land in the partition the renderer reads. ``None`` (which the cache
-    layer maps to ``default``) when the workspace cannot be resolved.
-    """
-    ws = _resolve_workspace_root()
-    return _resolve_active_group(ws) if ws else None
 
 
 _TARGET_RE = re.compile(r"[\w/.\-]+\.(?:ivy|spec)")

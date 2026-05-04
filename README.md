@@ -45,12 +45,15 @@ Claude Code auto-discovers plugins via the `.claude-plugin/` directory. No `pip 
 
 ## Components
 
+Counts below are computed by `plugins/panther-ivy-plugin/scripts/inventory_counts.py` and verified by `tests/test_readme_counts.py`. Update both the script's output and this table together when components change.
+
 | Component | Count | Description | Details |
 |-----------|-------|-------------|---------|
-| Agents | 3 (internal) | Model reviewer, spec analyst, traceability agent — dispatched by workflows, not user-facing | [agents/](plugins/panther-ivy-plugin/agents/) |
-| Commands | 5 (shortcuts) | Slash commands for verification, compilation, model info, health, observability | [commands/](plugins/panther-ivy-plugin/commands/) |
-| Skills | 12 (5 workflows + 7 knowledge) | Workflow skills (navigate, verify, build, review, triage) + domain knowledge (methodology, patterns, Ivy language, tooling, counterexamples, propagation, claims) | [skills/](plugins/panther-ivy-plugin/skills/) |
-| Hooks | 29 hooks across 12 event types | PreToolUse, PostToolUse, PostToolUseFailure, SessionStart/End, Stop, Subagent, PreCompact, UserPromptSubmit, Notification, PermissionRequest | [hooks/](plugins/panther-ivy-plugin/hooks/) |
+| Agents | 9 (6 specialist + 3 critic) | Specialists (`ivy-builder`, `ivy-experimenter`, `ivy-meta`, `ivy-refiner`, `ivy-reviewer`, `ivy-triage`) handle workflow execution; critics (`g-plan`, `g-fidelity`, `g-knowledge`) run adversarial-vote gates | [agents/](plugins/panther-ivy-plugin/agents/) |
+| Commands | 2 (shortcuts) | `/nct-health` (9-step diagnostic runbook), `/nct-iut-test` (IUT experiment via PANTHER) | [commands/](plugins/panther-ivy-plugin/commands/) |
+| Skills | 15 (1 orchestrator + 6 ops + 8 knowledge) | Orchestrator (`ivy`) routes intent; ops skills (`scaffold-ops`, `refine-ops`, `experiment-ops`, `review-ops`, `triage-ops`, `meta-self-mod-ops`) own workflow procedures; knowledge skills (`methodology`, `specification-patterns`, `propagation-patterns`, `ivy-syntax`, `ivy-toolkit`, `verification-failures`, `apt-attack-patterns`, `reference-drift`) provide domain references | [skills/](plugins/panther-ivy-plugin/skills/) |
+| Hooks | 45 commands / 37 matchers across 12 events | PreToolUse, PostToolUse, PostToolUseFailure, SessionStart/End, Stop, SubagentStart/Stop, PreCompact, UserPromptSubmit, Notification, PermissionRequest | [hooks/](plugins/panther-ivy-plugin/hooks/) |
+| Rules | 15 | Auto-loaded `.claude/rules/` files (iron-laws, agent-dispatch, journaling-contract, gate-verdicts, ivy-formatting, plan-mode, output-style, mcp-tool-reliability, postuse-hook-ordering, propagation-authority, gap-markers, skill-conventions, scaffold-anti-patterns, refine-anti-patterns, experiment-anti-patterns) | [.claude/rules/](plugins/panther-ivy-plugin/.claude/rules/) |
 
 ## Tooling Architecture
 
@@ -122,36 +125,36 @@ panther-ivy-plugin/
 │       ├── .lsp.json        # LSP configuration (co-located)
 │       ├── routing-rules.json # Smart routing rules for UserPromptSubmit hook
 │       ├── settings.json    # Plugin settings
-│       ├── agents/          # 3 internal agents (dispatched by workflows)
+│       ├── agents/          # 9 agents: 6 specialist (ivy-*) + 3 critic (g-*)
 │       │   ├── README.md
-│       │   ├── model-reviewer.md
-│       │   ├── spec-analyst.md
-│       │   └── traceability-agent.md
-│       ├── commands/        # 5 shortcut commands
+│       │   ├── ivy-builder-agent.md, ivy-experimenter-agent.md, ivy-meta-agent.md
+│       │   ├── ivy-refiner-agent.md, ivy-reviewer-agent.md, ivy-triage-agent.md
+│       │   └── g-plan-critic.md, g-fidelity-critic.md, g-knowledge-critic.md
+│       ├── commands/        # 2 shortcut commands
 │       │   ├── README.md
-│       │   ├── nct-check.md         # /nct-check -- formal verification
-│       │   ├── nct-compile.md       # /nct-compile -- compile to test binary
-│       │   ├── nct-model-info.md    # /nct-model-info -- model structure
-│       │   ├── nct-health.md        # /nct-health -- 9-step diagnostic
-│       │   └── nct-observability.md # /nct-observability -- JSONL event logs
+│       │   ├── nct-health.md        # /nct-health   -- 9-step diagnostic runbook
+│       │   └── nct-iut-test.md      # /nct-iut-test -- IUT experiment via PANTHER
 │       ├── hooks/
-│       │   ├── hooks.json   # 27 hooks across 12 event types
-│       │   └── scripts/     # Hook implementations (sh, py)
-│       ├── skills/          # 5 workflow + 7 knowledge skills
+│       │   ├── hooks.json   # 45 commands / 37 matchers across 12 events
+│       │   └── scripts/     # Hook implementations (Python; ~37 entry points + shared libs)
+│       ├── skills/          # 15 skills: 1 orchestrator + 6 ops + 8 knowledge
 │       │   ├── README.md
-│       │   ├── navigate/    # Session entry, warm resume, intent routing
-│       │   ├── verify/      # Verify, debug failures, run tests
-│       │   ├── build/       # Scaffold, add layers, propagate changes
-│       │   ├── review/      # Audit quality, coverage, RFC compliance
-│       │   ├── triage/      # Toolchain health, MCP/LSP diagnostics
-│       │   ├── methodology-reference/   # NCT/NACT/NSCT reference
-│       │   ├── specification-patterns/  # 14-layer template + pattern library
-│       │   ├── ivy-writing-guide/       # Ivy language reference
-│       │   ├── ivy-toolkit/             # LSP + MCP tool catalog
-│       │   ├── counterexample-guide/    # Z3 counterexample interpretation
-│       │   ├── propagation-patterns/    # Change propagation across layers
-│       │   └── claim-discussion/        # Claim/argument analysis
-│       ├── scripts/         # Server startup scripts
+│       │   ├── ivy/                     # ORCHESTRATOR — session entry, warm resume, intent routing, gate-critic dispatch
+│       │   ├── scaffold-ops/            # OPS — protocol model construction (NCT/NACT/NSCT scaffolding)
+│       │   ├── refine-ops/              # OPS — Ivy spec verification (compile -> verify -> diagnose -> fix loop)
+│       │   ├── experiment-ops/          # OPS — IUT execution + 9-step trace analysis
+│       │   ├── review-ops/              # OPS — RFC coverage audit, quality scoring, traceability
+│       │   ├── triage-ops/              # OPS — MCP/LSP/Serena health repair (9-step runbook)
+│       │   ├── meta-self-mod-ops/       # OPS — plugin source modifications (skills, agents, hooks, rules)
+│       │   ├── methodology/             # KNOWLEDGE — NCT / NACT / NSCT methodology reference
+│       │   ├── specification-patterns/  # KNOWLEDGE — 14-layer template + scaffolding patterns
+│       │   ├── propagation-patterns/    # KNOWLEDGE — type-change impact analysis + Ivy-to-C++ encoding
+│       │   ├── ivy-syntax/              # KNOWLEDGE — Ivy 1.7 syntax + module system + RFC annotation
+│       │   ├── ivy-toolkit/             # KNOWLEDGE — 18-tool MCP catalog + Serena semantic tools
+│       │   ├── verification-failures/   # KNOWLEDGE — verifier-pattern catalog + counterexample interpretation
+│       │   ├── apt-attack-patterns/     # KNOWLEDGE — NACT 6-stage attack lifecycle + around-block monitors
+│       │   └── reference-drift/         # KNOWLEDGE — cross-reference audit (Skill/Agent calls, _KNOWN_* sets)
+│       ├── scripts/         # Server startup + inventory + migration scripts
 │       └── tests/           # Plugin test suite
 └── README.md                # This file
 ```

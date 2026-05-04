@@ -161,3 +161,26 @@ def seed_journal():
         )
 
     return _seed
+
+
+@pytest.fixture(autouse=True)
+def _isolate_statusline_cache_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Path:
+    """Redirect the statusline cache root under ``tmp_path`` for every test.
+
+    Consolidates the per-file ``_isolate_cache_root`` autouse fixture
+    duplicated across ``test_statusline_cache_partitioning.py``,
+    ``test_statusline_overlay.py``, and ``test_statusline_cache_migration.py``.
+    Path overrides are cleared so each test gets the partition-aware
+    layout (rather than the env-override short-circuit) by default.
+
+    Tests that need the literal-path override can still set
+    ``PANTHER_IVY_STATUSLINE_CACHE_PATH`` via their own ``monkeypatch``
+    inside the test body — that takes precedence over this fixture's
+    delenv because pytest's monkeypatch is LIFO at teardown.
+    """
+    monkeypatch.setenv("PANTHER_IVY_STATUSLINE_CACHE_ROOT", str(tmp_path / "cache"))
+    monkeypatch.delenv("PANTHER_IVY_STATUSLINE_CACHE_PATH", raising=False)
+    monkeypatch.delenv("PANTHER_IVY_STATUSLINE_OVERLAY_PATH", raising=False)
+    return tmp_path

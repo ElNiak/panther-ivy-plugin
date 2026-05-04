@@ -29,20 +29,6 @@ sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 import statusline_cache as sc  # noqa: E402
 
 
-@pytest.fixture(autouse=True)
-def _isolate_cache_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Redirect the cache root and the override path under tmp_path.
-
-    Clearing ``PANTHER_IVY_STATUSLINE_CACHE_PATH`` ensures the partition
-    logic actually runs — the override would otherwise short-circuit
-    every test to a single file.
-    """
-    monkeypatch.setenv("PANTHER_IVY_STATUSLINE_CACHE_ROOT", str(tmp_path / "cache"))
-    monkeypatch.delenv("PANTHER_IVY_STATUSLINE_CACHE_PATH", raising=False)
-    monkeypatch.delenv("PANTHER_IVY_STATUSLINE_OVERLAY_PATH", raising=False)
-    return tmp_path
-
-
 def _make_workspace(tmp_path: Path, *, active_group: str | None) -> Path:
     """Build a panther_ivy-like workspace dir, optionally seeding the state file."""
     ws = tmp_path / "panther_ivy"

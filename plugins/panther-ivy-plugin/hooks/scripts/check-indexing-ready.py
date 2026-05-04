@@ -30,27 +30,9 @@ from hook_utils import (  # noqa: E402
     file_contains,
     is_pid_alive,
     read_stdin,
-)
-from statusline_cache import (  # noqa: E402
-    _resolve_active_group,
-    _resolve_workspace_root,
+    resolve_active_group_for_hook as _active_group,
 )
 from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
-
-
-def _active_group() -> str | None:
-    """Resolve the active ``ivy_workspace`` selection for partition routing.
-
-    Returns the group from ``<workspace_root>/.ivy-workspace-state.json``
-    so the ``lsp`` cache segment lands in the partition the renderer is
-    reading. Returns ``None`` (which the cache layer maps to ``default``)
-    when the workspace cannot be resolved or no selection is set. The
-    underlying LSP server is workspace-shared but the rendered ``lsp``
-    segment is per-protocol; a brief flicker on ``ivy_workspace`` switches
-    is expected — the next ready probe re-populates the new partition.
-    """
-    ws = _resolve_workspace_root()
-    return _resolve_active_group(ws) if ws else None
 
 _MCP_LOG = Path(os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log"))
 _LSP_LOG = Path(os.environ.get("IVY_LSP_LOG_PATH", "/tmp/ivy-lsp-lsp-latest.log"))

@@ -53,17 +53,14 @@ _SECTIONS_WITH_TIMESTAMP = frozenset({"mcp", "lsp"})
 # Existing pre-partitioning cache files migrate under this name.
 _DEFAULT_GROUP = "default"
 
-# Active-group names must be filesystem-safe path components. The canonical
-# set the plugin recognizes is {bgp, quic, apt, apt_quic, minip, coap,
-# scaffolds}, all of which match this pattern. Anything else (path
-# traversal, slashes, empty) collapses to ``_DEFAULT_GROUP`` so a malformed
-# .ivy-workspace-state.json cannot escape the cache directory.
-_VALID_GROUP_RE = re.compile(r"^[A-Za-z0-9_-]+$")
-
-# Session IDs from Claude Code are UUIDs (e.g. "00893aaf-19fa-41d2-8238-13269b9b3ca0").
-# Allow the broader hex-with-dashes-and-underscores form so test fixtures using
-# names like ``"test-session-A"`` or ``"sess_alpha"`` also validate.
-_VALID_SESSION_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+# Filesystem-safe path-component regex shared by ``active_group`` and
+# ``session_id`` validators. Both fields end up as a single path component
+# under the cache directory, so the safety rule (no path traversal, no
+# slashes, no empty values) is identical. Active-group examples: bgp,
+# quic, apt, apt_quic, minip, coap, scaffolds. Session IDs are UUIDs
+# (e.g. "00893aaf-19fa-41d2-8238-13269b9b3ca0") plus broader test-fixture
+# names like ``"sess_alpha"``.
+_VALID_PATH_COMPONENT_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
 def _cache_root() -> Path:
@@ -78,17 +75,22 @@ def _cache_root() -> Path:
     return _DEFAULT_CACHE_ROOT
 
 
+def _workspace_digest(workspace_root: str) -> str:
+    """Return the 12-character SHA1 digest used as the per-workspace cache bucket."""
+    return hashlib.sha1(workspace_root.encode("utf-8")).hexdigest()[:12]
+
+
 def _normalize_active_group(active_group: str | None) -> str:
     """Sanitize ``active_group`` for use as a filesystem path component.
 
-    Empty / non-string / unsafe values collapse to :data:`_DEFAULT_GROUP`.
-    The validation regex blocks path traversal (``..``), absolute paths,
-    and non-printable characters that would let a malformed
+    Empty / unsafe values collapse to :data:`_DEFAULT_GROUP`. The
+    validation regex blocks path traversal (``..``), absolute paths, and
+    non-printable characters that would let a malformed
     ``.ivy-workspace-state.json`` write outside the cache directory.
     """
-    if not active_group or not isinstance(active_group, str):
+    if not active_group:
         return _DEFAULT_GROUP
-    if not _VALID_GROUP_RE.match(active_group):
+    if not _VALID_PATH_COMPONENT_RE.match(active_group):
         return _DEFAULT_GROUP
     return active_group
 
@@ -149,7 +151,7 @@ def cache_path_for(workspace_root: str, active_group: str | None = None) -> Path
     if override:
         return Path(override)
 
-    digest = hashlib.sha1(workspace_root.encode("utf-8")).hexdigest()[:12]
+    digest = _workspace_digest(workspace_root)
     group = _normalize_active_group(active_group)
     return _cache_root() / digest / group / "statusline.json"
 
@@ -183,7 +185,7 @@ def overlay_path_for(
     if override:
         return Path(override)
 
-    digest = hashlib.sha1(workspace_root.encode("utf-8")).hexdigest()[:12]
+    digest = _workspace_digest(workspace_root)
     group = _normalize_active_group(active_group)
     return (
         _cache_root() / digest / group / "sessions" / session_id / "overlay.json"
@@ -553,7 +555,7 @@ def migrate_legacy_cache(workspace_root: str) -> bool:
     if not workspace_root:
         return False
     try:
-        digest = hashlib.sha1(workspace_root.encode("utf-8")).hexdigest()[:12]
+        digest = _workspace_digest(workspace_root)
         legacy_path = _cache_root() / digest / "statusline.json"
         if not legacy_path.is_file():
             return False
@@ -600,10 +602,10 @@ def migrate_legacy_cache(workspace_root: str) -> bool:
 
 
 def _validate_session_id(session_id: str) -> bool:
-    """Reject empty / non-string / unsafe session_id values."""
-    if not session_id or not isinstance(session_id, str):
+    """Reject empty / unsafe session_id values."""
+    if not session_id:
         return False
-    return bool(_VALID_SESSION_RE.match(session_id))
+    return bool(_VALID_PATH_COMPONENT_RE.match(session_id))
 
 
 def update_overlay(
@@ -703,17 +705,17 @@ def clear_overlay(
 ) -> None:
     """Delete the overlay file for one session.
 
-    Used by the SessionStart reaper (Phase 4) and by tests. No-op when
-    the file is missing or the session_id is unsafe.
+    Used by the SessionStart reaper and by tests. No-op when the file is
+    missing or the session_id is unsafe.
     """
     if not workspace_root:
         return
     if not _validate_session_id(session_id):
         return
     try:
-        path = overlay_path_for(workspace_root, session_id, active_group)
-        if path.exists():
-            path.unlink()
+        overlay_path_for(workspace_root, session_id, active_group).unlink(
+            missing_ok=True
+        )
     except OSError:
         pass
 

@@ -34,15 +34,6 @@ SESSION_A = "00893aaf-19fa-41d2-8238-13269b9b3ca0"
 SESSION_B = "11111111-2222-3333-4444-555555555555"
 
 
-@pytest.fixture(autouse=True)
-def _isolate_cache_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Redirect the cache root under tmp_path and clear path overrides."""
-    monkeypatch.setenv("PANTHER_IVY_STATUSLINE_CACHE_ROOT", str(tmp_path / "cache"))
-    monkeypatch.delenv("PANTHER_IVY_STATUSLINE_CACHE_PATH", raising=False)
-    monkeypatch.delenv("PANTHER_IVY_STATUSLINE_OVERLAY_PATH", raising=False)
-    return tmp_path
-
-
 def _make_workspace(tmp_path: Path) -> Path:
     ws = tmp_path / "panther_ivy"
     (ws / "protocol-testing").mkdir(parents=True)

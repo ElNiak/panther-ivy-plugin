@@ -36,26 +36,15 @@ sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 import statusline_cache as sc  # noqa: E402
 
 
-@pytest.fixture(autouse=True)
-def _isolate_cache_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Redirect the cache root under tmp_path and clear path overrides."""
-    monkeypatch.setenv("PANTHER_IVY_STATUSLINE_CACHE_ROOT", str(tmp_path / "cache"))
-    monkeypatch.delenv("PANTHER_IVY_STATUSLINE_CACHE_PATH", raising=False)
-    monkeypatch.delenv("PANTHER_IVY_STATUSLINE_OVERLAY_PATH", raising=False)
-    return tmp_path
-
-
 def _legacy_path(workspace_root: str) -> Path:
     """Compute the pre-partitioning legacy cache path for assertions.
 
     Mirrors :func:`statusline_cache.cache_path_for` for ``active_group=None``
     *minus* the partition directory — i.e. the layout that existed before
-    Phase 1 added the ``<active_group>/`` partition. Tests use this to
-    verify the migration starts from a faithful pre-partitioning state.
+    the per-protocol partitioning shipped. Tests use this to verify the
+    migration starts from a faithful pre-partitioning state.
     """
-    import hashlib
-    digest = hashlib.sha1(workspace_root.encode("utf-8")).hexdigest()[:12]
-    return sc._cache_root() / digest / "statusline.json"
+    return sc._cache_root() / sc._workspace_digest(workspace_root) / "statusline.json"
 
 
 class TestMigrateLegacyCache:
