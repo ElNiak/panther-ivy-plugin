@@ -115,6 +115,7 @@ def _all_hook_scripts() -> Iterable[pathlib.Path]:
         if p.stem not in _NON_HOOK_LIBS
         and p.stem not in _EXEMPT_HOOKS
         and "__pycache__" not in p.parts
+        and "lib" not in p.parts
     )
 
 

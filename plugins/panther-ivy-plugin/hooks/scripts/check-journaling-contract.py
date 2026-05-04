@@ -23,7 +23,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output
+from lib.hook_utils import emit_hook_output
 
 
 CONTRACT_REL_PATH = ".claude/rules/journaling-contract.md"

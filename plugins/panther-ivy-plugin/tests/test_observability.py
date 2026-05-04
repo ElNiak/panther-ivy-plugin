@@ -65,7 +65,7 @@ import sys
 
 sys.path.insert(0, str(_OBS_DIR))
 sys.path.insert(0, str(_OBS_DIR.parent))
-from hook_utils import resolve_log_dir
+from lib.hook_utils import resolve_log_dir
 from log_event import log_event
 
 

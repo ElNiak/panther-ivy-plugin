@@ -28,28 +28,26 @@ SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "track-skill-invocation.py"
 
 _SCRIPT_DEPS = (
     "track-skill-invocation.py",
-    "hook_utils.py",
-    "statusline_cache.py",
-    "workflow_state.py",
-    "style_utils.py",
 )
 
 
 def _materialise_scripts(plugin_root: Path) -> Path:
-    """Copy the hook + its sibling library modules into ``<plugin_root>/hooks/scripts/``.
+    """Copy the hook + the lib/ package into ``<plugin_root>/hooks/scripts/``.
 
     The references-loading tests need a controlled
     ``skills/<name>/references/*.md`` directory layout, so they construct a
     plugin tree under ``tmp_path`` and point ``CLAUDE_PLUGIN_ROOT`` at it.
     The hook script imports its sibling modules via
-    ``sys.path.insert(0, os.path.dirname(...))``, so those siblings have
+    ``sys.path.insert(0, os.path.dirname(...))``, so the lib/ package has
     to be co-located with the script in the constructed tree.
     """
+    import shutil
     scripts_src = PLUGIN_ROOT / "hooks" / "scripts"
     scripts_dst = plugin_root / "hooks" / "scripts"
     scripts_dst.mkdir(parents=True)
     for name in _SCRIPT_DEPS:
         (scripts_dst / name).write_bytes((scripts_src / name).read_bytes())
+    shutil.copytree(scripts_src / "lib", scripts_dst / "lib")
     return scripts_dst / "track-skill-invocation.py"
 
 

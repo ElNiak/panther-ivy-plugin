@@ -15,8 +15,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output
-from workflow_state import journal_path_template
+from lib.hook_utils import emit_hook_output
+from lib.workflow_state import journal_path_template
 
 
 SPECIALISTS = frozenset({

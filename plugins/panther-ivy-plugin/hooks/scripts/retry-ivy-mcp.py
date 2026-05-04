@@ -15,8 +15,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop, read_stdin
-from workflow_state import WorkflowContext, append_journal_event, journal_path
+from lib.hook_utils import emit_hook_output, emit_noop, read_stdin
+from lib.workflow_state import WorkflowContext, append_journal_event, journal_path
 
 _ALLOWLIST = frozenset({
     "mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_status",

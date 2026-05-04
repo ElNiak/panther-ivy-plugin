@@ -18,8 +18,8 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, emit_noop, is_session_active, read_stdin, resolve_session_id, resolve_sessions_dir
-from workflow_state import WorkflowContext, get_scaffold_state_safe, get_journal_entries
+from lib.hook_utils import emit_hook_output, emit_noop, is_session_active, read_stdin, resolve_session_id, resolve_sessions_dir
+from lib.workflow_state import WorkflowContext, get_scaffold_state_safe, get_journal_entries
 
 CLAIM_PATTERNS = {
     "resolved": re.compile(r"RESOLVED\("),

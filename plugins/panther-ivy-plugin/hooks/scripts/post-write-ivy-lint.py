@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop, mark_session_activity, read_stdin  # noqa: E402
+from lib.hook_utils import emit_hook_output, emit_noop, mark_session_activity, read_stdin  # noqa: E402
 
 _COMMENT = re.compile(r"#.*")
 _STRING = re.compile(r'"[^"]*"')

@@ -7,6 +7,7 @@ and tests/test_workflow_context.py import them.
 
 from lib.workflow_state.context import (
     OPS_SKILLS,
+    STATE_DIR_NAME,
     WorkflowContext,
     _KNOWN_WORKFLOWS,
     _VALID_EVENT_TYPES,
@@ -40,6 +41,7 @@ from lib.workflow_state.scaffold import (
 __all__ = [
     # context
     "OPS_SKILLS",
+    "STATE_DIR_NAME",
     "WorkflowContext",
     "_KNOWN_WORKFLOWS",
     "_VALID_EVENT_TYPES",

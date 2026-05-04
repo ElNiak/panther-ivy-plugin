@@ -26,13 +26,13 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import (  # noqa: E402
+from lib.hook_utils import (  # noqa: E402
     emit_hook_output,
     read_active_workspace,
     read_stdin,
     resolve_workspace_state_path,
 )
-from project_md_state import resolve_protocol_dir  # noqa: E402
+from lib.project_md_state import resolve_protocol_dir  # noqa: E402
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[2]
 

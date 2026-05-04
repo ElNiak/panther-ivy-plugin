@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from hook_utils import (
+    from lib.hook_utils import (
         MAX_CONSECUTIVE_MCP_FAILURES,
         emit_hook_output,
         emit_noop,
@@ -289,7 +289,7 @@ def main():
         print(f"[ivy-obs] unknown event type: {args.event}", file=sys.stderr)
 
     from log_event import log_event
-    from hook_utils import read_stdin
+    from lib.hook_utils import read_stdin
 
     data = read_stdin()
     session_id = data.get("session_id", "")

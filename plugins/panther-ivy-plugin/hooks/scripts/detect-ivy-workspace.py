@@ -39,14 +39,14 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import (  # noqa: E402
+from lib.hook_utils import (  # noqa: E402
     emit_hook_output,
     get_workspace_root as _hook_utils_workspace_root,
     read_stdin,
     resolve_session_id,
     resolve_workspace_state_path,
 )
-from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
+from lib.statusline_cache import update_from_hook as _statusline_update  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

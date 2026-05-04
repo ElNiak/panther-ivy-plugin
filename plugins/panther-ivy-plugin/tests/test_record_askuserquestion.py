@@ -24,7 +24,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = PLUGIN_ROOT / "hooks" / "scripts" / "record-askuserquestion.py"
 
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
-from workflow_state import set_active_workflow  # noqa: E402
+from lib.workflow_state import set_active_workflow  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

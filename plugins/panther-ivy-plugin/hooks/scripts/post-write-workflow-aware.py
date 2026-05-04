@@ -17,17 +17,17 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import (
+from lib.hook_utils import (
     emit_hook_output,
     emit_noop,
     mark_session_activity,
     read_stdin,
     resolve_active_group_for_hook as _active_group,
 )
-from statusline_cache import update_overlay_from_hook as _overlay_update
-from statusline_cache import update_from_hook as _statusline_update
+from lib.statusline_cache import update_overlay_from_hook as _overlay_update
+from lib.statusline_cache import update_from_hook as _statusline_update
 
-from workflow_state import WorkflowContext
+from lib.workflow_state import WorkflowContext
 
 
 _TARGET_RE = re.compile(r"[\w/.\-]+\.(?:ivy|spec)")

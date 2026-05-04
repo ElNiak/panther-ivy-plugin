@@ -26,7 +26,7 @@ pytestmark = pytest.mark.unit
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
-import statusline_cache as sc  # noqa: E402
+import lib.statusline_cache as sc  # noqa: E402
 
 
 def _make_workspace(tmp_path: Path, *, active_group: str | None) -> Path:

@@ -49,13 +49,15 @@ def _all_hook_scripts() -> Iterable[pathlib.Path]:
     """Iterate every hook script under HOOKS_DIR (excluding library modules).
 
     Recurses into the ``observability/`` subdirectory so ``observe.py`` and
-    ``log_event.py`` are scanned alongside the top-level scripts.
+    ``log_event.py`` are scanned alongside the top-level scripts. Excludes
+    the ``lib/`` package directory which contains utility modules, not hooks.
     """
     yield from (
         p
         for p in HOOKS_DIR.rglob("*.py")
         if p.stem not in _NON_HOOK_LIBS
         and "__pycache__" not in p.parts
+        and "lib" not in p.parts
     )
 
 

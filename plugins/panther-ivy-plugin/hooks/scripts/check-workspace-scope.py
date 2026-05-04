@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import resolve_session_id, emit_hook_output, emit_noop, read_stdin
+from lib.hook_utils import resolve_session_id, emit_hook_output, emit_noop, read_stdin
 
 
 def main():

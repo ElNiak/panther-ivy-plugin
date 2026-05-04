@@ -14,8 +14,8 @@ sys.path.insert(
         os.environ.get("CLAUDE_PLUGIN_ROOT", "."), "hooks", "scripts"
     ),
 )
-from hook_utils import emit_hook_output, emit_noop, is_session_active, read_stdin
-from workflow_state import (
+from lib.hook_utils import emit_hook_output, emit_noop, is_session_active, read_stdin
+from lib.workflow_state import (
     WorkflowContext,
     append_journal_event,
     journal_path,

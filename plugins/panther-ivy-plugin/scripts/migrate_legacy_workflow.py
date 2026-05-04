@@ -43,7 +43,7 @@ _PLUGIN_ROOT = Path(os.environ.get("CLAUDE_PLUGIN_ROOT", _SCRIPT_DIR.parent))
 sys.path.insert(0, str(_PLUGIN_ROOT / "hooks" / "scripts"))
 
 import yaml  # noqa: E402
-from workflow_state import append_journal_event  # type: ignore[import-not-found]  # noqa: E402
+from lib.workflow_state import append_journal_event  # type: ignore[import-not-found]  # noqa: E402
 
 _MIGRATION_MAP: dict[str, str | None] = {
     "workflow-build": "scaffold",

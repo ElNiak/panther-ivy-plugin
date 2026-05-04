@@ -27,7 +27,7 @@ pytestmark = pytest.mark.unit
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
-import statusline_cache as sc  # noqa: E402
+import lib.statusline_cache as sc  # noqa: E402
 
 
 SESSION_A = "00893aaf-19fa-41d2-8238-13269b9b3ca0"

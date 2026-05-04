@@ -16,14 +16,14 @@ def _patch_sys_path():
     sys.path.insert(0, _HOOK_SCRIPTS_DIR)
     yield
     sys.path.remove(_HOOK_SCRIPTS_DIR)
-    if "workflow_state" in sys.modules:
-        del sys.modules["workflow_state"]
+    if "lib.workflow_state" in sys.modules:
+        del sys.modules["lib.workflow_state"]
 
 
 def _import_module():
-    if "workflow_state" in sys.modules:
-        return importlib.reload(sys.modules["workflow_state"])
-    return importlib.import_module("workflow_state")
+    if "lib.workflow_state" in sys.modules:
+        return importlib.reload(sys.modules["lib.workflow_state"])
+    return importlib.import_module("lib.workflow_state")
 
 
 class TestWorkflowContextCurrent:

@@ -29,7 +29,7 @@ sys.path.insert(0, str(HOOKS_SCRIPTS))
 
 def _load_module() -> Any:
     spec = importlib.util.spec_from_file_location(
-        "hook_utils", HOOKS_SCRIPTS / "hook_utils.py"
+        "lib.hook_utils", HOOKS_SCRIPTS / "lib" / "hook_utils" / "__init__.py"
     )
     assert spec and spec.loader
     mod = importlib.util.module_from_spec(spec)
@@ -121,7 +121,7 @@ _WORKER_SCRIPT = textwrap.dedent(
     """
     import sys
     sys.path.insert(0, {hooks_scripts!r})
-    from hook_utils import read_mcp_health_state, write_mcp_health_state
+    from lib.hook_utils import read_mcp_health_state, write_mcp_health_state
     for _ in range({iterations}):
         state = read_mcp_health_state()
         state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1

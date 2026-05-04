@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, read_stdin  # noqa: E402
-from style_utils import compose_style, resolve_plugin_root  # noqa: E402
-from workflow_state import WorkflowContext  # noqa: E402
+from lib.hook_utils import emit_hook_output, read_stdin  # noqa: E402
+from lib.style_utils import compose_style, resolve_plugin_root  # noqa: E402
+from lib.workflow_state import WorkflowContext  # noqa: E402
 
 
 def main() -> int:

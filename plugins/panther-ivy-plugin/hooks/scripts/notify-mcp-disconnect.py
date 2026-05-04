@@ -11,8 +11,8 @@ import sys
 from typing import Any
 
 sys.path.insert(0, os.path.dirname(__file__))
-from hook_utils import emit_hook_output, emit_noop, read_stdin
-from statusline_cache import update_from_hook as _statusline_update
+from lib.hook_utils import emit_hook_output, emit_noop, read_stdin
+from lib.statusline_cache import update_from_hook as _statusline_update
 
 # Substrings that indicate an MCP server disconnection notification.
 _DISCONNECT_SIGNALS = (

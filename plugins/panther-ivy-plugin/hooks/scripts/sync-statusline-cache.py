@@ -47,13 +47,13 @@ sys.path.insert(
     os.path.join(os.environ.get("CLAUDE_PLUGIN_ROOT", "."), "hooks", "scripts"),
 )
 
-from hook_utils import (  # noqa: E402
+from lib.hook_utils import (  # noqa: E402
     VALID_EVENT_NAMES,
     emit_hook_output,
     emit_noop,
     read_stdin,
 )
-from statusline_cache import (  # noqa: E402
+from lib.statusline_cache import (  # noqa: E402
     _resolve_active_group,
     _resolve_workspace_root,
     cache_path_for,
@@ -61,7 +61,7 @@ from statusline_cache import (  # noqa: E402
     migrate_legacy_cache,
     update_section,
 )
-from workflow_state import (  # noqa: E402
+from lib.workflow_state import (  # noqa: E402
     _KNOWN_WORKFLOWS,
     active_workflow_path,
     find_protocol_dir,

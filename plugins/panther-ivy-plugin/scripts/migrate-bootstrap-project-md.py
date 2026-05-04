@@ -23,7 +23,7 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
-from project_md_state import write_project_md  # noqa: E402
+from lib.project_md_state import write_project_md  # noqa: E402
 
 
 def _discover_protocol_dirs(root: Path) -> list[Path]:

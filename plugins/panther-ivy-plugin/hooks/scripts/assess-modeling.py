@@ -49,9 +49,9 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, emit_noop, read_stdin
+from lib.hook_utils import emit_hook_output, emit_noop, read_stdin
 
-from workflow_state import (
+from lib.workflow_state import (
     WorkflowContext,
     append_journal_event,
     get_scaffold_state_safe,

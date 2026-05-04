@@ -26,7 +26,7 @@ from datetime import datetime
 from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from hook_utils import (
+from lib.hook_utils import (
     MAX_CONSECUTIVE_MCP_FAILURES,
     emit_dedup,
     emit_hook_output,
@@ -35,7 +35,7 @@ from hook_utils import (
     resolve_active_group_for_hook as _active_group,
     write_mcp_health_state,
 )
-from statusline_cache import update_from_hook as _statusline_update
+from lib.statusline_cache import update_from_hook as _statusline_update
 
 _STALE_PORT_AGE = 120  # Port file older than 2 min with no TCP → stale
 _PID_DIR = "/tmp/ivy-lsp-pids"

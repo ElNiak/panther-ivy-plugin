@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, is_pid_alive, read_pid_file  # noqa: E402
+from lib.hook_utils import emit_hook_output, is_pid_alive, read_pid_file  # noqa: E402
 
 _PID_DIR = Path("/tmp/ivy-lsp-pids")
 _HEALTH_STATE_FILE = Path("/tmp/ivy-mcp-health-state.json")

@@ -33,7 +33,7 @@ pytestmark = pytest.mark.unit
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
-import statusline_cache as sc  # noqa: E402
+import lib.statusline_cache as sc  # noqa: E402
 
 
 def _legacy_path(workspace_root: str) -> Path:

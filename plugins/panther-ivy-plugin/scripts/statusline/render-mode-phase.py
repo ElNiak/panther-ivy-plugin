@@ -30,11 +30,11 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
-from hook_utils import (  # noqa: E402
+from lib.hook_utils import (  # noqa: E402
     read_active_workspace,
     resolve_workspace_state_path,
 )
-from project_md_state import (  # noqa: E402
+from lib.project_md_state import (  # noqa: E402
     ProjectMdSchemaError,
     load_project_md,
     resolve_project_md_path,

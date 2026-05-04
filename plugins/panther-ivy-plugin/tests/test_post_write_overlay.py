@@ -106,9 +106,9 @@ def _read_overlay(
     """Read the overlay JSON via the same path computation the hook uses."""
     sys.path.insert(0, str(HOOK_SCRIPTS_DIR))
     try:
-        sys.modules.pop("statusline_cache", None)
+        sys.modules.pop("lib.statusline_cache", None)
         os.environ["PANTHER_IVY_STATUSLINE_CACHE_ROOT"] = str(cache_root)
-        import statusline_cache as sc
+        import lib.statusline_cache as sc
         path = sc.overlay_path_for(str(ws_root), session_id, active_group)
         if not path.exists():
             return None
@@ -116,16 +116,16 @@ def _read_overlay(
     finally:
         if str(HOOK_SCRIPTS_DIR) in sys.path:
             sys.path.remove(str(HOOK_SCRIPTS_DIR))
-        sys.modules.pop("statusline_cache", None)
+        sys.modules.pop("lib.statusline_cache", None)
 
 
 def _read_shared(cache_root: Path, ws_root: Path, active_group: str) -> dict | None:
     """Read the shared cache JSON via the same path computation."""
     sys.path.insert(0, str(HOOK_SCRIPTS_DIR))
     try:
-        sys.modules.pop("statusline_cache", None)
+        sys.modules.pop("lib.statusline_cache", None)
         os.environ["PANTHER_IVY_STATUSLINE_CACHE_ROOT"] = str(cache_root)
-        import statusline_cache as sc
+        import lib.statusline_cache as sc
         path = sc.cache_path_for(str(ws_root), active_group)
         if not path.exists():
             return None
@@ -133,7 +133,7 @@ def _read_shared(cache_root: Path, ws_root: Path, active_group: str) -> dict | N
     finally:
         if str(HOOK_SCRIPTS_DIR) in sys.path:
             sys.path.remove(str(HOOK_SCRIPTS_DIR))
-        sys.modules.pop("statusline_cache", None)
+        sys.modules.pop("lib.statusline_cache", None)
 
 
 class TestSessionOverlayRouting:

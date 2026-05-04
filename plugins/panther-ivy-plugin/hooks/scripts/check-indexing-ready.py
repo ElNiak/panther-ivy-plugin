@@ -23,7 +23,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import (  # noqa: E402
+from lib.hook_utils import (  # noqa: E402
     emit_dedup,
     emit_hook_output,
     emit_noop,
@@ -32,7 +32,7 @@ from hook_utils import (  # noqa: E402
     read_stdin,
     resolve_active_group_for_hook as _active_group,
 )
-from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
+from lib.statusline_cache import update_from_hook as _statusline_update  # noqa: E402
 
 _MCP_LOG = Path(os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log"))
 _LSP_LOG = Path(os.environ.get("IVY_LSP_LOG_PATH", "/tmp/ivy-lsp-lsp-latest.log"))

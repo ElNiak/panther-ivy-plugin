@@ -50,17 +50,17 @@ def _seed_statusline_cache(
     try:
         # Force a clean import each call so other tests' module state
         # doesn't leak across env-var changes.
-        sys.modules.pop("statusline_cache", None)
+        sys.modules.pop("lib.statusline_cache", None)
         import os
         os.environ["PANTHER_IVY_STATUSLINE_CACHE_ROOT"] = str(cache_root)
-        import statusline_cache
+        import lib.statusline_cache as statusline_cache
         statusline_cache.update_section(
             str(panther_ivy), "workspace", {"protocol": prev_group}
         )
     finally:
         if str(HOOK_SCRIPTS_DIR) in sys.path:
             sys.path.remove(str(HOOK_SCRIPTS_DIR))
-        sys.modules.pop("statusline_cache", None)
+        sys.modules.pop("lib.statusline_cache", None)
 
 
 def _hook_env(panther_ivy: Path, cache_root: Path) -> dict:

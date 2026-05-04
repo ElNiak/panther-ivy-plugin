@@ -24,7 +24,7 @@ sys.path.insert(0, str(HOOKS_SCRIPTS))
 
 def _load_module() -> Any:
     spec = importlib.util.spec_from_file_location(
-        "hook_utils", HOOKS_SCRIPTS / "hook_utils.py"
+        "lib.hook_utils", HOOKS_SCRIPTS / "lib" / "hook_utils" / "__init__.py"
     )
     assert spec and spec.loader
     mod = importlib.util.module_from_spec(spec)
@@ -85,7 +85,8 @@ def test_session_end_emits_hook_specific_output(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """SessionEnd is in the allow-list, so the nested envelope is emitted
-    and ``systemMessage`` lives top-level alongside it."""
+    and ``systemMessage`` lives top-level alongside it.
+    """
     mod = _load_module()
     mod.emit_hook_output("SessionEnd", system_message="MCP reconnecting")
     payload = _parse(capsys.readouterr().out)
@@ -100,7 +101,8 @@ def test_stop_envelope_is_top_level_only(
 ) -> None:
     """Stop is not in the allow-list. The runtime rejects
     ``hookSpecificOutput`` for Stop, so the helper must emit only top-level
-    fields. Pins the fix for the original validator-rejected envelope."""
+    fields. Pins the fix for the original validator-rejected envelope.
+    """
     mod = _load_module()
     mod.emit_hook_output("Stop", system_message="[ivy-session] recorded")
     payload = _parse(capsys.readouterr().out)
@@ -112,7 +114,8 @@ def test_notification_envelope_is_top_level_only(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Notification is not in the allow-list either. Same top-level-only
-    contract as Stop."""
+    contract as Stop.
+    """
     mod = _load_module()
     mod.emit_hook_output("Notification", system_message="MCP reconnecting")
     payload = _parse(capsys.readouterr().out)
@@ -125,7 +128,8 @@ def test_stop_drops_additional_context(
 ) -> None:
     """``additional_context`` has no top-level home in the Stop envelope, so
     the helper drops it. Callers are expected to pass ``system_message``
-    instead."""
+    instead.
+    """
     mod = _load_module()
     mod.emit_hook_output(
         "Stop",
@@ -171,7 +175,8 @@ def test_unknown_event_name_raises_value_error() -> None:
     A typo like ``"SessiontStart"`` would silently fall outside the runtime's
     allow-list and the additionalContext field would be dropped without
     warning. The raise here turns that silent-failure mode into a loud
-    Python traceback that surfaces during test runs."""
+    Python traceback that surfaces during test runs.
+    """
     mod = _load_module()
     with pytest.raises(ValueError, match="unknown event_name"):
         mod.emit_hook_output("SessiontStart", system_message="")
@@ -183,7 +188,8 @@ def test_none_system_message_raises_type_error() -> None:
     Empty string is allowed (suppresses the field); ``None`` is not.
     Backs the AST lint test in ``test_hook_output_discipline.py``: a
     contributor who forgets the kwarg gets a loud Python traceback
-    rather than a silently-broken hook."""
+    rather than a silently-broken hook.
+    """
     mod = _load_module()
     with pytest.raises(TypeError, match="system_message"):
         mod.emit_hook_output("PreToolUse", system_message=None)

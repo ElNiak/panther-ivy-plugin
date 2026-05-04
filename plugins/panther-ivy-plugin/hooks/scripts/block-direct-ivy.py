@@ -16,7 +16,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, emit_noop, read_stdin  # noqa: E402
+from lib.hook_utils import emit_hook_output, emit_noop, read_stdin  # noqa: E402
 
 _DIRECT_IVY_RE = re.compile(r"\b(?:ivy_check|ivyc|ivy_show|ivy_to_cpp)\b")
 

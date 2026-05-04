@@ -34,7 +34,7 @@ import pytest
 pytestmark = pytest.mark.unit
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
-PLUGIN_HOOK = PLUGIN_ROOT / "hooks" / "scripts" / "workflow_state.py"
+PLUGIN_HOOK = PLUGIN_ROOT / "hooks" / "scripts" / "lib" / "workflow_state" / "context.py"
 CONTRACT_MD = PLUGIN_ROOT / ".claude" / "rules" / "journaling-contract.md"
 IVY_LSP_TOOL = (
     PLUGIN_ROOT.parent.parent.parent

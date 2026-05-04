@@ -22,7 +22,7 @@ import yaml
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PLUGIN_ROOT / "hooks" / "scripts"))
 
-from project_md_state import (  # noqa: E402
+from lib.project_md_state import (  # noqa: E402
     VALID_IUT_VERDICT,
     VALID_MODES,
     VALID_VERIFY_STATUS,

@@ -27,8 +27,8 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import emit_hook_output, file_contains, is_pid_alive, read_pid_file  # noqa: E402
-from statusline_cache import update_from_hook as _statusline_update  # noqa: E402
+from lib.hook_utils import emit_hook_output, file_contains, is_pid_alive, read_pid_file  # noqa: E402
+from lib.statusline_cache import update_from_hook as _statusline_update  # noqa: E402
 
 _MCP_LOG = Path(os.environ.get("IVY_MCP_LOG_PATH", "/tmp/ivy-mcp-latest.log"))
 _LSP_LOG = Path(os.environ.get("IVY_LSP_LOG_PATH", "/tmp/ivy-lsp-lsp-latest.log"))

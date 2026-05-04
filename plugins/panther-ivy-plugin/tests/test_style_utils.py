@@ -16,14 +16,14 @@ def _patch_sys_path():
     sys.path.insert(0, _HOOK_SCRIPTS_DIR)
     yield
     sys.path.remove(_HOOK_SCRIPTS_DIR)
-    if "style_utils" in sys.modules:
-        del sys.modules["style_utils"]
+    if "lib.style_utils" in sys.modules:
+        del sys.modules["lib.style_utils"]
 
 
 def _import():
-    if "style_utils" in sys.modules:
-        return importlib.reload(sys.modules["style_utils"])
-    return importlib.import_module("style_utils")
+    if "lib.style_utils" in sys.modules:
+        return importlib.reload(sys.modules["lib.style_utils"])
+    return importlib.import_module("lib.style_utils")
 
 
 class TestFindSection:

@@ -14,8 +14,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from hook_utils import emit_hook_output, emit_noop, read_stdin
-from workflow_state import WorkflowContext
+from lib.hook_utils import emit_hook_output, emit_noop, read_stdin
+from lib.workflow_state import WorkflowContext
 
 RENDERED_TOOLS = {
     "ivy_verify",

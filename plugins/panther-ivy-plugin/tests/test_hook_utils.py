@@ -26,31 +26,37 @@ def _patch_sys_path():
     sys.path.insert(0, _HOOK_SCRIPTS_DIR)
     yield
     sys.path.remove(_HOOK_SCRIPTS_DIR)
-    if "hook_utils" in sys.modules:
-        del sys.modules["hook_utils"]
+    for key in list(sys.modules):
+        if key == "lib.hook_utils" or key.startswith("lib.hook_utils."):
+            del sys.modules[key]
 
 
 def _import_hook_utils():
-    if "hook_utils" in sys.modules:
-        return importlib.reload(sys.modules["hook_utils"])
-    return importlib.import_module("hook_utils")
+    if "lib.hook_utils" in sys.modules:
+        return importlib.reload(sys.modules["lib.hook_utils"])
+    return importlib.import_module("lib.hook_utils")
+
+
+def _import_hook_utils_session():
+    _import_hook_utils()
+    return importlib.import_module("lib.hook_utils.session")
 
 
 class TestResolveSessionId:
     def test_env_var_priority(self, monkeypatch):
-        mod = _import_hook_utils()
-        monkeypatch.setattr(mod, "_canonical_resolve", None)
+        session_mod = _import_hook_utils_session()
+        monkeypatch.setattr(session_mod, "_canonical_resolve", None)
         monkeypatch.setenv("IVY_SESSION_ID", "from-ivy")
         monkeypatch.setenv("CLAUDE_SESSION_ID", "from-claude")
-        assert mod.resolve_session_id() == "from-ivy"
+        assert session_mod.resolve_session_id() == "from-ivy"
 
     def test_fallback_to_unknown(self, monkeypatch):
-        mod = _import_hook_utils()
-        monkeypatch.setattr(mod, "_canonical_resolve", None)
+        session_mod = _import_hook_utils_session()
+        monkeypatch.setattr(session_mod, "_canonical_resolve", None)
         monkeypatch.delenv("IVY_SESSION_ID", raising=False)
         monkeypatch.delenv("CLAUDE_SESSION_ID", raising=False)
         monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
-        result = mod.resolve_session_id()
+        result = session_mod.resolve_session_id()
         assert isinstance(result, str)
         assert len(result) > 0
 
@@ -337,9 +343,10 @@ class TestSessionActivityHelpers:
     def test_fail_closed_when_session_id_unknown(self, tmp_path, monkeypatch):
         monkeypatch.setenv("TMPDIR", str(tmp_path))
         mod = _import_hook_utils()
-        # Patch resolve_session_id on the module to always return "unknown",
-        # bypassing the full priority chain (env vars, canonical, file read).
-        monkeypatch.setattr(mod, "resolve_session_id", lambda *a, **kw: "unknown")
+        # Patch resolve_session_id on the session sub-module where it is
+        # called by is_session_active and mark_session_activity at runtime.
+        session_mod = _import_hook_utils_session()
+        monkeypatch.setattr(session_mod, "resolve_session_id", lambda *a, **kw: "unknown")
         # When session_id resolves to "unknown", is_session_active must return False
         # even if we have tried to mark activity.
         mod.mark_session_activity("test:unknown-session")

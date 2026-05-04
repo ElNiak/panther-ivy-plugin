@@ -39,14 +39,14 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import (  # noqa: E402
+from lib.hook_utils import (  # noqa: E402
     emit_hook_output,
     emit_noop,
     get_workspace_root,
     read_stdin,
     resolve_session_id,
 )
-from workflow_state import (  # noqa: E402
+from lib.workflow_state import (  # noqa: E402
     STATE_DIR_NAME,
     WorkflowContext,
     append_journal_event,

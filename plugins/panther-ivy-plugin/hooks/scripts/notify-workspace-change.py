@@ -25,13 +25,13 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hook_utils import (  # noqa: E402
+from lib.hook_utils import (  # noqa: E402
     emit_hook_output,
     emit_noop,
     read_stdin,
     resolve_workspace_state_path,
 )
-import statusline_cache  # noqa: E402
+import lib.statusline_cache as statusline_cache  # noqa: E402
 
 
 def _read_active_group(state_path: str | None) -> tuple[str, str | None]:
