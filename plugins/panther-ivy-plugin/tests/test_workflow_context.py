@@ -59,9 +59,10 @@ class TestWorkflowContextCurrent:
         assert not hasattr(ctx, "invocation_depth")
         assert not hasattr(ctx, "caller")
 
-    def test_warns_and_drops_unknown_yaml_keys(self, monkeypatch, tmp_path, capfd):
+    def test_warns_and_drops_unknown_yaml_keys(self, monkeypatch, tmp_path):
         """Schema drift: unknown keys (including legacy invocation_depth / caller
-        from the pre-cluster-1 schema) are dropped, and a WARN is emitted once.
+        from the pre-cluster-1 schema) are dropped, and a WARN is buffered for the
+        calling hook to surface via emit_hook_output's auto-drain prepend.
         """
         import yaml
 
@@ -83,6 +84,10 @@ class TestWorkflowContextCurrent:
         monkeypatch.setenv("IVY_WORKSPACE_ROOT", str(tmp_path))
         monkeypatch.chdir(tmp_path)
         mod = _import_module()
+        # Drain any pre-test residue so we measure only what this test pushes.
+        from lib.hook_utils import drain_warnings
+        drain_warnings()
+
         ctx = mod.WorkflowContext.current(protocol="bgp")
         assert ctx is not None
         assert ctx.workflow == "refine"
@@ -92,19 +97,20 @@ class TestWorkflowContextCurrent:
         assert not hasattr(ctx, "rogue_field")
         assert not hasattr(ctx, "another_new_key")
 
-        captured = capfd.readouterr()
-        assert "WARN: WorkflowContext dropped unknown fields" in captured.err
+        warnings = drain_warnings()
+        assert len(warnings) == 1
+        warn = warnings[0]
+        assert "WorkflowContext dropped unknown fields" in warn
         # Legacy fields from pre-cluster-1 schema are now unknown and reported.
-        assert "invocation_depth" in captured.err
-        assert "caller" in captured.err
-        assert "rogue_field" in captured.err
-        assert "another_new_key" in captured.err
+        assert "invocation_depth" in warn
+        assert "caller" in warn
+        assert "rogue_field" in warn
+        assert "another_new_key" in warn
 
-        # Second call with the same unknown fields should NOT re-emit the WARN
+        # Second call with the same unknown fields should NOT re-buffer the WARN
         # (one-shot guard prevents hot-path spam).
         mod.WorkflowContext.current(protocol="bgp")
-        captured2 = capfd.readouterr()
-        assert captured2.err == ""
+        assert drain_warnings() == []
 
     def test_returns_none_when_workflow_key_missing(self, monkeypatch, tmp_path):
         """Guard: if active-workflow YAML lacks `workflow`, current() returns None."""

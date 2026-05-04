@@ -11,9 +11,11 @@ from .io import (
     VALID_EVENT_NAMES,
     _EVENTS_WITH_HOOK_SPECIFIC_OUTPUT,
     _hook_dedup_cache_path,
+    drain_warnings,
     emit_dedup,
     emit_hook_output,
     emit_noop,
+    push_warning,
     read_stdin,
 )
 from .session import (
@@ -42,9 +44,11 @@ __all__ = [
     # io
     "MAX_CONSECUTIVE_MCP_FAILURES",
     "VALID_EVENT_NAMES",
+    "drain_warnings",
     "emit_dedup",
     "emit_hook_output",
     "emit_noop",
+    "push_warning",
     "read_stdin",
     # session
     "file_contains",

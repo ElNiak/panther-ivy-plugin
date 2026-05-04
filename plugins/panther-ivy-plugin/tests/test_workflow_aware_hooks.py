@@ -28,7 +28,6 @@ def _make_workflow_env(tmpdir: str) -> dict:
             {
                 "workflow": "review",
                 "phase": "analyze",
-                "invocation_depth": 0,
                 "started": "2026-01-01T00:00:00+00:00",
             },
             f,

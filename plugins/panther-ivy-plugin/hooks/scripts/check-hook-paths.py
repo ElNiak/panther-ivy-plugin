@@ -44,10 +44,6 @@ def _extract_script_paths(hooks_json: dict) -> list[str]:
                     continue
                 rel = command.split(_CLAUDE_PLUGIN_ROOT_TOKEN, 1)[1].split()[0]
                 paths.append(rel)
-    emit_noop(
-        "SessionStart",
-        f"extracted {len(paths)} script path(s) from hooks.json for verification",
-    )
     return paths
 
 
@@ -74,13 +70,16 @@ def main() -> None:
         )
         return
 
-    missing: list[str] = []
-    for rel in _extract_script_paths(data):
-        if not (Path(plugin_root) / rel).is_file():
-            missing.append(rel)
+    paths = _extract_script_paths(data)
+    missing: list[str] = [
+        rel for rel in paths if not (Path(plugin_root) / rel).is_file()
+    ]
 
     if not missing:
-        emit_noop("SessionStart", "all hooks.json command paths verified")
+        emit_noop(
+            "SessionStart",
+            f"all {len(paths)} hooks.json command paths verified",
+        )
         return
 
     listing = "\n".join(f"  - {p}" for p in missing)

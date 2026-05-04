@@ -39,6 +39,36 @@ _EVENTS_WITH_HOOK_SPECIFIC_OUTPUT = frozenset({
 MAX_CONSECUTIVE_MCP_FAILURES = 3
 
 
+_PENDING_WARNINGS: list[str] = []
+
+
+def push_warning(message: str) -> None:
+    """Buffer a developer warning to be drained at next emit_hook_output.
+
+    Library-level helpers called from inside a hook lifecycle cannot safely
+    write to stdout (multiple JSON lines corrupt the hook protocol) and
+    cannot pick a single valid event name (callers span multiple event
+    types). They push warnings here; ``emit_hook_output`` drains the buffer
+    and prepends the messages to its ``system_message`` so the user sees
+    the warning via the normal hook protocol.
+
+    The buffer is per-process state; each hook invocation runs in its own
+    Python process so leakage across hooks is impossible.
+    """
+    _PENDING_WARNINGS.append(message)
+
+
+def drain_warnings() -> list[str]:
+    """Drain and return the buffered library warnings.
+
+    Called by ``emit_hook_output`` automatically. Tests may call directly
+    to assert without going through the emit machinery.
+    """
+    drained = _PENDING_WARNINGS[:]
+    _PENDING_WARNINGS.clear()
+    return drained
+
+
 def read_stdin() -> dict:
     """Read and parse JSON from stdin. Returns empty dict on failure."""
     try:
@@ -121,6 +151,12 @@ def emit_hook_output(
             "misspelled event name silently falls outside the runtime's "
             "allow-list and the additionalContext field is dropped without "
             "warning, so we raise here instead."
+        )
+
+    if pending := drain_warnings():
+        warn_prefix = "WARN: " + "; ".join(pending)
+        system_message = (
+            f"{warn_prefix} | {system_message}" if system_message else warn_prefix
         )
 
     output: dict = {}

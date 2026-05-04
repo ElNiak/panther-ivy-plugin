@@ -9,9 +9,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-import yaml
-
-from lib.hook_utils import emit_noop, get_workspace_root
+from lib.hook_utils import get_workspace_root, push_warning
 
 STATE_DIR_NAME = ".panther-ivy"
 _ACTIVE_WORKFLOW_FILE = "active-workflow"
@@ -182,8 +180,8 @@ def find_protocol_dir(protocol: str | None = None) -> str | None:
                 state = os.path.join(subdir, STATE_DIR_NAME, _ACTIVE_WORKFLOW_FILE)
                 if os.path.isfile(state):
                     return subdir
-    except OSError:
-        emit_noop("WorkflowState", f"error scanning for protocol dirs in {root}")
+    except OSError as exc:
+        push_warning(f"error scanning for protocol dirs in {root}: {exc}")
 
     return root
 
@@ -259,9 +257,8 @@ class WorkflowContext:
         }
         unknown = set(state.keys()) - _WORKFLOW_CONTEXT_FIELDS
         if new_unknown := unknown - _WARNED_UNKNOWN_FIELDS:
-            emit_noop(
-                "WorkflowState",
-                f"WARN - active-workflow file at {protocol_dir} has unknown fields: {sorted(unknown)}",
+            push_warning(
+                f"WorkflowContext dropped unknown fields: {sorted(new_unknown)}"
             )
             _WARNED_UNKNOWN_FIELDS.update(new_unknown)
         if "workflow" not in filtered:
