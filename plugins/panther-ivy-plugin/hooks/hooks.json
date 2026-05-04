@@ -313,7 +313,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render/summary.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/render/summary/main.py",
             "timeout": 10
           }
         ]
