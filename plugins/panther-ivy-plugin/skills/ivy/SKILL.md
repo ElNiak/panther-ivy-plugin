@@ -45,6 +45,17 @@ Phase 1 read the journal `last_n=20` and the active-workflow YAML. Phase 1.5 dec
 
 **Warm-resume (fresh `pending_dispatch`).** If the journal contains a `pending_dispatch` with no paired `workflow_resumed` and the entry is fresh (<2 h):
 
+0. **Validate `target_workflow`** against the canonical set `{scaffold, refine, experiment, review, triage, meta}`. If the value is not in the set, the entry is malformed (typo, schema drift, manual edit). Append an `error` event recording the gap, surface a user-visible `[ivy-resume]` warning, and **fall through to cold start** instead of consuming the bad `pending_dispatch`:
+   ```
+   ivy_workflow_state(
+     action="append_journal",
+     protocol="<protocol>",
+     event_type="error",
+     state='{"pattern":"unknown_target_workflow","target_workflow":"<bad_value>","source_pending_dispatch_index":<int>}'
+   )
+   ```
+   Then emit `[ivy-resume] pending_dispatch(target_workflow="<bad_value>") not in canonical set; falling through to cold-start. Inspect .panther-ivy/workflow-journal.yaml for the bad entry.` and continue to the cold-start branch below. Without this guard the bad target reaches `ivy_workflow_state(action="set")` and is rejected by the server's `_KNOWN_WORKFLOWS` check (per `journaling-contract.md §9` legacy-name failure mode), but the rejection arrives without a paired user-facing diagnostic — silent miss.
+
 1. Append `workflow_resumed` BEFORE `set_active_workflow` and BEFORE the dispatch (order matters — see contract §4: a crash between consume and dispatch must leave the pair already complete so the next-turn read does not double-consume):
    ```
    ivy_workflow_state(
