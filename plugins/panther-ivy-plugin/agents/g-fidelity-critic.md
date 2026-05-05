@@ -77,5 +77,7 @@ Your final `VERDICT_*` line must reference at least one `CITATION_PASS` or `CITA
   <field name="workspace" required="true" example="Workspace: bgp"/>
   <field name="phase_context" required="true" example="First action post-G0 SOUND"/>
   <field name="plan_file" required="true" example="docs/superpowers/plans/2026-04-28-X.md"/>
-  <field name="proposed_action" required="true" example="About to invoke Edit on file Y with the following diff"/>
+  <field name="observed_action" required="true" example="Edit on protocol-testing/bgp/bgp_speaker.ivy:42 was invoked with diff: +invariant conn_established_after_open"/>
+  <field name="tool_result_excerpt" required="false" example="Successfully edited 1 line"/>
+  <field name="plan_approved_ts" required="true" example="2026-05-05T17:32:11Z"/>
 </dispatch-context>

@@ -106,3 +106,75 @@ owning ops skill (per the Workflow-specific ABSTAIN routing table above).
   cited-by="skills/scaffold-ops, skills/refine-ops, skills/experiment-ops, skills/review-ops, skills/triage-ops, skills/meta-self-mod-ops"
   related-rules=".claude/rules/iron-laws.md, .claude/rules/gap-markers.md, .claude/rules/agent-dispatch.md, .claude/rules/ivy-formatting.md, .claude/rules/journaling-contract.md"
   glossary-source-superseded="skills/refine-ops/references/glossary.md (gate-verdict subset only; MPE / iron law / pending_dispatch entries remain in the glossary)"/>
+
+### G0 — plan-soundness (per-plan)
+
+| Verdict | Meaning | Routing |
+|---|---|---|
+| SOUND | Approved plan is internally consistent (no contradictory assumptions, all referenced files exist, ordering avoids broken intermediate states). | Emit `pending_dispatch(<caller>, reason="post-G0-SOUND")` and proceed to first task. |
+| UNSOUND(#NN, reason, plan-section) | Soundness gap: a missing prerequisite, false assumption, unverifiable claim, or ordering error. | **Halt plan execution.** Surface the gap to user with direct plan quotes; require revision via plan-mode re-entry. |
+| ABSTAIN | Critics had insufficient evidence (mixed votes, unreadable plan file, dependency files inaccessible). | Re-dispatch `g-plan-critic` ×3 with refined input. After 2 ABSTAIN cycles, halt and surface. |
+
+### G0b — plan-fidelity (per-action)
+
+| Verdict | Meaning | Routing |
+|---|---|---|
+| SOUND | Action conforms to first task of approved plan. | Emit `pending_dispatch(<caller>, reason="post-G0b-SOUND")` and proceed. Subsequent actions in the same plan task do not re-fire G0b — only the *first* action after `plan_approved` triggers it. |
+| UNSOUND(#NN, drift, plan-task) | Action drifted from the plan's first task. The drift cite is mandatory: file path, planned vs observed, and the plan task that was violated. | **Halt next actions.** Surface drift to user with direct code+plan quotes, citing the violated `plan-task`. User options (the only three): (a) **revert** — `git restore <file>` to undo the action, then resume from plan-mode; (b) **override** — append `decision{kind=g0b_override, rationale=<text>}` and continue without the gate (audit trail preserved); (c) **return to plan-mode** — keep the action's filesystem effect, but force a fresh plan that incorporates the drift. |
+| ABSTAIN | Critics had insufficient evidence (mixed votes, missing CITATION_PASS spot-checks, unreadable file state). | Re-dispatch `g-fidelity-critic` ×3 with the original prompt PLUS a `tool_input_digest` and the `plan-task` reference. After 2 ABSTAIN cycles in a row, halt and surface the same drift-options prompt as UNSOUND, with `<drift>` set to "abstain after 2 cycles". |
+
+### G2 — modeling (per-layer)
+
+| Verdict | Meaning | Routing |
+|---|---|---|
+| SOUND | Layer file conforms to verification-failures catalog ranges #200-249 + #250-299 (+ #260-289 if NSCT). | Append `gate_verdict{gate=g2, verdict=SOUND}`; proceed to next layer. |
+| UNSOUND(#NN, reason, file:line) | Catalog violation found in the layer file. | Write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only — never let a critic edit the file). Do not proceed to the next layer until each `[GAP:]` is resolved or promoted to `// DEFERRED YYYY-MM-DD: ...`. |
+| ABSTAIN | Critics could not establish soundness with available evidence. | Re-dispatch with refined input; cap at 2 cycles → halt and surface to user. |
+
+### G3 — test-spec (per-test-spec)
+
+| Verdict | Meaning | Routing |
+|---|---|---|
+| SOUND | Test spec conforms to catalog ranges #200-208 + #256-259 + #300-399; coverage matrix matches RFC requirement manifest. | Append `gate_verdict{gate=g3, verdict=SOUND}`; proceed to `ivy_compile` / `ivy_verify`. |
+| UNSOUND(#NN, reason, file:line) | Test spec gap (typically: silently fails to cover a MUST requirement, or over-constrains the generator). | Write `[GAP: #NN <reason>]` markers at the cited file:line locations. Do not proceed until resolved. |
+| ABSTAIN | Insufficient evidence to bless the test spec. | Re-dispatch ×3 with the coverage matrix included; cap at 2 cycles → halt. |
+
+### G4 — verification (per-ivy_verify-result)
+
+| Verdict | Meaning | Routing |
+|---|---|---|
+| SOUND | `ivy_verify` returned `status: OK`; no counterexamples; all invariants hold. | Append `gate_verdict{gate=g4, verdict=SOUND}`; refine workflow advances to its terminal phase. |
+| UNSOUND(#NN, reason, isolate) | `ivy_verify` returned `status: FAIL` (counterexample present, invariant violation, or compile error). | Refine Phase 6 (Diagnose) is dispatched: read the counterexample, classify the failure pattern (#NN per `verification-failures` catalog), draft a fix candidate. |
+| ABSTAIN | Verifier output ambiguous (timeout without counterexample, partial run). | Re-run `ivy_verify` with extended timeout once. On second ABSTAIN, halt and surface to user. |
+
+### G5 — trace-analysis (per-IUT-run)
+
+| Verdict | Meaning | Routing |
+|---|---|---|
+| SOUND | IUT trace matches the formal model's expected behaviour; no protocol violation observed. | Append `gate_verdict{gate=g5, verdict=SOUND}`; the experiment workflow advances to its terminal phase. |
+| UNSOUND(#NN, reason, spec-file:line) | Trace deviates from the model. The cite must reference the *spec* file:line, not the artifact path — the spec is the mutable target. | Write `[GAP: #NN <reason>]` markers at the cited spec locations. The hardest G5 call is distinguishing real IUT bugs from model bugs; when in doubt, return UNSURE. |
+| ABSTAIN | Critics could not establish attribution (real IUT bug vs. model bug). | Re-dispatch ×3 with the full artifact set (analysis_results.json, ivy_tester.log, IUT log, pcap via tshark). On second ABSTAIN, halt with caveat. |
+
+### G6 — knowledge-capture (per-session)
+
+| Verdict | Meaning | Routing |
+|---|---|---|
+| SOUND | At least one candidate learning is novel, load-bearing, and portable enough to capture. | Per-candidate aggregation runs: ≥2 KEEP votes → append `knowledge_captured(...)` event with `confidence=high`; ≥2 DROP → no journal write; ≥2 DEFER (or 1-1-1 split) → AskUserQuestion(KEEP / DROP / SKIP) — KEEP writes with `confidence=user-confirmed`, DROP and SKIP do not write. |
+| UNSOUND | No candidate is worth capturing this session (all are either already known, not load-bearing, or too session-specific to generalize). | No `knowledge_captured` events appended; `gate_verdict{gate=g6, verdict=UNSOUND}` is the journal trail for "we considered and rejected". |
+| ABSTAIN | Critics could not vote (dispatch failed or all returned ABSTAIN). | Re-dispatch ×3; cap at 2 cycles → halt with `gate_verdict{gate=g6, verdict=ABSTAIN, abstain_reason="dispatch_failure"}`; user can re-trigger by manually emitting `pending_dispatch`. UX-cost note: G6 dispatches inline on cold-start-eligible session-resume turns (~90s wall-clock). Set `IVY_DISPATCH_G6=0` to opt out for the current session. |
+
+### G7 — triage diagnose (per-MCP/LSP-failure)
+
+| Verdict | Meaning | Routing |
+|---|---|---|
+| SOUND | Triage completed the 9-step runbook; root cause identified; repair successful. | Append `gate_verdict{gate=g7, verdict=SOUND}`; emit `pending_dispatch(<caller>, reason="post-triage-repair")` to hand control back to the caller. |
+| UNSOUND(#NN, reason, runbook-step) | A runbook step failed without successful repair (e.g., MCP server cannot be revived; PID file remains stale). | Surface failure to user with the runbook step that failed. User decides: retry runbook, escalate, or abandon. |
+| ABSTAIN | Diagnosis ambiguous (multiple plausible root causes; insufficient evidence to commit). | Re-diagnose with broader log capture; cap at 2 cycles → escalate to user. |
+
+### G8 — triage repair-verify (per-repair-result)
+
+| Verdict | Meaning | Routing |
+|---|---|---|
+| SOUND | Repair verified by re-running the failing tool; result matches expected pass shape. | Append `gate_verdict{gate=g8, verdict=SOUND}`; triage workflow terminates; `pending_dispatch(<caller>)` hands back. |
+| UNSOUND | Repair verification failed (re-run still produces the original failure or a new failure). | Return to G7 diagnose with the new evidence. |
+| ABSTAIN | Verification result inconclusive (intermittent failure, environmental flake). | Run verification 3× and aggregate; majority result wins. If still ABSTAIN, return with caveat and let user decide. |

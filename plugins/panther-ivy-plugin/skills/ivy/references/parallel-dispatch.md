@@ -36,3 +36,18 @@ If a critic times out or returns malformed output, follow `agent-dispatch.md`: a
 - Sequential dependencies (output of agent A feeds agent B): use sequential dispatch.
 - Single-perspective tasks (one critic suffices): single Agent call.
 - Workflow agents (specialist agents that perform work, not vote): single Agent call per dispatch.
+
+## Per-candidate aggregation (G6 only)
+
+`g-knowledge-critic` returns a per-candidate `KEEP / DROP / DEFER` list in addition to the per-batch `VERDICT_*`. Aggregation runs at two levels:
+
+**Per-batch VERDICT (gate-level):** apply the asymmetric-vote rule above (≥2 SOUND / ≥2 UNSOUND / ≥2 ABSTAIN / mixed → ABSTAIN).
+
+**Per-candidate vote (within a SOUND batch):** aggregate KEEP / DROP / DEFER across the three critics for each individual candidate:
+
+- ≥2 KEEP → write `knowledge_captured(...)` with `confidence="high"`.
+- ≥2 DROP → no journal write; candidate dropped silently.
+- ≥2 DEFER → DEFER the candidate.
+- 1-1-1 split (one of each) → DEFER (consistent with the asymmetric-vote convention that mixed votes resolve to ABSTAIN at gate level).
+
+For DEFERred candidates, surface an `AskUserQuestion` in the same orchestrator turn with three options: KEEP (writes `knowledge_captured(...)` with `confidence="user-confirmed"`), DROP (no write), or SKIP (no write; candidate NOT added to the dedup set, so a future G6 invocation may re-vote on it). SKIP is the conservative default for "I'm not sure right now".

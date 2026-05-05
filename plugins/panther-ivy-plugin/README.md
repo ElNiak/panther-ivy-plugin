@@ -29,6 +29,14 @@ Runtime routing lives in the orchestrator skill at `skills/ivy/SKILL.md`. The or
 3. Learning questions ("how does NCT work?") are answered using loaded knowledge skills, no workflow activation.
 4. Every workflow returns to the orchestrator on completion.
 
+## G6 UX cost
+
+The G6 knowledge-capture gate dispatches inline on **cold-start-eligible session-resume turns** after Ivy activity. Dispatch cost: 3 Sonnet-tier critics × ~90s wall-clock = ~90s blocking before Phase 1.5 yields control.
+
+PROJECT.md warm-resume turns and `pending_dispatch` warm-resume turns do **NOT** pay this cost — G6 sits after both warm-resume branches and only fires when Phase 1.5 would otherwise drop to cold-start.
+
+Power users can opt out for the current session by setting `IVY_DISPATCH_G6=0` in their shell environment before invoking Claude Code. The skip path emits `[ivy-noop] G6 skipped (env opt-out)`; no `gate_dispatched{gate=g6}` is written.
+
 ## State Management
 
 Read `.panther-ivy/active-workflow` on every turn to know your current workflow phase.
