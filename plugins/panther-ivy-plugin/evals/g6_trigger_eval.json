@@ -1,0 +1,17 @@
+{
+  "gate": "g6",
+  "description": "G6 knowledge-capture gate fires in skills/ivy/SKILL.md Phase 1.5 cold-start-eligible turns when an unpaired session_end exists with at least one fresh candidate. Per-session gate.",
+  "should_trigger": [
+    {"prompt": "Resume after a refine session that fixed a deser_err pattern", "expected_state": "session_end_unpaired"},
+    {"prompt": "Open a new session after the previous one wrote progress{kind=fix_attempt} events", "expected_state": "session_end_unpaired"},
+    {"prompt": "First turn after a session_end with at least one decision event", "expected_state": "session_end_unpaired"},
+    {"prompt": "Resume into idle with a recent unsound gate_verdict in the prior session", "expected_state": "session_end_unpaired"}
+  ],
+  "should_not_trigger": [
+    {"prompt": "Resume into a fresh pending_dispatch (warm-resume wins)", "expected_state": null},
+    {"prompt": "Resume into a non-idle PROJECT.md (PROJECT.md warm-resume wins)", "expected_state": null},
+    {"prompt": "First turn after a session with NO Ivy activity (is_session_active was False; no session_end)", "expected_state": null},
+    {"prompt": "First turn with IVY_DISPATCH_G6=0 in env", "expected_state": null},
+    {"prompt": "First turn after G6 already ran for the most recent session_end (cycle closed)", "expected_state": null}
+  ]
+}

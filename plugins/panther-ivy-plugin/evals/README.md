@@ -20,3 +20,9 @@ Each gate's eval must hit ≥ 18 / 20 expected outcomes to be considered well-tu
 ## When to update
 
 When a gate's hook trigger logic changes (file-pattern matcher, workflow-active check, methodology overlay logic), re-run the eval. When a new failure mode is added to the catalog and surfaces in real use, add a should-trigger entry that exercises it.
+
+## Schema variants
+
+Most trigger evals use `expected_phase` (per-phase gates: G1, G2, G3, G4, G5). G0b is per-action — it fires on every PostToolUse-eligible action while a plan_approved is unpaired in the journal — so its eval uses **`expected_state`** keyed to journal predicates (`"plan_approved_unpaired"` for the trigger condition; `null` for the negative case). G6's eval uses `expected_state: "session_end_unpaired"` for the same reason.
+
+Implementations of the eval runner that read these files must accept either `expected_phase` (string keyed to a workflow phase) or `expected_state` (string keyed to a journal predicate); per-prompt entries carry exactly one of the two fields plus the prompt.
