@@ -1,4 +1,5 @@
 """Unit tests for G0b handlers in posttooluse/gates/gate_handlers.py."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -24,7 +25,7 @@ def test_parse_g0b_extracts_edit_artifact():
         "tool_response": {"success": True, "summary": "1 line changed"},
     }
     ctx = gh.parse_g0b(hook_input)
-    assert ctx is not None  # narrow Optional[dict] for type-checkers and downstream asserts
+    assert ctx is not None  # narrow Optional[dict] for type-checkers
     assert ctx["tool_name"] == "Edit"
     assert ctx["artifact"] == "protocol-testing/bgp/bgp.ivy"
     assert "tool_input_digest" in ctx and len(ctx["tool_input_digest"]) > 0
@@ -38,7 +39,7 @@ def test_parse_g0b_extracts_bash_artifact():
         "tool_response": {"output": "5 passed"},
     }
     ctx = gh.parse_g0b(hook_input)
-    assert ctx is not None  # narrow Optional[dict] for type-checkers and downstream asserts
+    assert ctx is not None  # narrow Optional[dict] for type-checkers
     assert ctx["tool_name"] == "Bash"
     assert ctx["artifact"] == "pytest tests/"
 
@@ -60,7 +61,11 @@ def _gd(ts):
 
 
 def _gv(ts):
-    return {"ts": ts, "type": "gate_verdict", "payload": {"gate": "g0b", "verdict": "sound"}}
+    return {
+        "ts": ts,
+        "type": "gate_verdict",
+        "payload": {"gate": "g0b", "verdict": "sound"},
+    }
 
 
 @pytest.fixture
@@ -115,7 +120,9 @@ def test_predicate_returns_true_on_orphan_gate_dispatched(fixed_now):
 # ---------------------------------------------------------------- dispatch_g0b
 
 
-def test_dispatch_g0b_appends_gate_dispatched_with_plan_approved_ts(fixed_now, tmp_path):
+def test_dispatch_g0b_appends_gate_dispatched_with_plan_approved_ts(
+    fixed_now, tmp_path
+):
     journal_dir = tmp_path / "proto"
     journal_dir.mkdir()
     journal = [_pa(_ts(0))]
@@ -128,7 +135,13 @@ def test_dispatch_g0b_appends_gate_dispatched_with_plan_approved_ts(fixed_now, t
         return True
 
     def fake_emit(event, system_message, additional_context=None):
-        captured_emits.append({"event": event, "system_message": system_message, "additional_context": additional_context})
+        captured_emits.append(
+            {
+                "event": event,
+                "system_message": system_message,
+                "additional_context": additional_context,
+            }
+        )
 
     ctx = {
         "protocol_dir": str(journal_dir),
@@ -139,9 +152,9 @@ def test_dispatch_g0b_appends_gate_dispatched_with_plan_approved_ts(fixed_now, t
         "workflow_ctx": None,
     }
 
-    with patch.object(gh, "get_journal_entries", return_value=journal), \
-         patch.object(gh, "append_journal_event", side_effect=fake_append), \
-         patch.object(gh, "emit_hook_output", side_effect=fake_emit):
+    with patch.object(gh, "get_journal_entries", return_value=journal), patch.object(
+        gh, "append_journal_event", side_effect=fake_append
+    ), patch.object(gh, "emit_hook_output", side_effect=fake_emit):
         gh.dispatch_g0b(ctx)
 
     assert len(captured_appends) == 1
