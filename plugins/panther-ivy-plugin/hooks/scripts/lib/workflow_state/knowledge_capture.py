@@ -34,6 +34,9 @@ def _extract_one(entry: dict) -> dict | None:
         evidence = []
     elif etype == "error":
         summary = payload.get("pattern", "")
+        # Evidence requires BOTH `file` and `line` per the journaling-contract.md `error` schema.
+        # If only one is set, the source event is malformed and we conservatively drop evidence
+        # rather than emit a partial cite that would mislead downstream G6 critics.
         file_, line_ = payload.get("file"), payload.get("line")
         evidence = [f"{file_}:{line_}"] if file_ and line_ is not None else []
     elif etype == "gate_verdict" and payload.get("verdict") == "unsound":

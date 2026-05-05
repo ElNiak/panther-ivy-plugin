@@ -16,12 +16,15 @@ _HOOK_SCRIPTS_DIR = str(Path(__file__).resolve().parent.parent / "hooks" / "scri
 
 @pytest.fixture(autouse=True)
 def _patch_sys_path():
+    original = sys.path[:]
     sys.path.insert(0, _HOOK_SCRIPTS_DIR)
-    yield
-    sys.path.remove(_HOOK_SCRIPTS_DIR)
-    for mod_name in list(sys.modules):
-        if mod_name.startswith("lib.workflow_state"):
-            del sys.modules[mod_name]
+    try:
+        yield
+    finally:
+        sys.path[:] = original
+        for mod_name in list(sys.modules):
+            if mod_name.startswith("lib.workflow_state"):
+                del sys.modules[mod_name]
 
 
 @pytest.fixture
