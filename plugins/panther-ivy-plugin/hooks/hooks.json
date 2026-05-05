@@ -70,7 +70,12 @@
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/lint/python-format.py",
             "timeout": 15
-          },
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|Bash|NotebookEdit",
+        "hooks": [
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/run-gate.py --id g2",
@@ -79,6 +84,11 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/run-gate.py --id g3",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/posttooluse/gates/run-gate.py --id g0b",
             "timeout": 10
           }
         ]

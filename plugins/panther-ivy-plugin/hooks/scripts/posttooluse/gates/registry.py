@@ -80,4 +80,13 @@ GATES: "dict[str, Gate]" = {
         predicate=gate_handlers.predicate_g5,
         dispatch=gate_handlers.dispatch_g5,
     ),
+    "g0b": Gate(
+        id="g0b",
+        name="plan-fidelity-gate",
+        watched_tools=frozenset({"Edit", "Write", "Bash", "NotebookEdit"}),
+        workflow_required=None,  # G0b is workflow-agnostic; fires whenever there is an unpaired plan_approved.
+        parse_input=gate_handlers.parse_g0b,
+        predicate=gate_handlers.predicate_g0b,
+        dispatch=gate_handlers.dispatch_g0b,
+    ),
 }

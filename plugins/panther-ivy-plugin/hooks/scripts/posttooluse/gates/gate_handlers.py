@@ -385,3 +385,166 @@ def dispatch_g5(ctx: dict) -> None:
         system_message=f"[G5 trace-analysis gate] dispatched on run_id={run_id}{suffix}",
         additional_context=directive,
     )
+
+
+# ---------------------------------------------------------------- G0b (plan-fidelity)
+
+
+def parse_g0b(hook_input: dict) -> Optional[dict]:
+    """Extract the action's artifact + tool_result_excerpt for the G0b critic prompt."""
+    tool_name = hook_input.get("tool_name", "")
+    tool_input = hook_input.get("tool_input", {}) or {}
+    tool_response = hook_input.get("tool_response", {}) or {}
+
+    # Extract artifact: file_path for Edit/Write/NotebookEdit; command for Bash.
+    artifact = tool_input.get("file_path") or tool_input.get("command", "")
+    if not artifact:
+        return None
+
+    # Hash tool_input for a stable digest the critic can correlate against the plan.
+    import hashlib as _hashlib
+    digest_body = f"{tool_name}|{artifact}|{tool_input}"
+    tool_input_digest = _hashlib.sha256(digest_body.encode("utf-8")).hexdigest()[:16]
+
+    # tool_response shape varies per tool; render a short string excerpt.
+    if isinstance(tool_response, dict):
+        excerpt_src = tool_response.get("output") or tool_response.get("summary") or str(tool_response)
+    else:
+        excerpt_src = str(tool_response)
+    tool_result_excerpt = excerpt_src[:200] if excerpt_src else ""
+
+    return {
+        "tool_name": tool_name,
+        "artifact": artifact,
+        "tool_input_digest": tool_input_digest,
+        "tool_result_excerpt": tool_result_excerpt,
+    }
+
+
+from datetime import datetime, timedelta, timezone
+
+
+def _now_iso() -> str:
+    """Indirection for testability — patched in unit tests."""
+    return datetime.now(timezone.utc).isoformat()
+
+
+# Re-import so unit tests can patch the symbol on this module.
+from lib.workflow_state.journal import get_journal_entries  # noqa: E402
+
+
+_G0B_STALE_HOURS = 2
+
+
+def predicate_g0b(ctx: dict) -> bool:
+    """Return True iff G0b should fire for this action.
+
+    Rule (per F-C1 / F-C3 from the design):
+        - Find most recent plan_approved at ts=T0. None? -> False.
+        - Find most recent gate_dispatched{gate=g0b} at ts=T_d (or None).
+        - Find most recent gate_verdict{gate=g0b}    at ts=T_v (or None).
+        - If T_v exists and T_v > T0 -> False (cycle closed).
+        - Elif T_d exists and T_d > T0:
+            - If T_v >= T_d                   -> False (cycle closed).
+            - Elif (now - T_d) <= 2h          -> False (cycle in flight).
+            - Else                            -> True  (orphan; re-fire).
+        - Else                                -> True  (no dispatch yet for this plan_approved).
+
+    No explicit plan-mode check (F-C2): plan_approved is only emitted on plan-mode exit,
+    so plan-mode naturally returns False above.
+    """
+    protocol_dir = ctx.get("protocol_dir")
+    if not protocol_dir:
+        return False
+    journal = get_journal_entries(protocol_dir, last_n=20)
+
+    # Most recent of each type. Journal is newest-last.
+    t0 = None
+    t_d = None
+    t_v = None
+    for entry in journal:
+        etype = entry.get("type")
+        ts = entry.get("ts")
+        payload = entry.get("payload") or {}
+        if etype == "plan_approved":
+            t0 = ts
+        elif etype == "gate_dispatched" and payload.get("gate") == "g0b":
+            t_d = ts
+        elif etype == "gate_verdict" and payload.get("gate") == "g0b":
+            t_v = ts
+
+    if t0 is None:
+        return False
+
+    if t_v is not None and t_v > t0:
+        return False  # cycle closed
+
+    if t_d is not None and t_d > t0:
+        if t_v is not None and t_v >= t_d:
+            return False  # cycle closed
+        # Orphan check: compare (now - t_d) to staleness window.
+        now = datetime.fromisoformat(_now_iso())
+        d_dt = datetime.fromisoformat(t_d)
+        if now - d_dt <= timedelta(hours=_G0B_STALE_HOURS):
+            return False  # cycle in flight
+        return True  # orphan dispatch
+
+    return True  # no dispatch yet for this plan_approved
+
+
+def dispatch_g0b(ctx: dict) -> None:
+    """Append gate_dispatched, emit T2 systemMessage + additionalContext directing critic dispatch."""
+    protocol_dir = ctx.get("protocol_dir") or ""
+    workflow_ctx = ctx.get("workflow_ctx")
+    artifact = ctx["artifact"]
+    tool_name = ctx["tool_name"]
+    tool_result_excerpt = ctx.get("tool_result_excerpt", "")
+
+    # Read T0 from the most recent plan_approved in the journal (predicate already
+    # validated that one exists and is unpaired).
+    journal = get_journal_entries(protocol_dir, last_n=20) if protocol_dir else []
+    t0 = None
+    for entry in journal:
+        if entry.get("type") == "plan_approved":
+            t0 = entry.get("ts")
+    # t0 should always be set here because predicate_g0b returned True.
+
+    if protocol_dir:
+        workflow, phase = _resolve_workflow_phase(workflow_ctx, protocol_dir)
+        append_journal_event(
+            protocol_dir,
+            event_type="gate_dispatched",
+            payload={
+                "gate": "g0b",
+                "trigger": "run-gate.py --id g0b",
+                "artifact": artifact,
+                "tool_name": tool_name,
+                "plan_approved_ts": t0,
+            },
+            workflow=workflow,
+            phase=phase,
+        )
+
+    directive = (
+        "[G0b plan-fidelity gate] First action after plan_approved completed. "
+        "Dispatch g-fidelity-critic ×3 in parallel per skills/ivy/references/parallel-dispatch.md "
+        "to verify this action conforms to the plan's first task.\n\n"
+        f"Action observed: {tool_name} on `{artifact}` "
+        f"(tool_result excerpt: {tool_result_excerpt}).\n"
+        f"Plan reference: plan_approved at ts={t0}.\n\n"
+        "Each critic loads g-fidelity-critic.md and applies the per-task plan-conformance rubric. "
+        "Aggregate via 2-of-3 asymmetric vote. "
+        "On UNSOUND, follow the .claude/rules/gate-verdicts.md G0b section routing "
+        "(revert / override / return-to-plan-mode)."
+    )
+
+    suffix = (
+        f"; gate_dispatched appended to journal at {journal_path(protocol_dir)}"
+        if protocol_dir
+        else ""
+    )
+    emit_hook_output(
+        "PostToolUse",
+        system_message=f"[G0b plan-fidelity gate] dispatched on {os.path.basename(artifact)}{suffix}",
+        additional_context=directive,
+    )

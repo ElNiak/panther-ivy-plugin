@@ -52,7 +52,7 @@ Counts below are computed by `plugins/panther-ivy-plugin/scripts/inventory_count
 | Agents | 9 (6 specialist + 3 critic) | Specialists (`ivy-builder`, `ivy-experimenter`, `ivy-meta`, `ivy-refiner`, `ivy-reviewer`, `ivy-triage`) handle workflow execution; critics (`g-plan`, `g-fidelity`, `g-knowledge`) run adversarial-vote gates | [agents/](plugins/panther-ivy-plugin/agents/) |
 | Commands | 2 (shortcuts) | `/nct-health` (9-step diagnostic runbook), `/nct-iut-test` (IUT experiment via PANTHER) | [commands/](plugins/panther-ivy-plugin/commands/) |
 | Skills | 15 (1 orchestrator + 6 ops + 8 knowledge) | Orchestrator (`ivy`) routes intent; ops skills (`scaffold-ops`, `refine-ops`, `experiment-ops`, `review-ops`, `triage-ops`, `meta-self-mod-ops`) own workflow procedures; knowledge skills (`methodology`, `specification-patterns`, `propagation-patterns`, `ivy-syntax`, `ivy-toolkit`, `verification-failures`, `apt-attack-patterns`, `reference-drift`) provide domain references | [skills/](plugins/panther-ivy-plugin/skills/) |
-| Hooks | 45 commands / 37 matchers across 12 events | PreToolUse, PostToolUse, PostToolUseFailure, SessionStart/End, Stop, SubagentStart/Stop, PreCompact, UserPromptSubmit, Notification, PermissionRequest | [hooks/](plugins/panther-ivy-plugin/hooks/) |
+| Hooks | 46 commands / 38 matchers across 12 events | PreToolUse, PostToolUse, PostToolUseFailure, SessionStart/End, Stop, SubagentStart/Stop, PreCompact, UserPromptSubmit, Notification, PermissionRequest | [hooks/](plugins/panther-ivy-plugin/hooks/) |
 | Rules | 15 | Auto-loaded `.claude/rules/` files (iron-laws, agent-dispatch, journaling-contract, gate-verdicts, ivy-formatting, plan-mode, output-style, mcp-tool-reliability, postuse-hook-ordering, propagation-authority, gap-markers, skill-conventions, scaffold-anti-patterns, refine-anti-patterns, experiment-anti-patterns) | [.claude/rules/](plugins/panther-ivy-plugin/.claude/rules/) |
 
 ## Tooling Architecture
@@ -135,7 +135,7 @@ panther-ivy-plugin/
 │       │   ├── nct-health.md        # /nct-health   -- 9-step diagnostic runbook
 │       │   └── nct-iut-test.md      # /nct-iut-test -- IUT experiment via PANTHER
 │       ├── hooks/
-│       │   ├── hooks.json   # 45 commands / 37 matchers across 12 events
+│       │   ├── hooks.json   # 46 commands / 38 matchers across 12 events
 │       │   └── scripts/     # Hook implementations (Python; ~37 entry points + shared libs)
 │       ├── skills/          # 15 skills: 1 orchestrator + 6 ops + 8 knowledge
 │       │   ├── README.md

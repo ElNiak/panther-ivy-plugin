@@ -39,8 +39,8 @@ from posttooluse.gates.registry import GATES, Gate
 
 
 def test_GATES_dict_has_expected_ids():
-    """GATES owns exactly g2, g3, g5 — no more, no fewer."""
-    assert set(GATES.keys()) == {"g2", "g3", "g5"}
+    """GATES owns exactly g2, g3, g5, g0b — no more, no fewer."""
+    assert set(GATES.keys()) == {"g2", "g3", "g5", "g0b"}
 
 
 def test_Gate_field_types_are_correct():
@@ -60,10 +60,11 @@ def test_Gate_field_types_are_correct():
 
 
 def test_workflow_required_consistency():
-    """G2/G3 are scaffold-only by design; G5 is unconstrained."""
+    """G2/G3 are scaffold-only by design; G5 and G0b are unconstrained."""
     assert GATES["g2"].workflow_required == "scaffold"
     assert GATES["g3"].workflow_required == "scaffold"
     assert GATES["g5"].workflow_required is None
+    assert GATES["g0b"].workflow_required is None
 
 
 def test_watched_tools_match_documented_matchers():
@@ -111,7 +112,7 @@ def test_run_gate_argparse_rejects_unknown_id():
 def test_gate_handlers_module_exposes_per_gate_functions():
     """The flat module surface registry.py imports actually exists."""
     for prefix in ("parse", "predicate", "dispatch"):
-        for gid in ("g2", "g3", "g5"):
+        for gid in ("g2", "g3", "g5", "g0b"):
             attr = f"{prefix}_{gid}"
             assert hasattr(gate_handlers, attr), (
                 f"gate_handlers.{attr} missing — registry.py reference would break"
