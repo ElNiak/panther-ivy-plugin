@@ -49,7 +49,7 @@ UNSOUND examples:
 ## Calibrated Abstention
 
 Abstain (do not vote SOUND or UNSOUND) when:
-- The `proposed_action` field in `<dispatch-context>` is abstract (no file paths, no concrete tool call, no diff content) — there is nothing to compare against the plan.
+- The `observed_action` field in `<dispatch-context>` is abstract (no file paths, no concrete tool call, no diff content) — there is nothing to compare against the plan.
 - The plan file itself is unreadable.
 - The action is exploratory only (a `Read` / `Grep` to inspect state) and not yet a plan-execution step.
 
