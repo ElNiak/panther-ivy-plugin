@@ -152,7 +152,7 @@ owning ops skill (per the Workflow-specific ABSTAIN routing table above).
 | Verdict | Meaning | Routing |
 |---|---|---|
 | SOUND | IUT trace matches the formal model's expected behaviour; no protocol violation observed. | Append `gate_verdict{gate=g5, verdict=SOUND}`; the experiment workflow advances to its terminal phase. |
-| UNSOUND(#NN, reason, spec-file:line) | Trace deviates from the model. The cite must reference the *spec* file:line, not the artifact path — the spec is the mutable target. | Write `[GAP: #NN <reason>]` markers at the cited spec locations. The hardest G5 call is distinguishing real IUT bugs from model bugs; when in doubt, return UNSURE. |
+| UNSOUND(#NN, reason, spec-file:line) | Trace deviates from the model. The cite must reference the *spec* file:line, not the artifact path — the spec is the mutable target. | Write `[GAP: #NN <reason>]` markers at the cited spec locations. The hardest G5 call is distinguishing real IUT bugs from model bugs; when attribution is genuinely ambiguous, return ABSTAIN rather than commit to an incorrect story. |
 | ABSTAIN | Critics could not establish attribution (real IUT bug vs. model bug). | Re-dispatch ×3 with the full artifact set (analysis_results.json, ivy_tester.log, IUT log, pcap via tshark). On second ABSTAIN, halt with caveat. |
 
 ### G6 — knowledge-capture (per-session)
@@ -175,6 +175,6 @@ owning ops skill (per the Workflow-specific ABSTAIN routing table above).
 
 | Verdict | Meaning | Routing |
 |---|---|---|
-| SOUND | Repair verified by re-running the failing tool; result matches expected pass shape. | Append `gate_verdict{gate=g8, verdict=SOUND}`; triage workflow terminates; `pending_dispatch(<caller>)` hands back. |
+| SOUND | Repair verified by re-running the failing tool; result matches expected pass shape. | Append `gate_verdict{gate=g8, verdict=SOUND}`; triage workflow terminates; `pending_dispatch(<caller>, reason="post-G8-repair-verified")` hands back. |
 | UNSOUND | Repair verification failed (re-run still produces the original failure or a new failure). | Return to G7 diagnose with the new evidence. |
 | ABSTAIN | Verification result inconclusive (intermittent failure, environmental flake). | Run verification 3× and aggregate; majority result wins. If still ABSTAIN, return with caveat and let user decide. |

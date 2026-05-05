@@ -39,7 +39,11 @@ Active workspace via `ivy_workspace(action="get")`. To set: `ivy_workspace(actio
 
 ## Phase 1.5 — Resume hand-off
 
-Phase 1 read the journal `last_n=20` and the active-workflow YAML. Phase 1.5 decides what to do with what was read. **Four branches**, at most one fires per turn: plan-mode skip → pending_dispatch warm-resume → PROJECT.md warm-resume → G6 knowledge-capture detection → cold start. F8 ordering rationale: workflow-resume turns prioritize the resumed workflow over knowledge capture; both pending_dispatch warm-resume and PROJECT.md warm-resume count as workflow-resumes, so G6 sits *after* both — only cold-start-eligible turns pay the ~90s G6 cost.
+Phase 1 read the journal `last_n=20` and the active-workflow YAML. Phase 1.5 decides what to do with what was read.
+
+**Four branches**, at most one fires per turn: plan-mode skip → pending_dispatch warm-resume → PROJECT.md warm-resume → G6 knowledge-capture detection → cold start.
+
+**F8 ordering rationale:** workflow-resume turns prioritize the resumed workflow over knowledge capture. Both `pending_dispatch` warm-resume and PROJECT.md warm-resume count as workflow-resumes, so G6 sits *after* both — only cold-start-eligible turns pay the ~90s G6 cost.
 
 **Plan-mode skip.** If plan-mode is detected (per `.claude/rules/plan-mode.md` § "Detection signals"), Phase 1.5 is SKIPPED. The orchestrator drops to plan authoring per that rule's 5-step procedure. Writing `workflow_resumed` without a real dispatch would break the consume-pair semantics defined in `.claude/rules/journaling-contract.md` §4.1; the unconsumed `pending_dispatch` survives to the next turn (subject to the 2 h staleness window in `workflow_state.py::is_workflow_stale`).
 
