@@ -24,6 +24,7 @@ def test_parse_g0b_extracts_edit_artifact():
         "tool_response": {"success": True, "summary": "1 line changed"},
     }
     ctx = gh.parse_g0b(hook_input)
+    assert ctx is not None  # narrow Optional[dict] for type-checkers and downstream asserts
     assert ctx["tool_name"] == "Edit"
     assert ctx["artifact"] == "protocol-testing/bgp/bgp.ivy"
     assert "tool_input_digest" in ctx and len(ctx["tool_input_digest"]) > 0
@@ -37,6 +38,7 @@ def test_parse_g0b_extracts_bash_artifact():
         "tool_response": {"output": "5 passed"},
     }
     ctx = gh.parse_g0b(hook_input)
+    assert ctx is not None  # narrow Optional[dict] for type-checkers and downstream asserts
     assert ctx["tool_name"] == "Bash"
     assert ctx["artifact"] == "pytest tests/"
 
