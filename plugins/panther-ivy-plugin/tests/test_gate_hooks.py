@@ -221,7 +221,7 @@ def test_g5_emits_on_iut_test_completion():
         }
         out = _run(
             RUN_GATE,
-            {"tool_name": "ivy_iut_test", "tool_result": tool_result},
+            {"tool_name": "ivy_iut_test", "tool_response": tool_result},
             extra_argv=["--id", "g5"],
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
@@ -238,7 +238,7 @@ def test_g5_silent_on_other_tools():
     with tempfile.TemporaryDirectory() as tmpdir:
         out = _run(
             RUN_GATE,
-            {"tool_name": "ivy_verify", "tool_result": {"status": "OK"}},
+            {"tool_name": "ivy_verify", "tool_response": {"status": "OK"}},
             extra_argv=["--id", "g5"],
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
@@ -253,7 +253,7 @@ def test_g4_emits_on_ivy_verify_completion_during_workflow():
         out = _run(
             RECORD_WORKFLOW_ERROR,
             {"tool_name": "ivy_verify",
-             "tool_result": {"status": "OK", "duration_s": 12.5}},
+             "tool_response": {"status": "OK", "duration_s": 12.5}},
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert out is not None
@@ -271,7 +271,7 @@ def test_g4_silent_when_no_workflow():
         out = _run(
             RECORD_WORKFLOW_ERROR,
             {"tool_name": "ivy_verify",
-             "tool_result": {"status": "OK"}},
+             "tool_response": {"status": "OK"}},
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         assert _is_noop_envelope(out)
@@ -283,7 +283,7 @@ def test_g4_silent_on_other_tools():
         out = _run(
             RECORD_WORKFLOW_ERROR,
             {"tool_name": "ivy_compile",
-             "tool_result": {"status": "OK"}},
+             "tool_response": {"status": "OK"}},
             env_overrides={"IVY_WORKSPACE_ROOT": tmpdir},
         )
         # ivy_compile is in WATCHED_TOOLS but G4 directive is gated on ivy_verify only.

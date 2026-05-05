@@ -82,7 +82,7 @@ def main() -> None:
         emit_noop("PostToolUse", "no active workflow")
         return
 
-    tool_result = hook_input.get("tool_result", "")
+    tool_result = hook_input.get("tool_response", "")
     if isinstance(tool_result, dict):
         tool_result = json.dumps(tool_result)
     elif not isinstance(tool_result, str):

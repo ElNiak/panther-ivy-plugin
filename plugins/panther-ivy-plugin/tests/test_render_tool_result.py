@@ -25,7 +25,7 @@ def run_hook(
     tmp_path: Path | None = None,
 ) -> dict | None:
     """Run the hook with given tool result, return parsed JSON or None."""
-    input_data = json.dumps({"tool_name": tool_name, "tool_output": tool_output})
+    input_data = json.dumps({"tool_name": tool_name, "tool_response": tool_output})
     env = os.environ.copy()
     env["CLAUDE_PLUGIN_ROOT"] = PLUGIN_ROOT
 

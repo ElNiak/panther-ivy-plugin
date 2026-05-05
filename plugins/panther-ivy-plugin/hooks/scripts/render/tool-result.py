@@ -250,7 +250,7 @@ def main():
         emit_noop("PostToolUse", f"unrecognized tool '{tool_name}'")
         return
 
-    tool_output = _parse_output(data.get("tool_output", ""))
+    tool_output = _parse_output(data.get("tool_response", ""))
     if not tool_output:
         emit_noop("PostToolUse", f"{base_tool} produced no parseable output")
         return

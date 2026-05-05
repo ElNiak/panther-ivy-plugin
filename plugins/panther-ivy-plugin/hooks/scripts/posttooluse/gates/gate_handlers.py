@@ -289,7 +289,7 @@ def dispatch_g3(ctx: dict) -> None:
 
 def parse_g5(hook_input: dict) -> Optional[dict]:
     """Extract artifacts from ivy_iut_test tool_result. Return None if tool_result is unparseable."""
-    tool_result = _parse_tool_result(hook_input.get("tool_result"))
+    tool_result = _parse_tool_result(hook_input.get("tool_response"))
     if not tool_result:
         return None
     artifacts = {

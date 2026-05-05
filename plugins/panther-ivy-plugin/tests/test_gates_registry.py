@@ -128,12 +128,12 @@ def test_g5_predicate_gates_missing_output_dir():
     and predicate_g5(ctx) == False (gate blocks dispatch).
     """
     hook_input = {
-        "tool_result": '{"protocol": "quic", "test": "t1", "iut": "picoquic", "run_id": "r1"}'
+        "tool_response": '{"protocol": "quic", "test": "t1", "iut": "picoquic", "run_id": "r1"}'
     }
     ctx = gate_handlers.parse_g5(hook_input)
-    assert ctx is not None, "parse_g5 must succeed when tool_result is parseable"
+    assert ctx is not None, "parse_g5 must succeed when tool_response is parseable"
     assert ctx.get("artifacts", {}).get("output_dir", "") == "", (
-        "output_dir must be empty string when absent from tool_result"
+        "output_dir must be empty string when absent from tool_response"
     )
     assert gate_handlers.predicate_g5(ctx) is False, (
         "predicate_g5 must return False (block dispatch) when output_dir is empty"
