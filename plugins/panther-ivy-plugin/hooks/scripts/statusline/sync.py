@@ -214,8 +214,6 @@ def main() -> None:
     new_payload = {
         "name": yaml_workflow,
         "phase": str(active.get("phase", "init")),
-        "invocation_depth": int(active.get("invocation_depth", 0) or 0),
-        "caller": active.get("caller"),
         "started": active.get("started"),
     }
 

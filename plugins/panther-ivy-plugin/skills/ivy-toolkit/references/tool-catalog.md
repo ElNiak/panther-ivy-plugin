@@ -394,7 +394,7 @@ Manage workflow state files for multi-session tracking.
 
 | Field | Value |
 |-------|-------|
-| Parameters | action (str), workflow (str, None), phase (str, None), protocol (str, None), caller (str, None), invocation_depth (int, 0), state (str/dict, None), event_type (str, None), last_n (int, 20) |
+| Parameters | action (str), workflow (str, None), phase (str, None), protocol (str, None), state (str/dict, None), event_type (str, None), last_n (int, 20) |
 | Returns | { success, action, ... action-specific fields } |
 | Timeout | 10s |
 | Tier | instant |

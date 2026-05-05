@@ -174,8 +174,6 @@ class TestNoOpWhenCacheMatches:
             {
                 "name": "scaffold",
                 "phase": "init",
-                "invocation_depth": 0,
-                "caller": None,
                 "started": "2026-05-02T12:00:00+00:00",
             },
         )

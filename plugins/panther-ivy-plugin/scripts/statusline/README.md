@@ -40,7 +40,7 @@ In rendering order, separated by ` · ` (middle dot):
 | Segment | Format | States |
 |---|---|---|
 | `protocol` | `🐍 bgp` | always present in-workspace |
-| `workflow` | `wf:verify:compile` | `wf:—` when none; prepends caller chain when `invocation_depth > 0` |
+| `workflow` | `wf:refine:compile` | `wf:—` when none |
 | `lsp` | `lsp:ready` / `lsp:idx 12/40` / `lsp:starting` / `lsp:down` | green / yellow / red; dim `?` if cache > 60s old |
 | `mcp` | `mcp:up 34ms` / `mcp:degraded` / `mcp:down ⚠` | green / yellow / red; dim `?` if cache > 60s old |
 | `testfile` | `test:frr_open.ivy` | hidden when no test file is tracked |

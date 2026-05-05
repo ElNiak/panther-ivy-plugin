@@ -55,7 +55,7 @@ statusline_overlay_path() {
 
 # Load all fields from the cache into shell variables. Sets:
 #   STC_WS_PROTOCOL
-#   STC_WF_NAME, STC_WF_PHASE, STC_WF_CALLER, STC_WF_DEPTH
+#   STC_WF_NAME, STC_WF_PHASE
 #   STC_LSP_STATUS, STC_LSP_IDX_DONE, STC_LSP_IDX_TOTAL, STC_LSP_AGE
 #   STC_MCP_STATUS, STC_MCP_LATENCY, STC_MCP_AGE
 #   STC_TESTFILE
@@ -65,7 +65,7 @@ statusline_overlay_path() {
 statusline_cache_load() {
     local cache_file="$1"
     STC_WS_PROTOCOL=""
-    STC_WF_NAME=""; STC_WF_PHASE=""; STC_WF_CALLER=""; STC_WF_DEPTH="0"
+    STC_WF_NAME=""; STC_WF_PHASE=""
     STC_LSP_STATUS=""; STC_LSP_IDX_DONE=""; STC_LSP_IDX_TOTAL=""; STC_LSP_AGE="99999"
     STC_MCP_STATUS=""; STC_MCP_LATENCY=""; STC_MCP_AGE="99999"
     STC_TESTFILE=""
@@ -84,8 +84,6 @@ statusline_cache_load() {
         .workspace.protocol // "",
         (.workflow.name // ""),
         (.workflow.phase // ""),
-        (if (.workflow.caller // null) == null then "" else (.workflow.caller|tostring) end),
-        (.workflow.invocation_depth // 0 | tostring),
         (.lsp.status // ""),
         (if (.lsp.indexing.done // null) == null then "" else (.lsp.indexing.done|tostring) end),
         (if (.lsp.indexing.total // null) == null then "" else (.lsp.indexing.total|tostring) end),
@@ -95,21 +93,19 @@ statusline_cache_load() {
         (.mcp.last_checked_at // ""),
         (.test_file.basename // "")
     ' "$cache_file" 2>/dev/null)
-    [ "${#fields[@]}" -ge 13 ] || return 3
+    [ "${#fields[@]}" -ge 11 ] || return 3
 
     STC_WS_PROTOCOL="${fields[0]}"
     STC_WF_NAME="${fields[1]}"
     STC_WF_PHASE="${fields[2]}"
-    STC_WF_CALLER="${fields[3]}"
-    STC_WF_DEPTH="${fields[4]:-0}"
-    STC_LSP_STATUS="${fields[5]}"
-    STC_LSP_IDX_DONE="${fields[6]}"
-    STC_LSP_IDX_TOTAL="${fields[7]}"
-    local lsp_ts="${fields[8]}"
-    STC_MCP_STATUS="${fields[9]}"
-    STC_MCP_LATENCY="${fields[10]}"
-    local mcp_ts="${fields[11]}"
-    STC_TESTFILE="${fields[12]}"
+    STC_LSP_STATUS="${fields[3]}"
+    STC_LSP_IDX_DONE="${fields[4]}"
+    STC_LSP_IDX_TOTAL="${fields[5]}"
+    local lsp_ts="${fields[6]}"
+    STC_MCP_STATUS="${fields[7]}"
+    STC_MCP_LATENCY="${fields[8]}"
+    local mcp_ts="${fields[9]}"
+    STC_TESTFILE="${fields[10]}"
 
     # Ages via one python call. Bash+macOS `date` can't parse ISO8601 with
     # timezone offsets cleanly, so one python subprocess is cheapest.
@@ -137,7 +133,7 @@ PY
     fi
 
     export STC_WS_PROTOCOL \
-        STC_WF_NAME STC_WF_PHASE STC_WF_CALLER STC_WF_DEPTH \
+        STC_WF_NAME STC_WF_PHASE \
         STC_LSP_STATUS STC_LSP_IDX_DONE STC_LSP_IDX_TOTAL STC_LSP_AGE \
         STC_MCP_STATUS STC_MCP_LATENCY STC_MCP_AGE \
         STC_TESTFILE

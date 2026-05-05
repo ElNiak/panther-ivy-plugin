@@ -62,7 +62,7 @@ write_cache() {
 {
   "version": 1,
   "workspace": {"root": "$FAKE_IVY", "protocol": "bgp", "detected_at": "$now_iso"},
-  "workflow": {"name": "verify", "phase": "compile", "invocation_depth": 0, "caller": null},
+  "workflow": {"name": "verify", "phase": "compile", "started": "2026-01-01T00:00:00+00:00"},
   "mcp": {"status": "up", "pid": 12345, "port": 58123, "last_error": null,
           "last_checked_at": "$now_iso", "latency_ms": 34},
   "lsp": {"status": "ready", "pid": 12346, "indexing": null,
@@ -125,7 +125,7 @@ NOW_ISO="$(iso_offset_now 0)"
 cat > "$SCRATCH/cache-mcp-down.json" <<EOF
 {"version":1,
  "workspace":{"root":"$FAKE_IVY","protocol":"bgp","detected_at":"$NOW_ISO"},
- "workflow":{"name":"workflow-verify","phase":"compile","invocation_depth":0,"caller":null},
+ "workflow":{"name":"workflow-verify","phase":"compile","started":"2026-01-01T00:00:00+00:00"},
  "mcp":{"status":"down","last_error":"notification","last_checked_at":"$NOW_ISO"},
  "lsp":{"status":"ready","last_checked_at":"$NOW_ISO"},
  "test_file":{"basename":"frr_open.ivy"}}
@@ -138,7 +138,7 @@ run_case "mcp down renders red down marker" \
 cat > "$SCRATCH/cache-lsp-indexing.json" <<EOF
 {"version":1,
  "workspace":{"root":"$FAKE_IVY","protocol":"bgp","detected_at":"$NOW_ISO"},
- "workflow":{"name":"workflow-build","phase":"propagate","invocation_depth":0,"caller":null},
+ "workflow":{"name":"workflow-build","phase":"propagate","started":"2026-01-01T00:00:00+00:00"},
  "mcp":{"status":"up","latency_ms":18,"last_checked_at":"$NOW_ISO"},
  "lsp":{"status":"indexing","indexing":{"done":12,"total":40},"last_checked_at":"$NOW_ISO"},
  "test_file":null}
@@ -155,7 +155,7 @@ STALE_ISO="$(iso_offset_now -120)"
 cat > "$SCRATCH/cache-stale.json" <<EOF
 {"version":1,
  "workspace":{"root":"$FAKE_IVY","protocol":"bgp","detected_at":"$NOW_ISO"},
- "workflow":{"name":"workflow-verify","phase":"compile","invocation_depth":0,"caller":null},
+ "workflow":{"name":"workflow-verify","phase":"compile","started":"2026-01-01T00:00:00+00:00"},
  "mcp":{"status":"up","latency_ms":34,"last_checked_at":"$STALE_ISO"},
  "lsp":{"status":"ready","last_checked_at":"$STALE_ISO"},
  "test_file":{"basename":"frr_open.ivy"}}
@@ -203,7 +203,7 @@ echo "# mcp:starting state renders"
 cat > "$SCRATCH/cache-mcp-starting.json" <<EOF
 {"version":1,
  "workspace":{"root":"$FAKE_IVY","protocol":"bgp","detected_at":"$NOW_ISO"},
- "workflow":{"name":"workflow-verify","phase":"compile","invocation_depth":0,"caller":null},
+ "workflow":{"name":"workflow-verify","phase":"compile","started":"2026-01-01T00:00:00+00:00"},
  "mcp":{"status":"starting","last_checked_at":"$NOW_ISO"},
  "lsp":{"status":"ready","last_checked_at":"$NOW_ISO"}}
 EOF

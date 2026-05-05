@@ -78,7 +78,7 @@ def _make_workspace(tmpdir: str, *, workflow: str, phase: str, methodology: str 
     state_dir.mkdir(parents=True)
     with open(state_dir / "active-workflow", "w") as f:
         yaml.safe_dump(
-            {"workflow": workflow, "phase": phase, "invocation_depth": 0,
+            {"workflow": workflow, "phase": phase,
              "started": "2026-01-01T00:00:00+00:00"},
             f,
         )
