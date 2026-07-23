@@ -13,7 +13,7 @@
         "IVY_LSP_DEBUG_LOG": "1",
         "IVY_LSP_MAX_CONCURRENT_TOOLS": "4",
         "IVY_LSP_FAST_INDEX_WORKERS": "4",
-        "IVY_LSP_PARSE_WORKERS": "1",
+        "IVY_LSP_PARSE_WORKERS": "4",
         "IVY_LSP_BULK_WORKERS": "4",
         "IVY_LSP_COMPILE_WORKERS": "2",
         "IVY_LSP_PREWARM_MODEL": "1",
