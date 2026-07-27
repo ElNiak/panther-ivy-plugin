@@ -1,0 +1,28 @@
+{
+  "gate": "g2",
+  "description": "G2 modeling gate fires on PostToolUse when an Edit/Write to a non-test .ivy file completes during an active scaffold workflow.",
+  "should_trigger": [
+    {"prompt": "Add an after init block to bgp_stack/bgp_fsm.ivy initializing all state relations", "expected_tool_match": "Edit|Write on *.ivy"},
+    {"prompt": "Write the new connection-layer file quic_stack/quic_connection.ivy", "expected_tool_match": "Write on *.ivy"},
+    {"prompt": "Insert a require ~present guard at the top of the handle_open action", "expected_tool_match": "Edit on *.ivy"},
+    {"prompt": "Refactor the frame layer to remove the assume true I added yesterday", "expected_tool_match": "Edit on *.ivy"},
+    {"prompt": "Add the missing interpret seconds -> bv[16] declaration", "expected_tool_match": "Edit on *.ivy"},
+    {"prompt": "Create bgp_stack/bgp_open.ivy with the OPEN message type", "expected_tool_match": "Write on *.ivy"},
+    {"prompt": "Add the disjunctive guard for the dual-purpose recv event", "expected_tool_match": "Edit on *.ivy"},
+    {"prompt": "Insert the deser_err handler in the deserializer chain", "expected_tool_match": "Edit on *.ivy"},
+    {"prompt": "Write the entity behavior file ivy_quic_client_behavior.ivy", "expected_tool_match": "Write on *.ivy"},
+    {"prompt": "Add the missing me-scoped action body in the parameterized object", "expected_tool_match": "Edit on *.ivy"}
+  ],
+  "should_not_trigger": [
+    {"prompt": "Update the bgp_test_*.ivy export list", "expected_tool_match": "Edit on *_test_*.ivy → handled by G3, not G2"},
+    {"prompt": "Edit build-state.yaml to mark frame layer complete", "expected_tool_match": "Edit on *.yaml"},
+    {"prompt": "Read quic_packet.ivy and explain it", "expected_tool_match": "Read only — no Write/Edit"},
+    {"prompt": "Run ivy_verify on the BGP test", "expected_tool_match": "MCP tool, not file edit"},
+    {"prompt": "Show the workflow journal entries", "expected_tool_match": "no file write"},
+    {"prompt": "Update the README.md in the protocol directory", "expected_tool_match": "Edit on *.md"},
+    {"prompt": "Edit a Python script in the hooks directory", "expected_tool_match": "Edit on *.py — not *.ivy"},
+    {"prompt": "What does the connection layer do?", "expected_tool_match": "no tool use"},
+    {"prompt": "Format this code snippet for me", "expected_tool_match": "no file write"},
+    {"prompt": "Add a new test case to bgp_server_test_session.ivy", "expected_tool_match": "Edit on *_test_*.ivy → G3"}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "gate": "g0b",
+  "description": "G0b plan-fidelity gate fires on PostToolUse(Edit|Write|Bash|NotebookEdit) when an unpaired plan_approved exists in the journal. Per-action gate, not per-phase — schema uses `expected_state` instead of `expected_phase` (see evals/README.md for divergence rationale).",
+  "should_trigger": [
+    {"prompt": "Edit protocol-testing/bgp/bgp_speaker.ivy line 42", "expected_state": "plan_approved_unpaired"},
+    {"prompt": "Write a new test spec at protocol-testing/quic/quic_test_handshake.ivy", "expected_state": "plan_approved_unpaired"},
+    {"prompt": "Bash: pytest tests/test_bgp_connection.py -v", "expected_state": "plan_approved_unpaired"},
+    {"prompt": "Apply the diff from the plan's first task to bgp_frame.ivy", "expected_state": "plan_approved_unpaired"},
+    {"prompt": "Run the first scaffold step from the approved plan", "expected_state": "plan_approved_unpaired"}
+  ],
+  "should_not_trigger": [
+    {"prompt": "Edit any file (no plan_approved in journal — plan-mode active)", "expected_state": null},
+    {"prompt": "Read the BGP speaker spec to understand it", "expected_state": null},
+    {"prompt": "Edit a second file after G0b already ran (cycle closed)", "expected_state": null},
+    {"prompt": "Edit a file 30 minutes into a G0b cycle (in flight)", "expected_state": null},
+    {"prompt": "List files in the protocol-testing directory", "expected_state": null}
+  ]
+}

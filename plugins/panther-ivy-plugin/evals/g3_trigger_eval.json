@@ -1,0 +1,28 @@
+{
+  "gate": "g3",
+  "description": "G3 test-spec gate fires on PostToolUse when an Edit/Write to a *_test_*.ivy file completes during an active scaffold workflow.",
+  "should_trigger": [
+    {"prompt": "Add the export declaration for handle_update in bgp_server_test_session.ivy", "expected_tool_match": "Edit on *_test_*.ivy"},
+    {"prompt": "Write a new test spec quic_client_test_handshake.ivy that exports the relevant actions", "expected_tool_match": "Write on *_test_*.ivy"},
+    {"prompt": "Add the _finalize block that requires all-streams-closed at the end of bgp_server_test_session.ivy", "expected_tool_match": "Edit on *_test_*.ivy"},
+    {"prompt": "Update the test spec to add error-path exports for malformed frames", "expected_tool_match": "Edit on *_test_*.ivy"},
+    {"prompt": "Author quic_mim_test_versionnegotiation.ivy", "expected_tool_match": "Write on *_test_*.ivy"},
+    {"prompt": "Append the NSCT timer breakpoint to bgp_server_test_keepalive.ivy", "expected_tool_match": "Edit on *_test_*.ivy"},
+    {"prompt": "Insert the require connected guard in the test spec's before block on send", "expected_tool_match": "Edit on *_test_*.ivy"},
+    {"prompt": "Add the bidirectional generate+receive coverage to bgp_client_test_open.ivy", "expected_tool_match": "Edit on *_test_*.ivy"},
+    {"prompt": "Write quic_server_test_close.ivy with terminal-state checks", "expected_tool_match": "Write on *_test_*.ivy"},
+    {"prompt": "Edit the test spec to bind requirement rfc9000:13.2 to an exported action", "expected_tool_match": "Edit on *_test_*.ivy"}
+  ],
+  "should_not_trigger": [
+    {"prompt": "Edit the layer file bgp_stack/bgp_open.ivy to add a require", "expected_tool_match": "Edit on *.ivy (non-test) → G2"},
+    {"prompt": "Update the requirement manifest YAML", "expected_tool_match": "Edit on *.yaml"},
+    {"prompt": "Read the existing test spec", "expected_tool_match": "Read only"},
+    {"prompt": "Run ivy_compile on the test", "expected_tool_match": "MCP tool, not file edit"},
+    {"prompt": "Show the coverage matrix", "expected_tool_match": "no file write"},
+    {"prompt": "Create a new behavior file under bgp_entities/", "expected_tool_match": "Edit on *.ivy (non-test) → G2"},
+    {"prompt": "Format the build-state.yaml", "expected_tool_match": "Edit on *.yaml"},
+    {"prompt": "Update a docs/ file", "expected_tool_match": "Edit on *.md"},
+    {"prompt": "Edit the Python hook script for routing", "expected_tool_match": "Edit on *.py"},
+    {"prompt": "Restart the MCP server", "expected_tool_match": "Bash, not file edit"}
+  ]
+}

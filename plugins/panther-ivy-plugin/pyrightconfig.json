@@ -1,0 +1,21 @@
+{
+  "include": [
+    "hooks/scripts",
+    "tests",
+    "scripts"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.pre-commit-cache",
+    ".backup"
+  ],
+  "extraPaths": [
+    "hooks/scripts"
+  ],
+  "pythonVersion": "3.10",
+  "reportMissingImports": "warning",
+  "reportAttributeAccessIssue": "warning",
+  "reportPrivateUsage": "none",
+  "reportMissingTypeArgument": "none",
+  "reportUnusedImport": "warning"
+}

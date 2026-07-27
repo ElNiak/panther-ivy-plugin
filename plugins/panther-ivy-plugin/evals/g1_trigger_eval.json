@@ -1,0 +1,28 @@
+{
+  "gate": "g1",
+  "description": "G1 exploration gate fires on UserPromptSubmit when scaffold workflow is in phase 'blueprint-done'.",
+  "should_trigger": [
+    {"prompt": "I just finished the blueprint, are all RFC MUST clauses in scope?", "expected_phase": "blueprint-done"},
+    {"prompt": "Audit this blueprint for completeness", "expected_phase": "blueprint-done"},
+    {"prompt": "Is this layer decomposition sound?", "expected_phase": "blueprint-done"},
+    {"prompt": "Continue — verify the blueprint before we start writing layers", "expected_phase": "blueprint-done"},
+    {"prompt": "What's next? The build-state shows blueprint-done.", "expected_phase": "blueprint-done"},
+    {"prompt": "Run the gate before Phase 3.", "expected_phase": "blueprint-done"},
+    {"prompt": "Are there any unresolved blockers from a prior session?", "expected_phase": "blueprint-done"},
+    {"prompt": "Methodology is NACT — does the blueprint enumerate attacker roles?", "expected_phase": "blueprint-done"},
+    {"prompt": "Check the blueprint against RFC 4271 before we proceed", "expected_phase": "blueprint-done"},
+    {"prompt": "Is this blueprint complete — are all MUSTs covered?", "expected_phase": "blueprint-done"}
+  ],
+  "should_not_trigger": [
+    {"prompt": "Format this YAML file please", "expected_phase": null},
+    {"prompt": "Open quic_frame.ivy", "expected_phase": null},
+    {"prompt": "Run ivy_verify on the BGP test", "expected_phase": null},
+    {"prompt": "What does the connection layer do?", "expected_phase": null},
+    {"prompt": "Continue writing the next layer", "expected_phase": "scoped"},
+    {"prompt": "Show me the workflow journal", "expected_phase": null},
+    {"prompt": "What MCP tools are available?", "expected_phase": null},
+    {"prompt": "Help me understand NCT methodology", "expected_phase": null},
+    {"prompt": "Restart the LSP server", "expected_phase": null},
+    {"prompt": "Compile the test spec", "expected_phase": "compile"}
+  ]
+}

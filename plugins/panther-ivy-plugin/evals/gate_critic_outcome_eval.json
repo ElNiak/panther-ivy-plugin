@@ -1,0 +1,74 @@
+{
+  "eval": "gate_critic_outcome",
+  "description": "Extends g{1..5}_trigger_eval.json by recording the post-refactor gate-firing paths: which critic agent each adversarial gate dispatches, how many parallel votes are spawned (asymmetric), where in the workflow the dispatch fires, and which cross-cutting skills the gate's verdict cites for evidence. Post-refactor: G2/G4 cite verification-failures (replacing the old ivy-error-patterns); G3/G4/G5 each dispatch g-fidelity-critic x3 inline. This eval pairs with g{1..5}_trigger_eval.json (which only graded trigger-phrase matching) to give the full gate contract.",
+  "gates": {
+    "g1": {
+      "expected_critic": "g-plan-critic",
+      "dispatch_count": 3,
+      "dispatch_locus": "scaffold-ops Phase 2 (blueprint-done)",
+      "references_skills": [
+        "specification-patterns",
+        "methodology",
+        "ivy-syntax"
+      ]
+    },
+    "g2": {
+      "expected_critic": "g-fidelity-critic",
+      "dispatch_count": 3,
+      "dispatch_locus": "scaffold-ops Phase 3 modeling-gate (per H ARD-GATE)",
+      "references_skills": [
+        "verification-failures",
+        "ivy-syntax",
+        "specification-patterns"
+      ]
+    },
+    "g3": {
+      "expected_critic": "g-fidelity-critic",
+      "dispatch_count": 3,
+      "dispatch_locus": "scaffold-ops Phase 3 test-spec gate (per H ARD-GATE) — inline with G2",
+      "references_skills": [
+        "verification-failures",
+        "ivy-syntax",
+        "propagation-patterns"
+      ]
+    },
+    "g4": {
+      "expected_critic": "g-fidelity-critic",
+      "dispatch_count": 3,
+      "dispatch_locus": "refine-ops Phase 4 verification-gate — inline post ivy_verify",
+      "references_skills": [
+        "verification-failures",
+        "ivy-syntax",
+        "ivy-toolkit"
+      ]
+    },
+    "g5": {
+      "expected_critic": "g-fidelity-critic",
+      "dispatch_count": 3,
+      "dispatch_locus": "review-ops Phase 4 trace-analysis-gate — inline post traceability extraction",
+      "references_skills": [
+        "verification-failures",
+        "specification-patterns",
+        "methodology"
+      ]
+    },
+    "g7": {
+      "expected_critic": "g-fidelity-critic",
+      "dispatch_count": 3,
+      "dispatch_locus": "triage-ops Phase 2 — inline post-diagnose, pre-fix (vets root-cause claim before user-confirmation prompt)",
+      "references_skills": [
+        "ivy-toolkit"
+      ],
+      "verbatim_prompt_template": "skills/ivy/references/critic_prompts/g7_triage_diag.md"
+    },
+    "g8": {
+      "expected_critic": "g-fidelity-critic",
+      "dispatch_count": 3,
+      "dispatch_locus": "triage-ops Phase 3 Step 3 — inline post-fix, pre-return (vets post-fix indicators before reporting recovery)",
+      "references_skills": [
+        "ivy-toolkit"
+      ],
+      "verbatim_prompt_template": "skills/ivy/references/critic_prompts/g8_triage_verify.md"
+    }
+  }
+}

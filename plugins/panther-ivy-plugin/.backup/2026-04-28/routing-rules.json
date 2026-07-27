@@ -1,0 +1,58 @@
+{
+  "_comment": "Authoritative routing table for panther-ivy-plugin. The README's Workflow Routing section points at this file; do not maintain a parallel table in README.md. Runtime consumer: hooks/scripts/route-user-prompt.py on UserPromptSubmit.",
+  "_comment_control_flow": "This file is one of three coexisting control-flow mechanisms (routing-rules.json + in-skill Skill() + pending_dispatch journal events). Each owns a unique capability; none is redundant. See skills/workflow-navigate/references/control-flow.md for the lifecycle diagram, decision table, and the audit conclusion that no entry here is safe to drop.",
+  "workflows": {
+    "workflow-verify": {
+      "keywords": ["verify", "check", "test", "pass", "fail", "debug", "counterexample", "invariant violation", "ivy_check", "ivy_verify", "compile error", "verification", "unsatisfied", "safety property", "is this sound", "real verify", "adversarial check", "interpret this counterexample", "audit verification", "false sound", "spurious pass"],
+      "intentPatterns": ["(does|did|will).*pass", "(why|what).*fail", "run.*test", "\\bfix\\b.*\\.(ivy)\\b", "error.*(line|ivy)", "check.*spec", "is\\s+this\\s+(actually\\s+)?sound", "did.*verify.*for.*right.*reason", "interpret.*(this\\s+)?counterexample", "(model|IUT)\\s+bug"],
+      "fileTriggers": ["*.ivy"],
+      "priority": "high"
+    },
+    "workflow-build": {
+      "keywords": ["build", "scaffold", "create", "model", "add pattern", "propagate", "new spec", "write spec", "add layer", "new protocol", "implement", "extend", "audit this layer", "audit this blueprint", "is this blueprint complete", "gate this layer"],
+      "intentPatterns": ["(create|build|write|design|implement|start).*?(model|spec|protocol|layer)", "(add|implement).*?(layer|pattern|frame|type|action)", "RFC\\s*\\d+.*model", "audit.*(layer|blueprint|model)", "is\\s+this\\s+(layer|blueprint|test\\s*spec)\\s+(sound|complete)"],
+      "fileTriggers": ["*.ivy"],
+      "priority": "medium"
+    },
+    "workflow-review": {
+      "keywords": ["review", "audit", "coverage", "RFC gaps", "quality", "traceability", "requirement", "manifest", "how much"],
+      "intentPatterns": ["(how much|what).*cover", "(check|audit|review).*?(quality|coverage|model)", "RFC.*coverage", "requirement.*map"],
+      "fileTriggers": [],
+      "priority": "medium"
+    },
+    "workflow-triage": {
+      "keywords": ["health", "broken", "tool error", "connection error", "MCP", "LSP", "server down", "not working", "not connected", "tool not found", "mcp__"],
+      "intentPatterns": ["(why|what).*(broken|error|crash|down)", "tool.*not found", "server.*not.*ready"],
+      "fileTriggers": [],
+      "priority": "critical"
+    },
+    "workflow-navigate": {
+      "keywords": ["what next", "where was I", "what should I", "confused", "help me decide", "which workflow", "how to start"],
+      "intentPatterns": ["(what|where).*(next|start|do)", "^(bgp|quic|coap|minip)$"],
+      "fileTriggers": [],
+      "priority": "low"
+    },
+    "meta-plugin-self-mod": {
+      "_comment": "Activates the 3-agent loop (implementer + spec-reviewer + plugin-conventions-reviewer) when modifying panther-ivy-plugin source. Scoped via fileTriggers to plugin paths only; does not fire on Ivy spec edits.",
+      "keywords": ["modify plugin", "edit skill", "edit agent", "edit hook", "plugin convention", "skill-conventions"],
+      "intentPatterns": ["(modify|edit|update|refactor).*(skill|agent|hook|rule|command|output-style)", "(audit|review).*plugin.*(source|conventions)"],
+      "fileTriggers": [
+        "skills/**/SKILL.md",
+        "skills/**/references/**/*.md",
+        "agents/**/*.md",
+        "hooks/**/*",
+        ".claude/rules/**/*.md",
+        "commands/**/*.md",
+        "output-styles/**/*.md",
+        "styles/**/*.md",
+        "routing-rules.json"
+      ],
+      "priority": "high"
+    }
+  },
+  "learning_injection": {
+    "keywords": ["teach", "explain", "how does", "what is NCT", "what is NACT", "methodology", "learn", "how do I", "what are"],
+    "intentPatterns": ["(teach|explain|how does|what is).*?(NCT|NACT|NSCT|ivy|formal|protocol testing)", "how.*(write|create).*ivy"],
+    "knowledge_skills": ["methodology", "ivy-toolkit", "ivy-syntax"]
+  }
+}

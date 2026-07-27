@@ -1,0 +1,22 @@
+{
+  "ivy": {
+    "command": "bash",
+    "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/start-ivy-server.sh", "--mode", "lsp"],
+    "extensionToLanguage": {
+      ".ivy": "ivy"
+    },
+    "env": {
+      "IVY_LSP_LOG_LEVEL": "${user_config.log_level}",
+      "IVY_LSP_ACTIVITY_LEVEL": "file",
+      "IVY_LSP_FAST_INDEX_WORKERS": "8",
+      "IVY_LSP_PARSE_WORKERS": "8",
+      "IVY_LSP_BULK_WORKERS": "6",
+      "IVY_LSP_COMPILE_WORKERS": "2",
+      "IVY_MCP_PORT": "19847",
+      "IVY_LSP_DEBUG_LOG": "1",
+      "IVY_LSP_DEBOUNCE_DELAY": "0.15",
+      "IVY_LSP_FORCE_REINSTALL": "${IVY_LSP_FORCE_REINSTALL:-0}",
+      "IVY_LSP_WORKSPACE_HINT": "${PWD}/panther/plugins/services/testers/panther_ivy"
+    }
+  }
+}

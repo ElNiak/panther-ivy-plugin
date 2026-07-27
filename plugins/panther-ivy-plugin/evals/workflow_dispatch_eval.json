@@ -1,0 +1,186 @@
+{
+  "eval": "workflow_dispatch",
+  "description": "Grades the panther-ivy-plugin:ivy orchestrator's journal final-entry shape (event, gate_status, evidence_paths_count_min) for each input prompt. Does NOT grade which specialist agent name was spawned — agent-name selection is internal to the orchestrator and may evolve. The journal final-entry contract is the stable observable. Cases mix verify (4) / build (4) / review (3) / triage (2) / meta (2) intents.",
+  "cases": [
+    {
+      "case": "verify a clean BGP layer",
+      "input": "verify protocol-testing/bgp/bgp_stack/bgp_connection.ivy",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "verify_complete",
+          "gate_status": "SOUND",
+          "evidence_paths_count_min": 1
+        }
+      }
+    },
+    {
+      "case": "diagnose a counterexample on the BGP open layer",
+      "input": "ivy_verify reported invariant conn_established failed at line 45 — diagnose",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "verify_complete",
+          "gate_status": "UNSOUND",
+          "evidence_paths_count_min": 2
+        }
+      }
+    },
+    {
+      "case": "verify with a compile error in the layer",
+      "input": "ivy_compile failed: parse error in bgp_open_message.ivy:88",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "verify_complete",
+          "gate_status": "ABSTAIN",
+          "evidence_paths_count_min": 1
+        }
+      }
+    },
+    {
+      "case": "verify reaches G4 SOUND on the BGP keepalive layer",
+      "input": "run G4 verification-gate against bgp_keepalive_message.ivy",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "verify_complete",
+          "gate_status": "SOUND",
+          "evidence_paths_count_min": 3
+        }
+      }
+    },
+    {
+      "case": "scaffold a new layer for BGP UPDATE",
+      "input": "scaffold a new bgp_update_message.ivy layer following the 14-layer template",
+      "fixture": "protocol-testing/bgp/bgp_stack/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "build_complete",
+          "gate_status": "NOT_APPLICABLE",
+          "evidence_paths_count_min": 1
+        }
+      }
+    },
+    {
+      "case": "extend the BGP open layer with new optional parameters",
+      "input": "extend bgp_open_message.ivy with capability advertisement type 65",
+      "fixture": "protocol-testing/bgp/bgp_stack/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "build_complete",
+          "gate_status": "SOUND",
+          "evidence_paths_count_min": 2
+        }
+      }
+    },
+    {
+      "case": "G2 modeling-gate fires SOUND after RFC-aware modeling",
+      "input": "run G2 modeling-gate against the new bgp_path_attribute layer",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "build_complete",
+          "gate_status": "SOUND",
+          "evidence_paths_count_min": 3
+        }
+      }
+    },
+    {
+      "case": "G3 test-spec gate fires SOUND with three g-fidelity-critic dispatches",
+      "input": "G3 test-spec gate on bgp_keepalive_test.ivy",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "build_complete",
+          "gate_status": "SOUND",
+          "evidence_paths_count_min": 3
+        }
+      }
+    },
+    {
+      "case": "coverage audit on a clean BGP layer",
+      "input": "what RFC 4271 MUSTs are covered by bgp_stack/?",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "review_complete",
+          "gate_status": "SOUND",
+          "evidence_paths_count_min": 2
+        }
+      }
+    },
+    {
+      "case": "review surfaces UNSOUND quality gate verdict",
+      "input": "audit bgp_stack/ — quality and traceability",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "review_complete",
+          "gate_status": "UNSOUND",
+          "evidence_paths_count_min": 2
+        }
+      }
+    },
+    {
+      "case": "traceability extraction from RFC 4271 Section 4.2",
+      "input": "extract requirements from RFC 4271 Section 4.2 OPEN message",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "review_complete",
+          "gate_status": "SOUND",
+          "evidence_paths_count_min": 1
+        }
+      }
+    },
+    {
+      "case": "triage MCP timeout during ivy_status",
+      "input": "ivy_status is timing out — what's wrong with the MCP server",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "triage_complete",
+          "gate_status": "NOT_APPLICABLE",
+          "evidence_paths_count_min": 1
+        }
+      }
+    },
+    {
+      "case": "triage waits for LSP indexing to finish",
+      "input": "the LSP indexer is busy — when can I run ivy_verify",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "triage_complete",
+          "gate_status": "NOT_APPLICABLE",
+          "evidence_paths_count_min": 1
+        }
+      }
+    },
+    {
+      "case": "meta edit to a plugin skill body",
+      "input": "edit skills/ivy/SKILL.md to clarify Phase 1 routing",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "meta_complete",
+          "gate_status": "SOUND",
+          "evidence_paths_count_min": 1
+        }
+      }
+    },
+    {
+      "case": "meta edit to a plugin agent frontmatter",
+      "input": "update agents/ivy-refiner-agent.md frontmatter to include the verification-failures skill reference",
+      "fixture": "tests/fixtures/bgp-clean-layer/",
+      "expected": {
+        "journal_final_entry": {
+          "event": "meta_complete",
+          "gate_status": "SOUND",
+          "evidence_paths_count_min": 1
+        }
+      }
+    }
+  ]
+}

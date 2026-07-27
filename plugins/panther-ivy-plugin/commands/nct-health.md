@@ -1,99 +1,31 @@
 ---
 name: nct-health
-description: Run a health check sequence for the Ivy LSP + MCP integration
+description: "Run the full 9-step Ivy LSP + MCP diagnostic runbook (content validation + phase reviews)"
 arguments: []
 ---
 
-Run a comprehensive health check of the Ivy LSP and MCP integration stack, reporting PASS/FAIL for each step.
+<purpose>
+Run the deep 9-step health-check runbook for the Ivy LSP + MCP
+integration stack by dispatching the ivy-triage-agent for the full
+9-step diagnostic. The runbook lives in the agent's preloaded
+`triage-ops` operating procedure (`skills/triage-ops/references/`).
+For quick preflight liveness checks, dispatch the agent with a
+preflight intent instead.
+</purpose>
 
-## Instructions
+<journal-note>
+Per `.claude/rules/journaling-contract.md` §1, this command writes the
+journal via the underlying `triage-ops` skill (the agent invokes it).
+The terminal-state HARD-GATE in contract §5 binds the dispatched agent.
+</journal-note>
 
-Run the following 7 checks in order. For each check, record PASS or FAIL with a short detail message. If a check fails, continue with the remaining checks (do not abort early).
+<metadata mode="FAST" orchestrator="false" workspace-aware="false"/>
 
-### Step 1: LSP process alive
-
-Run via Bash:
-```
-pgrep -f ivy_lsp
-```
-
-- If exit code is 0 and PIDs are returned: **PASS** -- report the PID(s).
-- If exit code is non-zero or no output: **FAIL** -- "No ivy_lsp process found."
-
-### Step 2: LSP log health
-
-Run via Bash:
-```
-tail -20 /tmp/ivy-lsp.log
-```
-
-- If the file does not exist: **FAIL** -- "Log file /tmp/ivy-lsp.log not found."
-- If the last 20 lines contain `CRITICAL` or `Traceback` or `crash`: **FAIL** -- quote the relevant line(s).
-- Otherwise: **PASS** -- "No critical errors in recent log entries."
-
-### Step 3: LSP responding
-
-Use the IDE LSP tool (`mcp__ide__getDiagnostics` or equivalent) to request `documentSymbol` on any `.ivy` file in the workspace. If no `.ivy` file is known, use `Glob` to find one first (e.g., `**/*.ivy`).
-
-- If the LSP returns a symbol list (even empty): **PASS** -- report the number of symbols.
-- If the LSP times out or returns an error: **FAIL** -- report the error message.
-
-### Step 4: MCP server alive
-
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_capabilities` with no arguments.
-
-- If the tool returns a JSON result with capabilities listed: **PASS** -- report the number of capabilities.
-- If the tool errors or times out: **FAIL** -- report the error.
-
-### Step 5: Workspace access
-
-Use `Glob` to find any `.ivy` file in the workspace. Then call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_lint` with:
-- `relative_path`: the path to the found `.ivy` file
-
-- If the tool returns a result (even with diagnostics): **PASS** -- report the file and diagnostic count.
-- If no `.ivy` files exist in the workspace: **FAIL** -- "No .ivy files found in workspace."
-- If the tool errors: **FAIL** -- report the error.
-
-### Step 6: Model builds
-
-Call `mcp__plugin_panther-ivy-plugin_ivy-tools__ivy_coverage` with `mode=stats` to test that the model analysis pipeline works.
-
-- If the tool returns stats or coverage data: **PASS** -- report a summary (e.g., number of requirements, coverage percentage).
-- If the tool errors: **FAIL** -- report the error.
-
-### Step 7: Cross-file resolution
-
-Use the IDE LSP `goToDefinition` on a known symbol in an `.ivy` file. If no symbol is known, pick one from the symbol list obtained in Step 3.
-
-- If the LSP returns a definition location (file + line): **PASS** -- report the target location.
-- If the LSP returns no results or errors: **FAIL** -- report the issue.
-
-## Result Presentation
-
-Present the final results in this format:
+<dispatch target="ivy-triage-agent" via="agent" mode="full-health-check"
+          reason="/nct-health — deep 9-step health-check runbook"/>
 
 ```
-## Ivy LSP + MCP Health Check
-
-| # | Check                    | Status | Details                          |
-|---|--------------------------|--------|----------------------------------|
-| 1 | LSP process alive        | PASS   | PID 12345                        |
-| 2 | LSP log health           | PASS   | No critical errors               |
-| 3 | LSP responding           | PASS   | 42 symbols returned              |
-| 4 | MCP server alive         | PASS   | 12 capabilities                  |
-| 5 | Workspace access         | PASS   | quic_types.ivy -- 0 diagnostics  |
-| 6 | Model builds             | PASS   | 15 requirements, 80% coverage    |
-| 7 | Cross-file resolution    | PASS   | quic_frame.ivy:34                |
-
-**Overall: 7/7 PASS**
+Agent(subagent_type="panther-ivy-plugin:ivy-triage-agent",
+      description="Full 9-step Ivy LSP + MCP health check",
+      prompt="Run the full 9-step Ivy LSP + MCP health-check runbook (full-health-check mode). Walk through every diagnostic step, report PASS/FAIL/WARN per step, and flag any repair actions that require user confirmation. Return under 800 words; JSON output per <output_schema>.")
 ```
-
-If any checks fail, add a `### Suggested Actions` section at the end:
-
-- If Step 1 fails: "Start the Ivy LSP server. Check if `ivy_lsp` is installed and in PATH."
-- If Step 2 fails: "Inspect `/tmp/ivy-lsp.log` for crash details. Consider restarting the LSP."
-- If Step 3 fails: "The LSP process may be running but unresponsive. Try restarting it."
-- If Step 4 fails: "The MCP server is not reachable. Check the plugin configuration in `.claude/plugins.json`."
-- If Step 5 fails: "Ensure `.ivy` files exist in the workspace and the MCP server has read access."
-- If Step 6 fails: "Model analysis failed. This may indicate a missing or corrupt protocol model."
-- If Step 7 fails: "Cross-file resolution is not working. The LSP index may need rebuilding."

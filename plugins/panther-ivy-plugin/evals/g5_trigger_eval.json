@@ -1,0 +1,28 @@
+{
+  "gate": "g5",
+  "description": "G5 trace-analysis gate fires on PostToolUse when ivy_iut_test completes (any verdict).",
+  "should_trigger": [
+    {"prompt": "Run the IUT test against frr_bgp", "expected_tool_match": "ivy_iut_test"},
+    {"prompt": "ivy_iut_test(protocol='quic', test_name='quic_server_test_handshake', iut_name='picoquic')", "expected_tool_match": "ivy_iut_test"},
+    {"prompt": "Drive the BGP session-establishment test against the FRR implementation", "expected_tool_match": "ivy_iut_test"},
+    {"prompt": "Run quic_client_test_versionnegotiation against aioquic", "expected_tool_match": "ivy_iut_test"},
+    {"prompt": "Test the bgp_keepalive scenario against frr_bgp v9.1.0", "expected_tool_match": "ivy_iut_test"},
+    {"prompt": "Execute the IUT test", "expected_tool_match": "ivy_iut_test"},
+    {"prompt": "Run the malicious-client scenario against the IUT", "expected_tool_match": "ivy_iut_test"},
+    {"prompt": "Drive the formal model against the implementation under test", "expected_tool_match": "ivy_iut_test"},
+    {"prompt": "Re-run the bgp test with the updated spec", "expected_tool_match": "ivy_iut_test"},
+    {"prompt": "Run the panther IUT pipeline for the QUIC handshake test", "expected_tool_match": "ivy_iut_test"}
+  ],
+  "should_not_trigger": [
+    {"prompt": "Run ivy_verify on the test spec", "expected_tool_match": "ivy_verify → G4, not G5"},
+    {"prompt": "Compile the test binary", "expected_tool_match": "ivy_compile"},
+    {"prompt": "Show the run summary from a prior ivy_iut_test invocation", "expected_tool_match": "Read of analysis_results.json"},
+    {"prompt": "Open the ivy_tester.log from a previous run", "expected_tool_match": "Read"},
+    {"prompt": "Inspect the pcap with tshark", "expected_tool_match": "Bash (tshark)"},
+    {"prompt": "List available IUT plugins", "expected_tool_match": "Bash ls"},
+    {"prompt": "Show the workflow journal", "expected_tool_match": "ivy_workflow_state"},
+    {"prompt": "What is NCT methodology?", "expected_tool_match": "no tool"},
+    {"prompt": "Edit the spec to add a require", "expected_tool_match": "Edit on *.ivy → G2"},
+    {"prompt": "Run ivy_diagnostics(mode='dashboard')", "expected_tool_match": "ivy_diagnostics"}
+  ]
+}

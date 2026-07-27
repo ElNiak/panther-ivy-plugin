@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+pytest-of-*/
+**/.panther-ivy/
+**/.backup/
+docs/

@@ -8,31 +8,8 @@
   },
   "plugins": [
     {
-      "name": "ivy-lsp",
-      "description": "Ivy language server for code intelligence, diagnostics, and navigation in .ivy formal specification files",
-      "version": "0.4.0",
-      "author": {
-        "name": "ElNiak",
-        "email": "elniak@github.com"
-      },
-      "source": "./plugins/ivy-lsp",
-      "category": "development",
-      "homepage": "https://github.com/ElNiak/ivy-lsp",
-      "strict": false,
-      "lspServers": {
-        "ivy": {
-          "command": "bash",
-          "args": ["-c", "uvx --from 'git+https://github.com/ElNiak/ivy-lsp' --with z3-solver ivy_lsp 2>>/tmp/ivy-lsp.log"],
-          "extensionToLanguage": {
-            ".ivy": "ivy"
-          }
-        }
-      }
-    },
-    {
       "name": "panther-ivy-plugin",
       "description": "NCT/NACT/NSCT methodology guidance for Ivy protocol testing via ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.",
-      "version": "0.4.0",
       "author": {
         "name": "ElNiak",
         "email": "elniak@github.com"

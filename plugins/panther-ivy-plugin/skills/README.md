@@ -2,110 +2,95 @@
 
 ## Overview
 
-- 6 skills providing domain knowledge for Ivy protocol testing within the PANTHER framework
-- Skills are surfaced automatically by Claude Code when trigger patterns in the user's query match a skill's `description` frontmatter
-- They provide **reference material** (language guides, workflow steps, tool catalogs); agents and commands provide interactive workflows and execution
+Skills provide reference material and operating procedures for Ivy protocol testing within the PANTHER framework. Post-Phase-2 of the bloat audit, the plugin uses an **orchestrator + specialist-agent** layout. The 14 skills under this directory split into three roles:
 
-## Skill Catalog
+- **Orchestrator (1)** — `ivy/` is the single user-invocable entry point. It routes user intent to a specialist agent or answers knowledge questions inline by reading a knowledge skill on demand.
+- **Ops skills (6)** — `scaffold-ops/`, `refine-ops/`, `experiment-ops/`, `review-ops/`, `triage-ops/`, `meta-self-mod-ops/` carry the operating procedures for the mode-first NCT pipeline (scaffold → refine → experiment → review). They are preloaded into their owning specialist agent via the agent's `skills:` frontmatter chain at spawn time and are not user-invocable directly.
+- **Knowledge skills (7)** — `apt-attack-patterns/`, `ivy-toolkit/`, `ivy-syntax/`, `methodology/`, `propagation-patterns/`, `specification-patterns/`, `verification-failures/` carry on-demand reference material loaded by the orchestrator and by specialist agents.
 
-### Methodology
+Specialist execution happens in six sibling agent files under `agents/` (`ivy-builder-agent`, `ivy-refiner-agent`, `ivy-experimenter-agent`, `ivy-reviewer-agent`, `ivy-triage-agent`, `ivy-meta-agent`). Three gate-critic agents (`g-plan-critic`, `g-fidelity-critic`, `g-knowledge-critic`) live alongside them. Agents are documented in `agents/README.md`; this file indexes the skills only.
 
-| Skill | Description |
-|-------|-------------|
-| [methodology-reference](methodology-reference/) | Complete reference for NCT (compositional testing), NACT (attack testing), and NSCT (simulation testing) methodologies |
+## Runtime composition (at a glance)
 
-### Specification Writing
+A user prompt becomes a workflow run via three layered control-flow steps. The full dispatch contract lives in `ivy/SKILL.md` (the orchestrator's "Dispatch" sections); the diagram below summarises it.
 
-| Skill | Description |
-|-------|-------------|
-| [specification-patterns](specification-patterns/) | 14-layer structural template and formal model pattern library (variants, serdes, shims, monitors, entities, modules) |
-| [ivy-writing-guide](ivy-writing-guide/) | Ivy language syntax, declaration types, module system, test spec patterns, and RFC bracket-tag annotations |
+```dot
+digraph plugin_runtime {
+  rankdir=LR;
+  node [shape=box, style=rounded, fontsize=10];
 
-### Tooling
+  start    [label="SessionStart\n(workspace/detect.py\n+ prompt/using-plugin.py)"];
+  prompt   [label="UserPromptSubmit", style="rounded,filled", fillcolor="#e3f2fd"];
+  ivy      [label="ivy orchestrator\n(intent routing, knowledge\nQ&A, active-workflow YAML)"];
+  agents   [label="specialist agents\n(refiner, experimenter, builder,\nreviewer, triage, meta)\n+ preloaded *-ops skills",
+            style="rounded,filled", fillcolor="#fff3e0"];
+  critics  [label="gate critics\n(g-plan-critic,\ng-fidelity-critic,\ng-knowledge-critic)"];
+  hooks    [label="PostToolUse adversarial gates\nG2/G3/G4/G5 (assess-*.py)"];
+  handoff  [label="append_pending_dispatch(target)\n+ clear active-workflow",
+            style="rounded,filled", fillcolor="#f3e5f5"];
 
-| Skill | Description |
-|-------|-------------|
-| [tooling-reference](tooling-reference/) | Complete tool catalog: LSP operations, 15 MCP tools (consolidated with mode dispatch), Claude native tools, and coordination workflows |
-| [ivy-lsp-walkthrough](ivy-lsp-walkthrough/) | End-to-end example of LSP + MCP coordination on the QUIC specification |
+  start    -> prompt;
+  prompt   -> ivy;
+  ivy      -> agents  [label="Agent(subagent_type=...)"];
+  ivy      -> critics [label="Agent(critic) ×3 parallel"];
+  agents   -> hooks   [style=dotted, label="tool result"];
+  hooks    -> critics [style=dashed];
+  agents   -> handoff [label="phase done"];
+  handoff  -> prompt  [label="next turn"];
+}
+```
 
-### Workflow
+The three layers each own a unique capability: the ivy orchestrator (intent classification + same-turn routing), `Agent(subagent_type=...)` dispatch (forked-context specialist execution, agent owns its `*-ops` operating procedure), and `pending_dispatch` (turn-boundary-surviving async hand-off recorded in the workflow journal). For the rule that specialist agents never invoke each other directly — they always return to the orchestrator first — see each agent file's `<role>` and the orchestrator's `## Dispatch` section.
 
-| Skill | Description |
-|-------|-------------|
-| [workflow-reference](workflow-reference/) | Verification workflows, RFC-to-Ivy mapping, quality gate pipeline, and debugging strategies |
+## Reading order for new contributors
 
-## Learning Paths
+1. **`ivy/SKILL.md`** — the orchestrator. Iron-law primer, methodology routing (NCT/NACT/NSCT), workspace control, dispatch tables for specialist agents and gate critics, post-dispatch sample-verify gate, and the knowledge-question routing table. Read this first; everything else is reached through it.
+2. **`.claude/rules/iron-laws.md`** — the four laws (`NO_FIX_WITHOUT_VERIFY`, `NO_LAYER_WITHOUT_SCAFFOLD`, `NO_QUALITY_WITHOUT_COVERAGE`, `STALENESS_RULE`) cited by every ops skill.
+3. **One ops skill that interests you** (`scaffold-ops`, `refine-ops`, `experiment-ops`, `review-ops`, `triage-ops`, or `meta-self-mod-ops`) plus its owning agent file under `../agents/` — read them as a pair, since the agent file owns the capability contract and the ops skill owns the procedure.
+4. **The knowledge skills cited by that ops skill's phase headers** (e.g. `refine-ops` cites `verification-failures` and `ivy-toolkit`; `experiment-ops` cites `apt-attack-patterns` for NACT and `ivy-toolkit`).
 
-### Path A: New to Ivy Protocol Testing
+## Orchestrator (1)
 
-1. **methodology-reference** -- NCT approach, role inversion, 10-step workflow
-2. **specification-patterns** -- 14-layer template, pattern library, scaffolding
-3. **ivy-writing-guide** -- Ivy syntax, test specs, RFC annotations
-4. **workflow-reference** -- Verification, debugging, quality gates
+| Skill | Type | Iron laws bound | Dispatches | Purpose |
+|-------|------|-----------------|------------|---------|
+| [ivy](ivy/) | rigid | all four (delegates enforcement to specialist agents) | `ivy-{builder,refiner,experimenter,reviewer,triage,meta}-agent`; `g-{plan,fidelity,knowledge}-critic` | Single session entry point — detect intent, run the iron-law primer, set the active-workflow YAML, dispatch the matching specialist agent or read a knowledge skill inline. Owns the post-dispatch sample-verify gate. |
 
-### Path B: Security Testing with NACT
+## Ops Skills (6)
 
-1. **methodology-reference** -- NACT section: APT 6-stage lifecycle, attack entities
-2. **ivy-writing-guide** -- Writing attack monitors with RFC bracket tags
-3. **workflow-reference** -- Verification of attack model consistency
+Operating procedures preloaded into a specialist agent via the agent's `skills:` frontmatter. Each `*-ops` skill is the procedure body for one mode of the NCT pipeline; the agent file under `../agents/` owns the capability contract (tools, model tier, `<dispatch-context>` schema, output schema). Not user-invocable.
 
-### Path C: Understanding the Tooling
+| Skill | Type | Iron laws bound | Preloaded into | Purpose |
+|-------|------|-----------------|----------------|---------|
+| [scaffold-ops](scaffold-ops/) | rigid | `NO_LAYER_WITHOUT_SCAFFOLD`, `STALENESS_RULE` | `ivy-builder-agent` | Scaffold and extend protocol models (NCT 14-layer template, NACT 6-stage attack template, NSCT simulation), propagate field/variant changes across layers. NCT phases 2-7. |
+| [refine-ops](refine-ops/) | rigid | `NO_FIX_WITHOUT_VERIFY`, `STALENESS_RULE` | `ivy-refiner-agent` | Compile, run `ivy_verify`, dispatch G4 inline, interpret counterexamples, drive the Phase 7 fix loop under attempt-counter cap. NCT phases 8-9. |
+| [experiment-ops](experiment-ops/) | rigid | `STALENESS_RULE` | `ivy-experimenter-agent` | Configure and run IUT experiments (panther run / ivy_iut_test), collect logs/pcap, dispatch G5 inline, apply the 9-step trace analysis, classify outcome. NCT phase 10. |
+| [review-ops](review-ops/) | rigid | `NO_QUALITY_WITHOUT_COVERAGE`, `STALENESS_RULE` | `ivy-reviewer-agent` | Audit RFC coverage, extract requirement manifests, score model quality, analyse IUT traces. |
+| [triage-ops](triage-ops/) | rigid | (none — diagnostic) | `ivy-triage-agent` | 9-step MCP / LSP / Serena health-check runbook and repair flow. |
+| [meta-self-mod-ops](meta-self-mod-ops/) | rigid | (none — editorial) | `ivy-meta-agent` | Plugin source modification flow (skills, agents, hooks, `.claude/rules/`, commands, output-styles) with self-audit against plugin conventions. |
 
-1. **tooling-reference** -- Architecture (LSP + MCP + native), 15 consolidated tools, coordination workflows
-2. **ivy-lsp-walkthrough** -- Concrete end-to-end example
-3. **workflow-reference** -- Verify-debug-fix cycle
+## Knowledge Skills (7)
 
-## Skill Details
+On-demand reference material. Loaded by the orchestrator (for "explain X" prompts) or by a specialist agent through its `skills:` frontmatter chain. Flexible (not rigid) — they answer questions, they do not run procedures.
 
-### methodology-reference
-- **Category**: Methodology
-- **Purpose**: Complete reference for all three PANTHER methodologies: NCT (compositional testing with role inversion), NACT (APT 6-stage lifecycle security testing), and NSCT (Shadow NS simulation testing). Covers the 10-step NCT workflow, attack entity roles, and Shadow NS configuration.
-- **Related commands**: `/nct-check`, `/nct-compile`, `/nct-scaffold`
+| Skill | Type | Loaded by | Purpose |
+|-------|------|-----------|---------|
+| [apt-attack-patterns](apt-attack-patterns/) | flexible | `ivy-reviewer-agent`; `ivy-builder-agent` (NACT methodology); `ivy` orchestrator (knowledge questions) | APT 6-stage attack lifecycle, attacker entities, around-block monitor patterns. |
+| [ivy-toolkit](ivy-toolkit/) | flexible | `ivy-{refiner,experimenter,builder,reviewer,triage}-agent`; `ivy` orchestrator (knowledge questions) | MCP tool catalogue (18 ivy-tools tools + Serena), parameter matrix, mode map, selection guide. |
+| [ivy-syntax](ivy-syntax/) | flexible | `ivy-refiner-agent`; `ivy-builder-agent`; `ivy` orchestrator (knowledge questions) | Ivy 1.7 syntax reference, module system, RFC annotation conventions, test-spec patterns. |
+| [methodology](methodology/) | flexible | `ivy` orchestrator (NCT/NACT/NSCT selection and knowledge questions) | NCT (compliance) / NACT (security) / NSCT (simulation) selection and workflow guidance, 14-layer template overview. |
+| [propagation-patterns](propagation-patterns/) | flexible | `ivy-builder-agent` (on type change in scaffold-ops); `ivy` orchestrator (knowledge questions) | Field/variant propagation patterns across stack/entities/shims/utils with Ivy-to-C++ encoding tables. |
+| [specification-patterns](specification-patterns/) | flexible | `ivy-builder-agent` (layer scaffolding in scaffold-ops); `ivy` orchestrator (knowledge questions) | 14-layer structural template reference and formal-model pattern scaffolding. |
+| [verification-failures](verification-failures/) | flexible | `ivy-refiner-agent` (diagnose phase in refine-ops); `ivy-reviewer-agent` (contested findings); G4 / G5 gate critics; `ivy` orchestrator (knowledge questions) | Numbered verifier-pattern catalogue (#100–#599), counterexample interpretation, claim-resolution gate. |
 
-### specification-patterns
-- **Category**: Specification Writing
-- **Purpose**: 14-layer structural template for protocol decomposition plus the formal model pattern library (variants, serdes, shims, monitors, entities, modules). Includes dependency graphs, minimal viable sets, scaffolding order, and composition rules.
-- **Related commands**: `/nct-scaffold`, `/nct-add-pattern`
+## Cross-cutting content (no longer discrete skills)
 
-### ivy-writing-guide
-- **Category**: Specification Writing
-- **Purpose**: Ivy language syntax reference, test specification patterns (includes, exports, before/after, `_finalize`), and RFC bracket-tag annotation guide for traceability.
+The four `cross-cutting-*` skills that existed pre-F.1 were graduated into the surfaces that needed them, so there is no separate "cross-cutting" tier in the new layout:
 
-### tooling-reference
-- **Category**: Tooling
-- **Purpose**: Authoritative tool catalog for the 15 consolidated MCP tools (with mode/view/detail dispatch), LSP operations, and Claude native tools. Includes coordination workflows and enforcement rules.
+- **Completion gate** (5-step IDENTIFY → RUN → READ → VERIFY → THEN-claim) — split between `.claude/rules/iron-laws.md` (binding statements) and each agent file's `## Completion gate` section (per-role enforcement). The orchestrator also keeps the gate as `ivy/references/completion-gate.md` for inline reference at claim time.
+- **Knowledge capture** — graduated into the `g-knowledge-critic` agent (G6 adversarial gate), dispatched by the orchestrator at session end via the Knowledge Gate.
+- **Parallel dispatch** — graduated into `.claude/rules/agent-dispatch.md` and into the orchestrator's `references/parallel-dispatch.md`.
+- **Reflection patterns** — inlined into agent bodies; there is no replacement skill.
 
-### ivy-lsp-walkthrough
-- **Category**: Tooling
-- **Purpose**: End-to-end walkthrough: adding rfc9000:7.3 to the QUIC spec using LSP for navigation and MCP for analysis/verification.
+## Naming convention
 
-### workflow-reference
-- **Category**: Workflow
-- **Purpose**: RFC-to-Ivy mapping patterns, verification workflows, quality gate pipeline, and debugging strategies.
-
-## Skills vs Agents vs Commands
-
-| Concept | Purpose | Invocation | Interaction |
-|---------|---------|------------|-------------|
-| **Skill** | Provides reference material and domain knowledge; surfaced automatically when trigger patterns match | Automatic (Claude Code matches user query to skill `description` frontmatter) | Passive -- informs the LLM's response with knowledge |
-| **Agent** | Executes a multi-step interactive workflow using MCP tools and user input | `@agent-name` or selected by Claude Code when a task matches | Active -- calls tools, asks questions, produces artifacts |
-| **Command** | Runs a single focused operation (verify, compile, scaffold) | `/command-name [args]` | Active -- executes one action and returns results |
-
-### Available Agents (4)
-
-| Agent | Purpose |
-|-------|---------|
-| model-reviewer | Reviews Ivy model files for quality, correctness, and best practices |
-| methodology-guide | Interactive guide for NCT, NACT, and NSCT methodologies |
-| spec-analyst | Navigates, explores, verifies, and diagnoses Ivy protocol specifications |
-| traceability-agent | Extracts RFC requirements, creates manifests, and audits coverage |
-
-### Available Commands (5)
-
-| Command | Purpose |
-|---------|---------|
-| `/nct-add-pattern` | Add a formal model pattern to an existing protocol specification |
-| `/nct-check` | Run formal verification (`ivy_check`) on an Ivy file |
-| `/nct-compile` | Compile an Ivy file to a test executable (`ivyc`) |
-| `/nct-model-info` | Display model structure (`ivy_show`) |
-| `/nct-scaffold` | Scaffold a new protocol model or test specification |
+Skills use the **flat-with-prefix layout** — each skill lives at `skills/<name>/SKILL.md` with `name: <name>` matching the leaf directory. The 2026-04-27 audit confirmed empirically that nested layouts with slash-named skills (`skills/<category>/<name>/` with `name: <category>/<name>`) are not registered by the Claude Code harness, so the plugin encodes the orchestrator/ops/knowledge taxonomy by directory name suffix (`-ops`) and by description rather than by nesting. See `.claude/rules/skill-conventions.md` for the canonical rule.

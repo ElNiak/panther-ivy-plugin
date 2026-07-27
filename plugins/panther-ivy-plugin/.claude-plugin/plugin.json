@@ -1,9 +1,57 @@
 {
   "name": "panther-ivy-plugin",
-  "description": "NCT/NACT/NSCT methodology guidance for Ivy protocol testing via ivy-tools MCP server. Provides agents, skills, and commands for formal protocol specification, attack modeling, and simulation-based testing using the 14-layer template architecture.",
-  "version": "0.4.0",
+  "description": "Ivy formal protocol tester. LSP + MCP servers, NCT/NACT/NSCT methodology, and 14-layer templates for writing, compiling, verifying, and running protocol specs against real implementations.",
+  "version": "0.11.0",
   "author": {
     "name": "ElNiak",
     "email": "elniak@github.com"
+  },
+  "repository": "https://github.com/ElNiak/panther-ivy-plugin",
+  "license": "MIT",
+  "keywords": ["ivy", "formal-verification", "protocol-testing", "panther", "interactive"],
+  "homepage": "https://github.com/ElNiak/panther-ivy-plugin",
+  "userConfig": {
+    "log_level": {
+      "title": "Log Level",
+      "type": "string",
+      "description": "Ivy LSP/MCP log verbosity (DEBUG, INFO, WARN, ERROR)",
+      "default": "DEBUG",
+      "sensitive": false
+    },
+    "enable_serena": {
+      "title": "Enable Serena",
+      "type": "boolean",
+      "description": "Enable the Serena MCP server for semantic code intelligence (requires panther-serena submodule)",
+      "default": false,
+      "sensitive": false
+    },
+    "force_reinstall": {
+      "title": "Force Reinstall",
+      "type": "boolean",
+      "description": "Force uvx to reinstall ivy-lsp on every server start (use when modifying local ivy-lsp source)",
+      "default": false,
+      "sensitive": false
+    },
+    "observability_enabled": {
+      "title": "Enable Observability",
+      "type": "boolean",
+      "description": "Enable observability event logging to JSONL files (true/false)",
+      "default": true,
+      "sensitive": false
+    },
+    "statusline_mode": {
+      "title": "Statusline Mode",
+      "type": "string",
+      "description": "How the plugin statusline composes with the global statusline: ivy-only | minimal | full-delegate | suppress-overlaps (default)",
+      "default": "suppress-overlaps",
+      "sensitive": false
+    },
+    "statusline_debug": {
+      "title": "Statusline Debug",
+      "type": "boolean",
+      "description": "Log statusline render errors to ~/.claude/panther-ivy-plugin/logs/statusline.log",
+      "default": false,
+      "sensitive": false
+    }
   }
 }

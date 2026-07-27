@@ -91,8 +91,8 @@ class TestHooksJson:
 
     def test_script_paths_reference_existing_files(self, plugin_root):
         """Every hook command references a script via
-        ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.sh -- verify those files
-        exist relative to the plugin root."""
+        ``${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.{py,sh}`` — verify those
+        files exist relative to the plugin root."""
         data = json.loads(
             (plugin_root / "hooks" / "hooks.json").read_text()
         )
@@ -102,17 +102,18 @@ class TestHooksJson:
                 for hook in hooks_list:
                     command = hook.get("command", "")
                     # Extract the script path from the command template
-                    # Format: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.sh"
+                    # Format: "<interpreter> ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/<name>.<ext>"
+                    # where interpreter is "python3" for .py and "bash" for .sh.
                     if "${CLAUDE_PLUGIN_ROOT}" in command:
-                        relative = command.split("${CLAUDE_PLUGIN_ROOT}/", 1)[1]
+                        relative = command.split("${CLAUDE_PLUGIN_ROOT}/", 1)[1].split()[0]
                         script_path = plugin_root / relative
                         assert script_path.is_file(), (
                             f"Hook script not found: {script_path} "
                             f"(referenced in {event_name} hook)"
                         )
 
-    def test_hooks_have_type_and_command(self, plugin_root):
-        """Each hook entry must have 'type' and 'command' fields."""
+    def test_hooks_have_type_and_command_or_prompt(self, plugin_root):
+        """Each hook entry must have 'type' and either 'command' or 'prompt'."""
         data = json.loads(
             (plugin_root / "hooks" / "hooks.json").read_text()
         )
@@ -122,18 +123,25 @@ class TestHooksJson:
                     assert "type" in hook, (
                         f"Hook in {event_name} missing 'type' field"
                     )
-                    assert "command" in hook, (
-                        f"Hook in {event_name} missing 'command' field"
-                    )
+                    if hook["type"] == "prompt":
+                        assert "prompt" in hook, (
+                            f"Prompt hook in {event_name} missing 'prompt' field"
+                        )
+                    else:
+                        assert "command" in hook, (
+                            f"Hook in {event_name} missing 'command' field"
+                        )
 
     def test_hooks_have_timeout(self, plugin_root):
-        """Each hook entry should have a 'timeout' field."""
+        """Each command hook entry should have a 'timeout' field."""
         data = json.loads(
             (plugin_root / "hooks" / "hooks.json").read_text()
         )
         for event_name, entries in data["hooks"].items():
             for entry in entries:
                 for hook in entry.get("hooks", []):
+                    if hook.get("type") == "prompt":
+                        continue  # Prompt hooks don't need timeouts
                     assert "timeout" in hook, (
                         f"Hook in {event_name} missing 'timeout' field"
                     )
@@ -181,12 +189,12 @@ class TestMcpJson:
 
 
 # ===================================================================
-# Sibling .lsp.json
+# .lsp.json (unified plugin)
 # ===================================================================
 
 
 class TestLspJson:
-    """Validate the sibling ivy-lsp/.lsp.json configuration."""
+    """Validate the .lsp.json configuration in the unified plugin."""
 
     def test_lsp_json_exists(self, ivy_lsp_root):
         path = ivy_lsp_root / ".lsp.json"

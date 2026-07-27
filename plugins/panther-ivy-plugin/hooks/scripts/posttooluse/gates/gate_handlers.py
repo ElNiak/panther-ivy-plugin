@@ -1,0 +1,550 @@
+#!/usr/bin/env python3
+"""Per-gate handler functions for the parametric G-gate runner.
+
+Each gate (g2, g3, g5) provides three handlers — `parse_<id>`,
+`predicate_<id>`, `dispatch_<id>` — referenced from the GATES
+registry in `registry.py` and orchestrated by `run-gate.py`. Handlers
+communicate via a single `ctx` dict the runner threads through:
+
+    run-gate: tool_name in watched_tools  →  parse_<id>(hook_input) → ctx
+                                          →  predicate_<id>(ctx)
+                                          →  workflow gate (if workflow_required)
+                                          →  set ctx["protocol_dir"] + ctx["workflow_ctx"]
+                                          →  dispatch_<id>(ctx)
+
+Each `dispatch_<id>` owns the per-gate `additionalContext` directive,
+the `gate_dispatched` journal payload shape, and the user-visible T2
+`systemMessage`. Bodies are lifted (where possible) from the pre-PR3
+dispatchers (`g2-modeling.py`, `g3-testspec.py`, `g5-trace.py`) so the
+existing test assertions on the directive prose and journal payloads
+continue to hold.
+
+Why dispatch is one function per gate (not parameterized):
+- G2/G3 systemMessage prefixes differ (`[G2 modeling gate]` vs
+  `[G3 test-spec gate]`); G5 uses `run_id` instead of basename.
+- G2 payload includes `layer`; G3 omits it; G5 nests an `artifacts`
+  dict.
+- G5's directive embeds `must NOT invoke ivy_iut_test`, the others
+  do not.
+- Workflow-context resolution differs: G2/G3 read it from
+  `WorkflowContext.current()` (set by the runner into ctx); G5
+  reads it from `get_active_workflow(protocol_dir)` because
+  `ivy_iut_test` invocations have no `WorkflowContext.current()`.
+
+The discipline tests (`test_hook_output_discipline.py`,
+`test_observability_write_discipline.py`) AST-scan each
+state-writing hook for an f-string `systemMessage` that matches T2
+(`"... appended to journal at <path>"`) and a `journal_path(...)`
+call. Each `dispatch_<id>` below contains both, satisfying the
+discipline.
+"""
+
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Optional
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from lib.hook_utils import emit_hook_output
+from lib.workflow_state import (
+    append_journal_event,
+    get_active_workflow,
+    get_scaffold_state_safe,
+    journal_path,
+)
+
+
+# ---------------------------------------------------------------- helpers
+
+
+def _is_layer_file(file_path: str) -> bool:
+    """True for .ivy files that are NOT test specs."""
+    if not file_path.endswith(".ivy"):
+        return False
+    name = os.path.basename(file_path)
+    return "_test_" not in name and not name.endswith("_test.ivy")
+
+
+def _is_test_spec(file_path: str) -> bool:
+    """True for .ivy files that are test specs (name contains `_test_` or ends `_test.ivy`)."""
+    if not file_path.endswith(".ivy"):
+        return False
+    name = os.path.basename(file_path)
+    return "_test_" in name or name.endswith("_test.ivy")
+
+
+def _resolve_layer_from_scaffold_state(
+    file_path: str,
+    scaffold_state: "dict[str, Any] | None",
+) -> Optional[str]:
+    """Resolve layer name from scaffold-state.yaml `layers` map, if available."""
+    if not scaffold_state:
+        return None
+    layers = scaffold_state.get("layers") or {}
+    target = os.path.basename(file_path)
+    for name, entry in layers.items():
+        if isinstance(entry, dict) and os.path.basename(entry.get("file", "")) == target:
+            return name
+    return None
+
+
+def _parse_tool_result(raw: object) -> "dict[str, Any] | None":
+    """Parse a tool_result into a dict, whether it is already a dict or a JSON string."""
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            return parsed if isinstance(parsed, dict) else None
+        except (ValueError, TypeError):
+            return None
+    return None
+
+
+def _resolve_workflow_phase(
+    workflow_ctx: object,
+    protocol_dir: Optional[str],
+) -> "tuple[str | None, str | None]":
+    """Resolve (workflow, phase) from ctx['workflow_ctx'] or active-workflow YAML."""
+    if workflow_ctx is not None:
+        return workflow_ctx.workflow, workflow_ctx.phase  # type: ignore[attr-defined]
+    if protocol_dir:
+        state = get_active_workflow(protocol_dir) or {}
+        return state.get("workflow"), state.get("phase")
+    return None, None
+
+
+# ---------------------------------------------------------------- G2 (modeling)
+
+
+def parse_g2(hook_input: dict) -> Optional[dict]:
+    """Extract the file path under audit. Return None if missing."""
+    tool_input = hook_input.get("tool_input", {}) or {}
+    file_path = tool_input.get("file_path", "")
+    if not file_path:
+        return None
+    return {"file_path": file_path}
+
+
+def predicate_g2(ctx: dict) -> bool:
+    """G2 fires only on layer files (excludes test specs)."""
+    return _is_layer_file(ctx["file_path"])
+
+
+def dispatch_g2(ctx: dict) -> None:
+    """Build payload + directive, append journal, emit hook output (T2 systemMessage)."""
+    file_path = ctx["file_path"]
+    protocol_dir = ctx.get("protocol_dir") or ""
+    workflow_ctx = ctx.get("workflow_ctx")
+
+    scaffold_state = (get_scaffold_state_safe(protocol_dir) or {}) if protocol_dir else {}
+    protocol = (
+        scaffold_state.get("protocol")
+        or (os.path.basename(protocol_dir.rstrip("/")) if protocol_dir else "<unknown>")
+    )
+    methodology = scaffold_state.get("methodology")
+    layer_name = _resolve_layer_from_scaffold_state(file_path, scaffold_state)
+
+    if protocol_dir:
+        workflow, phase = _resolve_workflow_phase(workflow_ctx, protocol_dir)
+        append_journal_event(
+            protocol_dir,
+            event_type="gate_dispatched",
+            payload={
+                "gate": "g2",
+                "trigger": "run-gate.py --id g2",
+                "artifact": file_path,
+                "layer": layer_name,
+                "methodology": methodology,
+            },
+            workflow=workflow,
+            phase=phase,
+        )
+
+    layer_line = (
+        f"- Layer (from scaffold-state.yaml): {layer_name}"
+        if layer_name
+        else "- Layer: unknown — not resolved from scaffold-state.yaml"
+    )
+    methodology_line = (
+        f"- Methodology: {methodology}"
+        if methodology
+        else "- Methodology: unknown (NACT/NSCT overlays not applied)"
+    )
+    nsct_note = ""
+    if methodology == "nsct":
+        nsct_note = "\n  - NSCT active: include catalog range #260-289 in the slice."
+
+    directive = (
+        "[G2 modeling gate] An .ivy layer file has been written while the `scaffold` workflow is active. "
+        "Dispatch the G2 modeling gate before proceeding to the next layer.\n\n"
+        f"Artifact under audit: `{file_path}` (protocol: {protocol}).\n"
+        f"{layer_line}\n"
+        f"{methodology_line}{nsct_note}\n\n"
+        "To dispatch:\n"
+        "1. Read the G2 verbatim critic template at `skills/ivy/references/critic_prompts/g2_modeling.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
+        "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #200-249 + #250-299 (+ #260-289 if NSCT).\n"
+        "4. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
+        "5. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only — never let a critic edit the file).\n"
+        "6. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
+        "7. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the scaffold-overlay format.\n\n"
+        "Do not proceed to the next layer until each `[GAP:]` is either resolved or deliberately promoted to `// DEFERRED YYYY-MM-DD: …`."
+    )
+
+    suffix = (
+        f"; gate_dispatched appended to journal at {journal_path(protocol_dir)}"
+        if protocol_dir
+        else ""
+    )
+    emit_hook_output(
+        "PostToolUse",
+        system_message=f"[G2 modeling gate] dispatched on {os.path.basename(file_path)}{suffix}",
+        additional_context=directive,
+    )
+
+
+# ---------------------------------------------------------------- G3 (test-spec)
+
+
+def parse_g3(hook_input: dict) -> Optional[dict]:
+    """Extract the test-spec file path under audit. Return None if missing."""
+    tool_input = hook_input.get("tool_input", {}) or {}
+    file_path = tool_input.get("file_path", "")
+    if not file_path:
+        return None
+    return {"file_path": file_path}
+
+
+def predicate_g3(ctx: dict) -> bool:
+    """G3 fires only on test-spec files."""
+    return _is_test_spec(ctx["file_path"])
+
+
+def dispatch_g3(ctx: dict) -> None:
+    """Build payload + directive, append journal, emit hook output (T2 systemMessage)."""
+    file_path = ctx["file_path"]
+    protocol_dir = ctx.get("protocol_dir") or ""
+    workflow_ctx = ctx.get("workflow_ctx")
+
+    scaffold_state = (get_scaffold_state_safe(protocol_dir) or {}) if protocol_dir else {}
+    protocol = (
+        scaffold_state.get("protocol")
+        or (os.path.basename(protocol_dir.rstrip("/")) if protocol_dir else "<unknown>")
+    )
+    methodology = scaffold_state.get("methodology")
+
+    if protocol_dir:
+        workflow, phase = _resolve_workflow_phase(workflow_ctx, protocol_dir)
+        append_journal_event(
+            protocol_dir,
+            event_type="gate_dispatched",
+            payload={
+                "gate": "g3",
+                "trigger": "run-gate.py --id g3",
+                "artifact": file_path,
+                "methodology": methodology,
+            },
+            workflow=workflow,
+            phase=phase,
+        )
+
+    methodology_line = f"- Methodology: {methodology}" if methodology else "- Methodology: unknown"
+    nsct_note = ""
+    if methodology == "nsct":
+        nsct_note = "\n  - NSCT active: NSCT-specific test-spec patterns are limited; apply base catalog slice only."
+
+    directive = (
+        "[G3 test-spec gate] A `*_test_*.ivy` file has been written while the `scaffold` workflow is active. "
+        "Dispatch the G3 test-spec gate before running `ivy_compile` / `ivy_verify`.\n\n"
+        f"Artifact under audit: `{file_path}` (protocol: {protocol}).\n"
+        f"{methodology_line}{nsct_note}\n\n"
+        "To dispatch:\n"
+        "1. Read the G3 verbatim critic template at `skills/ivy/references/critic_prompts/g3_testspec.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
+        "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #200-208 + #256-259 + #300-399.\n"
+        "4. Before spawning critics, gather inputs the template expects: the test file contents, the RFC requirement manifest (typically `{protocol}_requirements.yaml`), and the output of `ivy_coverage(mode=\"matrix\", test_file=<file_path>)`.\n"
+        "5. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
+        "6. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited file:line locations per `.claude/rules/gap-markers.md` (orchestrator only).\n"
+        "7. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
+        "8. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the scaffold-overlay format.\n\n"
+        "A test spec that looks clean but silently fails to cover a MUST requirement or over-constrains the generator is the exact failure mode G3 exists to catch — read the coverage matrix carefully."
+    )
+
+    suffix = (
+        f"; gate_dispatched appended to journal at {journal_path(protocol_dir)}"
+        if protocol_dir
+        else ""
+    )
+    emit_hook_output(
+        "PostToolUse",
+        system_message=f"[G3 test-spec gate] dispatched on {os.path.basename(file_path)}{suffix}",
+        additional_context=directive,
+    )
+
+
+# ---------------------------------------------------------------- G5 (trace-analysis)
+
+
+def parse_g5(hook_input: dict) -> Optional[dict]:
+    """Extract artifacts from ivy_iut_test tool_result. Return None if tool_result is unparseable."""
+    tool_result = _parse_tool_result(hook_input.get("tool_response"))
+    if not tool_result:
+        return None
+    artifacts = {
+        "output_dir": tool_result.get("output_dir", ""),
+        "logs_path": tool_result.get("logs_path", ""),
+        "pcap_path": tool_result.get("pcap_path", ""),
+        "ivy_trace_path": tool_result.get("ivy_trace_path", ""),
+        "protocol": tool_result.get("protocol", ""),
+        "test": tool_result.get("test", ""),
+        "iut": tool_result.get("iut", ""),
+        "run_id": tool_result.get("run_id", ""),
+        "summary": tool_result.get("summary", {}),
+    }
+    return {"artifacts": artifacts}
+
+
+def predicate_g5(ctx: dict) -> bool:
+    """G5 fires when output_dir is present in artifacts.
+
+    parse_g5 only checks structural shape (is tool_result parseable?);
+    predicate_g5 owns the gate condition (output_dir non-empty).
+    """
+    return bool(ctx.get("artifacts", {}).get("output_dir"))
+
+
+def dispatch_g5(ctx: dict) -> None:
+    """Build payload + directive, append journal, emit hook output (T2 systemMessage)."""
+    artifacts = ctx["artifacts"]
+    protocol_dir = ctx.get("protocol_dir") or ""
+    workflow_ctx = ctx.get("workflow_ctx")  # always None for G5 (no workflow_required)
+
+    scaffold_state = (get_scaffold_state_safe(protocol_dir) or {}) if protocol_dir else {}
+    methodology = scaffold_state.get("methodology")
+
+    if protocol_dir:
+        workflow, phase = _resolve_workflow_phase(workflow_ctx, protocol_dir)
+        append_journal_event(
+            protocol_dir,
+            event_type="gate_dispatched",
+            payload={
+                "gate": "g5",
+                "trigger": "run-gate.py --id g5",
+                "artifacts": {k: v for k, v in artifacts.items() if k != "summary"},
+                "methodology": methodology,
+            },
+            workflow=workflow,
+            phase=phase,
+        )
+
+    output_dir = artifacts.get("output_dir", "<unknown>")
+    logs_path = artifacts.get("logs_path", "<unknown>")
+    pcap_path = artifacts.get("pcap_path", "<unknown>")
+    ivy_trace_path = artifacts.get("ivy_trace_path", "<unknown>")
+    protocol = artifacts.get("protocol", "<unknown>")
+    test = artifacts.get("test", "<unknown>")
+    iut = artifacts.get("iut", "<unknown>")
+    run_id = artifacts.get("run_id", "<unknown>")
+    test_passed = artifacts.get("summary", {}).get("test_passed", "<unknown>")
+
+    methodology_line = f"- Methodology: {methodology}" if methodology else "- Methodology: unknown"
+    nsct_note = ""
+    if methodology == "nsct":
+        nsct_note = "\n  - NSCT active: include catalog range #560-589 (replay/syscall) in the slice."
+
+    directive = (
+        f"[G5 trace-analysis gate] An `ivy_iut_test` run has completed ({protocol}/{test} against {iut}, run_id={run_id}, test_passed={test_passed}). "
+        "Dispatch the G5 trace-analysis gate before accepting the run's verdict as ground truth.\n\n"
+        "Artifact paths:\n"
+        f"- `output_dir`: {output_dir}\n"
+        f"- `logs_path`: {logs_path}\n"
+        f"- `pcap_path`: {pcap_path}\n"
+        f"- `ivy_trace_path`: {ivy_trace_path}\n"
+        f"{methodology_line}{nsct_note}\n\n"
+        "To dispatch:\n"
+        "1. Read the G5 verbatim critic template at `skills/ivy/references/critic_prompts/g5_trace.md` (your preloaded `verification-failures` skill provides the catalog).\n"
+        "2. Apply the Adversarial Quality Gates discipline-layer rules: verbatim spawn prompts, dual context isolation, asymmetric vote (Sonnet × 5 default: 4 SOUND / 2 UNSOUND / pigeonhole exit), calibrated abstention.\n"
+        "3. Each critic loads the `verification-failures` skill to access the numbered catalog and applies only ID ranges #100-107 + #500-559 (+ #560-589 if NSCT).\n"
+        "4. CRITICAL constraint: critics must read the run output directory in the mandatory order (analysis_results.json → compile log if compilation suspect → ivy_tester.log → IUT log → pcaps via tshark). They must NOT invoke `ivy_iut_test` themselves — spawning a new run is forbidden.\n"
+        "5. Aggregate verdicts into VERDICT_SOUND / VERDICT_UNSOUND / VERDICT_ABSTAIN.\n"
+        "6. On VERDICT_UNSOUND, write `[GAP: #NN <reason>]` markers at the cited spec file:line locations (not at artifact paths — the spec is the mutable target) per `.claude/rules/gap-markers.md`.\n"
+        "7. Append a `gate_verdict` event to the workflow journal via `ivy_workflow_state(action=\"append_journal\", event_type=\"gate_verdict\", payload={...})`.\n"
+        "8. Render the verdict block per `styles/tool-renderers/ivy_verdict.md` in the verify-overlay format.\n\n"
+        "The hardest G5 call is distinguishing a real IUT bug from a model bug misattributed to the IUT. When in doubt about attribution, critics return UNSURE rather than bless an incorrect story."
+    )
+
+    suffix = (
+        f"; gate_dispatched appended to journal at {journal_path(protocol_dir)}"
+        if protocol_dir
+        else ""
+    )
+    emit_hook_output(
+        "PostToolUse",
+        system_message=f"[G5 trace-analysis gate] dispatched on run_id={run_id}{suffix}",
+        additional_context=directive,
+    )
+
+
+# ---------------------------------------------------------------- G0b (plan-fidelity)
+
+
+def parse_g0b(hook_input: dict) -> Optional[dict]:
+    """Extract the action's artifact + tool_result_excerpt for the G0b critic prompt."""
+    tool_name = hook_input.get("tool_name", "")
+    tool_input = hook_input.get("tool_input", {}) or {}
+    tool_response = hook_input.get("tool_response", {}) or {}
+
+    # Extract artifact: file_path for Edit/Write/NotebookEdit; command for Bash.
+    artifact = tool_input.get("file_path") or tool_input.get("command", "")
+    if not artifact:
+        return None
+
+    # Hash tool_input for a stable digest the critic can correlate against the plan.
+    import hashlib as _hashlib
+    digest_body = f"{tool_name}|{artifact}|{tool_input}"
+    tool_input_digest = _hashlib.sha256(digest_body.encode("utf-8")).hexdigest()[:16]
+
+    # tool_response shape varies per tool; render a short string excerpt.
+    if isinstance(tool_response, dict):
+        excerpt_src = tool_response.get("output") or tool_response.get("summary") or str(tool_response)
+    else:
+        excerpt_src = str(tool_response)
+    tool_result_excerpt = excerpt_src[:200] if excerpt_src else ""
+
+    return {
+        "tool_name": tool_name,
+        "artifact": artifact,
+        "tool_input_digest": tool_input_digest,
+        "tool_result_excerpt": tool_result_excerpt,
+    }
+
+
+from datetime import datetime, timedelta, timezone
+
+
+def _now_iso() -> str:
+    """Indirection for testability — patched in unit tests."""
+    return datetime.now(timezone.utc).isoformat()
+
+
+# Re-import so unit tests can patch the symbol on this module.
+from lib.workflow_state.journal import get_journal_entries  # noqa: E402
+
+
+_G0B_STALE_HOURS = 2
+
+
+def predicate_g0b(ctx: dict) -> bool:
+    """Return True iff G0b should fire for this action.
+
+    Rule (per F-C1 / F-C3 from the design):
+        - Find most recent plan_approved at ts=T0. None? -> False.
+        - Find most recent gate_dispatched{gate=g0b} at ts=T_d (or None).
+        - Find most recent gate_verdict{gate=g0b}    at ts=T_v (or None).
+        - If T_v exists and T_v > T0 -> False (cycle closed).
+        - Elif T_d exists and T_d > T0:
+            - If T_v >= T_d                   -> False (cycle closed).
+            - Elif (now - T_d) <= 2h          -> False (cycle in flight).
+            - Else                            -> True  (orphan; re-fire).
+        - Else                                -> True  (no dispatch yet for this plan_approved).
+
+    No explicit plan-mode check (F-C2): plan_approved is only emitted on plan-mode exit,
+    so plan-mode naturally returns False above.
+    """
+    protocol_dir = ctx.get("protocol_dir")
+    if not protocol_dir:
+        return False
+    journal = get_journal_entries(protocol_dir, last_n=20)
+
+    # Most recent of each type. Journal is newest-last.
+    t0 = None
+    t_d = None
+    t_v = None
+    for entry in journal:
+        etype = entry.get("type")
+        ts = entry.get("ts")
+        payload = entry.get("payload") or {}
+        if etype == "plan_approved":
+            t0 = ts
+        elif etype == "gate_dispatched" and payload.get("gate") == "g0b":
+            t_d = ts
+        elif etype == "gate_verdict" and payload.get("gate") == "g0b":
+            t_v = ts
+
+    if t0 is None:
+        return False
+
+    if t_v is not None and t_v > t0:
+        return False  # cycle closed
+
+    if t_d is not None and t_d > t0:
+        if t_v is not None and t_v >= t_d:
+            return False  # cycle closed
+        # Orphan check: compare (now - t_d) to staleness window.
+        now = datetime.fromisoformat(_now_iso())
+        d_dt = datetime.fromisoformat(t_d)
+        if now - d_dt <= timedelta(hours=_G0B_STALE_HOURS):
+            return False  # cycle in flight
+        return True  # orphan dispatch
+
+    return True  # no dispatch yet for this plan_approved
+
+
+def dispatch_g0b(ctx: dict) -> None:
+    """Append gate_dispatched, emit T2 systemMessage + additionalContext directing critic dispatch."""
+    protocol_dir = ctx.get("protocol_dir") or ""
+    workflow_ctx = ctx.get("workflow_ctx")
+    artifact = ctx["artifact"]
+    tool_name = ctx["tool_name"]
+    tool_result_excerpt = ctx.get("tool_result_excerpt", "")
+
+    # Read T0 from the most recent plan_approved in the journal (predicate already
+    # validated that one exists and is unpaired).
+    journal = get_journal_entries(protocol_dir, last_n=20) if protocol_dir else []
+    t0 = None
+    for entry in journal:
+        if entry.get("type") == "plan_approved":
+            t0 = entry.get("ts")
+    # t0 should always be set here because predicate_g0b returned True.
+
+    if protocol_dir:
+        workflow, phase = _resolve_workflow_phase(workflow_ctx, protocol_dir)
+        append_journal_event(
+            protocol_dir,
+            event_type="gate_dispatched",
+            payload={
+                "gate": "g0b",
+                "trigger": "run-gate.py --id g0b",
+                "artifact": artifact,
+                "tool_name": tool_name,
+                "plan_approved_ts": t0,
+            },
+            workflow=workflow,
+            phase=phase,
+        )
+
+    directive = (
+        "[G0b plan-fidelity gate] First action after plan_approved completed. "
+        "Dispatch g-fidelity-critic ×3 in parallel per skills/ivy/references/parallel-dispatch.md "
+        "to verify this action conforms to the plan's first task.\n\n"
+        f"Action observed: {tool_name} on `{artifact}` "
+        f"(tool_result excerpt: {tool_result_excerpt}).\n"
+        f"Plan reference: plan_approved at ts={t0}.\n\n"
+        "Each critic loads g-fidelity-critic.md and applies the per-task plan-conformance rubric. "
+        "Aggregate via 2-of-3 asymmetric vote. "
+        "On UNSOUND, follow the .claude/rules/gate-verdicts.md G0b section routing "
+        "(revert / override / return-to-plan-mode)."
+    )
+
+    suffix = (
+        f"; gate_dispatched appended to journal at {journal_path(protocol_dir)}"
+        if protocol_dir
+        else ""
+    )
+    emit_hook_output(
+        "PostToolUse",
+        system_message=f"[G0b plan-fidelity gate] dispatched on {os.path.basename(artifact)}{suffix}",
+        additional_context=directive,
+    )

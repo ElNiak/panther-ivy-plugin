@@ -1,9 +1,0 @@
-{
-  "name": "ivy-lsp",
-  "description": "Ivy language server for code intelligence, diagnostics, and navigation in .ivy formal specification files",
-  "version": "0.4.0",
-  "author": {
-    "name": "ElNiak",
-    "email": "elniak@github.com"
-  }
-}
